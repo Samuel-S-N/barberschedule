@@ -2,6 +2,7 @@ import { Pressable, Text, View } from "react-native";
 import { Calendar, Clock, Scissors } from "lucide-react-native";
 
 import { colors } from "../../lib/design/colors";
+import { shadows } from "../../lib/design/shadows";
 import { StatusBadge } from "./StatusBadge";
 import type { AppointmentStatus } from "./StatusBadge";
 
@@ -29,12 +30,15 @@ export function AppointmentCard({
   testID,
 }: AppointmentCardProps) {
   const cancelled = status === "cancelled";
+  const accessibilityLabel = `${serviceName} with ${barberName}, ${dateLabel} at ${timeLabel}, ${shopName}`;
 
   return (
     <Pressable
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
       className="rounded-[20px] bg-surface p-4 gap-2"
       onPress={onPress}
-      style={cancelled ? { opacity: 0.6 } : undefined}
+      style={[shadows.level1, cancelled ? { opacity: 0.6 } : undefined]}
       testID={testID}
     >
       <View className="flex-row items-center justify-between">

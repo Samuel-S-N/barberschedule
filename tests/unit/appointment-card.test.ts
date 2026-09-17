@@ -2,6 +2,7 @@ import React from "react";
 import { fireEvent, render } from "@testing-library/react-native";
 
 import { AppointmentCard } from "../../src/components/domain/AppointmentCard";
+import { shadows } from "../../src/lib/design/shadows";
 
 const baseProps = {
   serviceName: "Cut + Beard",
@@ -55,5 +56,29 @@ describe("AppointmentCard", () => {
     const flattened = Array.isArray(style) ? Object.assign({}, ...style) : (style ?? {});
 
     expect(flattened.opacity).toBeUndefined();
+  });
+
+  it("applies the level-1 shadow, per DESIGN_SYSTEM.md §12.4 (Card elevated)", async () => {
+    const view = await render(
+      React.createElement(AppointmentCard, { ...baseProps, status: "confirmed", testID: "card" }),
+    );
+
+    const style = view.getByTestId("card").props.style;
+    const flattened = Array.isArray(style) ? Object.assign({}, ...style) : (style ?? {});
+
+    expect(flattened).toEqual(expect.objectContaining(shadows.level1));
+  });
+
+  it("exposes an accessible button role and label", async () => {
+    const view = await render(
+      React.createElement(AppointmentCard, { ...baseProps, status: "confirmed", testID: "card" }),
+    );
+
+    const card = view.getByTestId("card");
+
+    expect(card.props.accessibilityRole).toBe("button");
+    expect(card.props.accessibilityLabel).toBe(
+      "Cut + Beard with João Silva, Thu, Aug 18 at 14:30, Barbearia Alfa",
+    );
   });
 });
