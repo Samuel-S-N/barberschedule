@@ -34,4 +34,15 @@ module.exports = tseslint.config(
       "@typescript-eslint/no-require-imports": "off",
     },
   },
+  {
+    // jest.setup.ts's jest.mock() factories and Jest manual mock files
+    // (__mocks__/**) must use require() inside the factory body — Jest
+    // hoists jest.mock() calls above top-level imports in the same file,
+    // so an imported binding referenced inside the factory would be used
+    // before initialization.
+    files: ["jest.setup.ts", "__mocks__/**/*.js"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
 );
