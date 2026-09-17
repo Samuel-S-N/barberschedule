@@ -3,13 +3,37 @@
 // Worklets module at import time and throws under Jest (no native bridge).
 // This mock provides just enough surface for the design system components
 // (useSharedValue/useAnimatedStyle/withTiming/withRepeat/Animated.View/
-// Animated.Text/createAnimatedComponent) to render in tests; none of this
-// project's component tests assert on computed animated style values.
+// Animated.Text/createAnimatedComponent) to render in tests.
 const React = require("react");
 const RN = require("react-native");
 
+// useRef-backed so the returned object survives re-renders of the same
+// component instance (matching real Reanimated's persistence semantics —
+// a plain `{ value }` object recreated every render would silently hide
+// any bug where a component forgets to update .value on a later render),
+// and the `.value` setter schedules a React re-render. Real Reanimated
+// re-evaluates useAnimatedStyle reactively outside React's render cycle
+// entirely (worklets on the UI thread); this mock has no such mechanism,
+// so without forcing a re-render here, a .value write from a useEffect
+// would never be reflected in what useAnimatedStyle last returned.
 function useSharedValue(initialValue) {
-  return { value: initialValue };
+  const [, forceRender] = React.useState(0);
+  const store = React.useRef(initialValue);
+  const sharedValue = React.useRef();
+
+  if (sharedValue.current === undefined) {
+    sharedValue.current = {
+      get value() {
+        return store.current;
+      },
+      set value(next) {
+        store.current = next;
+        forceRender((tick) => tick + 1);
+      },
+    };
+  }
+
+  return sharedValue.current;
 }
 
 function useAnimatedStyle(factory) {

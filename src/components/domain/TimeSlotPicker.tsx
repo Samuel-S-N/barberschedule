@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { Pressable, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -25,14 +25,21 @@ function Slot({ slot, onSelectSlot }: { slot: TimeSlot; onSelectSlot: (time: str
   const occupied = slot.status === "occupied";
   const selected = slot.status === "selected";
 
+  // Keyed on `selected` (not just set on press) so a slot that becomes
+  // selected/deselected purely through a prop change — e.g. the parent
+  // clears the previous selection after `onSelectSlot` fires — animates
+  // too, instead of only the slot the user just tapped.
+  useEffect(() => {
+    scale.value = withTiming(selected ? 1.03 : 1, { duration: Motion.duration.fast });
+  }, [scale, selected]);
+
   const handlePress = useCallback(() => {
     if (occupied) {
       return;
     }
 
-    scale.value = withTiming(1.03, { duration: Motion.duration.fast });
     onSelectSlot(slot.time);
-  }, [occupied, onSelectSlot, scale, slot.time]);
+  }, [occupied, onSelectSlot, slot.time]);
 
   const className = occupied
     ? "bg-neutral-100"

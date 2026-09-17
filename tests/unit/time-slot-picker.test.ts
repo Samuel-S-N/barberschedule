@@ -49,4 +49,32 @@ describe("TimeSlotPicker", () => {
       expect.objectContaining({ selected: false, disabled: false }),
     );
   });
+
+  function getScale(element: ReturnType<typeof render> extends Promise<infer T> ? T : never, testID: string) {
+    const style = element.getByTestId(testID).props.style;
+    const flattened = Array.isArray(style) ? Object.assign({}, ...style) : (style ?? {});
+    const transform = flattened.transform as Array<{ scale?: number }> | undefined;
+
+    return transform?.find((entry) => "scale" in entry)?.scale;
+  }
+
+  it("re-scales a slot up when it becomes selected via a prop change, and back down when deselected", async () => {
+    const initialSlots = [
+      { time: "09:00", status: "free" as const },
+      { time: "09:30", status: "selected" as const },
+    ];
+    const view = await render(React.createElement(TimeSlotPicker, { slots: initialSlots, onSelectSlot: jest.fn() }));
+
+    expect(getScale(view, "time-slot-09:00")).toBe(1);
+    expect(getScale(view, "time-slot-09:30")).toBe(1.03);
+
+    const nextSlots = [
+      { time: "09:00", status: "selected" as const },
+      { time: "09:30", status: "free" as const },
+    ];
+    await view.rerender(React.createElement(TimeSlotPicker, { slots: nextSlots, onSelectSlot: jest.fn() }));
+
+    expect(getScale(view, "time-slot-09:00")).toBe(1.03);
+    expect(getScale(view, "time-slot-09:30")).toBe(1);
+  });
 });
