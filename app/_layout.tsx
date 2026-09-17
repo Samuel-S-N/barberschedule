@@ -1,4 +1,16 @@
 import { Stack, useRouter, useSegments } from "expo-router";
+import { useFonts } from "expo-font";
+import {
+  Oswald_500Medium,
+  Oswald_600SemiBold,
+  Oswald_700Bold,
+} from "@expo-google-fonts/oswald";
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from "@expo-google-fonts/inter";
 import { useEffect, useMemo } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
@@ -6,10 +18,19 @@ import { resolveAuthRedirect } from "../src/features/auth/session";
 import { AppProviders } from "../src/providers/AppProviders";
 import { useSupabaseSession } from "../src/providers/AppProviders";
 
-function RootNavigator() {
+export function RootNavigator() {
   const router = useRouter();
   const segments = useSegments();
   const { isLoading, profile, session } = useSupabaseSession();
+  const [fontsLoaded] = useFonts({
+    Oswald_500Medium,
+    Oswald_600SemiBold,
+    Oswald_700Bold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
   const redirect = useMemo(
     () =>
       resolveAuthRedirect({
@@ -26,7 +47,7 @@ function RootNavigator() {
     }
   }, [isLoading, redirect, router]);
 
-  if (isLoading) {
+  if (isLoading || !fontsLoaded) {
     return (
       <View style={styles.loadingScreen}>
         <ActivityIndicator />
