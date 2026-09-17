@@ -29,6 +29,16 @@ describe("ServiceCard", () => {
     expect(view.getByText("R$ 65,00")).toBeTruthy();
   });
 
+  it("gives the duration tabular-nums, per the Global Constraints (duration is a number that must not \"jump\")", async () => {
+    const view = await render(
+      React.createElement(ServiceCard, { name: "Cut + Beard", durationMinutes: 45, priceCents: 6500 }),
+    );
+
+    expect(view.getByText("45 min").props.style).toEqual(
+      expect.objectContaining({ fontVariant: ["tabular-nums"] }),
+    );
+  });
+
   it("fires onPress and sets accessibilityState.selected", async () => {
     const onPress = jest.fn();
     const view = await render(

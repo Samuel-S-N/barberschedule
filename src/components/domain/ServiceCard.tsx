@@ -42,7 +42,12 @@ export function ServiceCard({
           <Text className="text-base font-sans-semibold text-ink">{name}</Text>
           <View className="flex-row items-center gap-1">
             <Clock color={colors.neutral[500]} size={14} />
-            <Text className="text-xs font-sans text-neutral-500">{durationMinutes} min</Text>
+            <Text
+              className="text-xs font-sans text-neutral-500"
+              style={{ fontVariant: ["tabular-nums"] }}
+            >
+              {durationMinutes} min
+            </Text>
           </View>
         </View>
       </View>
