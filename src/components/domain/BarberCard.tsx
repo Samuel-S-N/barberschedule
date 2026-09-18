@@ -6,7 +6,7 @@ import { colors } from "../../lib/design/colors";
 export type BarberCardProps = {
   name: string;
   specialty?: string;
-  rating: number;
+  rating?: number;
   distanceKm?: number;
   selected?: boolean;
   onPress?: () => void;
@@ -35,15 +35,17 @@ export function BarberCard({
       <View className="flex-1 gap-0.5">
         <View className="flex-row items-center justify-between">
           <Text className="text-lg font-display-semibold text-ink">{name}</Text>
-          <View className="flex-row items-center gap-1">
-            <Star color={colors.warning[400]} fill={colors.warning[400]} size={14} />
-            <Text
-              className="text-sm font-sans-semibold text-ink"
-              style={{ fontVariant: ["tabular-nums"] }}
-            >
-              {rating}
-            </Text>
-          </View>
+          {rating !== undefined ? (
+            <View className="flex-row items-center gap-1">
+              <Star color={colors.warning[400]} fill={colors.warning[400]} size={14} />
+              <Text
+                className="text-sm font-sans-semibold text-ink"
+                style={{ fontVariant: ["tabular-nums"] }}
+              >
+                {rating}
+              </Text>
+            </View>
+          ) : null}
         </View>
         {specialty ? <Text className="text-sm font-sans text-neutral-500">{specialty}</Text> : null}
         {distanceKm !== undefined ? (

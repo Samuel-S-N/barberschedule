@@ -39,4 +39,10 @@ describe("BarberCard", () => {
       expect.objectContaining({ selected: true }),
     );
   });
+
+  it("omits the rating row entirely when rating is not provided", async () => {
+    const view = await render(React.createElement(BarberCard, { name: "João Silva" }));
+
+    expect(view.queryByText("4.9")).toBeNull();
+  });
 });
