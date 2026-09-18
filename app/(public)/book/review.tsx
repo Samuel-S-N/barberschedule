@@ -1,10 +1,16 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
-import { Controller, useForm } from "react-hook-form";
 import { useState } from "react";
-import { Button, SafeAreaView, ScrollView, StyleSheet, Text, TextInput } from "react-native";
+import { SafeAreaView, ScrollView, Text, View } from "react-native";
 import { z } from "zod";
 
+import { EmptyState } from "../../../src/components/domain/EmptyState";
+import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
+import { TimeSlotPicker } from "../../../src/components/domain/TimeSlotPicker";
+import type { TimeSlot } from "../../../src/components/domain/TimeSlotPicker";
+import { Toast } from "../../../src/components/domain/Toast";
+import { Button } from "../../../src/components/ui/Button";
+import { Input } from "../../../src/components/ui/Input";
 import { bookAppointment } from "../../../src/features/appointments/api";
 import { getAvailableSlotsQueryOptions } from "../../../src/features/availability/query";
 import type { AvailableSlot } from "../../../src/features/availability/types";
@@ -24,8 +30,8 @@ export default function BookReviewScreen() {
   const localDate = param(params.localDate);
   const { profile, supabase } = useSupabaseSession();
   const [startsAt, setStartsAt] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<string | null>(null);
-  const { control, handleSubmit } = useForm({ defaultValues: { notes: "" } });
+  const [notes, setNotes] = useState("");
+  const [feedback, setFeedback] = useState<{ message: string; variant: "success" | "error" } | null>(null);
   const availability = useQuery({
     ...getAvailableSlotsQueryOptions(supabase, { barberId, barberServiceId, localDate }),
     enabled: Boolean(barberId && barberServiceId && localDate),
@@ -38,75 +44,87 @@ export default function BookReviewScreen() {
   const customer = customers.data?.find(
     (candidate) => candidate.active && candidate.userId === profile?.userId,
   );
-  const selectedSlot = availability.data?.find((slot: AvailableSlot) => slot.startsAt === startsAt);
   const booking = useMutation({
-    mutationFn: (notes: string) => {
+    mutationFn: (submittedNotes: string) => {
       if (profile?.role !== "customer" || !customer || !startsAt) {
         throw new Error("Choose an available time before booking.");
       }
       return bookAppointment(supabase, {
         barberServiceId,
         customerId: customer.id,
-        notes: notes || null,
+        notes: submittedNotes || null,
         source: "customer",
         startsAt,
       });
     },
-    onError: (error) => setFeedback(error instanceof Error ? error.message : "Unable to book this appointment."),
-    onSuccess: () => setFeedback("Booking confirmed."),
+    onError: (error) => setFeedback({
+      message: error instanceof Error ? error.message : "Unable to book this appointment.",
+      variant: "error",
+    }),
+    onSuccess: () => setFeedback({ message: "Booking confirmed.", variant: "success" }),
   });
 
-  const submit = handleSubmit(({ notes }) => {
+  const slots: TimeSlot[] = (availability.data ?? []).map((slot: AvailableSlot) => ({
+    status: slot.startsAt === startsAt ? "selected" : "free",
+    time: slot.localTime,
+  }));
+
+  const selectSlot = (time: string) => {
+    const match = availability.data?.find((slot: AvailableSlot) => slot.localTime === time);
+    setStartsAt(match?.startsAt ?? null);
+  };
+
+  const submit = () => {
     const parsed = notesSchema.safeParse({ notes });
     if (!parsed.success) {
-      setFeedback("Notes must be 500 characters or fewer.");
+      setFeedback({ message: "Notes must be 500 characters or fewer.", variant: "error" });
       return;
     }
     setFeedback(null);
     booking.mutate(parsed.data.notes);
-  });
+  };
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content} style={styles.scroll} testID="booking-review-scroll">
-        <Text accessibilityRole="header" style={styles.title}>Review your booking</Text>
-        <Text>{localDate}</Text>
-        {availability.isLoading ? <Text>Loading available times…</Text> : null}
-        {availability.error ? <Text>Unable to load availability.</Text> : null}
-        {availability.data?.map((slot: AvailableSlot) => (
-          <Button
-            color={slot.startsAt === startsAt ? "#2563eb" : undefined}
-            key={slot.startsAt}
-            onPress={() => setStartsAt(slot.startsAt)}
-            title={slot.localTime}
+    <SafeAreaView className="flex-1 bg-canvas">
+      <ScrollView className="flex-1" testID="booking-review-scroll">
+        <View className="items-center gap-4 p-6">
+          <Text accessibilityRole="header" className="w-full max-w-[420px] text-2xl font-display-bold text-ink">
+            Review your booking
+          </Text>
+          <Text className="w-full max-w-[420px] text-base font-sans text-neutral-600">{localDate}</Text>
+          <View className="w-full max-w-[420px] gap-2">
+            {availability.isLoading ? (
+              <>
+                <SkeletonBlock height={56} width={320} />
+                <SkeletonBlock height={56} width={320} />
+              </>
+            ) : null}
+            {availability.error ? (
+              <Text className="text-sm font-sans text-danger-500">Unable to load availability.</Text>
+            ) : null}
+            {!availability.isLoading && !availability.error && slots.length === 0 ? (
+              <EmptyState title="No times available this day" />
+            ) : null}
+            {slots.length > 0 ? <TimeSlotPicker onSelectSlot={selectSlot} slots={slots} /> : null}
+          </View>
+          <View className="w-full max-w-[420px]">
+            <Input label="Notes (optional)" multiline onChangeText={setNotes} testID="booking-notes-input" value={notes} />
+          </View>
+          <Toast
+            message={feedback?.message ?? ""}
+            onDismiss={() => setFeedback(null)}
+            variant={feedback?.variant ?? "info"}
+            visible={feedback !== null}
           />
-        ))}
-        {selectedSlot ? <Text>Selected time: {selectedSlot.localTime}</Text> : null}
-        <Controller
-          control={control}
-          name="notes"
-          render={({ field: { onBlur, onChange, value } }) => (
-            <TextInput
-              multiline
-              onBlur={onBlur}
-              onChangeText={onChange}
-              placeholder="Notes (optional)"
-              style={styles.input}
-              value={value}
+          <View className="w-full max-w-[420px]">
+            <Button
+              disabled={!startsAt || !customer || booking.isPending}
+              label="Confirm booking"
+              onPress={submit}
             />
-          )}
-        />
-        {feedback ? <Text>{feedback}</Text> : null}
-        <Button disabled={!startsAt || !customer || booking.isPending} onPress={submit} title="Confirm booking" />
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  content: { alignSelf: "center", gap: 12, maxWidth: 420, paddingBottom: 24, width: "100%" },
-  input: { borderColor: "#d1d5db", borderRadius: 8, borderWidth: 1, minHeight: 70, padding: 12 },
-  screen: { backgroundColor: "#fff", flex: 1, padding: 24 },
-  scroll: { flex: 1, width: "100%" },
-  title: { color: "#111827", fontSize: 28, fontWeight: "700" },
-});
