@@ -87,8 +87,8 @@ export default function BookReviewScreen() {
   return (
     <SafeAreaView className="flex-1 bg-canvas">
       <ScrollView className="flex-1" testID="booking-review-scroll">
-        <View className="items-center gap-4 p-6">
-          <Text accessibilityRole="header" className="w-full max-w-[420px] text-2xl font-display-bold text-ink">
+        <View className="items-center gap-4 p-5">
+          <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
             Review your booking
           </Text>
           <Text className="w-full max-w-[420px] text-base font-sans text-neutral-600">{localDate}</Text>

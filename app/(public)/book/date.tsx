@@ -23,8 +23,8 @@ export default function BookDateScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-canvas">
-      <View className="flex-1 items-center gap-6 p-6">
-        <Text accessibilityRole="header" className="w-full max-w-[420px] text-2xl font-display-bold text-ink">
+      <View className="flex-1 items-center gap-6 p-5">
+        <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
           Choose a date
         </Text>
         <View className="w-full">

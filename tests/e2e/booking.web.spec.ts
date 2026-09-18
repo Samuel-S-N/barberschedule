@@ -74,6 +74,8 @@ test("an authenticated customer can select a public slot and submit a booking", 
     }
 
     if (url.pathname.endsWith("/rpc/get_available_slots")) {
+      const payload = request.postDataJSON() as Record<string, unknown>;
+      expect(payload.local_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       await json([{
         ends_at: "2026-08-17T12:30:00Z",
         local_date: "2026-08-17",
@@ -121,7 +123,7 @@ test("an authenticated customer can select a public slot and submit a booking", 
   await page.getByRole("button", { name: "Confirm booking" }).click();
 
   await expect(page.getByText("Booking confirmed.")).toBeVisible();
-  expect(bookingPayload).toMatchObject({ customer_id: customerId, source: "customer" });
+  expect(bookingPayload).toMatchObject({ customer_id: customerId, source: "customer", starts_at: "2026-08-17T12:00:00Z" });
 });
 
 test("a customer sees an unavailable error when booking loses the slot", async ({ page }) => {
@@ -157,7 +159,11 @@ test("a customer sees an unavailable error when booking loses the slot", async (
       return;
     }
     if (url.pathname.endsWith("/customers")) return json([{ active: true, archived_at: null, email: "customer@example.com", full_name: "Browser Customer", id: customerId, phone: null, shop_id: shopId, user_id: customerUserId }]);
-    if (url.pathname.endsWith("/rpc/get_available_slots")) return json([{ ends_at: "2026-08-17T12:30:00Z", local_date: "2026-08-17", local_time: "09:00:00", starts_at: "2026-08-17T12:00:00Z" }]);
+    if (url.pathname.endsWith("/rpc/get_available_slots")) {
+      const payload = request.postDataJSON() as Record<string, unknown>;
+      expect(payload.local_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      return json([{ ends_at: "2026-08-17T12:30:00Z", local_date: "2026-08-17", local_time: "09:00:00", starts_at: "2026-08-17T12:00:00Z" }]);
+    }
     if (url.pathname.endsWith("/rpc/book_appointment")) {
       bookingPayload = request.postDataJSON() as Record<string, unknown>;
       return route.fulfill({ body: JSON.stringify({ code: "23P01", message: "overlap" }), contentType: "application/json", status: 409 });
@@ -175,7 +181,7 @@ test("a customer sees an unavailable error when booking loses the slot", async (
 
   await expect(page.getByText("That time is no longer available.")).toBeVisible();
   await expect(page.getByText("Booking confirmed.")).not.toBeVisible();
-  expect(bookingPayload).toMatchObject({ customer_id: customerId, source: "customer" });
+  expect(bookingPayload).toMatchObject({ customer_id: customerId, source: "customer", starts_at: "2026-08-17T12:00:00Z" });
 });
 
 test("an owner is redirected away from the customer booking flow", async ({ page }) => {
