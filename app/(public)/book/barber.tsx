@@ -1,7 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useLocalSearchParams } from "expo-router";
-import { ActivityIndicator, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { SafeAreaView, Text, View } from "react-native";
 
+import { BarberCard } from "../../../src/components/domain/BarberCard";
+import { EmptyState } from "../../../src/components/domain/EmptyState";
+import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
 import { listPublicBarbers } from "../../../src/features/barbers/api";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 
@@ -12,6 +15,7 @@ function param(value: string | string[] | undefined) {
 export default function BookBarberScreen() {
   const { shopId: rawShopId } = useLocalSearchParams<{ shopId?: string }>();
   const shopId = param(rawShopId);
+  const router = useRouter();
   const { supabase } = useSupabaseSession();
   const barbers = useQuery({
     enabled: Boolean(shopId),
@@ -20,24 +24,36 @@ export default function BookBarberScreen() {
   });
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.content}>
-        <Text accessibilityRole="header" style={styles.title}>Choose your barber</Text>
-        {barbers.isLoading ? <ActivityIndicator /> : null}
-        {barbers.error ? <Text>Unable to load barbers.</Text> : null}
-        {barbers.data?.map((barber) => (
-          <Link key={barber.id} href={`/book/service?shopId=${encodeURIComponent(shopId)}&barberId=${encodeURIComponent(barber.id)}`} style={styles.link}>
-            {barber.name}
-          </Link>
-        ))}
+    <SafeAreaView className="flex-1 bg-canvas">
+      <View className="flex-1 items-center gap-4 p-6">
+        <Text accessibilityRole="header" className="w-full max-w-[420px] text-2xl font-display-bold text-ink">
+          Choose your barber
+        </Text>
+        <View className="w-full max-w-[420px] gap-3">
+          {barbers.isLoading ? (
+            <>
+              <SkeletonBlock height={72} width={320} />
+              <SkeletonBlock height={72} width={320} />
+            </>
+          ) : null}
+          {barbers.error ? (
+            <Text className="text-sm font-sans text-danger-500">Unable to load barbers.</Text>
+          ) : null}
+          {!barbers.isLoading && !barbers.error && barbers.data?.length === 0 ? (
+            <EmptyState title="No barbers available" />
+          ) : null}
+          {barbers.data?.map((barber) => (
+            <BarberCard
+              key={barber.id}
+              name={barber.name}
+              onPress={() => router.push(
+                `/book/service?shopId=${encodeURIComponent(shopId)}&barberId=${encodeURIComponent(barber.id)}`,
+              )}
+              testID={`barber-card-${barber.id}`}
+            />
+          ))}
+        </View>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  content: { gap: 16, maxWidth: 420, width: "100%" },
-  link: { color: "#2563eb", fontSize: 16 },
-  screen: { alignItems: "center", backgroundColor: "#fff", flex: 1, justifyContent: "center", padding: 24 },
-  title: { color: "#111827", fontSize: 28, fontWeight: "700" },
-});
