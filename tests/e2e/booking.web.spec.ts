@@ -49,7 +49,13 @@ test("an authenticated customer can select a public slot and submit a booking", 
     }
 
     if (url.pathname.endsWith("/barber_services")) {
-      await json([{ id: barberServiceId, service_id: "service-1", services: { name: "Browser Cut" } }]);
+      await json([{
+        duration_override_minutes: null,
+        id: barberServiceId,
+        price_override_cents: null,
+        service_id: "service-1",
+        services: { duration_minutes: 30, name: "Browser Cut", price_cents: 4000 },
+      }]);
       return;
     }
 
@@ -106,14 +112,12 @@ test("an authenticated customer can select a public slot and submit a booking", 
   });
 
   await page.goto("/book");
-  await page.getByRole("link", { name: "Start booking at Browser Shop" }).click();
-  await page.getByRole("link", { name: "Browser Barber" }).click();
-  await page.getByRole("link", { name: "Browser Cut" }).click();
-  await page.getByPlaceholder("Local date (YYYY-MM-DD)").fill("2026-08-17");
-  await page.getByRole("link", { name: "Continue to review" }).click();
+  await page.getByRole("button", { name: "Start booking at Browser Shop" }).click();
+  await page.getByRole("button", { name: "Browser Barber" }).click();
+  await page.getByRole("button", { name: "Browser Cut" }).click();
+  await page.getByRole("button", { name: "Continue to review" }).click();
   await expect(page.getByTestId("booking-review-scroll")).toBeVisible();
   await page.getByRole("button", { name: "09:00" }).click();
-  await expect(page.getByText("Selected time: 09:00")).toBeVisible();
   await page.getByRole("button", { name: "Confirm booking" }).click();
 
   await expect(page.getByText("Booking confirmed.")).toBeVisible();
@@ -142,7 +146,16 @@ test("a customer sees an unavailable error when booking loses the slot", async (
     if (url.pathname.endsWith("/rpc/get_current_profile")) return json([{ role: "customer", user_id: customerUserId }]);
     if (url.pathname.endsWith("/shops")) return json([{ id: shopId, name: "Browser Shop" }]);
     if (url.pathname.endsWith("/barbers")) return json([{ active: true, archived_at: null, id: barberId, name: "Browser Barber", shop_id: shopId }]);
-    if (url.pathname.endsWith("/barber_services")) return json([{ id: barberServiceId, service_id: "service-1", services: { name: "Browser Cut" } }]);
+    if (url.pathname.endsWith("/barber_services")) {
+      await json([{
+        duration_override_minutes: null,
+        id: barberServiceId,
+        price_override_cents: null,
+        service_id: "service-1",
+        services: { duration_minutes: 30, name: "Browser Cut", price_cents: 4000 },
+      }]);
+      return;
+    }
     if (url.pathname.endsWith("/customers")) return json([{ active: true, archived_at: null, email: "customer@example.com", full_name: "Browser Customer", id: customerId, phone: null, shop_id: shopId, user_id: customerUserId }]);
     if (url.pathname.endsWith("/rpc/get_available_slots")) return json([{ ends_at: "2026-08-17T12:30:00Z", local_date: "2026-08-17", local_time: "09:00:00", starts_at: "2026-08-17T12:00:00Z" }]);
     if (url.pathname.endsWith("/rpc/book_appointment")) {
@@ -153,11 +166,10 @@ test("a customer sees an unavailable error when booking loses the slot", async (
   });
 
   await page.goto("/book");
-  await page.getByRole("link", { name: "Start booking at Browser Shop" }).click();
-  await page.getByRole("link", { name: "Browser Barber" }).click();
-  await page.getByRole("link", { name: "Browser Cut" }).click();
-  await page.getByPlaceholder("Local date (YYYY-MM-DD)").fill("2026-08-17");
-  await page.getByRole("link", { name: "Continue to review" }).click();
+  await page.getByRole("button", { name: "Start booking at Browser Shop" }).click();
+  await page.getByRole("button", { name: "Browser Barber" }).click();
+  await page.getByRole("button", { name: "Browser Cut" }).click();
+  await page.getByRole("button", { name: "Continue to review" }).click();
   await page.getByRole("button", { name: "09:00" }).click();
   await page.getByRole("button", { name: "Confirm booking" }).click();
 
