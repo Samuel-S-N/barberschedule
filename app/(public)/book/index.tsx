@@ -1,12 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "expo-router";
-import { ActivityIndicator, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
+import { SafeAreaView, Text, View } from "react-native";
 
+import { EmptyState } from "../../../src/components/domain/EmptyState";
+import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
+import { Button } from "../../../src/components/ui/Button";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 
 type Shop = { id: string; name: string };
 
 export default function BookIndexScreen() {
+  const router = useRouter();
   const { supabase } = useSupabaseSession();
   const shops = useQuery({
     queryFn: async () => {
@@ -18,24 +22,36 @@ export default function BookIndexScreen() {
   });
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.content}>
-        <Text accessibilityRole="header" style={styles.title}>Book an appointment</Text>
-        {shops.isLoading ? <ActivityIndicator /> : null}
-        {shops.error ? <Text>Unable to load shops.</Text> : null}
-        {shops.data?.map((shop) => (
-          <Link key={shop.id} href={`/book/barber?shopId=${encodeURIComponent(shop.id)}`} style={styles.link}>
-            Start booking at {shop.name}
-          </Link>
-        ))}
+    <SafeAreaView className="flex-1 bg-canvas">
+      <View className="flex-1 items-center gap-4 p-6">
+        <Text accessibilityRole="header" className="w-full max-w-[420px] text-2xl font-display-bold text-ink">
+          Book an appointment
+        </Text>
+        <View className="w-full max-w-[420px] gap-3">
+          {shops.isLoading ? (
+            <>
+              <SkeletonBlock height={60} width={320} />
+              <SkeletonBlock height={60} width={320} />
+              <SkeletonBlock height={60} width={320} />
+            </>
+          ) : null}
+          {shops.error ? (
+            <Text className="text-sm font-sans text-danger-500">Unable to load shops.</Text>
+          ) : null}
+          {!shops.isLoading && !shops.error && shops.data?.length === 0 ? (
+            <EmptyState title="No shops available" />
+          ) : null}
+          {shops.data?.map((shop) => (
+            <Button
+              key={shop.id}
+              label={`Start booking at ${shop.name}`}
+              onPress={() => router.push(`/book/barber?shopId=${encodeURIComponent(shop.id)}`)}
+              size="lg"
+              variant="primary"
+            />
+          ))}
+        </View>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  content: { gap: 16, maxWidth: 420, width: "100%" },
-  link: { color: "#2563eb", fontSize: 16 },
-  screen: { alignItems: "center", backgroundColor: "#fff", flex: 1, justifyContent: "center", padding: 24 },
-  title: { color: "#111827", fontSize: 28, fontWeight: "700" },
-});
