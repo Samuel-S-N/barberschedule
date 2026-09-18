@@ -8,6 +8,7 @@ export type InputProps = {
   placeholder?: string;
   error?: string;
   secureTextEntry?: boolean;
+  multiline?: boolean;
   testID?: string;
 };
 
@@ -18,6 +19,7 @@ export function Input({
   placeholder,
   error,
   secureTextEntry,
+  multiline = false,
   testID,
 }: InputProps) {
   const [focused, setFocused] = useState(false);
@@ -27,13 +29,15 @@ export function Input({
     : focused
       ? "border-[1.5px] border-primary-400"
       : "border border-neutral-200";
+  const heightClassName = multiline ? "min-h-input-height py-3" : "h-input-height";
 
   return (
     <View className="gap-1">
       <Text className="text-sm font-sans-medium text-neutral-700">{label}</Text>
       <TextInput
         accessibilityLabel={label}
-        className={`h-input-height rounded-xl px-4 font-sans text-base text-ink bg-surface ${borderClassName}`}
+        className={`${heightClassName} rounded-xl px-4 font-sans text-base text-ink bg-surface ${borderClassName}`}
+        multiline={multiline}
         onBlur={() => setFocused(false)}
         onChangeText={onChangeText}
         onFocus={() => setFocused(true)}

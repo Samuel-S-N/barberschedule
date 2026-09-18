@@ -48,4 +48,24 @@ describe("Input", () => {
 
     expect(view.queryByText("Invalid date format")).toBeNull();
   });
+
+  it("passes multiline through to the underlying TextInput when set", async () => {
+    const view = await render(
+      React.createElement(Input, {
+        label: "Notes", multiline: true, value: "", onChangeText: jest.fn(), testID: "notes-input",
+      }),
+    );
+
+    expect(view.getByTestId("notes-input").props.multiline).toBe(true);
+  });
+
+  it("does not set multiline on the underlying TextInput by default", async () => {
+    const view = await render(
+      React.createElement(Input, {
+        label: "Local date", value: "", onChangeText: jest.fn(), testID: "date-input",
+      }),
+    );
+
+    expect(view.getByTestId("date-input").props.multiline).toBeFalsy();
+  });
 });
