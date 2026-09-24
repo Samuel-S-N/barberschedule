@@ -49,7 +49,7 @@ export default function RescheduleScreen() {
     onError: (caught) => setError(caught instanceof Error ? caught.message : "Unable to reschedule."),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["my-appointments"] });
-      router.replace("/agenda");
+      router.replace("/appointments");
     },
   });
 

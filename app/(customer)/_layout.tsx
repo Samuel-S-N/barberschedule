@@ -12,10 +12,10 @@ import { useSupabaseSession } from "../../src/providers/AppProviders";
 const ITEMS = [
   { icon: House, key: "home", label: "Home" },
   { icon: CalendarPlus, key: "book", label: "Book" },
-  { icon: CalendarDays, key: "agenda", label: "Agenda" },
+  { icon: CalendarDays, key: "appointments", label: "Agenda" },
   { icon: User, key: "profile", label: "Profile" },
 ];
-const ACTIVE_TAB: Record<string, string> = { reschedule: "agenda" };
+const ACTIVE_TAB: Record<string, string> = { reschedule: "appointments" };
 
 export default function CustomerLayout() {
   const { profile, supabase } = useSupabaseSession();
@@ -65,7 +65,7 @@ export default function CustomerLayout() {
     >
       <Tabs.Screen name="home" />
       <Tabs.Screen name="book" />
-      <Tabs.Screen name="agenda" />
+      <Tabs.Screen name="appointments" />
       <Tabs.Screen name="profile" />
       <Tabs.Screen name="reschedule" options={{ href: null }} />
     </Tabs>

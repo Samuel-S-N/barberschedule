@@ -32,7 +32,7 @@ export default function CustomerHomeScreen() {
             {upcoming.isLoading ? <SkeletonBlock height={120} width={320} /> : null}
             {upcoming.error ? <Text className="text-sm font-sans text-danger-500">Unable to load appointments.</Text> : null}
             {!upcoming.isLoading && !upcoming.error && !next ? <EmptyState title="No upcoming appointments" /> : null}
-            {next ? <AppointmentCard {...toCardProps(next)} onPress={() => router.push("/agenda")} testID="home-next-appointment" /> : null}
+            {next ? <AppointmentCard {...toCardProps(next)} onPress={() => router.push("/appointments")} testID="home-next-appointment" /> : null}
             <Button label="Book an appointment" onPress={() => router.push("/book")} size="lg" />
           </View>
         </View>
