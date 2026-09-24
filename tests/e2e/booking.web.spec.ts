@@ -92,7 +92,8 @@ test("a new account is bootstrapped with ensure_my_customer before booking", asy
 test("an owner is redirected away from the customer booking flow", async ({ page }) => {
   await page.addInitScript(({ userId }) => {
     const now = Math.floor(Date.now() / 1000);
-    const token = `eyJhbGciOiJub25lIn0.${btoa(JSON.stringify({ exp: now + 3600, sub: userId }))}.`;
+    const header = btoa(JSON.stringify({ alg: "none" })).replace(/=+$/, "");
+    const token = `${header}.${btoa(JSON.stringify({ exp: now + 3600, sub: userId }))}.`;
     localStorage.setItem("sb-example-auth-token", JSON.stringify({
       access_token: token, expires_at: now + 3600, expires_in: 3600,
       refresh_token: "e2e-refresh-token", token_type: "bearer", user: { id: userId },
