@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView, Text, View } from "react-native";
 
 import { EmptyState } from "../../../src/components/domain/EmptyState";
@@ -15,6 +15,10 @@ export default function BookIndexScreen() {
     queryFn: () => listPublicShops(supabase),
     queryKey: ["public-shops"],
   });
+
+  if (shops.data?.length === 1) {
+    return <Redirect href={`/book/barber?shopId=${encodeURIComponent(shops.data[0].id)}`} />;
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-canvas">

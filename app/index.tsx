@@ -1,4 +1,4 @@
-import { Link } from "expo-router";
+import { Link, Redirect } from "expo-router";
 import { useState } from "react";
 import { Button, SafeAreaView, StyleSheet, Text, View } from "react-native";
 
@@ -19,6 +19,10 @@ export default function HomeScreen() {
       );
     }
   };
+
+  if (profile?.role === "customer") {
+    return <Redirect href="/home" />;
+  }
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -49,13 +53,6 @@ export default function HomeScreen() {
             <Link href="/settings" style={styles.link}>
               Owner settings
             </Link>
-          </View>
-        ) : null}
-        {profile?.role === "customer" ? (
-          <View style={styles.links}>
-            <Link href="/book" style={styles.link}>Book an appointment</Link>
-            <Link href="/appointments" style={styles.link}>My appointments</Link>
-            <Link href="/profile" style={styles.link}>My profile</Link>
           </View>
         ) : null}
         {feedback ? <Text style={styles.subtitle}>{feedback}</Text> : null}
