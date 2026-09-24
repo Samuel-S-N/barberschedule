@@ -1,130 +1,56 @@
-import { Link } from "expo-router";
-import React, { useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Button,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import { SafeAreaView, ScrollView, Text, View } from "react-native";
 
-import {
-  requestPasswordReset,
-  signInWithPassword,
-} from "../../src/features/auth/api";
+import { Toast } from "../../src/components/domain/Toast";
+import { Button } from "../../src/components/ui/Button";
+import { Input } from "../../src/components/ui/Input";
+import { signInWithPassword } from "../../src/features/auth/api";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 export default function LoginScreen() {
+  const router = useRouter();
   const { isLoading, supabase } = useSupabaseSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const canSubmit = useMemo(
-    () => email.trim().length > 0 && password.length > 0,
-    [email, password],
-  );
 
   const handleSignIn = async () => {
     setIsSubmitting(true);
-    setFeedback(null);
-
+    setError(null);
     try {
       await signInWithPassword(supabase, email.trim(), password);
-    } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Unable to sign in.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handlePasswordReset = async () => {
-    setIsSubmitting(true);
-    setFeedback(null);
-
-    try {
-      await requestPasswordReset(supabase, email.trim());
-      setFeedback("Password reset email sent.");
-    } catch (error) {
-      setFeedback(
-        error instanceof Error ? error.message : "Unable to send reset email.",
-      );
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Unable to sign in.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.card}>
-        <Text accessibilityRole="header" style={styles.title}>
-          Sign in
-        </Text>
-        <Text style={styles.subtitle}>
-          Use the same Barberschedule account on Web, iOS, or Android.
-        </Text>
-        <TextInput
-          autoCapitalize="none"
-          autoComplete="email"
-          keyboardType="email-address"
-          onChangeText={setEmail}
-          placeholder="Email"
-          style={styles.input}
-          value={email}
-        />
-        <TextInput
-          autoCapitalize="none"
-          onChangeText={setPassword}
-          placeholder="Password"
-          secureTextEntry
-          style={styles.input}
-          value={password}
-        />
-        {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}
-        {isLoading || isSubmitting ? <ActivityIndicator /> : null}
-        <Button disabled={!canSubmit || isLoading || isSubmitting} onPress={handleSignIn} title="Sign in" />
-        <Button disabled={email.trim().length === 0 || isLoading || isSubmitting} onPress={handlePasswordReset} title="Forgot password?" />
-        <Link href="/forgot-password" style={styles.link}>Open reset page</Link>
-      </View>
+    <SafeAreaView className="flex-1 bg-canvas">
+      <ScrollView className="flex-1">
+        <View className="items-center p-5">
+          <View className="w-full max-w-[420px] gap-4">
+            <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">Sign in</Text>
+            <Text className="text-base font-sans text-neutral-600">
+              Use the same Barberschedule account on Web, iOS, or Android.
+            </Text>
+            <Input label="Email" onChangeText={setEmail} testID="login-email" value={email} />
+            <Input label="Password" onChangeText={setPassword} secureTextEntry testID="login-password" value={password} />
+            <Toast message={error ?? ""} onDismiss={() => setError(null)} variant="error" visible={error !== null} />
+            <Button
+              disabled={!email.trim() || !password || isLoading || isSubmitting}
+              label="Sign in"
+              onPress={handleSignIn}
+              size="lg"
+            />
+            <Button label="Forgot password?" onPress={() => router.push("/forgot-password")} variant="ghost" />
+            <Button label="Create account" onPress={() => router.push("/signup")} variant="outline" />
+          </View>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    gap: 12,
-    maxWidth: 360,
-    width: "100%",
-  },
-  feedback: {
-    color: "#1f2937",
-    textAlign: "center",
-  },
-  input: {
-    borderColor: "#d1d5db",
-    borderRadius: 10,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  link: { color: "#2563eb", textAlign: "center" },
-  screen: {
-    alignItems: "center",
-    backgroundColor: "#ffffff",
-    flex: 1,
-    justifyContent: "center",
-    padding: 24,
-  },
-  subtitle: {
-    color: "#4b5563",
-    textAlign: "center",
-  },
-  title: {
-    color: "#111827",
-    fontSize: 28,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-});
