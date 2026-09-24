@@ -1,4 +1,6 @@
+import { TERMS_VERSION } from "../account/legal";
 import type { AuthSupabaseClient, Profile } from "./types";
+import type { SignupInput } from "./validation";
 
 type CurrentProfileRow = {
   full_name?: string | null;
@@ -55,6 +57,26 @@ export async function signInWithPassword(
     password,
   });
   throwIfError(error);
+}
+
+export async function signUpCustomer(
+  supabase: Pick<AuthSupabaseClient, "auth">,
+  input: SignupInput,
+) {
+  const { data, error } = await supabase.auth.signUp({
+    email: input.email,
+    options: {
+      data: {
+        accepted_terms_version: TERMS_VERSION,
+        full_name: input.fullName,
+        ...(input.phone ? { phone: input.phone } : {}),
+      },
+    },
+    password: input.password,
+  });
+  throwIfError(error);
+
+  return { needsEmailConfirmation: !data.session };
 }
 
 export async function signOut(supabase: Pick<AuthSupabaseClient, "auth">) {
