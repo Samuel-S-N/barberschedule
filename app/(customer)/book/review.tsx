@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { SafeAreaView, ScrollView, Text, View } from "react-native";
@@ -28,6 +28,7 @@ export default function BookReviewScreen() {
   const barberId = param(params.barberId);
   const barberServiceId = param(params.barberServiceId);
   const localDate = param(params.localDate);
+  const queryClient = useQueryClient();
   const { profile, supabase } = useSupabaseSession();
   const [startsAt, setStartsAt] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
@@ -61,7 +62,12 @@ export default function BookReviewScreen() {
       message: error instanceof Error ? error.message : "Unable to book this appointment.",
       variant: "error",
     }),
-    onSuccess: () => setFeedback({ message: "Booking confirmed.", variant: "success" }),
+    onSuccess: () => {
+      setFeedback({ message: "Booking confirmed.", variant: "success" });
+      // Home and Agenda stay mounted under the tab bar, so their cached lists must be refreshed explicitly.
+      void queryClient.invalidateQueries({ queryKey: ["my-appointments"] });
+      void queryClient.invalidateQueries({ queryKey: ["available-slots"] });
+    },
   });
 
   const slots: TimeSlot[] = (availability.data ?? []).map((slot: AvailableSlot) => ({

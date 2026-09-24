@@ -1,13 +1,19 @@
 import { expect, test } from "@playwright/test";
 
 import {
-  barberId, barberServiceId, customerId, customerUserId, json, mockCustomerRest, shopId, signInAsCustomer,
+  appointmentRow, barberId, barberServiceId, customerId, customerUserId, json, mockCustomerRest, shopId, signInAsCustomer,
 } from "./customer-helpers";
 
 const slot = { ends_at: "2026-08-17T12:30:00Z", local_date: "2026-08-17", local_time: "09:00:00", starts_at: "2026-08-17T12:00:00Z" };
 
-function bookingRest(page: import("@playwright/test").Page, onBook: (payload: Record<string, unknown>) => Promise<void> | void, bookStatus = 200) {
+function bookingRest(
+  page: import("@playwright/test").Page,
+  onBook: (payload: Record<string, unknown>) => Promise<void> | void,
+  bookStatus = 200,
+  extra?: (route: import("@playwright/test").Route, url: URL) => Promise<boolean | void> | boolean | void,
+) {
   return mockCustomerRest(page, async (route, url) => {
+    if (extra && (await extra(route, url)) === true) return true;
     if (url.pathname.endsWith("/barber_services")) {
       await json(route, [{
         duration_override_minutes: null, id: barberServiceId, price_override_cents: null, service_id: "service-1",
@@ -59,6 +65,35 @@ test("an authenticated customer can select a slot and submit a booking", async (
 
   await expect(page.getByText("Booking confirmed.")).toBeVisible();
   expect(bookingPayload).toMatchObject({ customer_id: customerId, source: "customer", starts_at: "2026-08-17T12:00:00Z" });
+});
+
+test("a new booking appears on Home and Agenda without reloading", async ({ page }) => {
+  let booked = false;
+  await signInAsCustomer(page);
+  await bookingRest(page, () => { booked = true; }, 200, async (route, url) => {
+    if (url.pathname.endsWith("/appointments")) {
+      await json(route, booked ? [appointmentRow()] : []);
+      return true;
+    }
+  });
+
+  // Home loads first (empty) and stays mounted under the tab bar.
+  await page.goto("/home");
+  await expect(page.getByText("No upcoming appointments")).toBeVisible();
+
+  await page.getByTestId("tab-book").click();
+  await page.getByRole("button", { name: "Browser Barber" }).click();
+  await page.getByRole("button", { name: "Browser Cut" }).click();
+  await page.getByRole("button", { name: "Continue to review" }).click();
+  await page.getByRole("button", { name: "09:00" }).click();
+  await page.getByRole("button", { name: "Confirm booking" }).click();
+  await expect(page.getByText("Booking confirmed.")).toBeVisible();
+
+  await page.getByTestId("tab-home").click();
+  await expect(page.getByTestId("home-next-appointment")).toBeVisible();
+
+  await page.getByTestId("tab-appointments").click();
+  await expect(page.getByTestId("appointment-card-appointment-upcoming")).toBeVisible();
 });
 
 test("a customer sees an unavailable error when booking loses the slot", async ({ page }) => {
