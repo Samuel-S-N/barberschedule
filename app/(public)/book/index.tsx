@@ -5,19 +5,14 @@ import { SafeAreaView, Text, View } from "react-native";
 import { EmptyState } from "../../../src/components/domain/EmptyState";
 import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
 import { Button } from "../../../src/components/ui/Button";
+import { listPublicShops } from "../../../src/features/shops/api";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
-
-type Shop = { id: string; name: string };
 
 export default function BookIndexScreen() {
   const router = useRouter();
   const { supabase } = useSupabaseSession();
   const shops = useQuery({
-    queryFn: async () => {
-      const { data, error } = await supabase.from("shops").select("id, name").order("name");
-      if (error) throw error;
-      return (data ?? []) as Shop[];
-    },
+    queryFn: () => listPublicShops(supabase),
     queryKey: ["public-shops"],
   });
 
