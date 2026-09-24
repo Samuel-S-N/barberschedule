@@ -3,6 +3,12 @@ declare const Deno: {
   serve(handler: (request: Request) => Response | Promise<Response>): void;
 };
 
+const corsHeaders = {
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Origin": "*",
+};
+
 function requiredEnv(name: string) {
   const value = Deno.env.get(name);
   if (!value) throw new Error(`Missing ${name}`);
@@ -10,10 +16,15 @@ function requiredEnv(name: string) {
 }
 
 function json(status: number, body: Record<string, unknown>) {
-  return new Response(JSON.stringify(body), { headers: { "Content-Type": "application/json" }, status });
+  return new Response(JSON.stringify(body), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    status,
+  });
 }
 
 Deno.serve(async (request) => {
+  // Browsers preflight supabase.functions.invoke (custom headers), so OPTIONS must succeed.
+  if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders, status: 204 });
   if (request.method !== "POST") return json(405, { code: "METHOD_NOT_ALLOWED" });
 
   const authorization = request.headers.get("Authorization");
@@ -29,6 +40,7 @@ Deno.serve(async (request) => {
   if (!userResponse.ok) return json(401, { code: "UNAUTHENTICATED" });
   const { id: userId } = await userResponse.json() as { id: string };
 
+  // Anonymize first: if the admin delete below fails, personal data is already gone and a retry is idempotent.
   const prepared = await fetch(`${url}/rest/v1/rpc/prepare_account_deletion`, {
     body: "{}",
     headers: { apikey: anonKey, Authorization: authorization, "Content-Type": "application/json" },
@@ -36,9 +48,9 @@ Deno.serve(async (request) => {
   });
   if (!prepared.ok) {
     const body = await prepared.json().catch(() => ({})) as { code?: string };
-    return body.code === "P0018"
-      ? json(409, { code: "ACCOUNT_DELETION_BLOCKED" })
-      : json(500, { code: "DELETION_FAILED" });
+    if (body.code === "P0018") return json(409, { code: "ACCOUNT_DELETION_BLOCKED" });
+    if (body.code === "42501") return json(403, { code: "FORBIDDEN" });
+    return json(500, { code: "DELETION_FAILED" });
   }
 
   const deleted = await fetch(`${url}/auth/v1/admin/users/${userId}`, {

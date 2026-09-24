@@ -15,7 +15,7 @@ export const LEGAL_SECTIONS = [
   },
   {
     title: "Your rights (LGPD)",
-    body: "In your profile you can correct your name and phone, download a copy of your data, and delete your account. Deleting your account removes your login and anonymizes your customer record; past appointments stay in the shop's records without your name, phone or email. Consent records are kept anonymously as proof of acceptance.",
+    body: "In your profile you can correct your name and phone, download a copy of your data, and delete your account. Deleting your account removes your login and anonymizes your customer record; past appointments stay in the shop's records without your name, phone or email (notes you wrote on an appointment are kept as written; ask the shop to remove them). Consent records are kept anonymously as proof of acceptance.",
   },
   {
     title: "Contact",

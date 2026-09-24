@@ -50,6 +50,7 @@ export default function CustomerProfileScreen() {
       await deleteMyAccount(supabase);
       await supabase.auth.signOut().catch(() => undefined);
     },
+    onSuccess: () => queryClient.clear(),
     onError: (caught) => {
       setConfirmingDelete(false);
       fail(caught, "Unable to delete your account.");
@@ -80,7 +81,7 @@ export default function CustomerProfileScreen() {
             {confirmingDelete ? (
               <View className="gap-2">
                 <Text className="text-base font-sans text-neutral-700">
-                  This deletes your login and anonymizes your customer record. Past appointments stay in the shop's records without your name, phone or email. This cannot be undone.
+                  This deletes your login and anonymizes your customer record. Past appointments stay in the shop's records without your name, phone or email; notes you wrote on an appointment are kept as written, so contact the shop if you want them removed. This cannot be undone.
                 </Text>
                 <Button
                   disabled={remove.isPending}

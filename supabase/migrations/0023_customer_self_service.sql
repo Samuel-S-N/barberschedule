@@ -54,18 +54,18 @@ begin
   select email, coalesce(raw_user_meta_data, '{}'::jsonb) into account_email, meta
   from auth.users where id = actor;
 
+  -- ON CONFLICT keeps concurrent bootstraps (double mount, two tabs, retries) from failing on the unique index.
+  insert into public.customers (shop_id, user_id, full_name, email, phone)
+  values (
+    shop,
+    actor,
+    coalesce((select full_name from public.profiles where user_id = actor), split_part(account_email, '@', 1)),
+    account_email,
+    nullif(btrim(meta ->> 'phone'), '')
+  )
+  on conflict (shop_id, user_id) where user_id is not null do nothing;
+
   select * into result from public.customers where shop_id = shop and user_id = actor;
-  if not found then
-    insert into public.customers (shop_id, user_id, full_name, email, phone)
-    values (
-      shop,
-      actor,
-      coalesce((select full_name from public.profiles where user_id = actor), split_part(account_email, '@', 1)),
-      account_email,
-      nullif(btrim(meta ->> 'phone'), '')
-    )
-    returning * into result;
-  end if;
 
   consent_version := nullif(btrim(meta ->> 'accepted_terms_version'), '');
   if consent_version is not null then
@@ -105,6 +105,10 @@ begin
   set full_name = btrim(p_full_name), phone = nullif(btrim(p_phone), ''), updated_at = clock_timestamp()
   where user_id = actor
   returning * into result;
+
+  if not found then
+    raise exception using errcode = 'P0007', message = 'CUSTOMER_UNAVAILABLE';
+  end if;
 
   return result;
 end;
@@ -160,7 +164,9 @@ as $$
 declare
   actor uuid := auth.uid();
 begin
-  if actor is null then
+  if actor is null
+    or coalesce((select role::text from public.profiles where user_id = actor), '') <> 'customer'
+  then
     raise exception using errcode = '42501', message = 'FORBIDDEN';
   end if;
 

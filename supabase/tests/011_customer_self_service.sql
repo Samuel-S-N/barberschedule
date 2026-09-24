@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(21);
 
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_user_meta_data)
 values
@@ -40,6 +40,7 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '70000000-0000-0000-0000-000000000003', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 select is((select count(*)::int from public.consents), 0, 'other users cannot read someone else''s consents');
+select throws_ok($$ select public.update_my_profile('Nobody', null) $$, 'P0007', null, 'update_my_profile needs an existing customer row');
 
 -- anon
 reset role;
@@ -47,6 +48,7 @@ set local role anon;
 select set_config('request.jwt.claim.sub', '', true);
 select set_config('request.jwt.claim.role', 'anon', true);
 select throws_ok($$ select public.ensure_my_customer() $$, '42501', null, 'anonymous callers cannot ensure a customer');
+select throws_ok($$ select public.prepare_account_deletion() $$, '42501', null, 'anonymous callers cannot run account deletion');
 
 -- owner
 reset role;
@@ -54,6 +56,7 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '70000000-0000-0000-0000-000000000001', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 select throws_ok($$ select public.ensure_my_customer() $$, '42501', null, 'owners cannot create a customer self row');
+select throws_ok($$ select public.prepare_account_deletion() $$, '42501', null, 'owners cannot run account deletion');
 
 -- profile update
 reset role;
@@ -93,6 +96,16 @@ select is(jsonb_array_length(public.export_my_data() -> 'appointments'), 0, 'exp
 -- deletion after cancelling
 reset role;
 update public.appointments set status = 'cancelled' where id = '75000000-0000-0000-0000-000000000001';
+insert into public.recurrence_series (id, shop_id, customer_id, barber_service_id, local_start_date, local_start_time, interval_weeks)
+select '76000000-0000-0000-0000-000000000001', shop_id, id, '74000000-0000-0000-0000-000000000001', current_date + 7, '10:00', 1
+from public.customers where user_id = '70000000-0000-0000-0000-000000000002';
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '70000000-0000-0000-0000-000000000002', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select throws_ok($$ select public.prepare_account_deletion() $$, 'P0018', null, 'deletion blocked while a recurrence series is active');
+
+reset role;
+delete from public.recurrence_series where id = '76000000-0000-0000-0000-000000000001';
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '70000000-0000-0000-0000-000000000002', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);

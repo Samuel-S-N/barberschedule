@@ -16,10 +16,18 @@ A newly signed-up account could not book: booking requires a `customers` row bou
 - **Deletion** = `prepare_account_deletion()` (anonymize the customer row: name `Cliente removido`, email/phone/user_id cleared, `anonymized_at` set, archived) followed by deleting the auth user in the `delete-account` Edge Function (service role, authenticated caller only). It is **blocked** (`P0018`) while the customer has an upcoming scheduled/confirmed appointment or an active recurrence series. Appointment rows and snapshots are retained for the shop's records.
 - **Routing:** the customer agenda tab is `/appointments` (not `/agenda`, which the owner already uses). `app/legal.tsx` sits outside role groups so it is reachable signed out and signed in. `resolveAuthRedirect` maps groups to roles through one table.
 
+## Review follow-ups (2026-09-23)
+
+- The Edge Function answers `OPTIONS` (204) and sends CORS headers on every response; without this the browser preflight for `supabase.functions.invoke` fails and web deletion never works. It must be checked once against `supabase functions serve` before release, because the e2e mocks the route.
+- `ensure_my_customer` uses `insert ... on conflict do nothing` then re-selects, so concurrent bootstraps cannot fail on the unique index.
+- `prepare_account_deletion` requires the customer role (`42501` otherwise; the function maps it to 403).
+- Deletion order is intentionally **anonymize first, then delete the auth user**. If the admin delete fails, personal data is already erased and a retry is idempotent; the reverse order could leave personal data behind with no way to retry.
+- Consent rows are self-attested: they derive from the user's own signup metadata, not from a server-verified acceptance event.
+
 ## Known limitations / open items
 
 - `appointments.notes` is free text and is retained as written after anonymization; redact on request until a policy exists.
 - The legal text in `src/features/account/legal.ts` is a factual summary of current data practice, not legal advice; the shop owner / counsel must review it and bump `TERMS_VERSION` when it changes.
-- The `delete-account` Edge Function has no automated test (no Deno runner in the repo). Its contract is covered by the client tests and the RPC by pgTAP.
+- The `delete-account` Edge Function has no automated test (no Deno runner in the repo). Its response contract is covered by the client tests and the RPC by pgTAP. It was verified **manually** on 2026-09-23 with `supabase functions serve` against the local stack: preflight returns 204 with CORS headers, an unauthenticated POST returns 401 with CORS headers, and a real signed-up user was bootstrapped, deleted (200), rejected afterwards (403), with the customer row anonymized and both consent rows retained unlinked. Repeat this check after changing the function.
 - Whether Supabase email confirmation is enabled differs per environment; signup handles both.
 - Deletion cannot be undone; there is no grace period.
