@@ -26,9 +26,8 @@ describe("AppointmentCard", () => {
   });
 
   it("shows only the shop name when shopAddress is not provided", async () => {
-    const { shopAddress: _omitted, ...withoutAddress } = baseProps;
     const view = await render(
-      React.createElement(AppointmentCard, { ...withoutAddress, status: "confirmed" }),
+      React.createElement(AppointmentCard, { ...baseProps, shopAddress: undefined, status: "confirmed" }),
     );
 
     expect(view.getByText("Barbearia Alfa")).toBeTruthy();
