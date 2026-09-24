@@ -458,6 +458,8 @@ Item `w-14 h-16 rounded-2xl`. Selecionado: `bg-ink`, dia da semana + número em 
 ```
 Ícone lucide 24, ativa: `primary-600` + label visível; inativa: `neutral-400`.
 
+> **Implementação (área do cliente):** as abas são Home / Book / Agenda / Profile (`BottomTabBar` é apresentacional; os itens vêm do layout). Todas as abas mostram o label; a ativa muda apenas de cor e peso. "Barbeiros" não é uma aba: a escolha de barbeiro faz parte do fluxo Book.
+
 ### 12.10 Toast
 
 `success` (agendamento confirmado) / `error` / `info`, mesma estrutura do FitBrother: `rounded-2xl · p-4 · text-sm font-sans-medium`, Sombra Nível 2, auto-dismiss 3s.

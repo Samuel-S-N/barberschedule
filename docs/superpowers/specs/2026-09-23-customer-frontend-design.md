@@ -1,7 +1,7 @@
 # Customer Frontend — Design
 
 **Date:** 2026-09-23
-**Status:** Draft (awaiting review)
+**Status:** Implemented (amended during execution — see "Amendments")
 **Branch:** `worktree-feat-customer-frontend`
 
 ## Goal
@@ -143,6 +143,15 @@ Strict TDD, task by task.
 - Gate: `npm run verify` + `npm run test:e2e:web` + `npm run export:web`,
   then code review before merge. Known unrelated failure: pgTAP
   `010_full_rls.sql` seed-count mismatch on clean `main`.
+
+## Amendments (decided during planning and execution)
+
+- `ensure_my_customer()` takes **no parameters**: phone and `accepted_terms_version` come from the caller's own `auth.users.raw_user_meta_data`, set at signup, so email-confirmation flows work across devices.
+- Consents are written **only** by `ensure_my_customer()`; there is no direct insert grant (stricter than "insert own rows").
+- `legal` is the root route `app/legal.tsx`, not under `(customer)`, so it is reachable signed out and signed in.
+- The customer agenda tab is **`/appointments`**, not `/agenda`: the owner already owns `/agenda`, and two files resolving to one URL silently shadowed the owner screen. `tests/unit/route-collisions.test.ts` now guards this.
+- Tab labels are Home / Book / Agenda / Profile (English, matching the shipped booking screens).
+- Two defects on `main` left the design system unstyled and were fixed here: `global.css` was never imported, and Reanimated animated components dropped NativeWind classes on web (`Button`, `TimeSlotPicker`, `SkeletonLoader` now keep classes on plain RN elements inside an animated wrapper).
 
 ## Open items
 
