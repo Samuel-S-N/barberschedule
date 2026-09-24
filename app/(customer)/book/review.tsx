@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { SafeAreaView, ScrollView, Text, View } from "react-native";
 import { z } from "zod";
@@ -28,6 +28,7 @@ export default function BookReviewScreen() {
   const barberId = param(params.barberId);
   const barberServiceId = param(params.barberServiceId);
   const localDate = param(params.localDate);
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { profile, supabase } = useSupabaseSession();
   const [startsAt, setStartsAt] = useState<string | null>(null);
@@ -63,10 +64,12 @@ export default function BookReviewScreen() {
       variant: "error",
     }),
     onSuccess: () => {
-      setFeedback({ message: "Booking confirmed.", variant: "success" });
       // Home and Agenda stay mounted under the tab bar, so their cached lists must be refreshed explicitly.
       void queryClient.invalidateQueries({ queryKey: ["my-appointments"] });
       void queryClient.invalidateQueries({ queryKey: ["available-slots"] });
+      // Reset the booking stack so the Book tab starts over instead of showing this finished review.
+      router.dismissAll();
+      router.navigate(`/home?booked=${Date.now()}`);
     },
   });
 

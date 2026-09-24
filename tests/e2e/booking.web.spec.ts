@@ -63,6 +63,8 @@ test("an authenticated customer can select a slot and submit a booking", async (
 
   await walkToReview(page);
 
+  // After confirming, the customer goes back to Home, where the confirmation is shown.
+  await expect(page).toHaveURL(/\/home/);
   await expect(page.getByText("Booking confirmed.")).toBeVisible();
   expect(bookingPayload).toMatchObject({ customer_id: customerId, source: "customer", starts_at: "2026-08-17T12:00:00Z" });
 });
@@ -87,13 +89,18 @@ test("a new booking appears on Home and Agenda without reloading", async ({ page
   await page.getByRole("button", { name: "Continue to review" }).click();
   await page.getByRole("button", { name: "09:00" }).click();
   await page.getByRole("button", { name: "Confirm booking" }).click();
-  await expect(page.getByText("Booking confirmed.")).toBeVisible();
 
-  await page.getByTestId("tab-home").click();
+  // Confirming returns to Home, which already lists the new appointment.
+  await expect(page).toHaveURL(/\/home/);
   await expect(page.getByTestId("home-next-appointment")).toBeVisible();
 
   await page.getByTestId("tab-appointments").click();
   await expect(page.getByTestId("appointment-card-appointment-upcoming")).toBeVisible();
+
+  // The booking flow was reset: Book starts over instead of showing the old review screen.
+  await page.getByTestId("tab-book").click();
+  await expect(page.getByRole("button", { name: "Browser Barber" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Confirm booking" })).not.toBeVisible();
 });
 
 test("a customer sees an unavailable error when booking loses the slot", async ({ page }) => {

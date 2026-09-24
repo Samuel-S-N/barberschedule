@@ -1,10 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import { SafeAreaView, ScrollView, Text, View } from "react-native";
 
 import { AppointmentCard } from "../../src/components/domain/AppointmentCard";
 import { EmptyState } from "../../src/components/domain/EmptyState";
 import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
+import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { listMyAppointments } from "../../src/features/appointments/lifecycle";
 import { useAppointmentCards } from "../../src/features/appointments/use-appointment-cards";
@@ -13,7 +15,14 @@ import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 export default function CustomerHomeScreen() {
   const router = useRouter();
+  const { booked } = useLocalSearchParams<{ booked?: string }>();
+  const [confirmed, setConfirmed] = useState(false);
   const { supabase } = useSupabaseSession();
+
+  // `booked` is a fresh timestamp after each confirmed booking, so every booking shows the message once.
+  useEffect(() => {
+    if (booked) setConfirmed(true);
+  }, [booked]);
   const customers = useQuery({ queryFn: () => listMyCustomers(supabase), queryKey: ["my-customers"] });
   const upcoming = useQuery({ queryFn: () => listMyAppointments(supabase), queryKey: ["my-appointments", "upcoming"] });
   const toCardProps = useAppointmentCards(upcoming.data ?? []);
@@ -35,6 +44,7 @@ export default function CustomerHomeScreen() {
             {next ? <AppointmentCard {...toCardProps(next)} onPress={() => router.push("/appointments")} testID="home-next-appointment" /> : null}
             <Button label="Book an appointment" onPress={() => router.push("/book")} size="lg" />
           </View>
+          <Toast message="Booking confirmed." onDismiss={() => setConfirmed(false)} variant="success" visible={confirmed} />
         </View>
       </ScrollView>
     </SafeAreaView>
