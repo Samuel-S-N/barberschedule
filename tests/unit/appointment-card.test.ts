@@ -25,6 +25,16 @@ describe("AppointmentCard", () => {
     expect(view.getByText("Confirmed")).toBeTruthy();
   });
 
+  it("shows only the shop name when shopAddress is not provided", async () => {
+    const { shopAddress: _omitted, ...withoutAddress } = baseProps;
+    const view = await render(
+      React.createElement(AppointmentCard, { ...withoutAddress, status: "confirmed" }),
+    );
+
+    expect(view.getByText("Barbearia Alfa")).toBeTruthy();
+    expect(view.queryByText(/·\s*$/)).toBeNull();
+  });
+
   it("fires onPress when tapped", async () => {
     const onPress = jest.fn();
     const view = await render(

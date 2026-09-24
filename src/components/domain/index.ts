@@ -12,6 +12,8 @@ export { TimeSlotPicker } from "./TimeSlotPicker";
 export type { TimeSlot, TimeSlotPickerProps, TimeSlotStatus } from "./TimeSlotPicker";
 export { AppointmentCard } from "./AppointmentCard";
 export type { AppointmentCardProps } from "./AppointmentCard";
+export { BottomTabBar } from "./BottomTabBar";
+export type { BottomTabBarProps, BottomTabItem } from "./BottomTabBar";
 export { EmptyState } from "./EmptyState";
 export type { EmptyStateProps } from "./EmptyState";
 export { Toast } from "./Toast";
