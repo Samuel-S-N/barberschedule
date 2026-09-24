@@ -10,6 +10,7 @@ module.exports = {
   // regardless of transformIgnorePatterns. Route straight to the package's
   // parallel CommonJS build instead of touching the global transform config.
   moduleNameMapper: {
+    "\\.css$": "<rootDir>/__mocks__/style-stub.js",
     "^lucide-react-native$": "<rootDir>/node_modules/lucide-react-native/dist/cjs/lucide-react-native.js",
   },
   // Extends jest-expo's own default (see node_modules/jest-expo/jest-preset.js)
