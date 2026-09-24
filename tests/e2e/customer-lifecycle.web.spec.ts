@@ -1,106 +1,178 @@
 import { expect, test } from "@playwright/test";
 
-const customerUserId = "55555555-5555-4555-8555-555555555555";
+import {
+  appointmentRow, customerRow, isHistoryQuery, json, mockCustomerRest, signInAsCustomer,
+} from "./customer-helpers";
 
-test("an authenticated customer can open their profile and appointment links", async ({ page }) => {
-  await page.addInitScript(({ userId }) => {
-    const now = Math.floor(Date.now() / 1000);
-    const token = `eyJhbGciOiJub25lIn0.${btoa(JSON.stringify({ exp: now + 3600, sub: userId }))}.`;
-    localStorage.setItem("sb-example-auth-token", JSON.stringify({
-      access_token: token, expires_at: now + 3600, expires_in: 3600,
-      refresh_token: "e2e-refresh-token", token_type: "bearer", user: { id: userId },
-    }));
-    localStorage.setItem("sb-127-auth-token", localStorage.getItem("sb-example-auth-token") ?? "");
-  }, { userId: customerUserId });
-
-  await page.route("**/rest/v1/**", async (route) => {
-    if (new URL(route.request().url()).pathname.endsWith("/rpc/get_current_profile")) {
-      await route.fulfill({ body: JSON.stringify([{ full_name: "Browser Customer", role: "customer", user_id: customerUserId }]), contentType: "application/json", status: 200 });
-      return;
+test("the home tab greets the customer and shows the next appointment", async ({ page }) => {
+  await signInAsCustomer(page);
+  await mockCustomerRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/appointments")) {
+      await json(route, isHistoryQuery(url) ? [] : [appointmentRow()]);
+      return true;
     }
-    await route.abort();
   });
 
-  await page.goto("/profile");
-  await expect(page.getByRole("heading", { name: "My profile" })).toBeVisible();
-  await expect(page.getByText("Browser Customer")).toBeVisible();
-  await expect(page.getByRole("link", { name: "My appointments" })).toBeVisible();
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Hi, Browser" })).toBeVisible();
+  await expect(page.getByTestId("home-next-appointment")).toBeVisible();
+
+  await page.getByTestId("tab-appointments").click();
+  await expect(page).toHaveURL(/\/appointments$/);
+  await expect(page.getByRole("heading", { name: "Agenda" })).toBeVisible();
 });
 
-test("a customer can view their upcoming appointments", async ({ page }) => {
-  const appointment = {
-    barber_buffer_minutes_snapshot: 0, barber_id: "barber-1", barber_service_id: "service-1",
-    created_at: "2026-08-13T10:00:00Z", customer_id: "customer-1", ends_at: "2026-08-17T12:30:00Z",
-    id: "appointment-upcoming", notes: null, occupied_until: "2026-08-17T12:30:00Z",
-    service_duration_minutes_snapshot: 30, service_id: "service-1", service_name_snapshot: "Browser Cut",
-    service_price_cents_snapshot: 4000, shop_id: "shop-1", source: "customer",
-    starts_at: "2026-08-17T12:00:00Z", status: "scheduled", updated_at: "2026-08-13T10:00:00Z",
-  };
+test("the agenda marks the appointment day and lets a customer cancel with confirmation", async ({ page }) => {
+  let cancelPayload: Record<string, unknown> | null = null;
+  let cancelled = false;
 
-  await page.addInitScript(({ userId }) => {
-    const now = Math.floor(Date.now() / 1000);
-    const token = `eyJhbGciOiJub25lIn0.${btoa(JSON.stringify({ exp: now + 3600, sub: userId }))}.`;
-    const session = JSON.stringify({
-      access_token: token, expires_at: now + 3600, expires_in: 3600,
-      refresh_token: "e2e-refresh-token", token_type: "bearer", user: { id: userId },
-    });
-    localStorage.setItem("sb-example-auth-token", session);
-    localStorage.setItem("sb-127-auth-token", session);
-  }, { userId: customerUserId });
-
-  await page.route("**/rest/v1/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    if (path.endsWith("/rpc/get_current_profile")) {
-      await route.fulfill({ body: JSON.stringify([{ role: "customer", user_id: customerUserId }]), contentType: "application/json", status: 200 });
-      return;
+  await signInAsCustomer(page);
+  await mockCustomerRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/appointments")) {
+      await json(route, cancelled || isHistoryQuery(url) ? [] : [appointmentRow()]);
+      return true;
     }
-    if (path.endsWith("/appointments")) {
-      await route.fulfill({ body: JSON.stringify([appointment]), contentType: "application/json", status: 200 });
-      return;
+    if (url.pathname.endsWith("/rpc/cancel_appointment")) {
+      cancelPayload = route.request().postDataJSON() as Record<string, unknown>;
+      cancelled = true;
+      await json(route, [appointmentRow({ status: "cancelled" })]);
+      return true;
     }
-    await route.abort();
   });
 
   await page.goto("/appointments");
-  await expect(page.getByRole("heading", { name: "My appointments" })).toBeVisible();
-  await expect(page.getByText("Browser Cut · 2026-08-17T12:00:00Z")).toBeVisible();
+  await expect(page.locator(`[data-testid^="calendar-strip-day-"][data-testid$="-dot"]`).first()).toBeVisible();
+  await expect(page.getByTestId("appointment-card-appointment-upcoming")).toBeVisible();
+
+  await page.getByTestId("appointment-card-appointment-upcoming").click();
+  await page.getByTestId("appointment-cancel-appointment-upcoming").click();
+  await expect(page.getByTestId("appointment-cancel-confirm-appointment-upcoming")).toBeVisible();
+  expect(cancelPayload).toBeNull();
+
+  await page.getByTestId("appointment-cancel-confirm-appointment-upcoming").click();
+  await expect(page.getByText("Appointment cancelled.")).toBeVisible();
+  expect(cancelPayload).toEqual({ appointment_id: "appointment-upcoming" });
 });
 
-test("a customer can view completed appointment history", async ({ page }) => {
-  const appointment = {
-    barber_buffer_minutes_snapshot: 0, barber_id: "barber-1", barber_service_id: "service-1",
-    created_at: "2026-08-13T10:00:00Z", customer_id: "customer-1", ends_at: "2026-08-17T12:30:00Z",
-    id: "appointment-history", notes: null, occupied_until: "2026-08-17T12:30:00Z",
-    service_duration_minutes_snapshot: 30, service_id: "service-1", service_name_snapshot: "Browser Cut",
-    service_price_cents_snapshot: 4000, shop_id: "shop-1", source: "customer",
-    starts_at: "2026-08-17T12:00:00Z", status: "completed", updated_at: "2026-08-13T10:00:00Z",
-  };
+test("changes are disabled with an explanation inside the 90-minute cutoff", async ({ page }) => {
+  const soon = new Date(Date.now() + 30 * 60 * 1000);
+  const soonRow = appointmentRow({ ends_at: soon.toISOString(), occupied_until: soon.toISOString(), starts_at: soon.toISOString() });
 
-  await page.addInitScript(({ userId }) => {
-    const now = Math.floor(Date.now() / 1000);
-    const token = `eyJhbGciOiJub25lIn0.${btoa(JSON.stringify({ exp: now + 3600, sub: userId }))}.`;
-    const session = JSON.stringify({
-      access_token: token, expires_at: now + 3600, expires_in: 3600,
-      refresh_token: "e2e-refresh-token", token_type: "bearer", user: { id: userId },
-    });
-    localStorage.setItem("sb-example-auth-token", session);
-    localStorage.setItem("sb-127-auth-token", session);
-  }, { userId: customerUserId });
-
-  await page.route("**/rest/v1/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    if (path.endsWith("/rpc/get_current_profile")) {
-      await route.fulfill({ body: JSON.stringify([{ role: "customer", user_id: customerUserId }]), contentType: "application/json", status: 200 });
-      return;
+  await signInAsCustomer(page);
+  await mockCustomerRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/appointments")) {
+      await json(route, isHistoryQuery(url) ? [] : [soonRow]);
+      return true;
     }
-    if (path.endsWith("/appointments")) {
-      await route.fulfill({ body: JSON.stringify([appointment]), contentType: "application/json", status: 200 });
-      return;
-    }
-    await route.abort();
   });
 
-  await page.goto("/history");
-  await expect(page.getByRole("heading", { name: "Appointment history" })).toBeVisible();
-  await expect(page.getByText("Browser Cut · completed")).toBeVisible();
+  await page.goto("/appointments");
+  await page.getByTestId("appointment-card-appointment-upcoming").click();
+
+  await expect(page.getByText("Changes are only allowed until 90 minutes before the start.")).toBeVisible();
+  await expect(page.getByTestId("appointment-reschedule-appointment-upcoming")).toBeDisabled();
+  await expect(page.getByTestId("appointment-cancel-appointment-upcoming")).toBeDisabled();
+});
+
+test("the history segment lists past appointments", async ({ page }) => {
+  await signInAsCustomer(page);
+  await mockCustomerRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/appointments")) {
+      await json(route, isHistoryQuery(url) ? [appointmentRow({ id: "appointment-history", status: "completed" })] : []);
+      return true;
+    }
+  });
+
+  await page.goto("/appointments");
+  await page.getByTestId("agenda-segment-history").click();
+
+  await expect(page.getByTestId("appointment-card-appointment-history")).toBeVisible();
+  await expect(page.getByText("Completed")).toBeVisible();
+});
+
+test("a customer can reschedule by picking a new date and time", async ({ page }) => {
+  let reschedulePayload: Record<string, unknown> | null = null;
+  const newStart = new Date(Date.now() + 6 * 24 * 3600 * 1000);
+  newStart.setUTCMinutes(0, 0, 0);
+
+  await signInAsCustomer(page);
+  await mockCustomerRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/appointments")) {
+      await json(route, isHistoryQuery(url) ? [] : [appointmentRow()]);
+      return true;
+    }
+    if (url.pathname.endsWith("/rpc/get_available_slots")) {
+      const end = new Date(newStart.getTime() + 30 * 60 * 1000);
+      await json(route, [{ ends_at: end.toISOString(), local_date: "2099-01-01", local_time: "10:00:00", starts_at: newStart.toISOString() }]);
+      return true;
+    }
+    if (url.pathname.endsWith("/rpc/reschedule_appointment")) {
+      reschedulePayload = route.request().postDataJSON() as Record<string, unknown>;
+      await json(route, [appointmentRow({ starts_at: newStart.toISOString() })]);
+      return true;
+    }
+  });
+
+  await page.goto("/appointments");
+  await page.getByTestId("appointment-card-appointment-upcoming").click();
+  await page.getByTestId("appointment-reschedule-appointment-upcoming").click();
+
+  await expect(page.getByRole("heading", { name: "Reschedule" })).toBeVisible();
+  await page.getByRole("button", { name: "10:00" }).click();
+  await page.getByTestId("reschedule-confirm").click();
+
+  await expect(page).toHaveURL(/\/appointments$/);
+  expect(reschedulePayload).toMatchObject({ appointment_id: "appointment-upcoming", new_starts_at: newStart.toISOString() });
+});
+
+test("a customer can edit their name and phone", async ({ page }) => {
+  let updatePayload: Record<string, unknown> | null = null;
+
+  await signInAsCustomer(page);
+  await mockCustomerRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/rpc/update_my_profile")) {
+      updatePayload = route.request().postDataJSON() as Record<string, unknown>;
+      await json(route, customerRow({ full_name: "Browser Renamed", phone: "+55 11 90000-0000" }));
+      return true;
+    }
+  });
+
+  await page.goto("/profile");
+  await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
+  await expect(page.getByLabel("Full name")).toHaveValue("Browser Customer");
+
+  await page.getByLabel("Full name").fill("Browser Renamed");
+  await page.getByLabel("Phone (optional)").fill("+55 11 90000-0000");
+  await page.getByTestId("profile-save").click();
+
+  await expect(page.getByText("Profile saved.")).toBeVisible();
+  expect(updatePayload).toEqual({ p_full_name: "Browser Renamed", p_phone: "+55 11 90000-0000" });
+});
+
+test("a customer can download their data as a JSON file", async ({ page }) => {
+  await signInAsCustomer(page);
+  await mockCustomerRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/rpc/export_my_data")) {
+      await json(route, { appointments: [], customers: [customerRow()] });
+      return true;
+    }
+  });
+
+  await page.goto("/profile");
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId("profile-export").click()]);
+
+  expect(download.suggestedFilename()).toMatch(/^barberschedule-my-data-\d{4}-\d{2}-\d{2}\.json$/);
+});
+
+test("deleting the account is blocked while appointments are upcoming", async ({ page }) => {
+  await signInAsCustomer(page);
+  await mockCustomerRest(page);
+  await page.route("**/functions/v1/delete-account", (route) =>
+    json(route, { code: "ACCOUNT_DELETION_BLOCKED" }, 409));
+
+  await page.goto("/profile");
+  await page.getByTestId("profile-delete").click();
+  await page.getByTestId("profile-delete-confirm").click();
+
+  await expect(page.getByText(/Cancel your upcoming appointments/)).toBeVisible();
 });
