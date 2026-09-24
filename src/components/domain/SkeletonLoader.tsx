@@ -26,11 +26,12 @@ export function SkeletonBlock({ width, height, testID }: SkeletonBlockProps) {
 
   return (
     <Animated.View
-      className="rounded-xl bg-neutral-100"
       importantForAccessibility="no-hide-descendants"
       style={[{ width, height }, shimmerStyle]}
       testID={testID}
-    />
+    >
+      <View className="h-full w-full rounded-xl bg-neutral-100" />
+    </Animated.View>
   );
 }
 
@@ -41,11 +42,12 @@ export function SkeletonCircle({ size, testID }: SkeletonCircleProps) {
 
   return (
     <Animated.View
-      className="bg-neutral-100"
       importantForAccessibility="no-hide-descendants"
       style={[{ width: size, height: size, borderRadius: size / 2 }, shimmerStyle]}
       testID={testID}
-    />
+    >
+      <View className="h-full w-full rounded-full bg-neutral-100" />
+    </Animated.View>
   );
 }
 
