@@ -1,15 +1,16 @@
-import { Button, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { Button, StyleSheet, Text, View } from "react-native";
 import { useState } from "react";
 
 import { signOut } from "../../src/features/auth/api";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { Screen } from "../../src/components/ui/Screen";
 
 export default function OwnerSettingsScreen() {
   const { profile, supabase } = useSupabaseSession();
   const [feedback, setFeedback] = useState<string | null>(null);
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <Screen style={styles.screen}>
       <View style={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>Owner settings</Text>
         <Text>Signed in as {profile?.fullName ?? "Owner"}.</Text>
@@ -18,7 +19,7 @@ export default function OwnerSettingsScreen() {
         {feedback ? <Text>{feedback}</Text> : null}
         <Button onPress={async () => { try { await signOut(supabase); } catch (error) { setFeedback(error instanceof Error ? error.message : "Unable to sign out."); } }} title="Sign out" />
       </View>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

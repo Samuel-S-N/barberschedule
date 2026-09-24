@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { Check } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, SafeAreaView, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { EmptyState } from "../../src/components/domain/EmptyState";
 import { Toast } from "../../src/components/domain/Toast";
@@ -11,6 +11,7 @@ import { signUpCustomer } from "../../src/features/auth/api";
 import { parseSignupInput } from "../../src/features/auth/validation";
 import { colors } from "../../src/lib/design/colors";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { Screen } from "../../src/components/ui/Screen";
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -44,7 +45,7 @@ export default function SignupScreen() {
 
   if (confirmationSent) {
     return (
-      <SafeAreaView className="flex-1 bg-canvas">
+      <Screen className="flex-1 bg-canvas">
         <View className="flex-1 items-center justify-center gap-4 p-5">
           <EmptyState title="Check your email" />
           <Text className="max-w-[420px] text-center text-base font-sans text-neutral-600">
@@ -52,12 +53,12 @@ export default function SignupScreen() {
           </Text>
           <Button label="Back to sign in" onPress={() => router.replace("/login")} />
         </View>
-      </SafeAreaView>
+      </Screen>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-canvas">
+    <Screen className="flex-1 bg-canvas">
       <ScrollView className="flex-1">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
@@ -87,6 +88,6 @@ export default function SignupScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }

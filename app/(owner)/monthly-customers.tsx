@@ -1,6 +1,6 @@
 import { Link } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Button, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { listOwnerBarberServices } from "../../src/features/services/api";
 import type { BarberService } from "../../src/features/services/types";
@@ -18,6 +18,7 @@ import {
 import type { RecurrenceSeries } from "../../src/features/recurrence/types";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { Screen } from "../../src/components/ui/Screen";
 
 type ShopRow = { id: string };
 
@@ -155,7 +156,7 @@ export default function MonthlyCustomersScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <Screen style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>Recurring customers</Text>
         <Link href="/recurrence-conflicts" style={styles.link}>Recurrence conflicts</Link>
@@ -187,7 +188,7 @@ export default function MonthlyCustomersScreen() {
           </View>
         </View>)}
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

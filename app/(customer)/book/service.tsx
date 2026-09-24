@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { SafeAreaView, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { EmptyState } from "../../../src/components/domain/EmptyState";
 import { ServiceCard } from "../../../src/components/domain/ServiceCard";
 import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
 import { resolveEffectiveServiceFields } from "../../../src/features/services/resolve-effective-fields";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
+import { Screen } from "../../../src/components/ui/Screen";
 
 type BarberServiceRow = {
   id: string;
@@ -40,7 +41,7 @@ export default function BookServiceScreen() {
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-canvas">
+    <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
       <View className="flex-1 items-center gap-4 p-5">
         <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
           Choose a service
@@ -81,6 +82,6 @@ export default function BookServiceScreen() {
           })}
         </View>
       </View>
-    </SafeAreaView>
+    </Screen>
   );
 }

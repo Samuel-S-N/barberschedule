@@ -1,12 +1,13 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { SafeAreaView, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Input } from "../../src/components/ui/Input";
 import { signInWithPassword } from "../../src/features/auth/api";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { Screen } from "../../src/components/ui/Screen";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -29,7 +30,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-canvas">
+    <Screen className="flex-1 bg-canvas">
       <ScrollView className="flex-1">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
@@ -51,6 +52,6 @@ export default function LoginScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { SafeAreaView, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 import { AppointmentCard } from "../../src/components/domain/AppointmentCard";
 import { EmptyState } from "../../src/components/domain/EmptyState";
@@ -12,6 +12,7 @@ import { listMyAppointments } from "../../src/features/appointments/lifecycle";
 import { useAppointmentCards } from "../../src/features/appointments/use-appointment-cards";
 import { listMyCustomers } from "../../src/features/customers/api";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { Screen } from "../../src/components/ui/Screen";
 
 export default function CustomerHomeScreen() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function CustomerHomeScreen() {
   const firstName = customers.data?.[0]?.fullName.split(" ")[0];
 
   return (
-    <SafeAreaView className="flex-1 bg-canvas">
+    <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
       <ScrollView className="flex-1">
         <View className="items-center gap-4 p-5">
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
@@ -47,6 +48,6 @@ export default function CustomerHomeScreen() {
           <Toast message="Booking confirmed." onDismiss={() => setConfirmed(false)} variant="success" visible={confirmed} />
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }

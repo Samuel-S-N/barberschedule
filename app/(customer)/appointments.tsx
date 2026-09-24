@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { SafeAreaView, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 import { AppointmentCard } from "../../src/components/domain/AppointmentCard";
 import { CalendarStrip } from "../../src/components/domain/CalendarStrip";
@@ -15,6 +15,7 @@ import type { Appointment } from "../../src/features/appointments/types";
 import { useAppointmentCards } from "../../src/features/appointments/use-appointment-cards";
 import { buildCalendarStripDays } from "../../src/lib/dates/calendar-strip-days";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { Screen } from "../../src/components/ui/Screen";
 
 const DAYS_AHEAD = 30;
 
@@ -106,7 +107,7 @@ export default function AgendaScreen() {
   const failed = segment === "upcoming" ? upcoming.error : history.error;
 
   return (
-    <SafeAreaView className="flex-1 bg-canvas">
+    <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
       <ScrollView className="flex-1">
         <View className="items-center gap-4 p-5">
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">Agenda</Text>
@@ -152,6 +153,6 @@ export default function AgendaScreen() {
           />
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }

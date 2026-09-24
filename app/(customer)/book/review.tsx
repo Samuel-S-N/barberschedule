@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-import { SafeAreaView, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { z } from "zod";
 
 import { EmptyState } from "../../../src/components/domain/EmptyState";
@@ -16,6 +16,7 @@ import { getAvailableSlotsQueryOptions } from "../../../src/features/availabilit
 import type { AvailableSlot } from "../../../src/features/availability/types";
 import { listMyCustomers } from "../../../src/features/customers/api";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
+import { Screen } from "../../../src/components/ui/Screen";
 
 const notesSchema = z.object({ notes: z.string().trim().max(500) });
 
@@ -94,7 +95,7 @@ export default function BookReviewScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-canvas">
+    <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
       <ScrollView className="flex-1" testID="booking-review-scroll">
         <View className="items-center gap-4 p-5">
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
@@ -134,6 +135,6 @@ export default function BookReviewScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }

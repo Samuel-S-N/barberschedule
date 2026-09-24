@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Redirect, useRouter } from "expo-router";
-import { SafeAreaView, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { EmptyState } from "../../../src/components/domain/EmptyState";
 import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
 import { Button } from "../../../src/components/ui/Button";
 import { listPublicShops } from "../../../src/features/shops/api";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
+import { Screen } from "../../../src/components/ui/Screen";
 
 export default function BookIndexScreen() {
   const router = useRouter();
@@ -21,7 +22,7 @@ export default function BookIndexScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-canvas">
+    <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
       <View className="flex-1 items-center gap-4 p-5">
         <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
           Book an appointment
@@ -51,6 +52,6 @@ export default function BookIndexScreen() {
           ))}
         </View>
       </View>
-    </SafeAreaView>
+    </Screen>
   );
 }

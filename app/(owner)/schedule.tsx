@@ -1,14 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Button,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import {
   deleteScheduleOverride,
@@ -30,6 +21,7 @@ import { listOwnerBarbers } from "../../src/features/barbers/api";
 import type { OwnerBarber } from "../../src/features/barbers/types";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { Screen } from "../../src/components/ui/Screen";
 
 type ShopRow = { id: string };
 
@@ -206,7 +198,7 @@ export default function OwnerScheduleScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <Screen style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>
           Owner schedule
@@ -334,7 +326,7 @@ export default function OwnerScheduleScreen() {
           </>
         ) : null}
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

@@ -1,14 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Button,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import type { Service } from "../../src/features/services/types";
 import {
@@ -22,6 +13,7 @@ import {
   parseIntegerInput,
 } from "../../src/features/services/validation";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { Screen } from "../../src/components/ui/Screen";
 
 type ShopRow = { id: string };
 
@@ -150,7 +142,7 @@ export default function OwnerServicesScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <Screen style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>
           Owner services
@@ -226,7 +218,7 @@ export default function OwnerServicesScreen() {
           ))}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

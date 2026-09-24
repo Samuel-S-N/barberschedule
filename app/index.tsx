@@ -1,9 +1,10 @@
 import { Link, Redirect } from "expo-router";
 import { useState } from "react";
-import { Button, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { Button, StyleSheet, Text, View } from "react-native";
 
 import { signOut } from "../src/features/auth/api";
 import { useSupabaseSession } from "../src/providers/AppProviders";
+import { Screen } from "../src/components/ui/Screen";
 
 export default function HomeScreen() {
   const { profile, supabase } = useSupabaseSession();
@@ -25,7 +26,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <Screen style={styles.screen}>
       <View style={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>
           Barberschedule MVP
@@ -58,7 +59,7 @@ export default function HomeScreen() {
         {feedback ? <Text style={styles.subtitle}>{feedback}</Text> : null}
         <Button onPress={handleSignOut} title="Sign out" />
       </View>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
