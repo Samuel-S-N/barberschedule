@@ -6,7 +6,6 @@ export const en = {
     back: "Back",
     email: "Email",
     fullName: "Full name",
-    minutesShort: "{{count}} min",
     password: "Password",
     phoneOptional: "Phone (optional)",
     tryAgain: "Try again",

@@ -7,7 +7,6 @@ export const pt: DeepStringRecord<typeof en> = {
     back: "Voltar",
     email: "E-mail",
     fullName: "Nome completo",
-    minutesShort: "{{count}} min",
     password: "Senha",
     phoneOptional: "Telefone (opcional)",
     tryAgain: "Tentar de novo",
