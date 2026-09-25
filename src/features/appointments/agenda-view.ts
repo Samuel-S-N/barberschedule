@@ -1,10 +1,8 @@
 import type { CalendarStripDay } from "../../components/domain/CalendarStrip";
+import type { Language } from "../../i18n/language";
 import { formatInstantInShopTime } from "../../lib/dates/shop-time";
+import { formatDateLabel } from "../../lib/i18n/format";
 import type { Appointment } from "./types";
-
-const labelFormatter = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric", month: "short", timeZone: "UTC", weekday: "short",
-});
 
 export function groupByLocalDate(appointments: Appointment[]) {
   const grouped = new Map<string, Appointment[]>();
@@ -18,11 +16,11 @@ export function groupByLocalDate(appointments: Appointment[]) {
   return grouped;
 }
 
-export function formatAppointmentLabels(appointment: Appointment) {
+export function formatAppointmentLabels(appointment: Appointment, language: Language = "en") {
   const { localDate, localTime } = formatInstantInShopTime(new Date(appointment.startsAt));
 
   return {
-    dateLabel: labelFormatter.format(new Date(`${localDate}T12:00:00Z`)).replace(/^(\w+),? /, "$1, "),
+    dateLabel: formatDateLabel(localDate, language),
     timeLabel: localTime,
   };
 }
