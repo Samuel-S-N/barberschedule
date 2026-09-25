@@ -1,7 +1,7 @@
 # Device Language (i18n) — Design
 
 **Date:** 2026-09-25
-**Status:** Draft (awaiting review)
+**Status:** Implemented (see "Amendments")
 **Branch:** `feat-i18n` (stacked on `worktree-feat-customer-frontend` / PR #1, which holds the customer screens this translates)
 
 ## Goal
@@ -71,6 +71,15 @@ The whole app follows the device language: Portuguese (Brazil), English and Span
 ## Out of scope
 
 In-app language picker; languages beyond `pt`, `en`, `es`; localising shop-provided content; right-to-left languages.
+
+## Amendments (decided during execution)
+
+- `ServiceCard` keeps its `min` unit: it is spelled the same in pt/en/es, so translating it would be code without behaviour.
+- `errorMessage` reads the `code` of `DomainError`, `ScheduleError`, `AvailabilityError` and auth errors (resource groups `errors.codes|schedule|availability|auth`), not only `DomainError`; `RangeError` maps to `errors.invalidDateTime`. The client-side working-period overlap error now carries `SCHEDULE_OVERLAPPING_PERIOD`.
+- Appointment statuses on the owner agenda are shown translated instead of as raw codes; two owner e2e assertions changed accordingly.
+- `009_notifications.sql` asserted the exact two-argument signature of `register_notification_token`; it now asserts the three-argument one.
+- Nothing in the app registers push tokens yet; the client contract carries the language so it is ready when registration is added.
+- `supabase/functions/dispatch-notifications/index.ts` imports `./messages.ts`, so `tsconfig.json` sets `allowImportingTsExtensions` (valid because `tsc` runs with `--noEmit`).
 
 ## Risks and open items
 
