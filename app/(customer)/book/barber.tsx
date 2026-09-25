@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 
 import { BarberCard } from "../../../src/components/domain/BarberCard";
@@ -17,6 +18,7 @@ export default function BookBarberScreen() {
   const { shopId: rawShopId } = useLocalSearchParams<{ shopId?: string }>();
   const shopId = param(rawShopId);
   const router = useRouter();
+  const { t } = useTranslation();
   const { supabase } = useSupabaseSession();
   const barbers = useQuery({
     enabled: Boolean(shopId),
@@ -28,7 +30,7 @@ export default function BookBarberScreen() {
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
       <View className="flex-1 items-center gap-4 p-5">
         <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
-          Choose your barber
+          {t("book.barberTitle")}
         </Text>
         <View className="w-full max-w-[420px] gap-3">
           {barbers.isLoading ? (
@@ -38,10 +40,10 @@ export default function BookBarberScreen() {
             </>
           ) : null}
           {barbers.error ? (
-            <Text className="text-sm font-sans text-danger-500">Unable to load barbers.</Text>
+            <Text className="text-sm font-sans text-danger-500">{t("book.barbersError")}</Text>
           ) : null}
           {!barbers.isLoading && !barbers.error && barbers.data?.length === 0 ? (
-            <EmptyState title="No barbers available" />
+            <EmptyState title={t("book.noBarbers")} />
           ) : null}
           {barbers.data?.map((barber) => (
             <BarberCard

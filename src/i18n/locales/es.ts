@@ -91,6 +91,7 @@ export const es: DeepStringRecord<typeof en> = {
     continue: "Continuar a la revisión",
     dateTitle: "Elige una fecha",
     error: "No se pudo hacer esta reserva.",
+    fallbackService: "Servicio",
     noBarbers: "No hay barberos disponibles",
     noServices: "No hay servicios disponibles",
     noShops: "No hay barberías disponibles",

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Redirect, useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 
 import { EmptyState } from "../../../src/components/domain/EmptyState";
@@ -11,6 +12,7 @@ import { Screen } from "../../../src/components/ui/Screen";
 
 export default function BookIndexScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { supabase } = useSupabaseSession();
   const shops = useQuery({
     queryFn: () => listPublicShops(supabase),
@@ -25,7 +27,7 @@ export default function BookIndexScreen() {
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
       <View className="flex-1 items-center gap-4 p-5">
         <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
-          Book an appointment
+          {t("book.shopTitle")}
         </Text>
         <View className="w-full max-w-[420px] gap-3">
           {shops.isLoading ? (
@@ -36,15 +38,15 @@ export default function BookIndexScreen() {
             </>
           ) : null}
           {shops.error ? (
-            <Text className="text-sm font-sans text-danger-500">Unable to load shops.</Text>
+            <Text className="text-sm font-sans text-danger-500">{t("book.shopsError")}</Text>
           ) : null}
           {!shops.isLoading && !shops.error && shops.data?.length === 0 ? (
-            <EmptyState title="No shops available" />
+            <EmptyState title={t("book.noShops")} />
           ) : null}
           {shops.data?.map((shop) => (
             <Button
               key={shop.id}
-              label={`Start booking at ${shop.name}`}
+              label={t("book.startAt", { shop: shop.name })}
               onPress={() => router.push(`/book/barber?shopId=${encodeURIComponent(shop.id)}`)}
               size="lg"
               variant="primary"

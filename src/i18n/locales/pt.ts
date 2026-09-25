@@ -91,6 +91,7 @@ export const pt: DeepStringRecord<typeof en> = {
     continue: "Continuar para a revisão",
     dateTitle: "Escolha uma data",
     error: "Não foi possível fazer este agendamento.",
+    fallbackService: "Serviço",
     noBarbers: "Nenhum barbeiro disponível",
     noServices: "Nenhum serviço disponível",
     noShops: "Nenhuma barbearia disponível",

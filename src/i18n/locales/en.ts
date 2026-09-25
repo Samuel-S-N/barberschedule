@@ -90,6 +90,7 @@ export const en = {
     continue: "Continue to review",
     dateTitle: "Choose a date",
     error: "Unable to book this appointment.",
+    fallbackService: "Service",
     noBarbers: "No barbers available",
     noServices: "No services available",
     noShops: "No shops available",
