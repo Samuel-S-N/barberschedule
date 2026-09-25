@@ -13,8 +13,29 @@ describe("notification token contracts", () => {
 
     expect(rpc).toHaveBeenCalledWith("register_notification_token", {
       target_expo_push_token: "ExponentPushToken[test]",
+      target_locale: null,
       target_platform: "ios",
     });
+  });
+
+  it("sends the device locale when given", async () => {
+    const rpc = jest.fn().mockResolvedValue({ data: [{ active: true, expo_push_token: "t", platform: "ios" }], error: null });
+
+    await registerNotificationToken({ rpc } as never, "t", "ios", "pt");
+
+    expect(rpc).toHaveBeenCalledWith("register_notification_token", {
+      target_expo_push_token: "t",
+      target_locale: "pt",
+      target_platform: "ios",
+    });
+  });
+
+  it("saveExpoPushToken defaults to the current app language", async () => {
+    const rpc = jest.fn().mockResolvedValue({ data: [{ active: true, expo_push_token: "t", platform: "ios" }], error: null });
+
+    await saveExpoPushToken({ rpc } as never, "t", "ios");
+
+    expect(rpc).toHaveBeenCalledWith("register_notification_token", expect.objectContaining({ target_locale: "en" }));
   });
 
   it("rejects an empty token before making a request", async () => {
