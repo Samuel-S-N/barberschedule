@@ -97,7 +97,8 @@ export function assertNoOverlappingWorkingPeriod(
   );
 
   if (overlaps) {
-    throw new Error("Working periods cannot overlap.");
+    // Same stable code the database error maps to, so the UI can translate either one.
+    throw Object.assign(new Error("Working periods cannot overlap."), { code: "SCHEDULE_OVERLAPPING_PERIOD" });
   }
 }
 

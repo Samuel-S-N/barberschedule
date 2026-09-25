@@ -1,3 +1,5 @@
+import type { AvailabilityErrorCode } from "../../features/availability/api";
+import type { ScheduleErrorCode } from "../../features/schedule/api";
 import type { DomainErrorCode } from "../../lib/errors/domain-errors";
 
 export const en = {
@@ -156,6 +158,18 @@ export const en = {
       user_already_exists: "An account with this email already exists.",
       weak_password: "Choose a stronger password.",
     },
+    availability: {
+      AVAILABILITY_FORBIDDEN: "You do not have permission to view availability.",
+      AVAILABILITY_INVALID_DATE: "Choose a valid date.",
+      AVAILABILITY_REQUEST_FAILED: "Unable to load availability.",
+    } satisfies Record<AvailabilityErrorCode, string>,
+    schedule: {
+      SCHEDULE_DUPLICATE_PERIOD: "This working period already exists.",
+      SCHEDULE_FORBIDDEN: "You do not have permission to manage this schedule.",
+      SCHEDULE_INVALID_INTERVAL: "Start time must be before end time.",
+      SCHEDULE_OVERLAPPING_PERIOD: "Working periods cannot overlap.",
+      SCHEDULE_REQUEST_FAILED: "Unable to update the schedule.",
+    } satisfies Record<ScheduleErrorCode, string>,
     codes: {
       ACCOUNT_DELETION_BLOCKED:
         "Cancel your upcoming appointments (or contact the shop about your recurring schedule) before deleting your account.",
@@ -182,5 +196,6 @@ export const en = {
       SLOT_UNAVAILABLE: "That time is no longer available.",
     } satisfies Record<DomainErrorCode, string>,
     generic: "Something went wrong. Please try again.",
+    invalidDateTime: "Enter a valid date and time.",
   },
 };

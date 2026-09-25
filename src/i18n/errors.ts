@@ -1,20 +1,20 @@
-import { DomainError } from "../lib/errors/domain-errors";
+import { en } from "./locales/en";
 
-const AUTH_CODES = new Set([
-  "email_not_confirmed",
-  "invalid_credentials",
-  "over_email_send_rate_limit",
-  "over_request_rate_limit",
-  "user_already_exists",
-  "weak_password",
-]);
+// The resource groups double as the list of known error codes: a code is translated
+// when some group defines it. DomainError, ScheduleError, AvailabilityError and
+// Supabase auth errors all expose a string `code`.
+const GROUPS = ["codes", "schedule", "availability", "auth"] as const;
 
 export function errorMessage(error: unknown, t: (key: string) => string, fallback: string) {
-  if (error instanceof DomainError) {
-    return t(`errors.codes.${error.code}`);
-  }
-
   const code = (error as { code?: unknown } | null)?.code;
 
-  return typeof code === "string" && AUTH_CODES.has(code) ? t(`errors.auth.${code}`) : fallback;
+  if (typeof code === "string") {
+    for (const group of GROUPS) {
+      if (Object.prototype.hasOwnProperty.call(en.errors[group], code)) {
+        return t(`errors.${group}.${code}`);
+      }
+    }
+  }
+
+  return error instanceof RangeError ? t("errors.invalidDateTime") : fallback;
 }

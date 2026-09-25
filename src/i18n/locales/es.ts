@@ -157,6 +157,18 @@ export const es: DeepStringRecord<typeof en> = {
       user_already_exists: "Ya existe una cuenta con este correo.",
       weak_password: "Elige una contraseña más segura.",
     },
+    availability: {
+      AVAILABILITY_FORBIDDEN: "No tienes permiso para ver la disponibilidad.",
+      AVAILABILITY_INVALID_DATE: "Elige una fecha válida.",
+      AVAILABILITY_REQUEST_FAILED: "No se pudo cargar la disponibilidad.",
+    },
+    schedule: {
+      SCHEDULE_DUPLICATE_PERIOD: "Este período de trabajo ya existe.",
+      SCHEDULE_FORBIDDEN: "No tienes permiso para gestionar estos horarios.",
+      SCHEDULE_INVALID_INTERVAL: "La hora inicial debe ser anterior a la final.",
+      SCHEDULE_OVERLAPPING_PERIOD: "Los períodos de trabajo no pueden solaparse.",
+      SCHEDULE_REQUEST_FAILED: "No se pudieron actualizar los horarios.",
+    },
     codes: {
       ACCOUNT_DELETION_BLOCKED:
         "Cancela tus citas futuras (o habla con la barbería sobre tu agenda recurrente) antes de eliminar tu cuenta.",
@@ -183,5 +195,6 @@ export const es: DeepStringRecord<typeof en> = {
       SLOT_UNAVAILABLE: "Ese horario ya no está disponible.",
     },
     generic: "Algo salió mal. Inténtalo de nuevo.",
+    invalidDateTime: "Introduce una fecha y hora válidas.",
   },
 };
