@@ -67,7 +67,7 @@ select ok(
 );
 
 select ok(
-  has_function_privilege('authenticated', 'public.register_notification_token(text,text)', 'execute'),
+  has_function_privilege('authenticated', 'public.register_notification_token(text,text,text)', 'execute'),
   'authenticated clients can execute token registration'
 );
 
