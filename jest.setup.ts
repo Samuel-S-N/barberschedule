@@ -1,3 +1,10 @@
+// A jest.fn so a test can switch the device language with `jest.mocked(getLocales).mockReturnValue(...)`.
+jest.mock("expo-localization", () => ({
+  getLocales: jest.fn(() => [{ languageCode: "en", languageTag: "en-US" }]),
+}));
+
+import "./src/i18n";
+
 // The published mock (`react-native-reanimated/mock`) eagerly initializes the
 // real native Worklets module and crashes under Jest — see the note in
 // __mocks__/react-native-reanimated.js. Mock explicitly instead of relying on

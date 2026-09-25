@@ -10,7 +10,11 @@ import React, {
   useState,
 } from "react";
 
+import { AppState } from "react-native";
+import { I18nextProvider } from "react-i18next";
+
 import { getCurrentProfile } from "../features/auth/api";
+import i18n, { syncLanguage } from "../i18n";
 import type { Profile } from "../features/auth/types";
 import { getSupabaseBrowserClient } from "../lib/supabase/client";
 
@@ -87,14 +91,26 @@ export function AppProviders({ children }: PropsWithChildren) {
     };
   }, [supabase]);
 
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        void syncLanguage();
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <SessionContext.Provider
-        value={{ isLoading, profile, session, supabase }}
-      >
-        {children}
-      </SessionContext.Provider>
-    </QueryClientProvider>
+    <I18nextProvider i18n={i18n}>
+      <QueryClientProvider client={queryClient}>
+        <SessionContext.Provider
+          value={{ isLoading, profile, session, supabase }}
+        >
+          {children}
+        </SessionContext.Provider>
+      </QueryClientProvider>
+    </I18nextProvider>
   );
 }
 
