@@ -7,5 +7,7 @@ export default defineConfig({
   retries: 0,
   use: {
     baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL ?? getE2EWebBaseUrl(),
+    // The app follows the browser language; pin English so the existing specs stay deterministic.
+    locale: "en-US",
   },
 });

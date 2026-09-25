@@ -1,16 +1,19 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
 
 import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Input } from "../../src/components/ui/Input";
-import { signInWithPassword } from "../../src/features/auth/api";
-import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { Screen } from "../../src/components/ui/Screen";
+import { signInWithPassword } from "../../src/features/auth/api";
+import { errorMessage } from "../../src/i18n/errors";
+import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { isLoading, supabase } = useSupabaseSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,7 +26,7 @@ export default function LoginScreen() {
     try {
       await signInWithPassword(supabase, email.trim(), password);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to sign in.");
+      setError(errorMessage(caught, t as never, t("auth.login.error")));
     } finally {
       setIsSubmitting(false);
     }
@@ -34,21 +37,19 @@ export default function LoginScreen() {
       <ScrollView className="flex-1">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
-            <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">Sign in</Text>
-            <Text className="text-base font-sans text-neutral-600">
-              Use the same Barberschedule account on Web, iOS, or Android.
-            </Text>
-            <Input label="Email" onChangeText={setEmail} testID="login-email" value={email} />
-            <Input label="Password" onChangeText={setPassword} secureTextEntry testID="login-password" value={password} />
+            <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("auth.login.title")}</Text>
+            <Text className="text-base font-sans text-neutral-600">{t("auth.login.subtitle")}</Text>
+            <Input label={t("common.email")} onChangeText={setEmail} testID="login-email" value={email} />
+            <Input label={t("common.password")} onChangeText={setPassword} secureTextEntry testID="login-password" value={password} />
             <Toast message={error ?? ""} onDismiss={() => setError(null)} variant="error" visible={error !== null} />
             <Button
               disabled={!email.trim() || !password || isLoading || isSubmitting}
-              label="Sign in"
+              label={t("auth.login.submit")}
               onPress={handleSignIn}
               size="lg"
             />
-            <Button label="Forgot password?" onPress={() => router.push("/forgot-password")} variant="ghost" />
-            <Button label="Create account" onPress={() => router.push("/signup")} variant="outline" />
+            <Button label={t("auth.login.forgot")} onPress={() => router.push("/forgot-password")} variant="ghost" />
+            <Button label={t("auth.login.createAccount")} onPress={() => router.push("/signup")} variant="outline" />
           </View>
         </View>
       </ScrollView>
