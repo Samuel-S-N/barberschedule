@@ -1,9 +1,10 @@
 import { Link } from "expo-router";
-import { SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { Screen } from "../../src/components/ui/Screen";
 
 export default function OwnerHomeScreen() {
   return (
-    <SafeAreaView style={styles.screen}>
+    <Screen style={styles.screen}>
       <View style={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>Owner workspace</Text>
         <Link href="/agenda" style={styles.link}>Agenda</Link>
@@ -12,7 +13,7 @@ export default function OwnerHomeScreen() {
         <Link href="/schedule" style={styles.link}>Schedule</Link>
         <Link href="/settings" style={styles.link}>Settings</Link>
       </View>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

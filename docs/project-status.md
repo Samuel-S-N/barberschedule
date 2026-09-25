@@ -18,6 +18,7 @@ Status: Tasks 1-13 implemented; credentialed EAS build remains deployment-only
 - Task 11 — deterministic fictional seed, complete RLS matrix audit, seed contract tests, and database/security boundary docs
 - Task 12 — password-reset/profile/settings routes, EAS/static-web configuration, release checks, and authenticated Web E2E coverage
 - Task 13 — clean-state regression gate, acceptance matrix, decision records, and final release/testing handoff docs
+- Task 14 — customer frontend: signup, redesigned auth, customer tab navigation (Home/Book/Agenda/Profile), agenda calendar with cancel/reschedule, profile edit, LGPD consent/export/account deletion, and the `0023` self-service RPCs (see `docs/decisions/011-customer-self-service-and-lgpd.md`). Also fixed two defects that left the design system unstyled: `global.css` was never imported, and Reanimated animated components dropped NativeWind classes on web.
 
 ## Current MVP boundary
 
@@ -71,9 +72,18 @@ Verified on 2026-08-13:
 - Task 12 Web E2E: `npm run test:e2e:web` — PASS (`9` Playwright tests); static export: `npm run export:web` — PASS (`42` routes).
 - Task 13 clean-state gate: `HOME=/tmp SUPABASE_DISABLE_TELEMETRY=1 npx supabase db reset --local` followed by `HOME=/tmp SUPABASE_DISABLE_TELEMETRY=1 npm run verify` — PASS: `20` Jest suites/`76` tests, `3` Node Web-runner tests, and `264` pgTAP assertions across `10` files.
 
+Verified on 2026-09-23 (Task 14), on a freshly reset local database:
+
+- `npm run verify` — PASS: typecheck, lint, Jest (`49` suites / `202` tests at the time of the gate), `3` Node Web-runner tests, and `285` pgTAP assertions across `11` files (including `011_customer_self_service.sql`, `21` assertions; `010_full_rls.sql` passes on this branch).
+- `npm run test:e2e:web` — PASS (`25` Playwright tests), including signup, tab navigation, agenda cancel/reschedule, profile edit, data export and deletion-blocked, plus a computed-style check that design-system buttons are styled.
+- `npm run export:web` — PASS.
+- Screens were also inspected visually in the browser at desktop and 390px widths (login, signup, home, agenda with actions, reschedule).
+
 No Web smoke was run for Task 5 because it changes no route or rendered UI; the availability client is covered at the RPC/query contract boundary.
 
 ## Known limitations
+
+- Task 14: the `delete-account` Edge Function has no automated test (the repo has no Deno runner); it was verified manually against the local stack (CORS preflight, 401, and a full signup → bootstrap → delete → anonymized-row check, see `docs/decisions/011-customer-self-service-and-lgpd.md`); customer e2e specs mock Supabase REST, so real Auth/RLS execution for the new RPCs is covered by pgTAP only. The agenda calendar strip starts at today, so a day with an appointment can sit off-screen on narrow phones. Barber-role and owner-screen retrofits are separate cycles.
 
 - The database exclusion constraint and transaction-scoped daily lock are implemented. A true network-backed two-session race fixture is deferred to release hardening; the current Jest test verifies the client loser contract and pgTAP verifies the database conflict behavior.
 - The lifecycle Web E2E mocks Supabase REST because this harness has no provisioned authenticated database fixture. It does not claim real Auth/RLS/database execution; `006_lifecycle.sql` proves RLS and sequential target exclusion, while the Jest mock proves the client concurrent-loser contract. A network-backed two-session concurrent-reschedule race remains release-hardening work.

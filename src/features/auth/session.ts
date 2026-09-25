@@ -15,11 +15,20 @@ function getTopLevelGroup(segments: string[]) {
   return segments.find((segment) => segment.startsWith("(")) ?? null;
 }
 
+const GROUP_ROLE: Record<string, AppRole> = {
+  "(customer)": "customer",
+  "(owner)": "owner",
+};
+
 export function resolveAuthRedirect({
   profileRole,
   segments,
   session,
 }: ResolveAuthRedirectInput) {
+  if (segments[0] === "legal") {
+    return null;
+  }
+
   const group = getTopLevelGroup(segments);
 
   if (!session) {
@@ -30,17 +39,7 @@ export function resolveAuthRedirect({
     return HOME_ROUTE;
   }
 
-  if (group === "(public)" && profileRole !== "customer") {
-    return HOME_ROUTE;
-  }
+  const requiredRole = group ? GROUP_ROLE[group] : undefined;
 
-  if (group === "(owner)" && profileRole !== "owner") {
-    return HOME_ROUTE;
-  }
-
-  if (group === "(customer)" && profileRole !== "customer") {
-    return HOME_ROUTE;
-  }
-
-  return null;
+  return requiredRole && profileRole !== requiredRole ? HOME_ROUTE : null;
 }

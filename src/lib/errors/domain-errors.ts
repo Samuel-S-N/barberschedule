@@ -17,7 +17,10 @@ export type DomainErrorCode =
   | "OWNER_AGENDA_REQUEST_FAILED"
   | "OWNER_STATUS_REQUEST_FAILED"
   | "APPOINTMENT_REQUEST_FAILED"
-  | "BOOKING_REQUEST_FAILED";
+  | "BOOKING_REQUEST_FAILED"
+  | "PROFILE_INVALID"
+  | "ACCOUNT_DELETION_BLOCKED"
+  | "ACCOUNT_REQUEST_FAILED";
 
 export class DomainError extends Error {
   constructor(
@@ -77,6 +80,13 @@ export function toDomainError(error: { code?: string; message?: string }): Domai
       return new DomainError("AGENDA_INVALID_RANGE", "Choose a valid agenda range.");
     case "P0015":
       return new DomainError("RECURRENCE_INVALID", "Choose a valid recurrence rule and 90-day window.");
+    case "P0017":
+      return new DomainError("PROFILE_INVALID", "Enter your name and a valid phone number.");
+    case "P0018":
+      return new DomainError(
+        "ACCOUNT_DELETION_BLOCKED",
+        "Cancel your upcoming appointments (or contact the shop about your recurring schedule) before deleting your account.",
+      );
     default:
       return new DomainError("BOOKING_REQUEST_FAILED", "Unable to create the appointment.");
   }

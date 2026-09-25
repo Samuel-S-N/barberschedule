@@ -1,6 +1,6 @@
 import { Link } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Button, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { getAvailableSlots } from "../../src/features/availability/api";
 import { bookOwnerAppointment } from "../../src/features/appointments/owner-api";
@@ -13,6 +13,7 @@ import type { BarberService, Service } from "../../src/features/services/types";
 import type { AvailableSlot } from "../../src/features/availability/types";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { Screen } from "../../src/components/ui/Screen";
 
 type ShopRow = { id: string };
 
@@ -115,7 +116,7 @@ export default function OwnerAppointmentFormScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <Screen style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>New owner appointment</Text>
         <Link href="/agenda" style={styles.link}>Back to agenda</Link>
@@ -131,7 +132,7 @@ export default function OwnerAppointmentFormScreen() {
         {isLoading || isSaving ? <ActivityIndicator /> : null}
         <Button disabled={!selectedBarberServiceId || !selectedCustomerId || !selectedStartsAt || isSaving} onPress={() => void createAppointment()} title="Create appointment" />
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

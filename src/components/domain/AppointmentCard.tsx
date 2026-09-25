@@ -13,7 +13,7 @@ export type AppointmentCardProps = {
   dateLabel: string;
   timeLabel: string;
   shopName: string;
-  shopAddress: string;
+  shopAddress?: string;
   onPress?: () => void;
   testID?: string;
 };
@@ -59,7 +59,7 @@ export function AppointmentCard({
       </View>
       <View className="h-px bg-neutral-200" />
       <Text className="text-sm font-sans text-neutral-500">
-        {shopName} · {shopAddress}
+        {shopAddress ? `${shopName} · ${shopAddress}` : shopName}
       </Text>
     </Pressable>
   );

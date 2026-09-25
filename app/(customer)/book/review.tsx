@@ -1,7 +1,7 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useLocalSearchParams } from "expo-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-import { SafeAreaView, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { z } from "zod";
 
 import { EmptyState } from "../../../src/components/domain/EmptyState";
@@ -16,6 +16,7 @@ import { getAvailableSlotsQueryOptions } from "../../../src/features/availabilit
 import type { AvailableSlot } from "../../../src/features/availability/types";
 import { listMyCustomers } from "../../../src/features/customers/api";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
+import { Screen } from "../../../src/components/ui/Screen";
 
 const notesSchema = z.object({ notes: z.string().trim().max(500) });
 
@@ -28,6 +29,8 @@ export default function BookReviewScreen() {
   const barberId = param(params.barberId);
   const barberServiceId = param(params.barberServiceId);
   const localDate = param(params.localDate);
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const { profile, supabase } = useSupabaseSession();
   const [startsAt, setStartsAt] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
@@ -61,7 +64,14 @@ export default function BookReviewScreen() {
       message: error instanceof Error ? error.message : "Unable to book this appointment.",
       variant: "error",
     }),
-    onSuccess: () => setFeedback({ message: "Booking confirmed.", variant: "success" }),
+    onSuccess: () => {
+      // Home and Agenda stay mounted under the tab bar, so their cached lists must be refreshed explicitly.
+      void queryClient.invalidateQueries({ queryKey: ["my-appointments"] });
+      void queryClient.invalidateQueries({ queryKey: ["available-slots"] });
+      // Reset the booking stack so the Book tab starts over instead of showing this finished review.
+      router.dismissAll();
+      router.navigate(`/home?booked=${Date.now()}`);
+    },
   });
 
   const slots: TimeSlot[] = (availability.data ?? []).map((slot: AvailableSlot) => ({
@@ -85,7 +95,7 @@ export default function BookReviewScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-canvas">
+    <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
       <ScrollView className="flex-1" testID="booking-review-scroll">
         <View className="items-center gap-4 p-5">
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
@@ -125,6 +135,6 @@ export default function BookReviewScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }

@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import { Pressable } from "react-native";
+import { Pressable, Text } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -42,8 +42,6 @@ const SIZE_CLASSNAME: Record<ButtonSize, string> = {
   lg: "h-button-height-lg",
 };
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
 export function Button({
   label,
   onPress,
@@ -74,22 +72,25 @@ export function Button({
     }
   }, [onPress]);
 
+  // The scale lives on an outer Animated.View: Reanimated's animated components drop
+  // NativeWind className styles on web, so the classed Pressable/Text are plain RN.
   return (
-    <AnimatedPressable
-      accessibilityLabel={label}
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      className={`flex-row items-center justify-center rounded-full px-6 min-w-[44px] ${SIZE_CLASSNAME[size]} ${VARIANT_CLASSNAME[variant]} ${disabled ? "opacity-50" : ""}`}
-      disabled={disabled}
-      onPress={handlePress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      style={animatedStyle}
-      testID={testID}
-    >
-      <Animated.Text className={`font-sans-semibold text-base ${VARIANT_TEXT_CLASSNAME[variant]}`}>
-        {label}
-      </Animated.Text>
-    </AnimatedPressable>
+    <Animated.View style={animatedStyle}>
+      <Pressable
+        accessibilityLabel={label}
+        accessibilityRole="button"
+        accessibilityState={{ disabled }}
+        className={`flex-row items-center justify-center rounded-full px-6 min-w-[44px] ${SIZE_CLASSNAME[size]} ${VARIANT_CLASSNAME[variant]} ${disabled ? "opacity-50" : ""}`}
+        disabled={disabled}
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        testID={testID}
+      >
+        <Text className={`font-sans-semibold text-base ${VARIANT_TEXT_CLASSNAME[variant]}`}>
+          {label}
+        </Text>
+      </Pressable>
+    </Animated.View>
   );
 }

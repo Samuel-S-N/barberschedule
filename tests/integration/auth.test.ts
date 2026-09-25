@@ -60,7 +60,7 @@ describe("auth session routing", () => {
     expect(
       getRedirect({
         role: "owner",
-        segments: ["(public)", "book"],
+        segments: ["(customer)", "book"],
         session: createSession(),
       }),
     ).toBe("/");
@@ -70,9 +70,18 @@ describe("auth session routing", () => {
     expect(
       getRedirect({
         role: "customer",
-        segments: ["(public)", "book"],
+        segments: ["(customer)", "book"],
         session: createSession(),
       }),
     ).toBeNull();
+  });
+
+  it("lets anyone open the legal page, signed in or out", () => {
+    expect(getRedirect({ segments: ["legal"] })).toBeNull();
+    expect(getRedirect({ role: "customer", segments: ["legal"], session: createSession() })).toBeNull();
+  });
+
+  it("redirects a signed-in user whose profile role is unknown away from role groups", () => {
+    expect(getRedirect({ role: null, segments: ["(customer)", "home"], session: createSession() })).toBe("/");
   });
 });

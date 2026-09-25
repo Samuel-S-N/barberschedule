@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from "react";
-import { Pressable, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -16,8 +16,6 @@ export type TimeSlotPickerProps = {
   onSelectSlot: (time: string) => void;
   testID?: string;
 };
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 function Slot({ slot, onSelectSlot }: { slot: TimeSlot; onSelectSlot: (time: string) => void }) {
   const scale = useSharedValue(slot.status === "selected" ? 1.03 : 1);
@@ -52,21 +50,24 @@ function Slot({ slot, onSelectSlot }: { slot: TimeSlot; onSelectSlot: (time: str
       ? "text-primary-600 font-sans-bold"
       : "text-neutral-800 font-sans-medium";
 
+  // The scale lives on an outer Animated.View: Reanimated's animated components drop
+  // NativeWind className styles on web, so the classed Pressable/Text are plain RN.
   return (
-    <AnimatedPressable
-      accessibilityLabel={slot.time}
-      accessibilityRole="button"
-      accessibilityState={{ disabled: occupied, selected }}
-      className={`h-slot-height min-w-[68px] items-center justify-center rounded-xl px-3 ${className}`}
-      disabled={occupied}
-      onPress={handlePress}
-      style={animatedStyle}
-      testID={`time-slot-${slot.time}`}
-    >
-      <Animated.Text className={`text-base ${textClassName}`} style={{ fontVariant: ["tabular-nums"] }}>
-        {slot.time}
-      </Animated.Text>
-    </AnimatedPressable>
+    <Animated.View style={animatedStyle} testID={`time-slot-${slot.time}-scale`}>
+      <Pressable
+        accessibilityLabel={slot.time}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: occupied, selected }}
+        className={`h-slot-height min-w-[68px] items-center justify-center rounded-xl px-3 ${className}`}
+        disabled={occupied}
+        onPress={handlePress}
+        testID={`time-slot-${slot.time}`}
+      >
+        <Text className={`text-base ${textClassName}`} style={{ fontVariant: ["tabular-nums"] }}>
+          {slot.time}
+        </Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 

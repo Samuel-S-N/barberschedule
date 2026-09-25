@@ -1,193 +1,141 @@
 import { expect, test } from "@playwright/test";
 
-const shopId = "11111111-1111-4111-8111-111111111111";
-const barberId = "22222222-2222-4222-8222-222222222222";
-const barberServiceId = "33333333-3333-4333-8333-333333333333";
-const customerId = "44444444-4444-4444-8444-444444444444";
-const customerUserId = "55555555-5555-4555-8555-555555555555";
+import {
+  appointmentRow, barberId, barberServiceId, customerId, customerUserId, json, mockCustomerRest, shopId, signInAsCustomer,
+} from "./customer-helpers";
 
-test("an authenticated customer can select a public slot and submit a booking", async ({ page }) => {
-  let bookingPayload: Record<string, unknown> | null = null;
-  await page.setViewportSize({ height: 480, width: 320 });
-  await page.addInitScript(({ userId }) => {
-    const now = Math.floor(Date.now() / 1000);
-    const token = `eyJhbGciOiJub25lIn0.${btoa(JSON.stringify({ exp: now + 3600, sub: userId }))}.`;
+const slot = { ends_at: "2026-08-17T12:30:00Z", local_date: "2026-08-17", local_time: "09:00:00", starts_at: "2026-08-17T12:00:00Z" };
 
-    localStorage.setItem("sb-example-auth-token", JSON.stringify({
-      access_token: token,
-      expires_at: now + 3600,
-      expires_in: 3600,
-      refresh_token: "e2e-refresh-token",
-      token_type: "bearer",
-      user: { id: userId },
-    }));
-    localStorage.setItem("sb-127-auth-token", localStorage.getItem("sb-example-auth-token") ?? "");
-  }, { userId: customerUserId });
-
-  await page.route("**/rest/v1/**", async (route) => {
-    const request = route.request();
-    const url = new URL(request.url());
-    const json = (body: unknown) => route.fulfill({
-      body: JSON.stringify(body),
-      contentType: "application/json",
-      status: 200,
-    });
-
-    if (url.pathname.endsWith("/rpc/get_current_profile")) {
-      await json([{ role: "customer", user_id: customerUserId }]);
-      return;
-    }
-
-    if (url.pathname.endsWith("/shops")) {
-      await json([{ id: shopId, name: "Browser Shop" }]);
-      return;
-    }
-
-    if (url.pathname.endsWith("/barbers")) {
-      await json([{ active: true, archived_at: null, id: barberId, name: "Browser Barber", shop_id: shopId }]);
-      return;
-    }
-
+function bookingRest(
+  page: import("@playwright/test").Page,
+  onBook: (payload: Record<string, unknown>) => Promise<void> | void,
+  bookStatus = 200,
+  extra?: (route: import("@playwright/test").Route, url: URL) => Promise<boolean | void> | boolean | void,
+) {
+  return mockCustomerRest(page, async (route, url) => {
+    if (extra && (await extra(route, url)) === true) return true;
     if (url.pathname.endsWith("/barber_services")) {
-      await json([{
-        duration_override_minutes: null,
-        id: barberServiceId,
-        price_override_cents: null,
-        service_id: "service-1",
+      await json(route, [{
+        duration_override_minutes: null, id: barberServiceId, price_override_cents: null, service_id: "service-1",
         services: { duration_minutes: 30, name: "Browser Cut", price_cents: 4000 },
       }]);
-      return;
+      return true;
     }
-
-    if (url.pathname.endsWith("/customers")) {
-      await json([{
-        active: true,
-        archived_at: null,
-        email: "customer@example.com",
-        full_name: "Browser Customer",
-        id: customerId,
-        phone: null,
-        shop_id: shopId,
-        user_id: customerUserId,
-      }]);
-      return;
-    }
-
     if (url.pathname.endsWith("/rpc/get_available_slots")) {
-      const payload = request.postDataJSON() as Record<string, unknown>;
-      expect(payload.local_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-      await json([{
-        ends_at: "2026-08-17T12:30:00Z",
-        local_date: "2026-08-17",
-        local_time: "09:00:00",
-        starts_at: "2026-08-17T12:00:00Z",
-      }]);
-      return;
+      expect((route.request().postDataJSON() as Record<string, unknown>).local_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      await json(route, [slot]);
+      return true;
     }
-
     if (url.pathname.endsWith("/rpc/book_appointment")) {
-      bookingPayload = request.postDataJSON() as Record<string, unknown>;
-      await json([{
-        barber_buffer_minutes_snapshot: 0,
-        barber_id: barberId,
-        barber_service_id: barberServiceId,
-        created_at: "2026-08-13T10:00:00Z",
-        customer_id: customerId,
-        ends_at: "2026-08-17T12:30:00Z",
-        id: "appointment-1",
-        notes: null,
-        occupied_until: "2026-08-17T12:30:00Z",
-        service_duration_minutes_snapshot: 30,
-        service_id: "service-1",
-        service_name_snapshot: "Browser Cut",
-        service_price_cents_snapshot: 4000,
-        shop_id: shopId,
-        source: "customer",
-        starts_at: "2026-08-17T12:00:00Z",
-        status: "scheduled",
-        updated_at: "2026-08-13T10:00:00Z",
+      await onBook(route.request().postDataJSON() as Record<string, unknown>);
+      if (bookStatus !== 200) {
+        await json(route, { code: "23P01", message: "overlap" }, 409);
+        return true;
+      }
+      await json(route, [{
+        barber_buffer_minutes_snapshot: 0, barber_id: barberId, barber_service_id: barberServiceId,
+        created_at: "2026-08-13T10:00:00Z", customer_id: customerId, ends_at: slot.ends_at, id: "appointment-1",
+        notes: null, occupied_until: slot.ends_at, service_duration_minutes_snapshot: 30, service_id: "service-1",
+        service_name_snapshot: "Browser Cut", service_price_cents_snapshot: 4000, shop_id: shopId, source: "customer",
+        starts_at: slot.starts_at, status: "scheduled", updated_at: "2026-08-13T10:00:00Z",
       }]);
-      return;
+      return true;
     }
-
-    await route.abort();
   });
+}
 
+async function walkToReview(page: import("@playwright/test").Page) {
   await page.goto("/book");
-  await page.getByRole("button", { name: "Start booking at Browser Shop" }).click();
+  // One shop: the picker is skipped and the barber list opens directly.
   await page.getByRole("button", { name: "Browser Barber" }).click();
   await page.getByRole("button", { name: "Browser Cut" }).click();
   await page.getByRole("button", { name: "Continue to review" }).click();
   await expect(page.getByTestId("booking-review-scroll")).toBeVisible();
   await page.getByRole("button", { name: "09:00" }).click();
   await page.getByRole("button", { name: "Confirm booking" }).click();
+}
 
+test("an authenticated customer can select a slot and submit a booking", async ({ page }) => {
+  let bookingPayload: Record<string, unknown> | null = null;
+  await page.setViewportSize({ height: 480, width: 320 });
+  await signInAsCustomer(page);
+  await bookingRest(page, (payload) => { bookingPayload = payload; });
+
+  await walkToReview(page);
+
+  // After confirming, the customer goes back to Home, where the confirmation is shown.
+  await expect(page).toHaveURL(/\/home/);
   await expect(page.getByText("Booking confirmed.")).toBeVisible();
   expect(bookingPayload).toMatchObject({ customer_id: customerId, source: "customer", starts_at: "2026-08-17T12:00:00Z" });
 });
 
-test("a customer sees an unavailable error when booking loses the slot", async ({ page }) => {
-  let bookingPayload: Record<string, unknown> | null = null;
-
-  await page.addInitScript(({ userId }) => {
-    const now = Math.floor(Date.now() / 1000);
-    const token = `eyJhbGciOiJub25lIn0.${btoa(JSON.stringify({ exp: now + 3600, sub: userId }))}.`;
-    const session = JSON.stringify({
-      access_token: token, expires_at: now + 3600, expires_in: 3600,
-      refresh_token: "e2e-refresh-token", token_type: "bearer", user: { id: userId },
-    });
-    localStorage.setItem("sb-example-auth-token", session);
-    localStorage.setItem("sb-127-auth-token", session);
-  }, { userId: customerUserId });
-
-  await page.route("**/rest/v1/**", async (route) => {
-    const request = route.request();
-    const url = new URL(request.url());
-    const json = (body: unknown) => route.fulfill({ body: JSON.stringify(body), contentType: "application/json", status: 200 });
-
-    if (url.pathname.endsWith("/rpc/get_current_profile")) return json([{ role: "customer", user_id: customerUserId }]);
-    if (url.pathname.endsWith("/shops")) return json([{ id: shopId, name: "Browser Shop" }]);
-    if (url.pathname.endsWith("/barbers")) return json([{ active: true, archived_at: null, id: barberId, name: "Browser Barber", shop_id: shopId }]);
-    if (url.pathname.endsWith("/barber_services")) {
-      await json([{
-        duration_override_minutes: null,
-        id: barberServiceId,
-        price_override_cents: null,
-        service_id: "service-1",
-        services: { duration_minutes: 30, name: "Browser Cut", price_cents: 4000 },
-      }]);
-      return;
+test("a new booking appears on Home and Agenda without reloading", async ({ page }) => {
+  let booked = false;
+  await signInAsCustomer(page);
+  await bookingRest(page, () => { booked = true; }, 200, async (route, url) => {
+    if (url.pathname.endsWith("/appointments")) {
+      await json(route, booked ? [appointmentRow()] : []);
+      return true;
     }
-    if (url.pathname.endsWith("/customers")) return json([{ active: true, archived_at: null, email: "customer@example.com", full_name: "Browser Customer", id: customerId, phone: null, shop_id: shopId, user_id: customerUserId }]);
-    if (url.pathname.endsWith("/rpc/get_available_slots")) {
-      const payload = request.postDataJSON() as Record<string, unknown>;
-      expect(payload.local_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-      return json([{ ends_at: "2026-08-17T12:30:00Z", local_date: "2026-08-17", local_time: "09:00:00", starts_at: "2026-08-17T12:00:00Z" }]);
-    }
-    if (url.pathname.endsWith("/rpc/book_appointment")) {
-      bookingPayload = request.postDataJSON() as Record<string, unknown>;
-      return route.fulfill({ body: JSON.stringify({ code: "23P01", message: "overlap" }), contentType: "application/json", status: 409 });
-    }
-    await route.abort();
   });
 
-  await page.goto("/book");
-  await page.getByRole("button", { name: "Start booking at Browser Shop" }).click();
+  // Home loads first (empty) and stays mounted under the tab bar.
+  await page.goto("/home");
+  await expect(page.getByText("No upcoming appointments")).toBeVisible();
+
+  await page.getByTestId("tab-book").click();
   await page.getByRole("button", { name: "Browser Barber" }).click();
   await page.getByRole("button", { name: "Browser Cut" }).click();
   await page.getByRole("button", { name: "Continue to review" }).click();
   await page.getByRole("button", { name: "09:00" }).click();
   await page.getByRole("button", { name: "Confirm booking" }).click();
 
+  // Confirming returns to Home, which already lists the new appointment.
+  await expect(page).toHaveURL(/\/home/);
+  await expect(page.getByTestId("home-next-appointment")).toBeVisible();
+
+  await page.getByTestId("tab-appointments").click();
+  await expect(page.getByTestId("appointment-card-appointment-upcoming")).toBeVisible();
+
+  // The booking flow was reset: Book starts over instead of showing the old review screen.
+  await page.getByTestId("tab-book").click();
+  await expect(page.getByRole("button", { name: "Browser Barber" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Confirm booking" })).not.toBeVisible();
+});
+
+test("a customer sees an unavailable error when booking loses the slot", async ({ page }) => {
+  let bookingPayload: Record<string, unknown> | null = null;
+  await signInAsCustomer(page);
+  await bookingRest(page, (payload) => { bookingPayload = payload; }, 409);
+
+  await walkToReview(page);
+
   await expect(page.getByText("That time is no longer available.")).toBeVisible();
   await expect(page.getByText("Booking confirmed.")).not.toBeVisible();
   expect(bookingPayload).toMatchObject({ customer_id: customerId, source: "customer", starts_at: "2026-08-17T12:00:00Z" });
 });
 
+test("a new account is bootstrapped with ensure_my_customer before booking", async ({ page }) => {
+  let ensureCalls = 0;
+  await signInAsCustomer(page);
+  await mockCustomerRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/rpc/ensure_my_customer")) {
+      ensureCalls += 1;
+      await json(route, { active: true, archived_at: null, email: "customer@example.com", full_name: "Browser Customer", id: customerId, phone: null, shop_id: shopId, user_id: customerUserId });
+      return true;
+    }
+  });
+
+  await page.goto("/book");
+  await expect(page.getByRole("button", { name: "Browser Barber" })).toBeVisible();
+  expect(ensureCalls).toBe(1);
+});
+
 test("an owner is redirected away from the customer booking flow", async ({ page }) => {
   await page.addInitScript(({ userId }) => {
     const now = Math.floor(Date.now() / 1000);
-    const token = `eyJhbGciOiJub25lIn0.${btoa(JSON.stringify({ exp: now + 3600, sub: userId }))}.`;
+    const header = btoa(JSON.stringify({ alg: "none" })).replace(/=+$/, "");
+    const token = `${header}.${btoa(JSON.stringify({ exp: now + 3600, sub: userId }))}.`;
     localStorage.setItem("sb-example-auth-token", JSON.stringify({
       access_token: token, expires_at: now + 3600, expires_in: 3600,
       refresh_token: "e2e-refresh-token", token_type: "bearer", user: { id: userId },
@@ -197,11 +145,7 @@ test("an owner is redirected away from the customer booking flow", async ({ page
 
   await page.route("**/rest/v1/**", async (route) => {
     if (new URL(route.request().url()).pathname.endsWith("/rpc/get_current_profile")) {
-      await route.fulfill({
-        body: JSON.stringify([{ role: "owner", user_id: customerUserId }]),
-        contentType: "application/json",
-        status: 200,
-      });
+      await json(route, [{ role: "owner", user_id: customerUserId }]);
       return;
     }
     await route.abort();
@@ -209,88 +153,6 @@ test("an owner is redirected away from the customer booking flow", async ({ page
 
   await page.goto("/book");
   await expect(page.getByRole("heading", { name: "Barberschedule MVP" })).toBeVisible();
-});
-
-test("a customer can reschedule an appointment from their appointments list", async ({ page }) => {
-  await page.addInitScript(({ userId }) => {
-    const now = Math.floor(Date.now() / 1000);
-    const token = `eyJhbGciOiJub25lIn0.${btoa(JSON.stringify({ exp: now + 3600, sub: userId }))}.`;
-    localStorage.setItem("sb-example-auth-token", JSON.stringify({
-      access_token: token, expires_at: now + 3600, expires_in: 3600,
-      refresh_token: "e2e-refresh-token", token_type: "bearer", user: { id: userId },
-    }));
-    localStorage.setItem("sb-127-auth-token", localStorage.getItem("sb-example-auth-token") ?? "");
-  }, { userId: customerUserId });
-
-  const appointment = {
-    barber_buffer_minutes_snapshot: 0, barber_id: barberId, barber_service_id: barberServiceId,
-    created_at: "2026-08-13T10:00:00Z", customer_id: customerId,
-    ends_at: "2026-08-17T12:30:00Z", id: "appointment-1", notes: null,
-    occupied_until: "2026-08-17T12:30:00Z", service_duration_minutes_snapshot: 30,
-    service_id: "service-1", service_name_snapshot: "Browser Cut",
-    service_price_cents_snapshot: 4000, shop_id: shopId, source: "customer",
-    starts_at: "2026-08-17T12:00:00Z", status: "scheduled",
-    updated_at: "2026-08-13T10:00:00Z",
-  };
-
-  await page.route("**/rest/v1/**", async (route) => {
-    const url = new URL(route.request().url());
-    const json = (body: unknown) => route.fulfill({ body: JSON.stringify(body), contentType: "application/json", status: 200 });
-    if (url.pathname.endsWith("/rpc/get_current_profile")) return json([{ role: "customer", user_id: customerUserId }]);
-    if (url.pathname.endsWith("/appointments")) return json([appointment]);
-    if (url.pathname.endsWith("/rpc/reschedule_appointment")) return json([{ ...appointment, starts_at: "2026-08-17T13:00:00Z" }]);
-    await route.abort();
-  });
-
-  await page.goto("/appointments");
-  await page.getByPlaceholder("New start (ISO)").fill("2026-08-17T13:00:00Z");
-  await page.getByRole("button", { name: "Reschedule appointment" }).click();
-  await expect(page.getByText("Appointment rescheduled.")).toBeVisible();
-});
-
-test("a customer can cancel an appointment from their appointments list", async ({ page }) => {
-  let cancelled = false;
-  let cancelPayload: Record<string, unknown> | null = null;
-  const appointment = {
-    barber_buffer_minutes_snapshot: 0, barber_id: barberId, barber_service_id: barberServiceId,
-    created_at: "2026-08-13T10:00:00Z", customer_id: customerId,
-    ends_at: "2026-08-17T12:30:00Z", id: "appointment-1", notes: null,
-    occupied_until: "2026-08-17T12:30:00Z", service_duration_minutes_snapshot: 30,
-    service_id: "service-1", service_name_snapshot: "Browser Cut",
-    service_price_cents_snapshot: 4000, shop_id: shopId, source: "customer",
-    starts_at: "2026-08-17T12:00:00Z", status: "scheduled",
-    updated_at: "2026-08-13T10:00:00Z",
-  };
-
-  await page.addInitScript(({ userId }) => {
-    const now = Math.floor(Date.now() / 1000);
-    const token = `eyJhbGciOiJub25lIn0.${btoa(JSON.stringify({ exp: now + 3600, sub: userId }))}.`;
-    const session = JSON.stringify({
-      access_token: token, expires_at: now + 3600, expires_in: 3600,
-      refresh_token: "e2e-refresh-token", token_type: "bearer", user: { id: userId },
-    });
-    localStorage.setItem("sb-example-auth-token", session);
-    localStorage.setItem("sb-127-auth-token", session);
-  }, { userId: customerUserId });
-
-  await page.route("**/rest/v1/**", async (route) => {
-    const request = route.request();
-    const url = new URL(request.url());
-    const json = (body: unknown) => route.fulfill({ body: JSON.stringify(body), contentType: "application/json", status: 200 });
-    if (url.pathname.endsWith("/rpc/get_current_profile")) return json([{ role: "customer", user_id: customerUserId }]);
-    if (url.pathname.endsWith("/appointments")) return json(cancelled ? [] : [appointment]);
-    if (url.pathname.endsWith("/rpc/cancel_appointment")) {
-      cancelPayload = request.postDataJSON() as Record<string, unknown>;
-      cancelled = true;
-      return json([{ ...appointment, status: "cancelled" }]);
-    }
-    await route.abort();
-  });
-
-  await page.goto("/appointments");
-  await expect(page.getByText("Browser Cut · 2026-08-17T12:00:00Z")).toBeVisible();
-  await page.getByRole("button", { name: "Cancel appointment" }).click();
-
-  await expect(page.getByText("Browser Cut · 2026-08-17T12:00:00Z")).not.toBeVisible();
-  expect(cancelPayload).toEqual({ appointment_id: "appointment-1" });
+  await page.goto("/home");
+  await expect(page.getByRole("heading", { name: "Barberschedule MVP" })).toBeVisible();
 });

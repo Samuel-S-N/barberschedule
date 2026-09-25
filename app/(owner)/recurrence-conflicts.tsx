@@ -1,10 +1,11 @@
 import { Link } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Button, Linking, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Button, Linking, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { buildWhatsAppRecurrenceConflictUrl, listOwnerRecurrenceConflicts } from "../../src/features/recurrence/api";
 import type { RecurrenceConflict } from "../../src/features/recurrence/types";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { Screen } from "../../src/components/ui/Screen";
 
 type ShopRow = { id: string };
 
@@ -49,7 +50,7 @@ export default function RecurrenceConflictsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <Screen style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>Recurrence conflicts</Text>
         <Link href="/monthly-customers" style={styles.link}>Back to recurring customers</Link>
@@ -62,7 +63,7 @@ export default function RecurrenceConflictsScreen() {
           <Button onPress={() => void openWhatsApp(conflict)} title="Open WhatsApp" />
         </View>)}
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

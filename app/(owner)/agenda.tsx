@@ -1,12 +1,13 @@
 import { Link } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Button, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { listOwnerAgenda, listOwnerAgendaOverrides } from "../../src/features/appointments/agenda-query";
 import { setOwnerAppointmentStatus } from "../../src/features/appointments/owner-api";
 import { cancelAppointment } from "../../src/features/appointments/lifecycle";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { Screen } from "../../src/components/ui/Screen";
 
 type AgendaView = "day" | "week" | "month";
 type ShopRow = { id: string };
@@ -103,7 +104,7 @@ export default function OwnerAgendaScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <Screen style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>Owner agenda</Text>
         <Link href="/appointment-form" style={styles.link}>New appointment</Link>
@@ -145,7 +146,7 @@ export default function OwnerAgendaScreen() {
           <Button disabled={appointments.length < 100 || isLoading} onPress={() => setOffset(offset + 100)} title="Next page" />
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

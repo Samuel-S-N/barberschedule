@@ -11,7 +11,7 @@ function throwIfError(error: Error | null) {
   }
 }
 
-function toCustomer(row: CustomerRow): Customer {
+export function toCustomer(row: CustomerRow): Customer {
   return {
     active: row.active,
     archivedAt: row.archived_at,
@@ -24,7 +24,7 @@ function toCustomer(row: CustomerRow): Customer {
   };
 }
 
-const customerColumns =
+export const customerColumns =
   "id, shop_id, user_id, full_name, email, phone, active, archived_at";
 
 export async function listOwnerCustomers(

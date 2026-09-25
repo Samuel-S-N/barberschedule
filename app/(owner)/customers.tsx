@@ -1,14 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Button,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import type { Customer } from "../../src/features/customers/types";
 import {
@@ -19,6 +10,7 @@ import {
 } from "../../src/features/customers/api";
 import { canSubmitCustomerForm } from "../../src/features/customers/validation";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { Screen } from "../../src/components/ui/Screen";
 
 type ShopRow = { id: string };
 
@@ -144,7 +136,7 @@ export default function OwnerCustomersScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <Screen style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>
           Owner customers
@@ -214,7 +206,7 @@ export default function OwnerCustomersScreen() {
           ))}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

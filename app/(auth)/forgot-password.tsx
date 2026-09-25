@@ -1,14 +1,19 @@
-import { Link } from "expo-router";
+import { useRouter } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, Button, SafeAreaView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
+import { Toast } from "../../src/components/domain/Toast";
+import { Button } from "../../src/components/ui/Button";
+import { Input } from "../../src/components/ui/Input";
 import { requestPasswordReset } from "../../src/features/auth/api";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { Screen } from "../../src/components/ui/Screen";
 
 export default function ForgotPasswordScreen() {
+  const router = useRouter();
   const { isLoading, supabase } = useSupabaseSession();
   const [email, setEmail] = useState("");
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ message: string; variant: "success" | "error" } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const submit = async () => {
@@ -17,34 +22,41 @@ export default function ForgotPasswordScreen() {
     setFeedback(null);
     try {
       await requestPasswordReset(supabase, email.trim());
-      setFeedback("Password reset email sent.");
-    } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Unable to send reset email.");
+      setFeedback({ message: "Password reset email sent.", variant: "success" });
+    } catch (caught) {
+      setFeedback({
+        message: caught instanceof Error ? caught.message : "Unable to send reset email.",
+        variant: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.card}>
-        <Text accessibilityRole="header" style={styles.title}>Reset password</Text>
-        <Text style={styles.subtitle}>We will send a reset link if the account exists.</Text>
-        <TextInput autoCapitalize="none" autoComplete="email" keyboardType="email-address" onChangeText={setEmail} placeholder="Email" style={styles.input} value={email} />
-        {feedback ? <Text>{feedback}</Text> : null}
-        {isLoading || isSubmitting ? <ActivityIndicator /> : null}
-        <Button disabled={!email.trim() || isLoading || isSubmitting} onPress={submit} title="Send reset email" />
-        <Link href="/login" style={styles.link}>Back to sign in</Link>
-      </View>
-    </SafeAreaView>
+    <Screen className="flex-1 bg-canvas">
+      <ScrollView className="flex-1">
+        <View className="items-center p-5">
+          <View className="w-full max-w-[420px] gap-4">
+            <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">Reset password</Text>
+            <Text className="text-base font-sans text-neutral-600">We will send a reset link if the account exists.</Text>
+            <Input label="Email" onChangeText={setEmail} testID="reset-email" value={email} />
+            <Toast
+              message={feedback?.message ?? ""}
+              onDismiss={() => setFeedback(null)}
+              variant={feedback?.variant ?? "info"}
+              visible={feedback !== null}
+            />
+            <Button
+              disabled={!email.trim() || isLoading || isSubmitting}
+              label="Send reset email"
+              onPress={submit}
+              size="lg"
+            />
+            <Button label="Back to sign in" onPress={() => router.replace("/login")} variant="ghost" />
+          </View>
+        </View>
+      </ScrollView>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  card: { gap: 12, maxWidth: 360, width: "100%" },
-  input: { borderColor: "#d1d5db", borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12 },
-  link: { color: "#2563eb", textAlign: "center" },
-  screen: { alignItems: "center", backgroundColor: "#fff", flex: 1, justifyContent: "center", padding: 24 },
-  subtitle: { color: "#4b5563", textAlign: "center" },
-  title: { color: "#111827", fontSize: 28, fontWeight: "700", textAlign: "center" },
-});

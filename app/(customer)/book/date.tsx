@@ -1,10 +1,11 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { SafeAreaView, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { CalendarStrip } from "../../../src/components/domain/CalendarStrip";
 import { Button } from "../../../src/components/ui/Button";
 import { buildCalendarStripDays } from "../../../src/lib/dates/calendar-strip-days";
+import { Screen } from "../../../src/components/ui/Screen";
 
 const DAYS_AHEAD = 14;
 
@@ -22,7 +23,7 @@ export default function BookDateScreen() {
   const [localDate, setLocalDate] = useState(days[0].date);
 
   return (
-    <SafeAreaView className="flex-1 bg-canvas">
+    <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
       <View className="flex-1 items-center gap-6 p-5">
         <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
           Choose a date
@@ -39,6 +40,6 @@ export default function BookDateScreen() {
           />
         </View>
       </View>
-    </SafeAreaView>
+    </Screen>
   );
 }

@@ -51,7 +51,9 @@ describe("TimeSlotPicker", () => {
   });
 
   function getScale(element: ReturnType<typeof render> extends Promise<infer T> ? T : never, testID: string) {
-    const style = element.getByTestId(testID).props.style;
+    // The scale lives on an outer Animated.View: Reanimated's web animated components
+    // drop NativeWind className styles, so the classed Pressable sits inside it.
+    const style = element.getByTestId(`${testID}-scale`).props.style;
     const flattened = Array.isArray(style) ? Object.assign({}, ...style) : (style ?? {});
     const transform = flattened.transform as Array<{ scale?: number }> | undefined;
 

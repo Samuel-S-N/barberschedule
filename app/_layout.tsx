@@ -1,3 +1,5 @@
+import "../global.css";
+
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useFonts } from "expo-font";
 import {
