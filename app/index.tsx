@@ -1,12 +1,15 @@
 import { Link, Redirect } from "expo-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button, StyleSheet, Text, View } from "react-native";
 
 import { signOut } from "../src/features/auth/api";
+import { errorMessage } from "../src/i18n/errors";
 import { useSupabaseSession } from "../src/providers/AppProviders";
 import { Screen } from "../src/components/ui/Screen";
 
 export default function HomeScreen() {
+  const { t } = useTranslation();
   const { profile, supabase } = useSupabaseSession();
   const [feedback, setFeedback] = useState<string | null>(null);
 
@@ -15,9 +18,7 @@ export default function HomeScreen() {
       setFeedback(null);
       await signOut(supabase);
     } catch (error) {
-      setFeedback(
-        error instanceof Error ? error.message : "Unable to sign out.",
-      );
+      setFeedback(errorMessage(error, t as never, t("profile.signOutError")));
     }
   };
 
@@ -29,35 +30,35 @@ export default function HomeScreen() {
     <Screen style={styles.screen}>
       <View style={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>
-          Barberschedule MVP
+          {t("owner.hub.title")}
         </Text>
         <Text style={styles.subtitle}>
-          Signed in as {profile?.role ?? "account"}.
+          {t("owner.hub.signedInAs", { role: t(profile?.role === "owner" ? "owner.roles.owner" : "owner.roles.account") })}
         </Text>
         {profile?.role === "owner" ? (
           <View style={styles.links}>
             <Link href="/barbers" style={styles.link}>
-              Manage barbers
+              {t("owner.hub.manageBarbers")}
             </Link>
             <Link href="/services" style={styles.link}>
-              Manage services
+              {t("owner.hub.manageServices")}
             </Link>
             <Link href="/customers" style={styles.link}>
-              Manage customers
+              {t("owner.hub.manageCustomers")}
             </Link>
             <Link href="/schedule" style={styles.link}>
-              Manage schedule
+              {t("owner.hub.manageSchedule")}
             </Link>
             <Link href="/agenda" style={styles.link}>
-              Manage agenda
+              {t("owner.hub.manageAgenda")}
             </Link>
             <Link href="/settings" style={styles.link}>
-              Owner settings
+              {t("owner.hub.settings")}
             </Link>
           </View>
         ) : null}
         {feedback ? <Text style={styles.subtitle}>{feedback}</Text> : null}
-        <Button onPress={handleSignOut} title="Sign out" />
+        <Button onPress={handleSignOut} title={t("common.signOut")} />
       </View>
     </Screen>
   );

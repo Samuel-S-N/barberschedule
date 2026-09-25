@@ -1,7 +1,9 @@
 import { Link } from "expo-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
+import { errorMessage } from "../../src/i18n/errors";
 import { listOwnerBarberServices } from "../../src/features/services/api";
 import type { BarberService } from "../../src/features/services/types";
 import { listOwnerCustomers } from "../../src/features/customers/api";
@@ -35,6 +37,7 @@ async function loadShopId(supabase: ReturnType<typeof useSupabaseSession>["supab
 }
 
 export default function MonthlyCustomersScreen() {
+  const { t } = useTranslation();
   const { supabase } = useSupabaseSession();
   const today = formatInstantInShopTime(new Date()).localDate;
   const [barberServices, setBarberServices] = useState<BarberService[]>([]);
@@ -63,7 +66,10 @@ export default function MonthlyCustomersScreen() {
     const load = async () => {
       try {
         const nextShopId = await loadShopId(supabase);
-        if (!nextShopId) throw new Error("No shop found.");
+        if (!nextShopId) {
+          if (active) setFeedback(t("common.noShop"));
+          return;
+        }
         const [nextCustomers, nextBarberServices, nextSeries] = await Promise.all([
           listOwnerCustomers(supabase, nextShopId),
           listOwnerBarberServices(supabase, nextShopId),
@@ -75,7 +81,7 @@ export default function MonthlyCustomersScreen() {
         setBarberServices(nextBarberServices.filter((service) => service.active));
         setSeries(nextSeries);
       } catch (error) {
-        if (active) setFeedback(error instanceof Error ? error.message : "Unable to load recurring customers.");
+        if (active) setFeedback(errorMessage(error, t as never, t("owner.recurring.loadError")));
       } finally {
         if (active) setIsLoading(false);
       }
@@ -96,11 +102,11 @@ export default function MonthlyCustomersScreen() {
     const interval = Number(intervalWeeks);
     const specialPrice = specialPriceCents.trim() === "" ? null : Number(specialPriceCents);
     if (!shopId || !Number.isInteger(interval) || interval <= 0 || !Number.isInteger(specialPrice ?? 0) || (specialPrice ?? 0) < 0) {
-      setFeedback("Use a positive interval and a non-negative special price.");
+      setFeedback(t("owner.recurring.validation"));
       return;
     }
     if (!editing && (!selectedCustomerId || !selectedBarberServiceId)) {
-      setFeedback("Choose a customer and service.");
+      setFeedback(t("owner.recurring.chooseCustomerService"));
       return;
     }
 
@@ -126,10 +132,10 @@ export default function MonthlyCustomersScreen() {
       }
       await ensureRecurrenceWindow(supabase, shopId, addDays(today, 90));
       await refresh(shopId);
-      setFeedback(editing ? "Recurring booking updated." : "Recurring booking saved.");
+      setFeedback(editing ? t("owner.recurring.updated") : t("owner.recurring.saved"));
       resetForm();
     } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Unable to save recurring booking.");
+      setFeedback(errorMessage(error, t as never, t("owner.recurring.saveError")));
     } finally {
       setIsSaving(false);
     }
@@ -142,7 +148,7 @@ export default function MonthlyCustomersScreen() {
       await operation();
       await refresh();
     } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Unable to update recurring booking.");
+      setFeedback(errorMessage(error, t as never, t("owner.recurring.updateError")));
     } finally {
       setIsSaving(false);
     }
@@ -158,33 +164,38 @@ export default function MonthlyCustomersScreen() {
   return (
     <Screen style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text accessibilityRole="header" style={styles.title}>Recurring customers</Text>
-        <Link href="/recurrence-conflicts" style={styles.link}>Recurrence conflicts</Link>
-        <Text style={styles.note}>Edits preserve every materialized occurrence; only later materialization uses the new rule.</Text>
+        <Text accessibilityRole="header" style={styles.title}>{t("owner.recurring.title")}</Text>
+        <Link href="/recurrence-conflicts" style={styles.link}>{t("owner.recurring.conflictsLink")}</Link>
+        <Text style={styles.note}>{t("owner.recurring.note")}</Text>
         {!editing ? <>
-          <Text style={styles.sectionTitle}>Customer</Text>
+          <Text style={styles.sectionTitle}>{t("common.customer")}</Text>
           <View style={styles.controls}>{customers.map((customer) => <Button color={customer.id === selectedCustomerId ? "#2563eb" : undefined} key={customer.id} onPress={() => setSelectedCustomerId(customer.id)} title={customer.fullName} />)}</View>
-          <Text style={styles.sectionTitle}>Service</Text>
-          <View style={styles.controls}>{barberServices.map((service) => <Button color={service.id === selectedBarberServiceId ? "#2563eb" : undefined} key={service.id} onPress={() => setSelectedBarberServiceId(service.id)} title={`Service ${service.id}`} />)}</View>
-          <TextInput onChangeText={setLocalStartDate} placeholder="Start date (YYYY-MM-DD)" style={styles.input} testID="recurrence-start-date" value={localStartDate} />
-        </> : <Text style={styles.note}>Editing {editing.customerName || "this customer"}; the original local start date is preserved.</Text>}
-        <TextInput keyboardType="number-pad" onChangeText={setIntervalWeeks} placeholder="Every N weeks" style={styles.input} value={intervalWeeks} />
-        <TextInput onChangeText={setLocalStartTime} placeholder="Local time (HH:mm)" style={styles.input} value={localStartTime} />
-        <TextInput keyboardType="number-pad" onChangeText={setSpecialPriceCents} placeholder="Special price cents (optional)" style={styles.input} value={specialPriceCents} />
+          <Text style={styles.sectionTitle}>{t("common.service")}</Text>
+          <View style={styles.controls}>{barberServices.map((service) => <Button color={service.id === selectedBarberServiceId ? "#2563eb" : undefined} key={service.id} onPress={() => setSelectedBarberServiceId(service.id)} title={t("owner.recurring.serviceOption", { id: service.id })} />)}</View>
+          <TextInput onChangeText={setLocalStartDate} placeholder={t("owner.recurring.startDateLabel")} style={styles.input} testID="recurrence-start-date" value={localStartDate} />
+        </> : <Text style={styles.note}>{t("owner.recurring.editing", { name: editing.customerName || t("owner.recurring.thisCustomer") })}</Text>}
+        <TextInput keyboardType="number-pad" onChangeText={setIntervalWeeks} placeholder={t("owner.recurring.intervalLabel")} style={styles.input} value={intervalWeeks} />
+        <TextInput onChangeText={setLocalStartTime} placeholder={t("owner.recurring.timeLabel")} style={styles.input} value={localStartTime} />
+        <TextInput keyboardType="number-pad" onChangeText={setSpecialPriceCents} placeholder={t("owner.recurring.specialPriceLabel")} style={styles.input} value={specialPriceCents} />
         {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}
         {isLoading || isSaving ? <ActivityIndicator /> : null}
-        <Button disabled={isSaving} onPress={() => void save()} title={editing ? "Save recurrence" : "Create recurrence"} />
-        {editing ? <Button disabled={isSaving} onPress={resetForm} title="Cancel edit" /> : null}
-        <Text style={styles.sectionTitle}>Series</Text>
-        <TextInput onChangeText={setOccurrenceDate} placeholder="Occurrence date (YYYY-MM-DD)" style={styles.input} value={occurrenceDate} />
+        <Button disabled={isSaving} onPress={() => void save()} title={editing ? t("owner.recurring.saveEdit") : t("owner.recurring.create")} />
+        {editing ? <Button disabled={isSaving} onPress={resetForm} title={t("common.cancelEdit")} /> : null}
+        <Text style={styles.sectionTitle}>{t("owner.recurring.series")}</Text>
+        <TextInput onChangeText={setOccurrenceDate} placeholder={t("owner.recurring.occurrenceLabel")} style={styles.input} value={occurrenceDate} />
         {series.map((item) => <View key={item.id} style={styles.card}>
-          <Text style={styles.name}>{item.customerName || item.customerId} · every {item.intervalWeeks} week(s)</Text>
-          <Text>{item.localStartDate} · {item.localStartTime} · {item.specialPriceCents === null ? "catalog price" : `${item.specialPriceCents} cents`} · {item.active ? "active" : "inactive"}</Text>
+          <Text style={styles.name}>{t("owner.recurring.everyWeeks", { count: item.intervalWeeks, customer: item.customerName || item.customerId })}</Text>
+          <Text>{t("owner.recurring.detail", {
+            date: item.localStartDate,
+            price: item.specialPriceCents === null ? t("owner.recurring.catalogPrice") : t("owner.recurring.cents", { count: item.specialPriceCents }),
+            state: item.active ? t("owner.recurring.active") : t("owner.recurring.inactive"),
+            time: item.localStartTime,
+          })}</Text>
           <View style={styles.controls}>
-            <Button disabled={isSaving} onPress={() => startEdit(item)} title="Edit" />
-            {item.active ? <Button disabled={isSaving} onPress={() => void mutate(() => setRecurrenceSeriesActive(supabase, item.id, false))} title="Deactivate" /> : null}
-            <Button disabled={isSaving} onPress={() => void mutate(() => cancelRecurrenceOccurrence(supabase, item.id, occurrenceDate))} title="Cancel occurrence" />
-            <Button disabled={isSaving || !item.active} onPress={() => void mutate(() => endRecurrenceSeries(supabase, item.id))} title="End series" />
+            <Button disabled={isSaving} onPress={() => startEdit(item)} title={t("common.edit")} />
+            {item.active ? <Button disabled={isSaving} onPress={() => void mutate(() => setRecurrenceSeriesActive(supabase, item.id, false))} title={t("common.deactivate")} /> : null}
+            <Button disabled={isSaving} onPress={() => void mutate(() => cancelRecurrenceOccurrence(supabase, item.id, occurrenceDate))} title={t("owner.recurring.cancelOccurrence")} />
+            <Button disabled={isSaving || !item.active} onPress={() => void mutate(() => endRecurrenceSeries(supabase, item.id))} title={t("owner.recurring.endSeries")} />
           </View>
         </View>)}
       </ScrollView>

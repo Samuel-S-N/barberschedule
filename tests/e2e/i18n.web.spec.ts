@@ -119,6 +119,47 @@ test.describe("Spanish customer", () => {
   });
 });
 
+async function signInAsOwner(page: import("@playwright/test").Page, handler?: Parameters<typeof mockCustomerRest>[1]) {
+  await signInAsCustomer(page);
+  await page.route("**/rest/v1/**", async (route) => {
+    const url = new URL(route.request().url());
+    if (handler && (await handler(route, url)) === true) return;
+    if (url.pathname.endsWith("/rpc/get_current_profile")) return json(route, [{ full_name: "Browser Owner", role: "owner", user_id: "55555555-5555-4555-8555-555555555555" }]);
+    if (url.pathname.endsWith("/shops")) return json(route, [{ id: "11111111-1111-4111-8111-111111111111", name: "Browser Shop" }]);
+    if (url.pathname.endsWith("/rpc/list_owner_barbers")) return json(route, [{ active: true, archived_at: null, id: "22222222-2222-4222-8222-222222222222", name: "Browser Barber", shop_id: "11111111-1111-4111-8111-111111111111", user_id: null }]);
+    if (url.pathname.endsWith("/working_periods") || url.pathname.endsWith("/schedule_overrides")) return json(route, []);
+    await route.abort();
+  });
+}
+
+test.describe("Portuguese owner", () => {
+  test.use({ locale: "pt-BR" });
+
+  test("the owner hub and settings are in Portuguese", async ({ page }) => {
+    await signInAsOwner(page);
+
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: "Barberschedule MVP" })).toBeVisible();
+    await expect(page.getByText("Conectado como dono.")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Gerenciar agenda" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Gerenciar horários" })).toBeVisible();
+
+    await page.goto("/settings");
+    await expect(page.getByRole("heading", { name: "Configurações do dono" })).toBeVisible();
+    await expect(page.getByText("Fuso horário da barbearia: America/Sao_Paulo")).toBeVisible();
+  });
+
+  test("the owner schedule screen is in Portuguese", async ({ page }) => {
+    await signInAsOwner(page);
+
+    await page.goto("/schedule");
+    await expect(page.getByRole("heading", { name: "Horários" })).toBeVisible();
+    await expect(page.getByText("Barbeiro selecionado: Browser Barber")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Browser Barber (selecionado)" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Adicionar período de trabalho" })).toBeVisible();
+  });
+});
+
 test.describe("Unsupported device language", () => {
   test.use({ locale: "fr-FR" });
 

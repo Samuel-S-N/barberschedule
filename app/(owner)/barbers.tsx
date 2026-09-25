@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
+import { errorMessage } from "../../src/i18n/errors";
 import type { OwnerBarber } from "../../src/features/barbers/types";
 import {
   createBarber,
@@ -27,6 +29,7 @@ async function loadShopId(supabase: ReturnType<typeof useSupabaseSession>["supab
 }
 
 export default function OwnerBarbersScreen() {
+  const { t } = useTranslation();
   const { supabase } = useSupabaseSession();
   const [barbers, setBarbers] = useState<OwnerBarber[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -59,14 +62,14 @@ export default function OwnerBarbersScreen() {
         setShopId(nextShopId);
 
         if (!nextShopId) {
-          setFeedback("No shop found.");
+          setFeedback(t("common.noShop"));
           return;
         }
 
         setBarbers(await listOwnerBarbers(supabase, nextShopId));
       } catch (error) {
         if (active) {
-          setFeedback(error instanceof Error ? error.message : "Unable to load barbers.");
+          setFeedback(errorMessage(error, t as never, t("owner.barbers.loadError")));
         }
       } finally {
         if (active) {
@@ -105,7 +108,7 @@ export default function OwnerBarbersScreen() {
       resetForm();
       await refresh();
     } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Unable to save barber.");
+      setFeedback(errorMessage(error, t as never, t("owner.barbers.saveError")));
     } finally {
       setIsSaving(false);
     }
@@ -119,7 +122,7 @@ export default function OwnerBarbersScreen() {
       await setBarberActive(supabase, barber.id, !barber.active);
       await refresh();
     } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Unable to update barber.");
+      setFeedback(errorMessage(error, t as never, t("owner.barbers.updateError")));
     } finally {
       setIsSaving(false);
     }
@@ -129,11 +132,11 @@ export default function OwnerBarbersScreen() {
     <Screen style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>
-          Owner barbers
+          {t("owner.barbers.title")}
         </Text>
         <TextInput
           onChangeText={setName}
-          placeholder="Barber name"
+          placeholder={t("owner.barbers.nameLabel")}
           style={styles.input}
           value={name}
         />
@@ -142,27 +145,27 @@ export default function OwnerBarbersScreen() {
         <Button
           disabled={name.trim().length === 0 || isLoading || isSaving || !shopId}
           onPress={handleSave}
-          title={editingId ? "Save barber" : "Add barber"}
+          title={editingId ? t("owner.barbers.save") : t("owner.barbers.add")}
         />
-        {editingId ? <Button onPress={resetForm} title="Cancel edit" /> : null}
+        {editingId ? <Button onPress={resetForm} title={t("common.cancelEdit")} /> : null}
         <View style={styles.list}>
           {barbers.map((barber) => (
             <View key={barber.id} style={styles.card}>
               <Text style={styles.name}>
-                {barber.name} {barber.active ? "" : "(archived)"}
+                {barber.name} {barber.active ? "" : t("common.archived")}
               </Text>
               <Button
                 onPress={() => {
                   setEditingId(barber.id);
                   setName(barber.name);
                 }}
-                title="Edit"
+                title={t("common.edit")}
               />
               <Button
                 onPress={() => {
                   void handleToggle(barber);
                 }}
-                title={barber.active ? "Deactivate" : "Activate"}
+                title={barber.active ? t("common.deactivate") : t("common.activate")}
               />
             </View>
           ))}

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
+import { errorMessage } from "../../src/i18n/errors";
 import type { Customer } from "../../src/features/customers/types";
 import {
   createCustomer,
@@ -28,6 +30,7 @@ async function loadShopId(supabase: ReturnType<typeof useSupabaseSession>["supab
 }
 
 export default function OwnerCustomersScreen() {
+  const { t } = useTranslation();
   const { supabase } = useSupabaseSession();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -61,14 +64,14 @@ export default function OwnerCustomersScreen() {
         setShopId(nextShopId);
 
         if (!nextShopId) {
-          setFeedback("No shop found.");
+          setFeedback(t("common.noShop"));
           return;
         }
 
         setCustomers(await listOwnerCustomers(supabase, nextShopId));
       } catch (error) {
         if (active) {
-          setFeedback(error instanceof Error ? error.message : "Unable to load customers.");
+          setFeedback(errorMessage(error, t as never, t("owner.customers.loadError")));
         }
       } finally {
         if (active) {
@@ -115,7 +118,7 @@ export default function OwnerCustomersScreen() {
       resetForm();
       await refresh();
     } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Unable to save customer.");
+      setFeedback(errorMessage(error, t as never, t("owner.customers.saveError")));
     } finally {
       setIsSaving(false);
     }
@@ -129,7 +132,7 @@ export default function OwnerCustomersScreen() {
       await setCustomerActive(supabase, customer.id, !customer.active);
       await refresh();
     } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Unable to update customer.");
+      setFeedback(errorMessage(error, t as never, t("owner.customers.updateError")));
     } finally {
       setIsSaving(false);
     }
@@ -139,11 +142,11 @@ export default function OwnerCustomersScreen() {
     <Screen style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>
-          Owner customers
+          {t("owner.customers.title")}
         </Text>
         <TextInput
           onChangeText={setFullName}
-          placeholder="Customer name"
+          placeholder={t("owner.customers.nameLabel")}
           style={styles.input}
           value={fullName}
         />
@@ -152,13 +155,13 @@ export default function OwnerCustomersScreen() {
           autoComplete="email"
           keyboardType="email-address"
           onChangeText={setEmail}
-          placeholder="Email (optional)"
+          placeholder={t("owner.customers.emailLabel")}
           style={styles.input}
           value={email}
         />
         <TextInput
           onChangeText={setPhone}
-          placeholder="Phone (optional)"
+          placeholder={t("common.phoneOptional")}
           style={styles.input}
           value={phone}
         />
@@ -175,17 +178,17 @@ export default function OwnerCustomersScreen() {
             shopId,
           })}
           onPress={handleSave}
-          title={editingId ? "Save customer" : "Add customer"}
+          title={editingId ? t("owner.customers.save") : t("owner.customers.add")}
         />
-        {editingId ? <Button onPress={resetForm} title="Cancel edit" /> : null}
+        {editingId ? <Button onPress={resetForm} title={t("common.cancelEdit")} /> : null}
         <View style={styles.list}>
           {customers.map((customer) => (
             <View key={customer.id} style={styles.card}>
               <Text style={styles.name}>
-                {customer.fullName} {customer.active ? "" : "(archived)"}
+                {customer.fullName} {customer.active ? "" : t("common.archived")}
               </Text>
               <Text style={styles.meta}>
-                {customer.email ?? "no email"} · {customer.phone ?? "no phone"}
+                {customer.email ?? t("owner.customers.noEmail")} · {customer.phone ?? t("owner.customers.noPhone")}
               </Text>
               <Button
                 onPress={() => {
@@ -194,13 +197,13 @@ export default function OwnerCustomersScreen() {
                   setFullName(customer.fullName);
                   setPhone(customer.phone ?? "");
                 }}
-                title="Edit"
+                title={t("common.edit")}
               />
               <Button
                 onPress={() => {
                   void handleToggle(customer);
                 }}
-                title={customer.active ? "Deactivate" : "Activate"}
+                title={customer.active ? t("common.deactivate") : t("common.activate")}
               />
             </View>
           ))}

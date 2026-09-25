@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
+import { errorMessage } from "../../src/i18n/errors";
 import type { Service } from "../../src/features/services/types";
 import {
   createService,
@@ -31,6 +33,7 @@ async function loadShopId(supabase: ReturnType<typeof useSupabaseSession>["supab
 }
 
 export default function OwnerServicesScreen() {
+  const { t } = useTranslation();
   const { supabase } = useSupabaseSession();
   const [description, setDescription] = useState("");
   const [durationMinutes, setDurationMinutes] = useState("30");
@@ -65,14 +68,14 @@ export default function OwnerServicesScreen() {
         setShopId(nextShopId);
 
         if (!nextShopId) {
-          setFeedback("No shop found.");
+          setFeedback(t("common.noShop"));
           return;
         }
 
         setServices(await listOwnerServices(supabase, nextShopId));
       } catch (error) {
         if (active) {
-          setFeedback(error instanceof Error ? error.message : "Unable to load services.");
+          setFeedback(errorMessage(error, t as never, t("owner.services.loadError")));
         }
       } finally {
         if (active) {
@@ -121,7 +124,7 @@ export default function OwnerServicesScreen() {
       resetForm();
       await refresh();
     } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Unable to save service.");
+      setFeedback(errorMessage(error, t as never, t("owner.services.saveError")));
     } finally {
       setIsSaving(false);
     }
@@ -135,7 +138,7 @@ export default function OwnerServicesScreen() {
       await setServiceActive(supabase, service.id, !service.active);
       await refresh();
     } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Unable to update service.");
+      setFeedback(errorMessage(error, t as never, t("owner.services.updateError")));
     } finally {
       setIsSaving(false);
     }
@@ -145,31 +148,31 @@ export default function OwnerServicesScreen() {
     <Screen style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>
-          Owner services
+          {t("owner.services.title")}
         </Text>
         <TextInput
           onChangeText={setName}
-          placeholder="Service name"
+          placeholder={t("owner.services.nameLabel")}
           style={styles.input}
           value={name}
         />
         <TextInput
           keyboardType="numeric"
           onChangeText={setDurationMinutes}
-          placeholder="Duration in minutes"
+          placeholder={t("owner.services.durationLabel")}
           style={styles.input}
           value={durationMinutes}
         />
         <TextInput
           keyboardType="numeric"
           onChangeText={setPriceCents}
-          placeholder="Price in cents"
+          placeholder={t("owner.services.priceLabel")}
           style={styles.input}
           value={priceCents}
         />
         <TextInput
           onChangeText={setDescription}
-          placeholder="Description (optional)"
+          placeholder={t("owner.services.descriptionLabel")}
           style={styles.input}
           value={description}
         />
@@ -185,15 +188,15 @@ export default function OwnerServicesScreen() {
             || !isIntegerInput(priceCents)
           }
           onPress={handleSave}
-          title={editingId ? "Save service" : "Add service"}
+          title={editingId ? t("owner.services.save") : t("owner.services.add")}
         />
-        {editingId ? <Button onPress={resetForm} title="Cancel edit" /> : null}
+        {editingId ? <Button onPress={resetForm} title={t("common.cancelEdit")} /> : null}
         <View style={styles.list}>
           {services.map((service) => (
             <View key={service.id} style={styles.card}>
               <Text style={styles.name}>
-                {service.name} — {service.durationMinutes} min — {service.priceCents}¢{" "}
-                {service.active ? "" : "(archived)"}
+                {t("owner.services.summary", { minutes: service.durationMinutes, name: service.name, price: service.priceCents })}{" "}
+                {service.active ? "" : t("common.archived")}
               </Text>
               {service.description ? (
                 <Text style={styles.description}>{service.description}</Text>
@@ -206,13 +209,13 @@ export default function OwnerServicesScreen() {
                   setName(service.name);
                   setPriceCents(String(service.priceCents));
                 }}
-                title="Edit"
+                title={t("common.edit")}
               />
               <Button
                 onPress={() => {
                   void handleToggle(service);
                 }}
-                title={service.active ? "Deactivate" : "Activate"}
+                title={service.active ? t("common.deactivate") : t("common.activate")}
               />
             </View>
           ))}

@@ -1,7 +1,9 @@
 import { Link } from "expo-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Button, Linking, ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { errorMessage } from "../../src/i18n/errors";
 import { buildWhatsAppRecurrenceConflictUrl, listOwnerRecurrenceConflicts } from "../../src/features/recurrence/api";
 import type { RecurrenceConflict } from "../../src/features/recurrence/types";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
@@ -10,6 +12,7 @@ import { Screen } from "../../src/components/ui/Screen";
 type ShopRow = { id: string };
 
 export default function RecurrenceConflictsScreen() {
+  const { t } = useTranslation();
   const { supabase } = useSupabaseSession();
   const [conflicts, setConflicts] = useState<RecurrenceConflict[]>([]);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -22,11 +25,14 @@ export default function RecurrenceConflictsScreen() {
         const { data, error } = await supabase.from("shops").select("id").order("name", { ascending: true });
         if (error) throw error;
         const shopId = (data as ShopRow[] | null)?.[0]?.id;
-        if (!shopId) throw new Error("No shop found.");
+        if (!shopId) {
+          if (active) setFeedback(t("common.noShop"));
+          return;
+        }
         const nextConflicts = await listOwnerRecurrenceConflicts(supabase, shopId);
         if (active) setConflicts(nextConflicts);
       } catch (error) {
-        if (active) setFeedback(error instanceof Error ? error.message : "Unable to load recurrence conflicts.");
+        if (active) setFeedback(errorMessage(error, t as never, t("owner.conflicts.loadError")));
       } finally {
         if (active) setIsLoading(false);
       }
@@ -43,7 +49,7 @@ export default function RecurrenceConflictsScreen() {
       serviceName: conflict.serviceName,
     });
     if (!url) {
-      setFeedback("This customer has no phone number for WhatsApp.");
+      setFeedback(t("owner.conflicts.noPhone"));
       return;
     }
     await Linking.openURL(url);
@@ -52,15 +58,15 @@ export default function RecurrenceConflictsScreen() {
   return (
     <Screen style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text accessibilityRole="header" style={styles.title}>Recurrence conflicts</Text>
-        <Link href="/monthly-customers" style={styles.link}>Back to recurring customers</Link>
-        <Text style={styles.note}>Conflicts stay at their original local date/time; choose any replacement manually after contacting the customer.</Text>
+        <Text accessibilityRole="header" style={styles.title}>{t("owner.conflicts.title")}</Text>
+        <Link href="/monthly-customers" style={styles.link}>{t("owner.conflicts.back")}</Link>
+        <Text style={styles.note}>{t("owner.conflicts.note")}</Text>
         {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}
         {isLoading ? <ActivityIndicator /> : null}
         {conflicts.map((conflict) => <View key={conflict.id} style={styles.card}>
           <Text style={styles.name}>{conflict.customerName} · {conflict.serviceName}</Text>
           <Text>{conflict.occurrenceDate} · {conflict.localStartTime} · {conflict.reason} · {conflict.status}</Text>
-          <Button onPress={() => void openWhatsApp(conflict)} title="Open WhatsApp" />
+          <Button onPress={() => void openWhatsApp(conflict)} title={t("owner.conflicts.openWhatsApp")} />
         </View>)}
       </ScrollView>
     </Screen>
