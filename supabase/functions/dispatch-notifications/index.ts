@@ -1,3 +1,5 @@
+import { buildMessage } from "./messages.ts";
+
 declare const Deno: {
   env: { get(name: string): string | undefined };
   serve(handler: (request: Request) => Response | Promise<Response>): void;
@@ -8,6 +10,7 @@ type ClaimedNotification = {
   event_type: string;
   expo_push_token: string | null;
   id: string;
+  locale: string | null;
   max_attempts: number;
   payload: Record<string, unknown>;
 };
@@ -60,8 +63,7 @@ async function dispatchOne(notification: ClaimedNotification) {
     },
     body: JSON.stringify({
       to: notification.expo_push_token,
-      title: notification.event_type,
-      body: notification.event_type,
+      ...buildMessage(notification.event_type, notification.locale, notification.payload),
       data: notification.payload,
     }),
   });

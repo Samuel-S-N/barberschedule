@@ -19,6 +19,12 @@ describe("buildCalendarStripDays", () => {
     expect(days).toEqual([{ date: "2026-09-18", dayNumber: "18", weekdayLabel: "Fri" }]);
   });
 
+  it("labels weekdays in the requested language", () => {
+    const [first] = buildCalendarStripDays(new Date("2026-09-18T12:00:00Z"), 1, "pt");
+
+    expect(first.weekdayLabel).toMatch(/^sex/i);
+  });
+
   it("returns an empty array when count is 0", () => {
     expect(buildCalendarStripDays(new Date("2026-09-18T12:00:00Z"), 0)).toEqual([]);
   });

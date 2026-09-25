@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
+import { errorMessage } from "../../src/i18n/errors";
 import {
   deleteScheduleOverride,
   deleteWorkingPeriod,
@@ -38,17 +40,10 @@ async function loadShopId(supabase: ReturnType<typeof useSupabaseSession>["supab
   return (data as ShopRow[] | null)?.[0]?.id ?? null;
 }
 
-const weekdays = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
+const WEEKDAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
 
 export default function OwnerScheduleScreen() {
+  const { t } = useTranslation();
   const { supabase } = useSupabaseSession();
   const [barbers, setBarbers] = useState<OwnerBarber[]>([]);
   const [endTime, setEndTime] = useState("18:00");
@@ -96,7 +91,7 @@ export default function OwnerScheduleScreen() {
         setShopId(nextShopId);
 
         if (!nextShopId) {
-          setFeedback("No shop found.");
+          setFeedback(t("common.noShop"));
           return;
         }
 
@@ -111,7 +106,7 @@ export default function OwnerScheduleScreen() {
         await refresh(nextShopId);
       } catch (error) {
         if (active) {
-          setFeedback(error instanceof Error ? error.message : "Unable to load schedule.");
+          setFeedback(errorMessage(error, t as never, t("owner.schedule.loadError")));
         }
       } finally {
         if (active) {
@@ -152,7 +147,7 @@ export default function OwnerScheduleScreen() {
       await createWorkingPeriod(supabase, input);
       await refresh();
     } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Unable to add working period.");
+      setFeedback(errorMessage(error, t as never, t("owner.schedule.addPeriodError")));
     } finally {
       setIsSaving(false);
     }
@@ -177,7 +172,7 @@ export default function OwnerScheduleScreen() {
       });
       await refresh();
     } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Unable to add override.");
+      setFeedback(errorMessage(error, t as never, t("owner.schedule.addOverrideError")));
     } finally {
       setIsSaving(false);
     }
@@ -191,7 +186,7 @@ export default function OwnerScheduleScreen() {
       await remove();
       await refresh();
     } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Unable to remove schedule item.");
+      setFeedback(errorMessage(error, t as never, t("owner.schedule.removeError")));
     } finally {
       setIsSaving(false);
     }
@@ -201,11 +196,9 @@ export default function OwnerScheduleScreen() {
     <Screen style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>
-          Owner schedule
+          {t("owner.schedule.title")}
         </Text>
-        <Text style={styles.note}>
-          Working periods repeat weekly. Overrides are local shop dates; availability is Task 5.
-        </Text>
+        <Text style={styles.note}>{t("owner.schedule.note")}</Text>
         <View style={styles.barberList}>
           {barbers.map((barber) => (
             <Button
@@ -213,52 +206,58 @@ export default function OwnerScheduleScreen() {
               color={barber.id === selectedBarberId ? "#2563eb" : undefined}
               key={barber.id}
               onPress={() => setSelectedBarberId(barber.id)}
-              title={barber.id === selectedBarberId ? `${barber.name} (selected)` : barber.name}
+              title={barber.id === selectedBarberId ? t("common.selectedOption", { option: barber.name }) : barber.name}
             />
           ))}
         </View>
         {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}
         {isLoading || isSaving ? <ActivityIndicator /> : null}
-        {!selectedBarber ? <Text style={styles.note}>Add a barber before creating a schedule.</Text> : null}
+        {!selectedBarber ? <Text style={styles.note}>{t("owner.schedule.noBarber")}</Text> : null}
         {selectedBarber ? (
           <>
-            <Text style={styles.note}>Selected barber: {selectedBarber.name}</Text>
-            <Text style={styles.sectionTitle}>Weekly working periods — {selectedBarber.name}</Text>
+            <Text style={styles.note}>{t("owner.schedule.selectedBarber", { name: selectedBarber.name })}</Text>
+            <Text style={styles.sectionTitle}>{t("owner.schedule.periodsTitle", { name: selectedBarber.name })}</Text>
             <TextInput
               keyboardType="numeric"
               onChangeText={setWeekday}
-              placeholder="Weekday 1-7 (Monday-Sunday)"
+              placeholder={t("owner.schedule.weekdayLabel")}
               style={styles.input}
               value={weekday}
             />
             <TextInput
               onChangeText={setStartTime}
-              placeholder="Start time (HH:mm)"
+              placeholder={t("common.startTime")}
               style={styles.input}
               value={startTime}
             />
             <TextInput
               onChangeText={setEndTime}
-              placeholder="End time (HH:mm)"
+              placeholder={t("common.endTime")}
               style={styles.input}
               value={endTime}
             />
-            <Button disabled={isSaving} onPress={handleAddPeriod} title="Add working period" />
+            <Button disabled={isSaving} onPress={handleAddPeriod} title={t("owner.schedule.addPeriod")} />
             {selectedPeriods.map((period) => (
               <View key={period.id} style={styles.card}>
-                <Text>{weekdays[period.weekday - 1]} · {period.startTime}–{period.endTime}</Text>
+                <Text>
+                  {t("owner.schedule.periodLine", {
+                    end: period.endTime,
+                    start: period.startTime,
+                    weekday: t(`owner.schedule.weekdays.${WEEKDAY_KEYS[period.weekday - 1]}`),
+                  })}
+                </Text>
                 <Button
                   disabled={isSaving}
                   onPress={() => void handleDelete(() => deleteWorkingPeriod(supabase, period.id))}
-                  title="Remove"
+                  title={t("common.remove")}
                 />
               </View>
             ))}
 
-            <Text style={styles.sectionTitle}>Date overrides</Text>
+            <Text style={styles.sectionTitle}>{t("owner.schedule.overridesTitle")}</Text>
             <TextInput
               onChangeText={setLocalDate}
-              placeholder="Local date (YYYY-MM-DD)"
+              placeholder={t("common.localDate")}
               style={styles.input}
               value={localDate}
             />
@@ -267,13 +266,13 @@ export default function OwnerScheduleScreen() {
                 accessibilityState={{ selected: overrideKind === "block" }}
                 color={overrideKind === "block" ? "#2563eb" : undefined}
                 onPress={() => setOverrideKind("block")}
-                title={overrideKind === "block" ? "Block time (selected)" : "Block time"}
+                title={overrideKind === "block" ? t("common.selectedOption", { option: t("owner.schedule.blockTime") }) : t("owner.schedule.blockTime")}
               />
               <Button
                 accessibilityState={{ selected: overrideKind === "opening" }}
                 color={overrideKind === "opening" ? "#2563eb" : undefined}
                 onPress={() => setOverrideKind("opening")}
-                title={overrideKind === "opening" ? "Extra opening (selected)" : "Extra opening"}
+                title={overrideKind === "opening" ? t("common.selectedOption", { option: t("owner.schedule.extraOpening") }) : t("owner.schedule.extraOpening")}
               />
             </View>
             {overrideKind === "block" ? (
@@ -282,13 +281,13 @@ export default function OwnerScheduleScreen() {
                   accessibilityState={{ selected: isAllDayBlock }}
                   color={isAllDayBlock ? "#2563eb" : undefined}
                   onPress={() => setIsAllDayBlock(true)}
-                  title={isAllDayBlock ? "All day (selected)" : "All day"}
+                  title={isAllDayBlock ? t("common.selectedOption", { option: t("owner.schedule.allDayOption") }) : t("owner.schedule.allDayOption")}
                 />
                 <Button
                   accessibilityState={{ selected: !isAllDayBlock }}
                   color={!isAllDayBlock ? "#2563eb" : undefined}
                   onPress={() => setIsAllDayBlock(false)}
-                  title={!isAllDayBlock ? "Timed block (selected)" : "Timed block"}
+                  title={!isAllDayBlock ? t("common.selectedOption", { option: t("owner.schedule.timedBlock") }) : t("owner.schedule.timedBlock")}
                 />
               </View>
             ) : null}
@@ -296,30 +295,32 @@ export default function OwnerScheduleScreen() {
               <>
                 <TextInput
                   onChangeText={setOverrideStartTime}
-                  placeholder="Start time (HH:mm)"
+                  placeholder={t("common.startTime")}
                   style={styles.input}
                   value={overrideStartTime}
                 />
                 <TextInput
                   onChangeText={setOverrideEndTime}
-                  placeholder="End time (HH:mm)"
+                  placeholder={t("common.endTime")}
                   style={styles.input}
                   value={overrideEndTime}
                 />
               </>
             ) : null}
-            <Button disabled={isSaving} onPress={handleAddOverride} title="Add override" />
+            <Button disabled={isSaving} onPress={handleAddOverride} title={t("owner.schedule.addOverride")} />
             {selectedOverrides.map((override) => (
               <View key={override.id} style={styles.card}>
                 <Text>
-                  {override.localDate} · {override.kind} · {override.startTime
-                    ? `${override.startTime}–${override.endTime}`
-                    : "all day"}
+                  {t("owner.schedule.overrideLine", {
+                    date: override.localDate,
+                    kind: override.kind === "opening" ? t("owner.schedule.kindOpening") : t("owner.schedule.kindBlock"),
+                    time: override.startTime ? `${override.startTime}–${override.endTime}` : t("common.allDay"),
+                  })}
                 </Text>
                 <Button
                   disabled={isSaving}
                   onPress={() => void handleDelete(() => deleteScheduleOverride(supabase, override.id))}
-                  title="Remove"
+                  title={t("common.remove")}
                 />
               </View>
             ))}

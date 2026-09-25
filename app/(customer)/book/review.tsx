@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
 import { z } from "zod";
 
@@ -15,10 +16,13 @@ import { bookAppointment } from "../../../src/features/appointments/api";
 import { getAvailableSlotsQueryOptions } from "../../../src/features/availability/query";
 import type { AvailableSlot } from "../../../src/features/availability/types";
 import { listMyCustomers } from "../../../src/features/customers/api";
+import { errorMessage } from "../../../src/i18n/errors";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 import { Screen } from "../../../src/components/ui/Screen";
 
 const notesSchema = z.object({ notes: z.string().trim().max(500) });
+// The button is disabled until a time is chosen, so this is only a safety net; it is mapped to text in onError.
+const NO_SLOT_SELECTED = "NO_SLOT_SELECTED";
 
 function param(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";
@@ -31,6 +35,7 @@ export default function BookReviewScreen() {
   const localDate = param(params.localDate);
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const { profile, supabase } = useSupabaseSession();
   const [startsAt, setStartsAt] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
@@ -50,7 +55,7 @@ export default function BookReviewScreen() {
   const booking = useMutation({
     mutationFn: (submittedNotes: string) => {
       if (profile?.role !== "customer" || !customer || !startsAt) {
-        throw new Error("Choose an available time before booking.");
+        throw new Error(NO_SLOT_SELECTED);
       }
       return bookAppointment(supabase, {
         barberServiceId,
@@ -61,7 +66,11 @@ export default function BookReviewScreen() {
       });
     },
     onError: (error) => setFeedback({
-      message: error instanceof Error ? error.message : "Unable to book this appointment.",
+      message: errorMessage(
+        error,
+        t as never,
+        error instanceof Error && error.message === NO_SLOT_SELECTED ? t("book.chooseTime") : t("book.error"),
+      ),
       variant: "error",
     }),
     onSuccess: () => {
@@ -87,7 +96,7 @@ export default function BookReviewScreen() {
   const submit = () => {
     const parsed = notesSchema.safeParse({ notes });
     if (!parsed.success) {
-      setFeedback({ message: "Notes must be 500 characters or fewer.", variant: "error" });
+      setFeedback({ message: t("book.notesTooLong"), variant: "error" });
       return;
     }
     setFeedback(null);
@@ -99,7 +108,7 @@ export default function BookReviewScreen() {
       <ScrollView className="flex-1" testID="booking-review-scroll">
         <View className="items-center gap-4 p-5">
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
-            Review your booking
+            {t("book.reviewTitle")}
           </Text>
           <Text className="w-full max-w-[420px] text-base font-sans text-neutral-600">{localDate}</Text>
           <View className="w-full max-w-[420px] gap-2">
@@ -110,15 +119,15 @@ export default function BookReviewScreen() {
               </>
             ) : null}
             {availability.error ? (
-              <Text className="text-sm font-sans text-danger-500">Unable to load availability.</Text>
+              <Text className="text-sm font-sans text-danger-500">{t("book.timesError")}</Text>
             ) : null}
             {!availability.isLoading && !availability.error && slots.length === 0 ? (
-              <EmptyState title="No times available this day" />
+              <EmptyState title={t("book.noTimes")} />
             ) : null}
             {slots.length > 0 ? <TimeSlotPicker onSelectSlot={selectSlot} slots={slots} /> : null}
           </View>
           <View className="w-full max-w-[420px]">
-            <Input label="Notes (optional)" multiline onChangeText={setNotes} testID="booking-notes-input" value={notes} />
+            <Input label={t("book.notes")} multiline onChangeText={setNotes} testID="booking-notes-input" value={notes} />
           </View>
           <Toast
             message={feedback?.message ?? ""}
@@ -129,7 +138,7 @@ export default function BookReviewScreen() {
           <View className="w-full max-w-[420px]">
             <Button
               disabled={!startsAt || !customer || booking.isPending}
-              label="Confirm booking"
+              label={t("book.confirm")}
               onPress={submit}
             />
           </View>

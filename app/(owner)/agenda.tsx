@@ -1,7 +1,9 @@
 import { Link } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
+import { errorMessage } from "../../src/i18n/errors";
 import { listOwnerAgenda, listOwnerAgendaOverrides } from "../../src/features/appointments/agenda-query";
 import { setOwnerAppointmentStatus } from "../../src/features/appointments/owner-api";
 import { cancelAppointment } from "../../src/features/appointments/lifecycle";
@@ -26,12 +28,16 @@ function addDays(localDate: string, days: number) {
 }
 
 function agendaRange(localDate: string, view: AgendaView) {
-  if (view === "day") return { end: localDate, label: `Day: ${localDate}`, start: localDate };
-  if (view === "week") return { end: addDays(localDate, 6), label: `Week: ${localDate}`, start: localDate };
-  return { end: addDays(localDate, 30), label: `Month: ${localDate}`, start: localDate };
+  if (view === "day") return { end: localDate, start: localDate };
+  if (view === "week") return { end: addDays(localDate, 6), start: localDate };
+  return { end: addDays(localDate, 30), start: localDate };
 }
 
+const VIEW_LABEL = { day: "owner.agenda.viewDay", month: "owner.agenda.viewMonth", week: "owner.agenda.viewWeek" } as const;
+const RANGE_LABEL = { day: "owner.agenda.rangeDay", month: "owner.agenda.rangeMonth", week: "owner.agenda.rangeWeek" } as const;
+
 export default function OwnerAgendaScreen() {
+  const { t } = useTranslation();
   const { supabase } = useSupabaseSession();
   const [appointments, setAppointments] = useState<Awaited<ReturnType<typeof listOwnerAgenda>>>([]);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -63,12 +69,12 @@ export default function OwnerAgendaScreen() {
         if (!active) return;
         setShopId(nextShopId);
         if (!nextShopId) {
-          setFeedback("No shop found.");
+          setFeedback(t("common.noShop"));
           return;
         }
         await refresh(nextShopId);
       } catch (error) {
-        if (active) setFeedback(error instanceof Error ? error.message : "Unable to load agenda.");
+        if (active) setFeedback(errorMessage(error, t as never, t("owner.agenda.loadError")));
       } finally {
         if (active) setIsLoading(false);
       }
@@ -86,7 +92,7 @@ export default function OwnerAgendaScreen() {
       else await setOwnerAppointmentStatus(supabase, appointmentId, status);
       await refresh();
     } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Unable to update appointment.");
+      setFeedback(errorMessage(error, t as never, t("owner.agenda.updateError")));
     } finally {
       setIsSaving(false);
     }
@@ -106,44 +112,44 @@ export default function OwnerAgendaScreen() {
   return (
     <Screen style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text accessibilityRole="header" style={styles.title}>Owner agenda</Text>
-        <Link href="/appointment-form" style={styles.link}>New appointment</Link>
-        <Text style={styles.note}>Free times and blocks are enforced by the booking availability check.</Text>
-        <TextInput onChangeText={(value) => { setLocalDate(value); setOffset(0); }} placeholder="Local date (YYYY-MM-DD)" style={styles.input} value={localDate} />
+        <Text accessibilityRole="header" style={styles.title}>{t("owner.agenda.title")}</Text>
+        <Link href="/appointment-form" style={styles.link}>{t("owner.agenda.newAppointment")}</Link>
+        <Text style={styles.note}>{t("owner.agenda.note")}</Text>
+        <TextInput onChangeText={(value) => { setLocalDate(value); setOffset(0); }} placeholder={t("common.localDate")} style={styles.input} value={localDate} />
         <View style={styles.controls}>
           {(["day", "week", "month"] as const).map((item) => (
-            <Button key={item} color={view === item ? "#2563eb" : undefined} onPress={() => selectView(item)} title={`${item[0].toUpperCase()}${item.slice(1)}`} />
+            <Button key={item} color={view === item ? "#2563eb" : undefined} onPress={() => selectView(item)} title={t(VIEW_LABEL[item])} />
           ))}
         </View>
         <View style={styles.controls}>
-          <Button disabled={isLoading} onPress={() => moveRange(-1)} title="Previous range" />
-          <Button disabled={isLoading} onPress={() => moveRange(1)} title="Next range" />
+          <Button disabled={isLoading} onPress={() => moveRange(-1)} title={t("owner.agenda.previousRange")} />
+          <Button disabled={isLoading} onPress={() => moveRange(1)} title={t("owner.agenda.nextRange")} />
         </View>
-        <Text style={styles.note}>{range.label}</Text>
+        <Text style={styles.note}>{t(RANGE_LABEL[view], { date: localDate })}</Text>
         {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}
         {isLoading || isSaving ? <ActivityIndicator /> : null}
         {appointments.map((appointment) => (
           <View key={appointment.id} style={styles.card}>
             <Text style={styles.name}>{appointment.customerName} · {appointment.serviceNameSnapshot}</Text>
-            <Text>{appointment.barberName} · {appointment.startsAt} · {appointment.status}</Text>
+            <Text>{appointment.barberName} · {appointment.startsAt} · {t(`status.${appointment.status}`)}</Text>
             {appointment.status === "scheduled" || appointment.status === "confirmed" ? (
               <View style={styles.controls}>
-                <Button disabled={isSaving} onPress={() => void updateStatus(appointment.id, "completed")} title="Complete" />
-                <Button disabled={isSaving} onPress={() => void updateStatus(appointment.id, "no_show")} title="No-show" />
-                <Button disabled={isSaving} onPress={() => void updateStatus(appointment.id, "cancelled")} title="Cancel" />
+                <Button disabled={isSaving} onPress={() => void updateStatus(appointment.id, "completed")} title={t("owner.agenda.complete")} />
+                <Button disabled={isSaving} onPress={() => void updateStatus(appointment.id, "no_show")} title={t("status.no_show")} />
+                <Button disabled={isSaving} onPress={() => void updateStatus(appointment.id, "cancelled")} title={t("common.cancel")} />
               </View>
             ) : null}
           </View>
         ))}
         {overrides.map((override) => (
           <View key={override.id} style={styles.card}>
-            <Text style={styles.name}>{override.barberName} · {override.kind}</Text>
-            <Text>{override.localDate} · {override.startTime ? `${override.startTime}–${override.endTime}` : "all day"}</Text>
+            <Text style={styles.name}>{override.barberName} · {override.kind === "opening" ? t("owner.schedule.kindOpening") : t("owner.schedule.kindBlock")}</Text>
+            <Text>{override.localDate} · {override.startTime ? `${override.startTime}–${override.endTime}` : t("common.allDay")}</Text>
           </View>
         ))}
         <View style={styles.controls}>
-          <Button disabled={offset === 0 || isLoading} onPress={() => setOffset(Math.max(0, offset - 100))} title="Previous page" />
-          <Button disabled={appointments.length < 100 || isLoading} onPress={() => setOffset(offset + 100)} title="Next page" />
+          <Button disabled={offset === 0 || isLoading} onPress={() => setOffset(Math.max(0, offset - 100))} title={t("owner.agenda.previousPage")} />
+          <Button disabled={appointments.length < 100 || isLoading} onPress={() => setOffset(offset + 100)} title={t("owner.agenda.nextPage")} />
         </View>
       </ScrollView>
     </Screen>

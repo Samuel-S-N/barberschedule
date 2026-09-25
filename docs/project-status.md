@@ -18,6 +18,7 @@ Status: Tasks 1-13 implemented; credentialed EAS build remains deployment-only
 - Task 11 — deterministic fictional seed, complete RLS matrix audit, seed contract tests, and database/security boundary docs
 - Task 12 — password-reset/profile/settings routes, EAS/static-web configuration, release checks, and authenticated Web E2E coverage
 - Task 13 — clean-state regression gate, acceptance matrix, decision records, and final release/testing handoff docs
+- Task 15 — device language: the whole app (customer, auth, legal, owner screens, error messages) follows the device language in Portuguese (Brazil), English or Spanish, with English as the fallback; push notifications now carry real text in the token's language instead of the raw event code (see `docs/decisions/012-device-language.md`).
 - Task 14 — customer frontend: signup, redesigned auth, customer tab navigation (Home/Book/Agenda/Profile), agenda calendar with cancel/reschedule, profile edit, LGPD consent/export/account deletion, and the `0023` self-service RPCs (see `docs/decisions/011-customer-self-service-and-lgpd.md`). Also fixed two defects that left the design system unstyled: `global.css` was never imported, and Reanimated animated components dropped NativeWind classes on web.
 
 ## Current MVP boundary
@@ -72,6 +73,13 @@ Verified on 2026-08-13:
 - Task 12 Web E2E: `npm run test:e2e:web` — PASS (`9` Playwright tests); static export: `npm run export:web` — PASS (`42` routes).
 - Task 13 clean-state gate: `HOME=/tmp SUPABASE_DISABLE_TELEMETRY=1 npx supabase db reset --local` followed by `HOME=/tmp SUPABASE_DISABLE_TELEMETRY=1 npm run verify` — PASS: `20` Jest suites/`76` tests, `3` Node Web-runner tests, and `264` pgTAP assertions across `10` files.
 
+Verified on 2026-09-25 (Task 15), on a freshly reset local database:
+
+- `npm run verify` — PASS: typecheck, lint, Jest (`62` suites / `282` tests), `3` Node Web-runner tests, and `294` pgTAP assertions across `12` files (including `012_notification_locale.sql`, `9` assertions).
+- `npm run test:e2e:web` — PASS (`36` Playwright tests; existing specs run with the browser locale pinned to `en-US`, plus new `pt-BR`, `es-ES` and unsupported-language fallback specs).
+- `npm run export:web` — PASS.
+- The `dispatch-notifications` function was exercised on the local stack with `supabase functions serve`; screens were checked in a browser at 360px in all three languages. Details and limits are in `docs/decisions/012-device-language.md`.
+
 Verified on 2026-09-23 (Task 14), on a freshly reset local database:
 
 - `npm run verify` — PASS: typecheck, lint, Jest (`49` suites / `202` tests at the time of the gate), `3` Node Web-runner tests, and `285` pgTAP assertions across `11` files (including `011_customer_self_service.sql`, `21` assertions; `010_full_rls.sql` passes on this branch).
@@ -82,6 +90,8 @@ Verified on 2026-09-23 (Task 14), on a freshly reset local database:
 No Web smoke was run for Task 5 because it changes no route or rendered UI; the availability client is covered at the RPC/query contract boundary.
 
 ## Known limitations
+
+- Task 15: push token registration is not wired into the app yet, so the device language only reaches the server once it is; English and Spanish copy (legal and notification text especially) needs a native reader; recurrence conflict `reason`/`status` codes on the owner screen are still shown raw.
 
 - Task 14: the `delete-account` Edge Function has no automated test (the repo has no Deno runner); it was verified manually against the local stack (CORS preflight, 401, and a full signup → bootstrap → delete → anonymized-row check, see `docs/decisions/011-customer-self-service-and-lgpd.md`); customer e2e specs mock Supabase REST, so real Auth/RLS execution for the new RPCs is covered by pgTAP only. The agenda calendar strip starts at today, so a day with an appointment can sit off-screen on narrow phones. Barber-role and owner-screen retrofits are separate cycles.
 

@@ -1,7 +1,9 @@
 import { Link } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
+import { errorMessage } from "../../src/i18n/errors";
 import { getAvailableSlots } from "../../src/features/availability/api";
 import { bookOwnerAppointment } from "../../src/features/appointments/owner-api";
 import { listOwnerBarbers } from "../../src/features/barbers/api";
@@ -25,6 +27,7 @@ async function loadShopId(supabase: ReturnType<typeof useSupabaseSession>["supab
 }
 
 export default function OwnerAppointmentFormScreen() {
+  const { t } = useTranslation();
   const { supabase } = useSupabaseSession();
   const [barbers, setBarbers] = useState<OwnerBarber[]>([]);
   const [barberServices, setBarberServices] = useState<BarberService[]>([]);
@@ -46,7 +49,10 @@ export default function OwnerAppointmentFormScreen() {
     const load = async () => {
       try {
         const shopId = await loadShopId(supabase);
-        if (!shopId) throw new Error("No shop found.");
+        if (!shopId) {
+          if (active) setFeedback(t("common.noShop"));
+          return;
+        }
         const [nextBarbers, nextBarberServices, nextCustomers, nextServices] = await Promise.all([
           listOwnerBarbers(supabase, shopId),
           listOwnerBarberServices(supabase, shopId),
@@ -59,7 +65,7 @@ export default function OwnerAppointmentFormScreen() {
         setCustomers(nextCustomers.filter((customer) => customer.active));
         setServices(nextServices.filter((service) => service.active));
       } catch (error) {
-        if (active) setFeedback(error instanceof Error ? error.message : "Unable to load appointment form.");
+        if (active) setFeedback(errorMessage(error, t as never, t("owner.appointmentForm.loadError")));
       } finally {
         if (active) setIsLoading(false);
       }
@@ -88,7 +94,7 @@ export default function OwnerAppointmentFormScreen() {
       }));
       setSelectedStartsAt(null);
     } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Unable to load available times.");
+      setFeedback(errorMessage(error, t as never, t("owner.appointmentForm.timesError")));
     } finally {
       setIsSaving(false);
     }
@@ -105,11 +111,11 @@ export default function OwnerAppointmentFormScreen() {
         notes: notes.trim() || null,
         startsAt: selectedStartsAt,
       });
-      setFeedback("Appointment created.");
+      setFeedback(t("owner.appointmentForm.created"));
       setSlots([]);
       setSelectedStartsAt(null);
     } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Unable to create appointment.");
+      setFeedback(errorMessage(error, t as never, t("owner.appointmentForm.createError")));
     } finally {
       setIsSaving(false);
     }
@@ -118,19 +124,19 @@ export default function OwnerAppointmentFormScreen() {
   return (
     <Screen style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text accessibilityRole="header" style={styles.title}>New owner appointment</Text>
-        <Link href="/agenda" style={styles.link}>Back to agenda</Link>
-        <Text style={styles.sectionTitle}>Customer</Text>
+        <Text accessibilityRole="header" style={styles.title}>{t("owner.appointmentForm.title")}</Text>
+        <Link href="/agenda" style={styles.link}>{t("owner.appointmentForm.backToAgenda")}</Link>
+        <Text style={styles.sectionTitle}>{t("common.customer")}</Text>
         <View style={styles.controls}>{customers.map((customer) => <Button color={customer.id === selectedCustomerId ? "#2563eb" : undefined} key={customer.id} onPress={() => setSelectedCustomerId(customer.id)} title={customer.fullName} />)}</View>
-        <Text style={styles.sectionTitle}>Service</Text>
+        <Text style={styles.sectionTitle}>{t("common.service")}</Text>
         <View style={styles.controls}>{choices.map(({ barber, barberService, service }) => <Button color={barberService.id === selectedBarberServiceId ? "#2563eb" : undefined} key={barberService.id} onPress={() => setSelectedBarberServiceId(barberService.id)} title={`${barber?.name} · ${service?.name}`} />)}</View>
-        <TextInput onChangeText={setLocalDate} placeholder="Local date (YYYY-MM-DD)" style={styles.input} testID="owner-appointment-date" value={localDate} />
-        <Button disabled={!selectedBarberService || isSaving} onPress={() => void loadSlots()} title="Load available times" />
+        <TextInput onChangeText={setLocalDate} placeholder={t("common.localDate")} style={styles.input} testID="owner-appointment-date" value={localDate} />
+        <Button disabled={!selectedBarberService || isSaving} onPress={() => void loadSlots()} title={t("owner.appointmentForm.loadTimes")} />
         <View style={styles.controls}>{slots.map((slot) => <Button color={slot.startsAt === selectedStartsAt ? "#2563eb" : undefined} key={slot.startsAt} onPress={() => setSelectedStartsAt(slot.startsAt)} title={slot.localTime} />)}</View>
-        <TextInput onChangeText={setNotes} placeholder="Notes (optional)" style={styles.input} value={notes} />
+        <TextInput onChangeText={setNotes} placeholder={t("book.notes")} style={styles.input} value={notes} />
         {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}
         {isLoading || isSaving ? <ActivityIndicator /> : null}
-        <Button disabled={!selectedBarberServiceId || !selectedCustomerId || !selectedStartsAt || isSaving} onPress={() => void createAppointment()} title="Create appointment" />
+        <Button disabled={!selectedBarberServiceId || !selectedCustomerId || !selectedStartsAt || isSaving} onPress={() => void createAppointment()} title={t("owner.appointmentForm.create")} />
       </ScrollView>
     </Screen>
   );

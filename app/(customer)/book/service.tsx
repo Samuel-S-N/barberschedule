@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 
 import { EmptyState } from "../../../src/components/domain/EmptyState";
@@ -25,6 +26,7 @@ export default function BookServiceScreen() {
   const barberId = param(rawBarberId);
   const shopId = param(rawShopId);
   const router = useRouter();
+  const { t } = useTranslation();
   const { supabase } = useSupabaseSession();
   const services = useQuery({
     enabled: Boolean(barberId),
@@ -44,7 +46,7 @@ export default function BookServiceScreen() {
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
       <View className="flex-1 items-center gap-4 p-5">
         <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
-          Choose a service
+          {t("book.serviceTitle")}
         </Text>
         <View className="w-full max-w-[420px] gap-3">
           {services.isLoading ? (
@@ -54,10 +56,10 @@ export default function BookServiceScreen() {
             </>
           ) : null}
           {services.error ? (
-            <Text className="text-sm font-sans text-danger-500">Unable to load services.</Text>
+            <Text className="text-sm font-sans text-danger-500">{t("book.servicesError")}</Text>
           ) : null}
           {!services.isLoading && !services.error && services.data?.length === 0 ? (
-            <EmptyState title="No services available" />
+            <EmptyState title={t("book.noServices")} />
           ) : null}
           {services.data?.map((service) => {
             const effective = resolveEffectiveServiceFields({
@@ -71,7 +73,7 @@ export default function BookServiceScreen() {
               <ServiceCard
                 durationMinutes={effective.durationMinutes}
                 key={service.id}
-                name={service.services?.name ?? "Service"}
+                name={service.services?.name ?? t("book.fallbackService")}
                 onPress={() => router.push(
                   `/book/date?shopId=${encodeURIComponent(shopId)}&barberId=${encodeURIComponent(barberId)}&barberServiceId=${encodeURIComponent(service.id)}`,
                 )}

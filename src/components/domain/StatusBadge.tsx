@@ -1,4 +1,5 @@
 import { Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 export type AppointmentStatus = "scheduled" | "confirmed" | "completed" | "cancelled" | "no_show";
 
@@ -6,14 +7,6 @@ export type StatusBadgeProps = {
   status: AppointmentStatus;
   label?: string;
   testID?: string;
-};
-
-const DEFAULT_LABEL: Record<AppointmentStatus, string> = {
-  scheduled: "Scheduled",
-  confirmed: "Confirmed",
-  completed: "Completed",
-  cancelled: "Cancelled",
-  no_show: "No-show",
 };
 
 const CLASSNAME: Record<AppointmentStatus, string> = {
@@ -41,7 +34,8 @@ const DOT_CLASSNAME: Record<AppointmentStatus, string> = {
 };
 
 export function StatusBadge({ status, label, testID }: StatusBadgeProps) {
-  const resolvedLabel = label ?? DEFAULT_LABEL[status];
+  const { t } = useTranslation();
+  const resolvedLabel = label ?? t(`status.${status}`);
 
   return (
     <View

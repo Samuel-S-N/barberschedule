@@ -34,6 +34,10 @@ describe("agenda view helpers", () => {
     });
   });
 
+  it("formats the date label in the requested language", () => {
+    expect(formatAppointmentLabels(appointment("a", "2026-08-17T12:00:00Z"), "pt").dateLabel).toMatch(/^seg.*17.*ago/i);
+  });
+
   it("marks days that have appointments", () => {
     const grouped = groupByLocalDate([appointment("a", "2026-08-18T13:00:00Z")]);
 

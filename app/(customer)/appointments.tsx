@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
 
 import { AppointmentCard } from "../../src/components/domain/AppointmentCard";
@@ -13,6 +14,8 @@ import { groupByLocalDate, markAppointmentDays, pickInitialDate } from "../../sr
 import { cancelAppointment, isLifecycleWindowOpen, listMyAppointments } from "../../src/features/appointments/lifecycle";
 import type { Appointment } from "../../src/features/appointments/types";
 import { useAppointmentCards } from "../../src/features/appointments/use-appointment-cards";
+import { errorMessage } from "../../src/i18n/errors";
+import { useLanguage } from "../../src/i18n/use-language";
 import { buildCalendarStripDays } from "../../src/lib/dates/calendar-strip-days";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { Screen } from "../../src/components/ui/Screen";
@@ -22,6 +25,8 @@ const DAYS_AHEAD = 30;
 export default function AgendaScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
+  const language = useLanguage();
   const { supabase } = useSupabaseSession();
   const [segment, setSegment] = useState<"upcoming" | "history">("upcoming");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -34,17 +39,20 @@ export default function AgendaScreen() {
   const toCardProps = useAppointmentCards([...(upcoming.data ?? []), ...(history.data ?? [])]);
 
   const grouped = useMemo(() => groupByLocalDate(upcoming.data ?? []), [upcoming.data]);
-  const days = useMemo(() => markAppointmentDays(buildCalendarStripDays(new Date(), DAYS_AHEAD), grouped), [grouped]);
+  const days = useMemo(
+    () => markAppointmentDays(buildCalendarStripDays(new Date(), DAYS_AHEAD, language), grouped),
+    [grouped, language],
+  );
   const selectedDate = pickedDate ?? pickInitialDate(days, grouped);
   const dayAppointments = grouped.get(selectedDate) ?? [];
 
   const cancel = useMutation({
     mutationFn: (appointmentId: string) => cancelAppointment(supabase, appointmentId),
-    onError: (error) => setFeedback({ message: error instanceof Error ? error.message : "Unable to cancel.", variant: "error" }),
+    onError: (error) => setFeedback({ message: errorMessage(error, t as never, t("appointments.cancelError")), variant: "error" }),
     onSuccess: () => {
       setConfirmingId(null);
       setSelectedId(null);
-      setFeedback({ message: "Appointment cancelled.", variant: "success" });
+      setFeedback({ message: t("appointments.cancelled"), variant: "success" });
       void queryClient.invalidateQueries({ queryKey: ["my-appointments"] });
     },
   });
@@ -62,26 +70,24 @@ export default function AgendaScreen() {
         {withActions && selectedId === appointment.id ? (
           <View className="gap-2 px-1">
             {!open ? (
-              <Text className="text-sm font-sans text-neutral-600">
-                Changes are only allowed until 90 minutes before the start.
-              </Text>
+              <Text className="text-sm font-sans text-neutral-600">{t("appointments.locked")}</Text>
             ) : null}
             {confirmingId === appointment.id ? (
               <>
                 <Button
                   disabled={cancel.isPending}
-                  label="Confirm cancellation"
+                  label={t("appointments.confirmCancel")}
                   onPress={() => cancel.mutate(appointment.id)}
                   testID={`appointment-cancel-confirm-${appointment.id}`}
                   variant="danger"
                 />
-                <Button label="Keep appointment" onPress={() => setConfirmingId(null)} variant="ghost" />
+                <Button label={t("appointments.keep")} onPress={() => setConfirmingId(null)} variant="ghost" />
               </>
             ) : (
               <>
                 <Button
                   disabled={!open}
-                  label="Reschedule"
+                  label={t("appointments.reschedule")}
                   onPress={() => router.push(
                     `/reschedule?appointmentId=${encodeURIComponent(appointment.id)}&barberId=${encodeURIComponent(appointment.barberId)}&barberServiceId=${encodeURIComponent(appointment.barberServiceId)}`,
                   )}
@@ -90,7 +96,7 @@ export default function AgendaScreen() {
                 />
                 <Button
                   disabled={!open}
-                  label="Cancel appointment"
+                  label={t("appointments.cancel")}
                   onPress={() => setConfirmingId(appointment.id)}
                   testID={`appointment-cancel-${appointment.id}`}
                   variant="danger"
@@ -110,17 +116,17 @@ export default function AgendaScreen() {
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
       <ScrollView className="flex-1">
         <View className="items-center gap-4 p-5">
-          <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">Agenda</Text>
+          <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">{t("appointments.title")}</Text>
           <View className="w-full max-w-[420px] flex-row gap-2">
             <Button
-              label="Upcoming"
+              label={t("appointments.upcoming")}
               onPress={() => setSegment("upcoming")}
               size="sm"
               testID="agenda-segment-upcoming"
               variant={segment === "upcoming" ? "dark" : "outline"}
             />
             <Button
-              label="History"
+              label={t("appointments.history")}
               onPress={() => setSegment("history")}
               size="sm"
               testID="agenda-segment-history"
@@ -134,12 +140,12 @@ export default function AgendaScreen() {
           ) : null}
           <View className="w-full max-w-[420px] gap-3">
             {loading ? <SkeletonBlock height={120} width={320} /> : null}
-            {failed ? <Text className="text-sm font-sans text-danger-500">Unable to load appointments.</Text> : null}
+            {failed ? <Text className="text-sm font-sans text-danger-500">{t("appointments.loadError")}</Text> : null}
             {!loading && !failed && segment === "upcoming" && dayAppointments.length === 0 ? (
-              <EmptyState title="No appointments this day" />
+              <EmptyState title={t("appointments.emptyDay")} />
             ) : null}
             {!loading && !failed && segment === "history" && (history.data?.length ?? 0) === 0 ? (
-              <EmptyState title="No past appointments yet" />
+              <EmptyState title={t("appointments.emptyHistory")} />
             ) : null}
             {segment === "upcoming"
               ? dayAppointments.map((appointment) => renderAppointment(appointment, true))

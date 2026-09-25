@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { Language } from "../../i18n/language";
+
 type NotificationsSupabaseClient = Pick<SupabaseClient, "rpc">;
 
 export type NotificationToken = {
@@ -12,9 +14,11 @@ export async function registerNotificationToken(
   supabase: NotificationsSupabaseClient,
   expoPushToken: string,
   platform: string | null = null,
+  locale: Language | null = null,
 ) {
   const { data, error } = await supabase.rpc("register_notification_token", {
     target_expo_push_token: expoPushToken,
+    target_locale: locale,
     target_platform: platform,
   });
 

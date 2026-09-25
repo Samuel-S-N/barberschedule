@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
 
 import { AppointmentCard } from "../../src/components/domain/AppointmentCard";
@@ -16,6 +17,7 @@ import { Screen } from "../../src/components/ui/Screen";
 
 export default function CustomerHomeScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { booked } = useLocalSearchParams<{ booked?: string }>();
   const [confirmed, setConfirmed] = useState(false);
   const { supabase } = useSupabaseSession();
@@ -35,17 +37,17 @@ export default function CustomerHomeScreen() {
       <ScrollView className="flex-1">
         <View className="items-center gap-4 p-5">
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
-            {firstName ? `Hi, ${firstName}` : "Welcome"}
+            {firstName ? t("home.greeting", { name: firstName }) : t("home.welcome")}
           </Text>
           <View className="w-full max-w-[420px] gap-3">
-            <Text className="text-sm font-sans-medium text-neutral-600">Your next appointment</Text>
+            <Text className="text-sm font-sans-medium text-neutral-600">{t("home.nextAppointment")}</Text>
             {upcoming.isLoading ? <SkeletonBlock height={120} width={320} /> : null}
-            {upcoming.error ? <Text className="text-sm font-sans text-danger-500">Unable to load appointments.</Text> : null}
-            {!upcoming.isLoading && !upcoming.error && !next ? <EmptyState title="No upcoming appointments" /> : null}
+            {upcoming.error ? <Text className="text-sm font-sans text-danger-500">{t("home.loadError")}</Text> : null}
+            {!upcoming.isLoading && !upcoming.error && !next ? <EmptyState title={t("home.empty")} /> : null}
             {next ? <AppointmentCard {...toCardProps(next)} onPress={() => router.push("/appointments")} testID="home-next-appointment" /> : null}
-            <Button label="Book an appointment" onPress={() => router.push("/book")} size="lg" />
+            <Button label={t("home.bookCta")} onPress={() => router.push("/book")} size="lg" />
           </View>
-          <Toast message="Booking confirmed." onDismiss={() => setConfirmed(false)} variant="success" visible={confirmed} />
+          <Toast message={t("home.bookingConfirmed")} onDismiss={() => setConfirmed(false)} variant="success" visible={confirmed} />
         </View>
       </ScrollView>
     </Screen>

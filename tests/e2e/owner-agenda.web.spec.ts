@@ -141,10 +141,11 @@ test("an owner can mark an appointment as no-show or cancelled", async ({ page }
   await expect(page.getByText("Cancelled Customer · Browser Cut")).toBeVisible();
 
   await page.getByRole("button", { name: "No-show" }).first().click();
-  await expect(page.getByText("no_show")).toBeVisible();
+  // The status is shown translated ("No-show"), no longer as the raw `no_show` code.
+  await expect(page.getByText(/ · No-show$/)).toBeVisible();
   expect(statusPayload).toEqual({ appointment_id: "appointment-no-show", new_status: "no_show" });
 
   await page.getByRole("button", { name: "Cancel" }).click();
-  await expect(page.getByText("cancelled")).toBeVisible();
+  await expect(page.getByText(/ · Cancelled$/)).toBeVisible();
   expect(cancelPayload).toEqual({ appointment_id: "appointment-cancelled" });
 });
