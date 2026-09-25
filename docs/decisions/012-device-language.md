@@ -24,7 +24,7 @@ All UI text was hard-coded in English, dates used fixed `en-US`/`en-GB` formatte
 
 ## Known limitations / open items
 
-- **Push registration is not wired into the app.** Nothing calls `registerNotificationToken`/`saveExpoPushToken` yet (there is no `expo-notifications` usage), so the language will only reach the server once registration exists. The client contract is ready.
+- **Push registration is not wired into the app.** Nothing calls `registerNotificationToken`/`saveExpoPushToken` yet (there is no `expo-notifications` usage), so the language will only reach the server once registration exists. The client contract is ready. When registration is wired it must also re-register on a language change, otherwise the stored locale goes stale until the next registration (a two-argument re-registration keeps the stored locale by design).
 - **Translation review:** Portuguese was written as the reference; the English and Spanish texts (legal text and notification copy especially) should be read by a native speaker, and counsel's review of the legal text now covers three languages.
 - **Owner-only technical values** such as recurrence conflict `reason`/`status` codes are still shown raw. The WhatsApp message to customers (`buildWhatsAppRecurrenceConflictUrl`) is written in Portuguese, the customers' language.
 - **Date formatting** relies on `Intl.DateTimeFormat`; Hermes on Android and native iOS can render month/weekday abbreviations slightly differently from Node. The formats are asserted in Jest and were checked in a browser, not on a device.

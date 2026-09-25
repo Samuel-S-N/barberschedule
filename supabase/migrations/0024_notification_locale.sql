@@ -31,7 +31,7 @@ begin
   on conflict (expo_push_token) do update
   set user_id = excluded.user_id,
       platform = excluded.platform,
-      locale = excluded.locale,
+      locale = case when target_locale is null then public.notification_tokens.locale else excluded.locale end,
       active = true,
       last_seen_at = clock_timestamp(),
       updated_at = clock_timestamp()

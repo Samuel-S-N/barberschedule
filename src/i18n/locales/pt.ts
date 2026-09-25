@@ -82,6 +82,7 @@ export const pt: DeepStringRecord<typeof en> = {
     emptyDay: "Nenhum agendamento neste dia",
     emptyHistory: "Nenhum agendamento anterior ainda",
     fallbackBarber: "Barbeiro",
+    cardLabel: "{{service}} com {{barber}}, {{date}} às {{time}}, {{shop}}",
     fallbackShop: "Barbearia",
     history: "Histórico",
     keep: "Manter agendamento",

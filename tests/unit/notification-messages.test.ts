@@ -37,6 +37,17 @@ describe("buildMessage", () => {
     expect(body).toContain("09:00");
   });
 
+  it.each([
+    ["appointment.cancelled", "pt", "Agendamento de Hidratação em"],
+    ["appointment.cancelled", "es", "Cita de Hidratação el"],
+    ["appointment.rescheduled", "pt", "Agendamento de Hidratação remarcado"],
+    ["appointment.rescheduled", "es", "Cita de Hidratação reprogramada"],
+  ])("%s in %s keeps the noun outside the service name", (eventType, locale, start) => {
+    const body = buildMessage(eventType, locale, { ...appointment, service_name: "Hidratação" }).body;
+
+    expect(body.startsWith(start)).toBe(true);
+  });
+
   it("formats the time in the shop timezone, not UTC", () => {
     expect(buildMessage("appointment.reminder", "en", appointment).body).toContain("09:00");
     expect(buildMessage("appointment.reminder", "en", appointment, "UTC").body).toContain("12:00");

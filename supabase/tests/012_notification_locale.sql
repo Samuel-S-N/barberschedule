@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(8);
+select plan(9);
 
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at)
 values ('00000000-0000-0000-0000-000000000000', 'b0000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 't12-user@example.com', 'password-hash', now());
@@ -16,6 +16,7 @@ select is((select locale from public.register_notification_token('ExponentPushTo
 select is((select locale from public.register_notification_token('ExponentPushToken[t12b]', 'ios', 'fr')), 'en', 'unsupported locales fall back to en');
 select is((select locale from public.register_notification_token('ExponentPushToken[t12c]', 'ios', null)), 'en', 'a missing locale is stored as en');
 select is((select locale from public.register_notification_token('ExponentPushToken[t12d]', 'ios')), 'en', 'the old two-argument call still works');
+select is((select locale from public.register_notification_token('ExponentPushToken[t12a]', 'ios')), 'es', 'a two-argument re-registration keeps the stored locale');
 
 reset role;
 delete from public.notification_tokens

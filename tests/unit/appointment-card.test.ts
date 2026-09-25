@@ -25,6 +25,23 @@ describe("AppointmentCard", () => {
     expect(view.getByText("Confirmed")).toBeTruthy();
   });
 
+  it("describes the card to screen readers in the device language", async () => {
+    const i18n = jest.requireActual("../../src/i18n").default;
+
+    await i18n.changeLanguage("pt");
+    try {
+      const view = await render(
+        React.createElement(AppointmentCard, { ...baseProps, status: "confirmed", testID: "card" }),
+      );
+
+      expect(view.getByTestId("card").props.accessibilityLabel).toBe(
+        "Cut + Beard com João Silva, Thu, Aug 18 às 14:30, Barbearia Alfa",
+      );
+    } finally {
+      await i18n.changeLanguage("en");
+    }
+  });
+
   it("shows only the shop name when shopAddress is not provided", async () => {
     const view = await render(
       React.createElement(AppointmentCard, { ...baseProps, shopAddress: undefined, status: "confirmed" }),

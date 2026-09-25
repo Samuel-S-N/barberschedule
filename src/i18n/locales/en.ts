@@ -83,6 +83,7 @@ export const en = {
     emptyDay: "No appointments this day",
     emptyHistory: "No past appointments yet",
     fallbackBarber: "Barber",
+    cardLabel: "{{service}} with {{barber}}, {{date}} at {{time}}, {{shop}}",
     fallbackShop: "Barbershop",
     history: "History",
     keep: "Keep appointment",

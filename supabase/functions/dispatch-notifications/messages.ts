@@ -26,13 +26,13 @@ const APPOINTMENT_EVENTS: Record<string, Catalog> = {
   },
   "appointment.cancelled": {
     en: { body: (s, w) => `${s} on ${w} was cancelled.`, title: "Appointment cancelled" },
-    es: { body: (s, w) => `${s} el ${w} fue cancelada.`, title: "Cita cancelada" },
-    pt: { body: (s, w) => `${s} em ${w} foi cancelado.`, title: "Agendamento cancelado" },
+    es: { body: (s, w) => `Cita de ${s} el ${w} fue cancelada.`, title: "Cita cancelada" },
+    pt: { body: (s, w) => `Agendamento de ${s} em ${w} foi cancelado.`, title: "Agendamento cancelado" },
   },
   "appointment.rescheduled": {
     en: { body: (s, w) => `${s} moved to ${w}.`, title: "Appointment rescheduled" },
-    es: { body: (s, w) => `${s} reprogramada para ${w}.`, title: "Cita reprogramada" },
-    pt: { body: (s, w) => `${s} remarcado para ${w}.`, title: "Agendamento remarcado" },
+    es: { body: (s, w) => `Cita de ${s} reprogramada para ${w}.`, title: "Cita reprogramada" },
+    pt: { body: (s, w) => `Agendamento de ${s} remarcado para ${w}.`, title: "Agendamento remarcado" },
   },
   "appointment.reminder": {
     en: { body: (s, w) => `Coming up: ${s} on ${w}.`, title: "Appointment reminder" },

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Pressable, Text, View } from "react-native";
 import { Calendar, Clock, Scissors } from "lucide-react-native";
 
@@ -30,7 +31,14 @@ export function AppointmentCard({
   testID,
 }: AppointmentCardProps) {
   const cancelled = status === "cancelled";
-  const accessibilityLabel = `${serviceName} with ${barberName}, ${dateLabel} at ${timeLabel}, ${shopName}`;
+  const { t } = useTranslation();
+  const accessibilityLabel = t("appointments.cardLabel", {
+    barber: barberName,
+    date: dateLabel,
+    service: serviceName,
+    shop: shopName,
+    time: timeLabel,
+  });
 
   return (
     <Pressable

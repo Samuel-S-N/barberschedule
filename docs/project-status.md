@@ -75,7 +75,7 @@ Verified on 2026-08-13:
 
 Verified on 2026-09-25 (Task 15), on a freshly reset local database:
 
-- `npm run verify` — PASS: typecheck, lint, Jest (`62` suites / `277` tests), `3` Node Web-runner tests, and `293` pgTAP assertions across `12` files (including `012_notification_locale.sql`, `8` assertions).
+- `npm run verify` — PASS: typecheck, lint, Jest (`62` suites / `282` tests), `3` Node Web-runner tests, and `294` pgTAP assertions across `12` files (including `012_notification_locale.sql`, `9` assertions).
 - `npm run test:e2e:web` — PASS (`36` Playwright tests; existing specs run with the browser locale pinned to `en-US`, plus new `pt-BR`, `es-ES` and unsupported-language fallback specs).
 - `npm run export:web` — PASS.
 - The `dispatch-notifications` function was exercised on the local stack with `supabase functions serve`; screens were checked in a browser at 360px in all three languages. Details and limits are in `docs/decisions/012-device-language.md`.
