@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render } from "@testing-library/react-native";
+import { act, fireEvent, render } from "@testing-library/react-native";
 
 import { MonthCalendar } from "../../src/components/domain/MonthCalendar";
 
@@ -88,5 +88,56 @@ describe("MonthCalendar", () => {
     } finally {
       await i18n.changeLanguage("en");
     }
+  });
+});
+
+// Drives the responder handlers the way the responder system does: record the start,
+// ask whether to claim the move, then release.
+async function drag(view: Awaited<ReturnType<typeof renderCalendar>>, from: [number, number], to: [number, number]) {
+  const props = view.getByTestId("month-calendar").props;
+  const at = ([pageX, pageY]: [number, number]) => ({ nativeEvent: { pageX, pageY } });
+
+  props.onStartShouldSetResponderCapture(at(from));
+  const claimed = props.onMoveShouldSetResponderCapture(at(to));
+
+  await act(async () => props.onResponderRelease(at(to)));
+
+  return claimed;
+}
+
+describe("MonthCalendar swipe", () => {
+  it("goes to the next month when dragged left", async () => {
+    const view = await renderCalendar();
+
+    expect(await drag(view, [300, 200], [180, 205])).toBe(true);
+    expect(view.getByTestId("month-calendar-title")).toHaveTextContent("October 2026");
+  });
+
+  it("goes back when dragged right", async () => {
+    const view = await renderCalendar();
+
+    await fireEvent.press(view.getByTestId("month-calendar-next"));
+    await drag(view, [100, 200], [230, 200]);
+
+    expect(view.getByTestId("month-calendar-title")).toHaveTextContent("September 2026");
+  });
+
+  it("stops at the last month of the window and at the current month", async () => {
+    const view = await renderCalendar();
+
+    await drag(view, [100, 200], [230, 200]);
+    expect(view.getByTestId("month-calendar-title")).toHaveTextContent("September 2026");
+
+    await drag(view, [300, 200], [180, 200]);
+    await drag(view, [300, 200], [180, 200]);
+    expect(view.getByTestId("month-calendar-title")).toHaveTextContent("October 2026");
+  });
+
+  it("ignores a mostly vertical drag and a short one", async () => {
+    const view = await renderCalendar();
+
+    expect(await drag(view, [300, 100], [250, 300])).toBe(false);
+    expect(await drag(view, [300, 200], [280, 200])).toBe(false);
+    expect(view.getByTestId("month-calendar-title")).toHaveTextContent("September 2026");
   });
 });

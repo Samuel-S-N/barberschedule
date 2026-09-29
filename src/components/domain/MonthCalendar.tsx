@@ -1,9 +1,11 @@
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, Text, View } from "react-native";
+import type { GestureResponderEvent } from "react-native";
 
 import { useLanguage } from "../../i18n/use-language";
+import { isHorizontalDrag, swipeDirection } from "../../lib/gestures/swipe";
 import { addLocalDays } from "../../lib/dates/calendar-strip-days";
 import { BOOKING_DAYS_AHEAD, addMonths, buildMonthGrid, isDateBookable } from "../../lib/dates/month-calendar";
 import { colors } from "../../lib/design/colors";
@@ -27,9 +29,37 @@ export function MonthCalendar({ maxDaysAhead = BOOKING_DAYS_AHEAD, onSelectDate,
   const grid = buildMonthGrid(month, language);
   const canGoBack = month > currentMonth;
   const canGoForward = month < lastMonth;
+  const goBack = () => setMonth(addMonths(month, -1));
+  const goForward = () => setMonth(addMonths(month, 1));
+  const start = useRef({ x: 0, y: 0 });
+  const delta = (event: GestureResponderEvent) => ({
+    dx: event.nativeEvent.pageX - start.current.x,
+    dy: event.nativeEvent.pageY - start.current.y,
+  });
 
+  // Capture handlers let a horizontal drag take over from a day cell while plain taps still reach the cells.
   return (
-    <View className="w-full max-w-[420px] gap-2" testID={testID}>
+    <View
+      className="w-full max-w-[420px] select-none gap-2"
+      onMoveShouldSetResponderCapture={(event) => {
+        const { dx, dy } = delta(event);
+
+        return isHorizontalDrag(dx, dy);
+      }}
+      onResponderRelease={(event) => {
+        const { dx, dy } = delta(event);
+        const direction = swipeDirection(dx, dy);
+
+        if (direction === "next" && canGoForward) goForward();
+        if (direction === "previous" && canGoBack) goBack();
+      }}
+      onStartShouldSetResponderCapture={(event) => {
+        start.current = { x: event.nativeEvent.pageX, y: event.nativeEvent.pageY };
+
+        return false;
+      }}
+      testID={testID ?? "month-calendar"}
+    >
       <View className="flex-row items-center justify-between">
         <Pressable
           accessibilityLabel={t("common.previousMonth")}
@@ -37,7 +67,7 @@ export function MonthCalendar({ maxDaysAhead = BOOKING_DAYS_AHEAD, onSelectDate,
           accessibilityState={{ disabled: !canGoBack }}
           className={`h-10 w-10 items-center justify-center rounded-full ${canGoBack ? "" : "opacity-30"}`}
           disabled={!canGoBack}
-          onPress={() => setMonth(addMonths(month, -1))}
+          onPress={goBack}
           testID="month-calendar-prev"
         >
           <ChevronLeft color={colors.ink} size={20} />
@@ -51,7 +81,7 @@ export function MonthCalendar({ maxDaysAhead = BOOKING_DAYS_AHEAD, onSelectDate,
           accessibilityState={{ disabled: !canGoForward }}
           className={`h-10 w-10 items-center justify-center rounded-full ${canGoForward ? "" : "opacity-30"}`}
           disabled={!canGoForward}
-          onPress={() => setMonth(addMonths(month, 1))}
+          onPress={goForward}
           testID="month-calendar-next"
         >
           <ChevronRight color={colors.ink} size={20} />
