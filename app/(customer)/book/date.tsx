@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 
@@ -19,7 +19,7 @@ export default function BookDateScreen() {
   const barberServiceId = param(params.barberServiceId);
   const shopId = param(params.shopId);
   const { t } = useTranslation();
-  const today = useMemo(() => formatInstantInShopTime(new Date()).localDate, []);
+  const today = formatInstantInShopTime(new Date()).localDate;
   const [localDate, setLocalDate] = useState(today);
 
   return (

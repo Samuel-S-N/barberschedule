@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
 
@@ -32,7 +32,7 @@ export default function RescheduleScreen() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
   const { supabase } = useSupabaseSession();
-  const today = useMemo(() => formatInstantInShopTime(new Date()).localDate, []);
+  const today = formatInstantInShopTime(new Date()).localDate;
   const [localDate, setLocalDate] = useState(today);
   const [startsAt, setStartsAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

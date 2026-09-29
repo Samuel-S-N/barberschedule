@@ -58,6 +58,15 @@ describe("MonthCalendar", () => {
     expect(view.getByTestId("month-calendar-title")).toHaveTextContent("September 2026");
   });
 
+  it("moves off a month that became past when today rolls over", async () => {
+    const view = await renderCalendar();
+
+    await view.rerender(React.createElement(MonthCalendar, { onSelectDate: jest.fn(), selectedDate: "2026-10-01", today: "2026-10-01" }));
+
+    expect(view.getByTestId("month-calendar-title")).toHaveTextContent("October 2026");
+    expect(view.getByTestId("month-calendar-prev")).toBeDisabled();
+  });
+
   it("marks the selected day for assistive technology", async () => {
     const view = await renderCalendar(jest.fn(), "2026-09-30");
 
