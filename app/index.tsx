@@ -26,6 +26,10 @@ export default function HomeScreen() {
     return <Redirect href="/home" />;
   }
 
+  if (profile?.role === "barber") {
+    return <Redirect href="/my-agenda" />;
+  }
+
   return (
     <Screen style={styles.screen}>
       <View style={styles.content}>

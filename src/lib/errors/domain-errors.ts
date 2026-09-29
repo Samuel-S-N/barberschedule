@@ -20,7 +20,12 @@ export type DomainErrorCode =
   | "BOOKING_REQUEST_FAILED"
   | "PROFILE_INVALID"
   | "ACCOUNT_DELETION_BLOCKED"
-  | "ACCOUNT_REQUEST_FAILED";
+  | "ACCOUNT_REQUEST_FAILED"
+  | "BARBER_NOT_LINKED"
+  | "BARBER_INVITE_CONFLICT"
+  | "COMPENSATION_INVALID"
+  | "EARNINGS_INVALID_RANGE"
+  | "BARBER_REQUEST_FAILED";
 
 export class DomainError extends Error {
   constructor(
@@ -87,6 +92,14 @@ export function toDomainError(error: { code?: string; message?: string }): Domai
         "ACCOUNT_DELETION_BLOCKED",
         "Cancel your upcoming appointments (or contact the shop about your recurring schedule) before deleting your account.",
       );
+    case "P0019":
+      return new DomainError("BARBER_NOT_LINKED", "This account is not linked to an active barber.");
+    case "P0020":
+      return new DomainError("BARBER_INVITE_CONFLICT", "This barber already has an account or the email is in use.");
+    case "P0021":
+      return new DomainError("COMPENSATION_INVALID", "Enter a valid commission or chair rental.");
+    case "P0022":
+      return new DomainError("EARNINGS_INVALID_RANGE", "Choose a period of up to 92 days.");
     default:
       return new DomainError("BOOKING_REQUEST_FAILED", "Unable to create the appointment.");
   }

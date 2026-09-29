@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type AppRole = "customer" | "owner";
+export type AppRole = "barber" | "customer" | "owner";
 
 export type Profile = {
   fullName?: string | null;
