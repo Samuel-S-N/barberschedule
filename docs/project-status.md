@@ -77,7 +77,7 @@ Verified on 2026-08-13:
 
 Verified on 2026-09-29 (Task 17):
 
-- Jest `66` suites / `322` tests, `3` Node Web-runner tests, typecheck and lint clean; `npm run test:e2e:web` `38` passed (new `swipe.web.spec.ts`: tab swipe, and month swipe on the booking date step); `npm run export:web` OK.
+- Jest `66` suites / `324` tests, `3` Node Web-runner tests, typecheck and lint clean; `npm run test:e2e:web` `38` passed (new `swipe.web.spec.ts`: tab swipe, and month swipe on the booking date step); `npm run export:web` OK.
 - pgTAP: same `292` of `294` as Task 16 (two "three customers" asserts count the extra customer from manual phone testing on the local database); no SQL changed.
 - Checked in a browser at 390x700: the current page slides with the pointer and the next one is already mounted (Agenda to Profile checked); Agenda strip and tab bar unaffected. Not checked on a device: pager-view on Android/iOS and the horizontal strip inside the native pager. On a single-shop database the first visit to Book shows a blank page during the drag, because `book/index` is only a `<Redirect>` that waits for focus (existing behaviour).
 

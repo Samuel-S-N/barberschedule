@@ -31,10 +31,11 @@ export function MonthCalendar({ maxDaysAhead = BOOKING_DAYS_AHEAD, onSelectDate,
   const canGoForward = month < lastMonth;
   const goBack = () => setMonth(addMonths(month, -1));
   const goForward = () => setMonth(addMonths(month, 1));
-  const start = useRef({ x: 0, y: 0 });
+  const start = useRef<{ x: number; y: number } | null>(null);
+  // No recorded start (the touch began outside the calendar, or the last gesture ended): no movement.
   const delta = (event: GestureResponderEvent) => ({
-    dx: event.nativeEvent.pageX - start.current.x,
-    dy: event.nativeEvent.pageY - start.current.y,
+    dx: start.current ? event.nativeEvent.pageX - start.current.x : 0,
+    dy: start.current ? event.nativeEvent.pageY - start.current.y : 0,
   });
 
   // Capture handlers let a horizontal drag take over from a day cell while plain taps still reach the cells.
@@ -50,8 +51,12 @@ export function MonthCalendar({ maxDaysAhead = BOOKING_DAYS_AHEAD, onSelectDate,
         const { dx, dy } = delta(event);
         const direction = swipeDirection(dx, dy);
 
+        start.current = null;
         if (direction === "next" && canGoForward) goForward();
         if (direction === "previous" && canGoBack) goBack();
+      }}
+      onResponderTerminate={() => {
+        start.current = null;
       }}
       onStartShouldSetResponderCapture={(event) => {
         start.current = { x: event.nativeEvent.pageX, y: event.nativeEvent.pageY };

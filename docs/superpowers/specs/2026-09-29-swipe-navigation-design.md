@@ -39,7 +39,9 @@ app/(customer)/(tabs)/_layout.tsx TopTabs + BottomTabBar (the current tab layout
 app/(customer)/(tabs)/home.tsx, appointments.tsx, profile.tsx, book/*   moved with `git mv`
 ```
 
-URLs do not change (groups are not part of the URL): `/home`, `/book`, `/appointments`, `/profile`, `/reschedule`. Relative imports in moved files gain one `../`. `ACTIVE_TAB` and the `reschedule` `Tabs.Screen` are deleted; while on `/reschedule` no tab bar is shown (a full-screen task with its own "Keep current time" action) and it returns with `router.replace("/appointments")` as today.
+URLs do not change (groups are not part of the URL): `/home`, `/book`, `/appointments`, `/profile`, `/reschedule`. Relative imports in moved files gain one `../`. `ACTIVE_TAB` and the `reschedule` `Tabs.Screen` are deleted; while on `/reschedule` no tab bar is shown (a full-screen task with its own "Keep current time" action).
+
+*Amendments (from code review):* the return after rescheduling uses `router.dismissTo("/appointments")`, because `router.replace` pushed a second tab navigator on top of the first (checked in the e2e by counting tab bars); `app/(customer)/_layout.tsx` exports `unstable_settings = { initialRouteName: "(tabs)" }` so a cold start or web refresh on `/reschedule` still has the tabs underneath; the reschedule `Screen` now includes the bottom edge because the tab bar no longer pads it.
 
 ### Tabs
 
@@ -73,6 +75,8 @@ URLs do not change (groups are not part of the URL): `/home`, `/book`, `/appoint
 ## Risks and open items
 
 - The pager, and a horizontal `ScrollView` inside it (Agenda strip), behave differently on Android and iOS than on web. I can only verify web here; the user checks on the phone through Expo Go.
+- Native checklist for the phone: on Android the pager may take horizontal drags from the Agenda day strip; on iOS the edge-back gesture of the nested `book` stack (barber, service, review steps) competes with the pager's right swipe.
+- Web touch devices: neither the pager nor the calendar sets `touch-action`; the e2e drags with the mouse, not real touch events.
 - `react-native-tab-view` is loaded through a dynamic `require` in `expo-router`; Metro must resolve it (checked by the bundle build).
 - `reschedule` becomes a stack screen above the tabs (no tab bar underneath, back gesture returns to the previous screen). This is intended.
 - Moving the tab screens into `(tabs)/` is a file move only; `git mv` keeps history, and the route-collision test guards URLs.

@@ -9,6 +9,9 @@ import { ensureMyCustomer } from "../../src/features/account/api";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { Screen } from "../../src/components/ui/Screen";
 
+// A cold start or web refresh on /reschedule still gets the tabs underneath, so back has somewhere to go.
+export const unstable_settings = { initialRouteName: "(tabs)" };
+
 export default function CustomerLayout() {
   const { t } = useTranslation();
   const { profile, supabase } = useSupabaseSession();

@@ -51,12 +51,13 @@ export default function RescheduleScreen() {
     onError: (caught) => setError(errorMessage(caught, t as never, t("reschedule.error"))),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["my-appointments"] });
-      router.replace("/appointments");
+      // dismissTo pops back to the tabs already underneath; replace would mount a second tab navigator.
+      router.dismissTo("/appointments");
     },
   });
 
   return (
-    <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
+    <Screen edges={["top", "bottom", "left", "right"]} className="flex-1 bg-canvas">
       <ScrollView className="flex-1">
         <View className="items-center gap-4 p-5">
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">{t("reschedule.title")}</Text>

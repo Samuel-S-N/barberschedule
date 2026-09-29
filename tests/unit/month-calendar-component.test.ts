@@ -133,6 +133,30 @@ describe("MonthCalendar swipe", () => {
     expect(view.getByTestId("month-calendar-title")).toHaveTextContent("October 2026");
   });
 
+  it("ignores a gesture that never started inside the calendar", async () => {
+    const view = await renderCalendar();
+    const props = view.getByTestId("month-calendar").props;
+    const at = (pageX: number, pageY: number) => ({ nativeEvent: { pageX, pageY } });
+
+    expect(props.onMoveShouldSetResponderCapture(at(-100, 0))).toBe(false);
+    await act(async () => props.onResponderRelease(at(-100, 0)));
+
+    expect(view.getByTestId("month-calendar-title")).toHaveTextContent("September 2026");
+  });
+
+  it("forgets the start once a gesture is released", async () => {
+    const view = await renderCalendar();
+    const props = view.getByTestId("month-calendar").props;
+
+    await drag(view, [300, 200], [180, 200]);
+    expect(view.getByTestId("month-calendar-title")).toHaveTextContent("October 2026");
+
+    await fireEvent.press(view.getByTestId("month-calendar-prev"));
+    await act(async () => props.onResponderRelease({ nativeEvent: { pageX: 0, pageY: 200 } }));
+
+    expect(view.getByTestId("month-calendar-title")).toHaveTextContent("September 2026");
+  });
+
   it("ignores a mostly vertical drag and a short one", async () => {
     const view = await renderCalendar();
 
