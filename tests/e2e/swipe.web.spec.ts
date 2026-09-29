@@ -59,6 +59,8 @@ test("on the booking date step a drag changes the month, not the tab", async ({ 
   await page.getByRole("button", { name: "Browser Barber" }).click();
   await page.getByRole("button", { name: "Corte" }).click();
   await expect(page.getByTestId("month-calendar-title")).toBeVisible();
+  // gesture-handler defaults to `touch-action: none` on web, which would stop a touch browser from scrolling the page.
+  await expect(page.getByTestId("month-calendar")).toHaveCSS("touch-action", "pan-y");
   const before = await page.getByTestId("month-calendar-title").innerText();
 
   await drag(page, [330, 300], [60, 300]);

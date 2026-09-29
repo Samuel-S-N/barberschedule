@@ -56,8 +56,8 @@ function withRepeat(animation) {
   return animation;
 }
 
-// react-native-gesture-handler's GestureDetector takes its Reanimated path when a gesture callback is a
-// worklet (the Babel plugin makes every inline `Gesture.X().onY(() => ...)` one) and asks for an event handler.
+// react-native-gesture-handler's GestureDetector calls `Reanimated.useEvent` on every render (even for
+// `runOnJS(true)` gestures) whenever Reanimated is installed, so the detector cannot mount without it.
 function useEvent() {
   return () => {};
 }

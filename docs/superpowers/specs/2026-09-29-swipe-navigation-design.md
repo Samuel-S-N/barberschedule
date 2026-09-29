@@ -67,6 +67,8 @@ URLs do not change (groups are not part of the URL): `/home`, `/book`, `/appoint
 
 *Amendment (found on a device):* the first version used React Native responder handlers, which worked on web but never on Android. Inside the tab pager, `react-native-pager-view`'s `NestedScrollableHost` calls `NativeGestureUtil.notifyNativeGestureStarted` as soon as a touch passes the touch slop, even with `scrollEnabled=false`, and React Native then sends `touchCancel` to the JS touch system: every JS responder or `PanResponder` gesture inside the pager is cancelled after about 8 dp (seen in the device log). A native pan is not cancelled. Verified on the device log: `gh active` then `gh end` with `success true` and translations of about ±120 to ±175 dp.
 
+On web gesture-handler sets `touch-action: none` on the detector's view by default, which would stop a touch browser from scrolling the page over the calendar; the detector uses `touchAction="pan-y"` (asserted in the e2e with `toHaveCSS`).
+
 The Jest reanimated mock gained `useEvent`, because gesture-handler takes its Reanimated path when a gesture callback is a worklet (the Babel plugin makes every inline `Gesture.X().onY(...)` one).
 
 ## Testing
