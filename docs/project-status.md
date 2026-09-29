@@ -18,6 +18,7 @@ Status: Tasks 1-13 implemented; credentialed EAS build remains deployment-only
 - Task 11 — deterministic fictional seed, complete RLS matrix audit, seed contract tests, and database/security boundary docs
 - Task 12 — password-reset/profile/settings routes, EAS/static-web configuration, release checks, and authenticated Web E2E coverage
 - Task 13 — clean-state regression gate, acceptance matrix, decision records, and final release/testing handoff docs
+- Task 17 — swipe navigation: dragging sideways changes month in the calendar (switches on release) and moves between the customer tabs with the page following the finger. Tabs moved into `app/(customer)/(tabs)/` and render through expo-router's `TopTabs` (new dependencies `react-native-tab-view`, `react-native-pager-view`); the pager is locked on `/book/date`, and `/reschedule` is now a stack screen above the tabs. Spec: `docs/superpowers/specs/2026-09-29-swipe-navigation-design.md`, plan: `docs/superpowers/plans/2026-09-29-swipe-navigation.md`.
 - Task 16 — month calendar: the book date step and the reschedule screen use a month grid (Sunday-first columns, month navigation, no past months) with a 30 day booking window instead of the 14 day carousel; the Agenda tab keeps the strip. Plan: `docs/superpowers/plans/2026-09-28-month-calendar.md`.
 - Task 15 — device language: the whole app (customer, auth, legal, owner screens, error messages) follows the device language in Portuguese (Brazil), English or Spanish, with English as the fallback; push notifications now carry real text in the token's language instead of the raw event code (see `docs/decisions/012-device-language.md`).
 - Task 14 — customer frontend: signup, redesigned auth, customer tab navigation (Home/Book/Agenda/Profile), agenda calendar with cancel/reschedule, profile edit, LGPD consent/export/account deletion, and the `0023` self-service RPCs (see `docs/decisions/011-customer-self-service-and-lgpd.md`). Also fixed two defects that left the design system unstyled: `global.css` was never imported, and Reanimated animated components dropped NativeWind classes on web.
@@ -73,6 +74,12 @@ Verified on 2026-08-13:
 - Task 11 seed contract: `npm test -- --runInBand tests/integration/seed-contract.test.ts` — PASS (`2` tests); full RLS audit `010_full_rls.sql` — PASS (`29` pgTAP assertions).
 - Task 12 Web E2E: `npm run test:e2e:web` — PASS (`9` Playwright tests); static export: `npm run export:web` — PASS (`42` routes).
 - Task 13 clean-state gate: `HOME=/tmp SUPABASE_DISABLE_TELEMETRY=1 npx supabase db reset --local` followed by `HOME=/tmp SUPABASE_DISABLE_TELEMETRY=1 npm run verify` — PASS: `20` Jest suites/`76` tests, `3` Node Web-runner tests, and `264` pgTAP assertions across `10` files.
+
+Verified on 2026-09-29 (Task 17):
+
+- Jest `66` suites / `322` tests, `3` Node Web-runner tests, typecheck and lint clean; `npm run test:e2e:web` `38` passed (new `swipe.web.spec.ts`: tab swipe, and month swipe on the booking date step); `npm run export:web` OK.
+- pgTAP: same `292` of `294` as Task 16 (two "three customers" asserts count the extra customer from manual phone testing on the local database); no SQL changed.
+- Checked in a browser at 390x700: the current page slides with the pointer and the next one is already mounted (Agenda to Profile checked); Agenda strip and tab bar unaffected. Not checked on a device: pager-view on Android/iOS and the horizontal strip inside the native pager. On a single-shop database the first visit to Book shows a blank page during the drag, because `book/index` is only a `<Redirect>` that waits for focus (existing behaviour).
 
 Verified on 2026-09-28 (Task 16):
 

@@ -46,7 +46,7 @@ URLs do not change (groups are not part of the URL): `/home`, `/book`, `/appoint
 `app/(customer)/(tabs)/_layout.tsx` uses `TopTabs`:
 
 - `tabBarPosition="bottom"`, `tabBar` renders the current `BottomTabBar` inside the same `Screen edges={["bottom","left","right"]}` wrapper; `onSelect` still calls `navigation.navigate(key)`.
-- `screenOptions`: `lazy: true` so the four screens do not all mount at once.
+- `screenOptions`: `lazy: false` and `sceneStyle` with the `canvas` colour. *Amendment (during implementation):* the first draft used `lazy: true`, but a lazy page only mounts once the gesture reaches it, so the incoming page was blank while the finger dragged it in. All four screens now mount at startup (four light screens; their queries start together). A `ThemeProvider` in `app/_layout.tsx` sets the navigation theme background to `canvas`, because the default grey showed between pages.
 - The bootstrap gating (`ensureMyCustomer`, error and loading states) stays in `app/(customer)/_layout.tsx`.
 
 ### Swipe lock on the calendar step

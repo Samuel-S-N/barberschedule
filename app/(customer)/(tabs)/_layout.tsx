@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import { BottomTabBar } from "../../../src/components/domain/BottomTabBar";
 import { Screen } from "../../../src/components/ui/Screen";
+import { colors } from "../../../src/lib/design/colors";
 import { isTabSwipeEnabled } from "../../../src/lib/navigation/tab-swipe";
 
 // expo-router types the TopTabs callbacks as `any`; these are the only fields used.
@@ -22,7 +23,12 @@ export default function TabsLayout() {
 
   return (
     <TopTabs
-      screenOptions={{ lazy: true, swipeEnabled: isTabSwipeEnabled(pathname) }}
+      screenOptions={{
+        // Not lazy: every page is mounted so the next one is already visible while the finger drags it in.
+        lazy: false,
+        sceneStyle: { backgroundColor: colors.canvas },
+        swipeEnabled: isTabSwipeEnabled(pathname),
+      }}
       tabBar={({ navigation, state }: TabBarProps) => (
         // Tab screens skip the bottom edge; the bar owns it so the system navigation area isn't padded twice.
         <Screen className="bg-surface" edges={["bottom", "left", "right"]}>

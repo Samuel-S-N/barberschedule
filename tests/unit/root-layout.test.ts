@@ -10,7 +10,9 @@ import { render } from "@testing-library/react-native";
 // first time the factory actually runs.
 jest.mock("expo-font", () => ({ useFonts: jest.fn() }));
 jest.mock("expo-router", () => ({
+  DefaultTheme: { colors: { background: "grey", primary: "blue" } },
   Stack: jest.fn(() => null),
+  ThemeProvider: jest.fn(({ children }: { children: unknown }) => children),
   useRouter: () => ({ replace: jest.fn() }),
   useSegments: () => [],
 }));
@@ -22,7 +24,8 @@ jest.mock("../../src/providers/AppProviders", () => ({
 }));
 
 import { useFonts } from "expo-font";
-import { Stack as MockedStack } from "expo-router";
+import { Stack as MockedStack, ThemeProvider as MockedThemeProvider } from "expo-router";
+import { colors } from "../../src/lib/design/colors";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { RootNavigator } from "../../app/_layout";
 
@@ -66,5 +69,19 @@ describe("RootNavigator font gate", () => {
     await render(React.createElement(RootNavigator));
 
     expect(mockedStack).toHaveBeenCalled();
+  });
+
+  it("paints navigator scenes with the app canvas instead of the default grey", async () => {
+    mockedUseFonts.mockReturnValue([true, null] as never);
+    mockedUseSupabaseSession.mockReturnValue({
+      isLoading: false, profile: null, session: null, supabase: {} as never,
+    });
+
+    await render(React.createElement(RootNavigator));
+
+    const theme = jest.mocked(MockedThemeProvider).mock.calls[0][0] as unknown as { value: { colors: Record<string, string> } };
+
+    expect(theme.value.colors.background).toBe(colors.canvas);
+    expect(theme.value.colors.primary).toBe("blue");
   });
 });
