@@ -75,6 +75,12 @@ Verified on 2026-08-13:
 - Task 12 Web E2E: `npm run test:e2e:web` — PASS (`9` Playwright tests); static export: `npm run export:web` — PASS (`42` routes).
 - Task 13 clean-state gate: `HOME=/tmp SUPABASE_DISABLE_TELEMETRY=1 npx supabase db reset --local` followed by `HOME=/tmp SUPABASE_DISABLE_TELEMETRY=1 npm run verify` — PASS: `20` Jest suites/`76` tests, `3` Node Web-runner tests, and `264` pgTAP assertions across `10` files.
 
+Verified on 2026-09-30 (Task 17 fix, month swipe on Android):
+
+- The responder-based month swipe never worked on Android: inside the tab pager, `react-native-pager-view` cancels JS touches after about 8 dp (`touchCancel` seen in the device log). The swipe is now a native `Gesture.Pan()` from `react-native-gesture-handler` (`~2.32.0`) under a `GestureHandlerRootView`. On a real phone (Expo Go, Android) five drags were logged with `gh active` and `gh end` `success true`, translations about ±110 to ±175 dp, directions `next`/`previous` as dragged.
+- Jest `66` suites / `324` tests, `3` runner tests, typecheck and lint clean, `npm run test:e2e:web` `38` passed, `npm run export:web` OK. pgTAP unchanged from before (the same two "three customers" asserts count the extra customer from manual phone testing; no SQL changed).
+- Not confirmed by me: what the calendar looked like on screen after each drag (only the log). The pager against the Agenda strip and the iOS edge-back gesture are still unchecked on devices.
+
 Verified on 2026-09-29 (Task 17):
 
 - Jest `66` suites / `324` tests, `3` Node Web-runner tests, typecheck and lint clean; `npm run test:e2e:web` `38` passed (new `swipe.web.spec.ts`: tab swipe, and month swipe on the booking date step); `npm run export:web` OK.

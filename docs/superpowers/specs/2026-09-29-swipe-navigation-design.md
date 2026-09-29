@@ -59,11 +59,15 @@ URLs do not change (groups are not part of the URL): `/home`, `/book`, `/appoint
 
 ### Month swipe
 
-`MonthCalendar` wraps its root `View` in a `PanResponder` (React Native built-in, no dependency):
+`MonthCalendar` wraps its root `View` in a `GestureDetector` with a native `Gesture.Pan()` from `react-native-gesture-handler` (`~2.32.0`, the version Expo Go 57 embeds; `GestureHandlerRootView` wraps the app in `app/_layout.tsx`):
 
-- Claims the gesture only when `|dx| > 20` and `|dx| > 2 * |dy|`, so vertical scroll and taps are untouched.
-- On release, `dx <= -40` calls the same handler as the next arrow, `dx >= 40` the previous one, both guarded by `canGoForward` / `canGoBack`.
-- Pure helper `swipeDirection(dx, dy): "next" | "previous" | null` in `src/lib/gestures/swipe.ts`, unit tested; the component test drives the handlers.
+- `activeOffsetX([-20, 20])` claims the gesture after 20 dp sideways, `failOffsetY([-25, 25])` lets vertical movement fail it, so taps on day cells and the arrows are untouched. `runOnJS(true)` because the callbacks call `setState`.
+- On end (only when the gesture succeeded, not when it was cancelled), `swipeDirection(translationX, translationY)` returns `next` at `dx <= -40` and `previous` at `dx >= 40` with `|dx| > 2 * |dy|`; both call the same handlers as the arrows, guarded by `canGoForward` / `canGoBack`.
+- Pure helper `swipeDirection(dx, dy): "next" | "previous" | null` in `src/lib/gestures/swipe.ts`, unit tested; the component test plays the pan with gesture-handler's `fireGestureHandler`.
+
+*Amendment (found on a device):* the first version used React Native responder handlers, which worked on web but never on Android. Inside the tab pager, `react-native-pager-view`'s `NestedScrollableHost` calls `NativeGestureUtil.notifyNativeGestureStarted` as soon as a touch passes the touch slop, even with `scrollEnabled=false`, and React Native then sends `touchCancel` to the JS touch system: every JS responder or `PanResponder` gesture inside the pager is cancelled after about 8 dp (seen in the device log). A native pan is not cancelled. Verified on the device log: `gh active` then `gh end` with `success true` and translations of about ±120 to ±175 dp.
+
+The Jest reanimated mock gained `useEvent`, because gesture-handler takes its Reanimated path when a gesture callback is a worklet (the Babel plugin makes every inline `Gesture.X().onY(...)` one).
 
 ## Testing
 
@@ -80,7 +84,7 @@ URLs do not change (groups are not part of the URL): `/home`, `/book`, `/appoint
 - `react-native-tab-view` is loaded through a dynamic `require` in `expo-router`; Metro must resolve it (checked by the bundle build).
 - `reschedule` becomes a stack screen above the tabs (no tab bar underneath, back gesture returns to the previous screen). This is intended.
 - Moving the tab screens into `(tabs)/` is a file move only; `git mv` keeps history, and the route-collision test guards URLs.
-- Adds two dependencies: `react-native-tab-view`, `react-native-pager-view` (installed with `npx expo install` so versions match SDK 57).
+- Adds three dependencies: `react-native-tab-view`, `react-native-pager-view` and `react-native-gesture-handler` (installed with `npx expo install` so versions match SDK 57; the `3.1.0` that was in `node_modules` only as a transitive dev dependency of `react-native-screens` does not match Expo Go's native module).
 
 ## Out of scope
 
