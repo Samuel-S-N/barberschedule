@@ -1,0 +1,72 @@
+# Swipe Navigation — Design
+
+**Date:** 2026-09-29
+**Status:** Approved in chat, ready for planning
+**Branch:** `feat-month-calendar` (adds to the month calendar work, one PR)
+
+## Goal
+
+Dragging sideways navigates:
+
+1. Between the customer tabs Home, Agendar, Agenda and Perfil, with the page following the finger.
+2. Between months in the month calendar (Agendar date step and Reschedule), which today only works through the arrow buttons.
+
+## Decisions (from brainstorming)
+
+- Tab swipe follows the finger (pager), not "switch on release".
+- Month swipe switches on release (threshold), it does not follow the finger.
+- Scope is the customer app. The owner screens have no tab bar.
+
+## Findings that shaped this design
+
+- `expo-router` 57 vendors `@react-navigation/*`; there is no top-level `@react-navigation` package. Installing `@react-navigation/material-top-tabs` from npm would create a second navigation context, so it must not be added.
+- `expo-router` ships the same navigator as `TopTabs` (`import { TopTabs } from "expo-router/js-top-tabs"`). It loads `react-native-tab-view` lazily and throws if it is missing, and `react-native-tab-view` needs `react-native-pager-view`. Neither is installed. `react-native-pager-view` 8.0.2 is the SDK 57 version and Expo Go bundles it, so no native rebuild is needed for Expo Go.
+- On web `react-native-tab-view` falls back to a `PanResponder` pager, so dragging can be tested in Playwright.
+- `TopTabs.Screen` has no `href: null`, so a screen cannot be a hidden tab. Today `app/(customer)/reschedule.tsx` is one (`ACTIVE_TAB` maps it to "Agenda").
+- `TopTabs` accepts `swipeEnabled`, `lazy`, `tabBarPosition` and a custom `tabBar`, so the existing `BottomTabBar` (with its safe-area wrapper) is reused unchanged.
+- The Agenda tab has a horizontal `ScrollView` (`CalendarStrip`) inside the pager. The book date step and Reschedule will have the `MonthCalendar`, which also handles horizontal drags.
+
+## Design
+
+### Tabs
+
+`app/(customer)/_layout.tsx` swaps `Tabs` for `TopTabs`:
+
+- `tabBarPosition="bottom"`, `tabBar` renders the current `BottomTabBar` inside the same `Screen edges={["bottom","left","right"]}` wrapper; `onSelect` still calls `navigation.navigate(key)`.
+- `screenOptions`: `lazy: true` so the four screens do not all mount at once, `animationEnabled: true` for the tap transition.
+- Routes and URLs stay `/home`, `/book`, `/appointments`, `/profile`.
+- The bootstrap gating (`ensureMyCustomer`, error and loading states) is unchanged.
+
+### Reschedule leaves the tab group
+
+`reschedule` cannot be a hidden tab, so it moves out of the pager: `app/(customer)/reschedule.tsx` becomes `app/reschedule.tsx`, a screen of the root stack, same URL `/reschedule`. The tab bar is not shown on it (a full-screen task with its own "Keep current time" action); returning uses `router.replace("/appointments")` as today. The root layout registers it if the current one needs explicit `Stack.Screen` entries. `ACTIVE_TAB` and the `reschedule` `Tabs.Screen` are deleted.
+
+### Swipe lock on the calendar screens
+
+`MonthCalendar` needs horizontal drags, so on the book date step the pager must not steal them. The layout computes `swipeEnabled` from the current route: disabled when the focused tab is `book` and its nested stack is past the first screen (date step, review step), enabled otherwise. Implementation reads the nested stack state from the tab route (`state.routes[index].state`) inside `screenOptions`; the rule is a small pure function with a unit test. Reschedule is outside the pager, so it needs no lock.
+
+### Month swipe
+
+`MonthCalendar` wraps its root `View` in a `PanResponder` (React Native built-in, no dependency):
+
+- Claims the gesture only when `|dx| > 20` and `|dx| > 2 * |dy|`, so vertical scroll and taps are untouched.
+- On release, `dx <= -40` calls the same handler as the next arrow, `dx >= 40` the previous one, both guarded by `canGoForward` / `canGoBack`.
+- Pure helper `swipeDirection(dx, dy): "next" | "previous" | null` in `src/lib/gestures/swipe.ts`, unit tested; the component test drives the handlers.
+
+## Testing
+
+- Jest: `swipeDirection` (thresholds, vertical-dominant, sign), the swipe-lock rule, `MonthCalendar` drag next/previous and limits.
+- Playwright (web, touch-like drag with the mouse): dragging left on Home lands on Agendar and the tab bar updates; dragging right on Home stays put (first tab); on `/book/date` dragging left changes the month and does not change the tab; `/reschedule` still opens from an appointment and returns to Agenda.
+- Existing e2e for booking, lifecycle and i18n must stay green.
+- Full gate: `npm run verify`, `npm run test:e2e:web`, `npm run export:web`, then code review.
+
+## Risks and open items
+
+- The pager, and a horizontal `ScrollView` inside it (Agenda strip), behave differently on Android and iOS than on web. I can only verify web here; the user checks on the phone through Expo Go.
+- `react-native-tab-view` is loaded through a dynamic `require` in `expo-router`; Metro must resolve it (checked by the bundle build).
+- Moving `reschedule` changes its stack behaviour (no tab bar underneath, back gesture returns to the previous screen). This is intended.
+- Adds two dependencies: `react-native-tab-view`, `react-native-pager-view` (installed with `npx expo install` so versions match SDK 57).
+
+## Out of scope
+
+Owner navigation, animated month transitions, swipe between days, tab-bar indicator animation.
