@@ -56,6 +56,12 @@ function withRepeat(animation) {
   return animation;
 }
 
+// react-native-gesture-handler's GestureDetector takes its Reanimated path when a gesture callback is a
+// worklet (the Babel plugin makes every inline `Gesture.X().onY(() => ...)` one) and asks for an event handler.
+function useEvent() {
+  return () => {};
+}
+
 function createAnimatedComponent(Component) {
   return React.forwardRef(function AnimatedMockComponent(props, ref) {
     return React.createElement(Component, { ...props, ref });
@@ -76,6 +82,7 @@ module.exports = {
   createAnimatedComponent,
   useSharedValue,
   useAnimatedStyle,
+  useEvent,
   withTiming,
   withSpring: withTiming,
   withRepeat,

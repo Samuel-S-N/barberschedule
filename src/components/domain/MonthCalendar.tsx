@@ -1,11 +1,11 @@
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, Text, View } from "react-native";
-import type { GestureResponderEvent } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 
 import { useLanguage } from "../../i18n/use-language";
-import { isHorizontalDrag, swipeDirection } from "../../lib/gestures/swipe";
+import { swipeDirection } from "../../lib/gestures/swipe";
 import { addLocalDays } from "../../lib/dates/calendar-strip-days";
 import { BOOKING_DAYS_AHEAD, addMonths, buildMonthGrid, isDateBookable } from "../../lib/dates/month-calendar";
 import { colors } from "../../lib/design/colors";
@@ -31,40 +31,25 @@ export function MonthCalendar({ maxDaysAhead = BOOKING_DAYS_AHEAD, onSelectDate,
   const canGoForward = month < lastMonth;
   const goBack = () => setMonth(addMonths(month, -1));
   const goForward = () => setMonth(addMonths(month, 1));
-  const start = useRef<{ x: number; y: number } | null>(null);
-  // No recorded start (the touch began outside the calendar, or the last gesture ended): no movement.
-  const delta = (event: GestureResponderEvent) => ({
-    dx: start.current ? event.nativeEvent.pageX - start.current.x : 0,
-    dy: start.current ? event.nativeEvent.pageY - start.current.y : 0,
-  });
+  // A native gesture on purpose: inside the Android pager (react-native-pager-view) a JS responder is
+  // cancelled after ~8 dp, because the pager announces a native gesture as soon as the touch passes the slop.
+  const swipe = Gesture.Pan()
+    .withTestId("month-swipe")
+    .runOnJS(true)
+    .activeOffsetX([-20, 20])
+    .failOffsetY([-25, 25])
+    .onEnd((event, success) => {
+      if (!success) return;
 
-  // Capture handlers let a horizontal drag take over from a day cell while plain taps still reach the cells.
+      const direction = swipeDirection(event.translationX, event.translationY);
+
+      if (direction === "next" && canGoForward) goForward();
+      if (direction === "previous" && canGoBack) goBack();
+    });
+
   return (
-    <View
-      className="w-full max-w-[420px] select-none gap-2"
-      onMoveShouldSetResponderCapture={(event) => {
-        const { dx, dy } = delta(event);
-
-        return isHorizontalDrag(dx, dy);
-      }}
-      onResponderRelease={(event) => {
-        const { dx, dy } = delta(event);
-        const direction = swipeDirection(dx, dy);
-
-        start.current = null;
-        if (direction === "next" && canGoForward) goForward();
-        if (direction === "previous" && canGoBack) goBack();
-      }}
-      onResponderTerminate={() => {
-        start.current = null;
-      }}
-      onStartShouldSetResponderCapture={(event) => {
-        start.current = { x: event.nativeEvent.pageX, y: event.nativeEvent.pageY };
-
-        return false;
-      }}
-      testID={testID ?? "month-calendar"}
-    >
+    <GestureDetector gesture={swipe}>
+    <View className="w-full max-w-[420px] select-none gap-2" testID={testID ?? "month-calendar"}>
       <View className="flex-row items-center justify-between">
         <Pressable
           accessibilityLabel={t("common.previousMonth")}
@@ -130,5 +115,6 @@ export function MonthCalendar({ maxDaysAhead = BOOKING_DAYS_AHEAD, onSelectDate,
         </View>
       ))}
     </View>
+    </GestureDetector>
   );
 }

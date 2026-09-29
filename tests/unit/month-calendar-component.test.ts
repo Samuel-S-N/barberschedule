@@ -1,5 +1,7 @@
 import React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
+import { State } from "react-native-gesture-handler";
+import { fireGestureHandler, getByGestureTestId } from "react-native-gesture-handler/jest-utils";
 
 import { MonthCalendar } from "../../src/components/domain/MonthCalendar";
 
@@ -91,25 +93,25 @@ describe("MonthCalendar", () => {
   });
 });
 
-// Drives the responder handlers the way the responder system does: record the start,
-// ask whether to claim the move, then release.
-async function drag(view: Awaited<ReturnType<typeof renderCalendar>>, from: [number, number], to: [number, number]) {
-  const props = view.getByTestId("month-calendar").props;
-  const at = ([pageX, pageY]: [number, number]) => ({ nativeEvent: { pageX, pageY } });
-
-  props.onStartShouldSetResponderCapture(at(from));
-  const claimed = props.onMoveShouldSetResponderCapture(at(to));
-
-  await act(async () => props.onResponderRelease(at(to)));
-
-  return claimed;
+// Plays the native pan the way gesture-handler reports it: began, active, then ended with the total translation.
+// A native gesture is used because inside the Android pager a JS responder is cancelled after ~8 dp.
+async function drag(translationX: number, translationY = 0) {
+  await act(async () => {
+    fireGestureHandler(getByGestureTestId("month-swipe"), [
+      { state: State.BEGAN },
+      { state: State.ACTIVE, translationX: 0, translationY: 0 },
+      { state: State.ACTIVE, translationX, translationY },
+      { state: State.END, translationX, translationY },
+    ]);
+  });
 }
 
 describe("MonthCalendar swipe", () => {
   it("goes to the next month when dragged left", async () => {
     const view = await renderCalendar();
 
-    expect(await drag(view, [300, 200], [180, 205])).toBe(true);
+    await drag(-120, 5);
+
     expect(view.getByTestId("month-calendar-title")).toHaveTextContent("October 2026");
   });
 
@@ -117,51 +119,42 @@ describe("MonthCalendar swipe", () => {
     const view = await renderCalendar();
 
     await fireEvent.press(view.getByTestId("month-calendar-next"));
-    await drag(view, [100, 200], [230, 200]);
+    await drag(130);
 
     expect(view.getByTestId("month-calendar-title")).toHaveTextContent("September 2026");
   });
 
-  it("stops at the last month of the window and at the current month", async () => {
+  it("stops at the current month and at the last month of the window", async () => {
     const view = await renderCalendar();
 
-    await drag(view, [100, 200], [230, 200]);
+    await drag(130);
     expect(view.getByTestId("month-calendar-title")).toHaveTextContent("September 2026");
 
-    await drag(view, [300, 200], [180, 200]);
-    await drag(view, [300, 200], [180, 200]);
+    await drag(-120);
+    await drag(-120);
     expect(view.getByTestId("month-calendar-title")).toHaveTextContent("October 2026");
   });
 
-  it("ignores a gesture that never started inside the calendar", async () => {
+  it("ignores a short drag and a mostly vertical one", async () => {
     const view = await renderCalendar();
-    const props = view.getByTestId("month-calendar").props;
-    const at = (pageX: number, pageY: number) => ({ nativeEvent: { pageX, pageY } });
 
-    expect(props.onMoveShouldSetResponderCapture(at(-100, 0))).toBe(false);
-    await act(async () => props.onResponderRelease(at(-100, 0)));
+    await drag(-30);
+    await drag(-80, 60);
 
     expect(view.getByTestId("month-calendar-title")).toHaveTextContent("September 2026");
   });
 
-  it("forgets the start once a gesture is released", async () => {
-    const view = await renderCalendar();
-    const props = view.getByTestId("month-calendar").props;
-
-    await drag(view, [300, 200], [180, 200]);
-    expect(view.getByTestId("month-calendar-title")).toHaveTextContent("October 2026");
-
-    await fireEvent.press(view.getByTestId("month-calendar-prev"));
-    await act(async () => props.onResponderRelease({ nativeEvent: { pageX: 0, pageY: 200 } }));
-
-    expect(view.getByTestId("month-calendar-title")).toHaveTextContent("September 2026");
-  });
-
-  it("ignores a mostly vertical drag and a short one", async () => {
+  it("does nothing when the gesture is cancelled", async () => {
     const view = await renderCalendar();
 
-    expect(await drag(view, [300, 100], [250, 300])).toBe(false);
-    expect(await drag(view, [300, 200], [280, 200])).toBe(false);
+    await act(async () => {
+      fireGestureHandler(getByGestureTestId("month-swipe"), [
+        { state: State.BEGAN },
+        { state: State.ACTIVE, translationX: -120, translationY: 0 },
+        { state: State.CANCELLED, translationX: -120, translationY: 0 },
+      ]);
+    });
+
     expect(view.getByTestId("month-calendar-title")).toHaveTextContent("September 2026");
   });
 });
