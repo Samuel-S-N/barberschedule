@@ -3,7 +3,7 @@ import { formatWeekdayShort } from "../i18n/format";
 import { formatInstantInShopTime } from "./shop-time";
 import type { CalendarStripDay } from "../../components/domain/CalendarStrip";
 
-function addLocalDays(localDate: string, days: number): string {
+export function addLocalDays(localDate: string, days: number): string {
   const anchor = new Date(`${localDate}T12:00:00Z`);
   anchor.setUTCDate(anchor.getUTCDate() + days);
   return anchor.toISOString().slice(0, 10);
