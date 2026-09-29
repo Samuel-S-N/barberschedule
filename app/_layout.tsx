@@ -15,6 +15,7 @@ import {
 } from "@expo-google-fonts/inter";
 import { useEffect, useMemo } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { resolveAuthRedirect } from "../src/features/auth/session";
 import { colors } from "../src/lib/design/colors";
@@ -70,13 +71,19 @@ export function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <AppProviders>
-      <RootNavigator />
-    </AppProviders>
+    // Native gestures (MonthCalendar's swipe) need this root; JS responders are cancelled inside the Android pager.
+    <GestureHandlerRootView style={styles.root}>
+      <AppProviders>
+        <RootNavigator />
+      </AppProviders>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   loadingScreen: {
     alignItems: "center",
     flex: 1,

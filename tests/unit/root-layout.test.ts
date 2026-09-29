@@ -16,18 +16,23 @@ jest.mock("expo-router", () => ({
   useRouter: () => ({ replace: jest.fn() }),
   useSegments: () => [],
 }));
+jest.mock("react-native-gesture-handler", () => ({
+  GestureHandlerRootView: jest.fn(({ children }: { children: unknown }) => children),
+}));
 jest.mock("../../src/features/auth/session", () => ({
   resolveAuthRedirect: jest.fn(() => null),
 }));
 jest.mock("../../src/providers/AppProviders", () => ({
+  AppProviders: ({ children }: { children: unknown }) => children,
   useSupabaseSession: jest.fn(),
 }));
 
 import { useFonts } from "expo-font";
 import { Stack as MockedStack, ThemeProvider as MockedThemeProvider } from "expo-router";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { colors } from "../../src/lib/design/colors";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
-import { RootNavigator } from "../../app/_layout";
+import RootLayout, { RootNavigator } from "../../app/_layout";
 
 const mockedUseFonts = jest.mocked(useFonts);
 const mockedUseSupabaseSession = jest.mocked(useSupabaseSession);
@@ -69,6 +74,18 @@ describe("RootNavigator font gate", () => {
     await render(React.createElement(RootNavigator));
 
     expect(mockedStack).toHaveBeenCalled();
+  });
+
+  it("wraps the app in a gesture root so native gestures work inside the pager", async () => {
+    mockedUseFonts.mockReturnValue([true, null] as never);
+    mockedUseSupabaseSession.mockReturnValue({
+      isLoading: false, profile: null, session: null, supabase: {} as never,
+    });
+
+    await render(React.createElement(RootLayout));
+
+    expect(GestureHandlerRootView).toHaveBeenCalled();
+    expect(jest.mocked(GestureHandlerRootView).mock.calls[0][0]).toMatchObject({ style: { flex: 1 } });
   });
 
   it("paints navigator scenes with the app canvas instead of the default grey", async () => {
