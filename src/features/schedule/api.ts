@@ -198,3 +198,20 @@ export async function deleteScheduleOverride(
   const { error } = await supabase.from("schedule_overrides").delete().eq("id", scheduleOverrideId);
   throwIfError(error);
 }
+
+export async function listMyScheduleOverrides(
+  supabase: ScheduleSupabaseClient,
+  barberId: string,
+  fromLocalDate: string,
+) {
+  const { data, error } = await supabase
+    .from("schedule_overrides")
+    .select(scheduleOverrideColumns)
+    .eq("barber_id", barberId)
+    .gte("local_date", fromLocalDate)
+    .order("local_date", { ascending: true })
+    .order("start_time", { ascending: true });
+  throwIfError(error);
+
+  return (data ?? []).map((row) => toScheduleOverride(row as ScheduleOverrideRow));
+}

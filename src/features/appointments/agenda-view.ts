@@ -4,8 +4,8 @@ import { formatInstantInShopTime } from "../../lib/dates/shop-time";
 import { formatDateLabel } from "../../lib/i18n/format";
 import type { Appointment } from "./types";
 
-export function groupByLocalDate(appointments: Appointment[]) {
-  const grouped = new Map<string, Appointment[]>();
+export function groupByLocalDate<T extends Appointment>(appointments: T[]) {
+  const grouped = new Map<string, T[]>();
   const sorted = [...appointments].sort((a, b) => a.startsAt.localeCompare(b.startsAt));
 
   for (const appointment of sorted) {
@@ -25,10 +25,10 @@ export function formatAppointmentLabels(appointment: Appointment, language: Lang
   };
 }
 
-export function markAppointmentDays(days: CalendarStripDay[], grouped: Map<string, Appointment[]>) {
+export function markAppointmentDays(days: CalendarStripDay[], grouped: Map<string, unknown[]>) {
   return days.map((day) => ({ ...day, hasAppointment: grouped.has(day.date) }));
 }
 
-export function pickInitialDate(days: CalendarStripDay[], grouped: Map<string, Appointment[]>) {
+export function pickInitialDate(days: CalendarStripDay[], grouped: Map<string, unknown[]>) {
   return days.find((day) => grouped.has(day.date))?.date ?? days[0].date;
 }

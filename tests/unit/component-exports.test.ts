@@ -22,5 +22,6 @@ describe("component barrel exports", () => {
     expect(domain.SkeletonCircle).toBeDefined();
     expect(domain.SkeletonText).toBeDefined();
     expect(domain.BottomTabBar).toBeDefined();
+    expect(domain.StatTile).toBeDefined();
   });
 });

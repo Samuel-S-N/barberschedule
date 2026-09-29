@@ -16,6 +16,7 @@ function getTopLevelGroup(segments: string[]) {
 }
 
 const GROUP_ROLE: Record<string, AppRole> = {
+  "(barber)": "barber",
   "(customer)": "customer",
   "(owner)": "owner",
 };
