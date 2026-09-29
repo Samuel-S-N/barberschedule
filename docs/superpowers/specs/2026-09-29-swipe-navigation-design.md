@@ -28,22 +28,30 @@ Dragging sideways navigates:
 
 ## Design
 
+### Route structure
+
+`reschedule` cannot be a hidden tab, and it must stay under `(customer)` because `resolveAuthRedirect` decides access by the first `(group)` segment. So a `(tabs)` sub-group is added:
+
+```
+app/(customer)/_layout.tsx        bootstrap gating (ensureMyCustomer) + <Stack headerShown:false>
+app/(customer)/reschedule.tsx     unchanged file, now a stack screen above the tabs
+app/(customer)/(tabs)/_layout.tsx TopTabs + BottomTabBar (the current tab layout code)
+app/(customer)/(tabs)/home.tsx, appointments.tsx, profile.tsx, book/*   moved with `git mv`
+```
+
+URLs do not change (groups are not part of the URL): `/home`, `/book`, `/appointments`, `/profile`, `/reschedule`. Relative imports in moved files gain one `../`. `ACTIVE_TAB` and the `reschedule` `Tabs.Screen` are deleted; while on `/reschedule` no tab bar is shown (a full-screen task with its own "Keep current time" action) and it returns with `router.replace("/appointments")` as today.
+
 ### Tabs
 
-`app/(customer)/_layout.tsx` swaps `Tabs` for `TopTabs`:
+`app/(customer)/(tabs)/_layout.tsx` uses `TopTabs`:
 
 - `tabBarPosition="bottom"`, `tabBar` renders the current `BottomTabBar` inside the same `Screen edges={["bottom","left","right"]}` wrapper; `onSelect` still calls `navigation.navigate(key)`.
-- `screenOptions`: `lazy: true` so the four screens do not all mount at once, `animationEnabled: true` for the tap transition.
-- Routes and URLs stay `/home`, `/book`, `/appointments`, `/profile`.
-- The bootstrap gating (`ensureMyCustomer`, error and loading states) is unchanged.
+- `screenOptions`: `lazy: true` so the four screens do not all mount at once.
+- The bootstrap gating (`ensureMyCustomer`, error and loading states) stays in `app/(customer)/_layout.tsx`.
 
-### Reschedule leaves the tab group
+### Swipe lock on the calendar step
 
-`reschedule` cannot be a hidden tab, so it moves out of the pager: `app/(customer)/reschedule.tsx` becomes `app/reschedule.tsx`, a screen of the root stack, same URL `/reschedule`. The tab bar is not shown on it (a full-screen task with its own "Keep current time" action); returning uses `router.replace("/appointments")` as today. The root layout registers it if the current one needs explicit `Stack.Screen` entries. `ACTIVE_TAB` and the `reschedule` `Tabs.Screen` are deleted.
-
-### Swipe lock on the calendar screens
-
-`MonthCalendar` needs horizontal drags, so on the book date step the pager must not steal them. The layout computes `swipeEnabled` from the current route: disabled when the focused tab is `book` and its nested stack is past the first screen (date step, review step), enabled otherwise. Implementation reads the nested stack state from the tab route (`state.routes[index].state`) inside `screenOptions`; the rule is a small pure function with a unit test. Reschedule is outside the pager, so it needs no lock.
+`MonthCalendar` needs horizontal drags, so on the book date step the pager must not steal them. `screenOptions` sets `swipeEnabled` per tab route: false when the route is `book` and the focused screen of its nested stack (`route.state?.routes[route.state.index]?.name`) is `date`; true otherwise. The rule is a small pure function `isTabSwipeEnabled(routeName, nestedRouteName)` with a unit test. The other booking steps (shop, barber, service, review) keep tab swipe: the nested stack state survives leaving and returning to the tab. Reschedule is outside the pager, so it needs no lock.
 
 ### Month swipe
 
@@ -64,7 +72,8 @@ Dragging sideways navigates:
 
 - The pager, and a horizontal `ScrollView` inside it (Agenda strip), behave differently on Android and iOS than on web. I can only verify web here; the user checks on the phone through Expo Go.
 - `react-native-tab-view` is loaded through a dynamic `require` in `expo-router`; Metro must resolve it (checked by the bundle build).
-- Moving `reschedule` changes its stack behaviour (no tab bar underneath, back gesture returns to the previous screen). This is intended.
+- `reschedule` becomes a stack screen above the tabs (no tab bar underneath, back gesture returns to the previous screen). This is intended.
+- Moving the tab screens into `(tabs)/` is a file move only; `git mv` keeps history, and the route-collision test guards URLs.
 - Adds two dependencies: `react-native-tab-view`, `react-native-pager-view` (installed with `npx expo install` so versions match SDK 57).
 
 ## Out of scope
