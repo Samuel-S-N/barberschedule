@@ -37,6 +37,7 @@ describe("AppointmentCard", () => {
       expect(view.getByTestId("card").props.accessibilityLabel).toBe(
         "Cut + Beard com João Silva, Thu, Aug 18 às 14:30, Barbearia Alfa",
       );
+      view.unmount();
     } finally {
       await i18n.changeLanguage("en");
     }
