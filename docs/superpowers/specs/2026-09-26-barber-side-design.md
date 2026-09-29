@@ -1,7 +1,7 @@
 # Barber Side — Design
 
 **Date:** 2026-09-26
-**Status:** Draft
+**Status:** Implemented (amended during execution — see "Amendments")
 
 ## Goal
 
@@ -308,3 +308,14 @@ Same TDD discipline as every prior cycle:
 - Invite email copy/branding is Supabase's default template unless the
   owner configures a custom one in the Supabase dashboard — same
   owner-provided-content pattern as the legal text in Task 14.
+
+## Amendments (decided during execution)
+
+- No `barbers_select_self` / `barbers_update_self` policies and no comparison trigger: `barbers` has column-level grants, so a barber reads and writes their own profile only through `get_my_barber_profile` / `update_my_barber_profile` (stricter and simpler).
+- Owner compensation goes through a new owner-only RPC `set_barber_compensation` (raises `P0021`) instead of a trigger; `list_my_barber_services` was added for the profile screen.
+- `commission_percent` is `not null default 0` (chair rental requires 0) instead of nullable.
+- `is_own_barber` and every barber RPC require `barbers.active`, which resolves the deactivation open item at the database: a deactivated barber gets `P0019`.
+- Route names: `/my-agenda`, `/earnings`, `/my-profile` (the customer group already owns `/profile`, caught by `route-collisions.test.ts`).
+- `resolveAuthRedirect` sends a mismatched barber to `/my-agenda` (not `/`), because `/` is also an owner route.
+- The Edge Function links the barber row first (guarded by `user_id is null`) and promotes the profile second; if linking loses a race it deletes the invited user, so no orphan account remains.
+- `list_owner_barbers` was dropped and recreated with the new columns (its return type changed).

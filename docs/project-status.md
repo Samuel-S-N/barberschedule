@@ -1,7 +1,7 @@
 # Project status
 
-Date: 2026-08-17
-Status: Tasks 1-13 implemented; credentialed EAS build remains deployment-only
+Date: 2026-09-29
+Status: Tasks 1-16 implemented; credentialed EAS build remains deployment-only
 
 ## Implemented
 
@@ -20,6 +20,8 @@ Status: Tasks 1-13 implemented; credentialed EAS build remains deployment-only
 - Task 13 — clean-state regression gate, acceptance matrix, decision records, and final release/testing handoff docs
 - Task 15 — device language: the whole app (customer, auth, legal, owner screens, error messages) follows the device language in Portuguese (Brazil), English or Spanish, with English as the fallback; push notifications now carry real text in the token's language instead of the raw event code (see `docs/decisions/012-device-language.md`).
 - Task 14 — customer frontend: signup, redesigned auth, customer tab navigation (Home/Book/Agenda/Profile), agenda calendar with cancel/reschedule, profile edit, LGPD consent/export/account deletion, and the `0023` self-service RPCs (see `docs/decisions/011-customer-self-service-and-lgpd.md`). Also fixed two defects that left the design system unstyled: `global.css` was never imported, and Reanimated animated components dropped NativeWind classes on web.
+
+- Task 16 — barber side: `barber` role (owner invite through the `invite-barber` Edge Function), barber-scoped agenda/status/profile/earnings RPCs, own schedule blocks, per-barber compensation (commission or chair rental, owner-managed), report-only earnings dashboard, `(barber)` screens (`/my-agenda`, `/earnings`, `/my-profile`) and owner invite/compensation controls, in pt/en/es (see `docs/decisions/013-barber-role.md`). Migrations `0025`/`0026`.
 
 ## Current MVP boundary
 
@@ -73,6 +75,13 @@ Verified on 2026-08-13:
 - Task 12 Web E2E: `npm run test:e2e:web` — PASS (`9` Playwright tests); static export: `npm run export:web` — PASS (`42` routes).
 - Task 13 clean-state gate: `HOME=/tmp SUPABASE_DISABLE_TELEMETRY=1 npx supabase db reset --local` followed by `HOME=/tmp SUPABASE_DISABLE_TELEMETRY=1 npm run verify` — PASS: `20` Jest suites/`76` tests, `3` Node Web-runner tests, and `264` pgTAP assertions across `10` files.
 
+Verified on 2026-09-29 (Task 16), on the local stack started with `supabase start -x postgres-meta,studio,imgproxy,vector,logflare,edge-runtime,supavisor,realtime,storage-api,mailpit,kong,postgrest` (the excluded images could not be pulled here) and migrations applied from scratch:
+
+- `npm run typecheck`, `npm run lint` — PASS; Jest — PASS (`65` suites / `307` tests); `npm run test:e2e:runner` — PASS (`3`).
+- pgTAP — PASS: `331` assertions across `13` files (new `013_barber_role.sql`, `37`), run with `psql -f` per file because the `pg_prove` image could not be pulled (so `npm run test:db` itself was not run).
+- Web E2E — PASS (`43` Playwright tests, `7` new in `barber-side.web.spec.ts`), run against a warmed `expo start --web` server with the local Chromium because the cold-start ping in `scripts/run-e2e-web.mjs` times out in this sandbox; `npm run export:web` — PASS.
+- Not verified: the `invite-barber` Edge Function end to end (no SMTP / Edge runtime here); see decision 013.
+
 Verified on 2026-09-25 (Task 15), on a freshly reset local database:
 
 - `npm run verify` — PASS: typecheck, lint, Jest (`62` suites / `282` tests), `3` Node Web-runner tests, and `294` pgTAP assertions across `12` files (including `012_notification_locale.sql`, `9` assertions).
@@ -90,6 +99,8 @@ Verified on 2026-09-23 (Task 14), on a freshly reset local database:
 No Web smoke was run for Task 5 because it changes no route or rendered UI; the availability client is covered at the RPC/query contract boundary.
 
 ## Known limitations
+
+- Task 16: per-service commission, per-barber weekly hours, payment processing and billing are out of scope; the invite Edge Function is untested end to end; a deactivated barber only sees a "not linked" error; avatar is a URL, not an upload.
 
 - Task 15: push token registration is not wired into the app yet, so the device language only reaches the server once it is; English and Spanish copy (legal and notification text especially) needs a native reader; recurrence conflict `reason`/`status` codes on the owner screen are still shown raw.
 

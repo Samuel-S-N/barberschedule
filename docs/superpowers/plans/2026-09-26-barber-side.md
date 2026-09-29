@@ -1,5 +1,7 @@
 # Barber Side Implementation Plan
 
+> **Status: implemented on 2026-09-29.** Where execution differed from this plan, the spec's "Amendments" section and `docs/decisions/013-barber-role.md` are authoritative (e.g. routes `/my-agenda` and `/my-profile`, RPC-only profile access, `set_barber_compensation`).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Give every barber their own account, scoped agenda, self-service

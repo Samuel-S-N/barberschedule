@@ -225,7 +225,7 @@ describe("barber route guard", () => {
   });
 
   it("keeps barbers out of the owner and customer groups", () => {
-    expect(resolveAuthRedirect({ profileRole: "barber", segments: ["(owner)", "agenda"], session })).toBe("/");
-    expect(resolveAuthRedirect({ profileRole: "barber", segments: ["(customer)", "home"], session })).toBe("/");
+    expect(resolveAuthRedirect({ profileRole: "barber", segments: ["(owner)", "agenda"], session })).toBe("/my-agenda");
+    expect(resolveAuthRedirect({ profileRole: "barber", segments: ["(customer)", "home"], session })).toBe("/my-agenda");
   });
 });
