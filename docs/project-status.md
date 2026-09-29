@@ -18,6 +18,7 @@ Status: Tasks 1-13 implemented; credentialed EAS build remains deployment-only
 - Task 11 — deterministic fictional seed, complete RLS matrix audit, seed contract tests, and database/security boundary docs
 - Task 12 — password-reset/profile/settings routes, EAS/static-web configuration, release checks, and authenticated Web E2E coverage
 - Task 13 — clean-state regression gate, acceptance matrix, decision records, and final release/testing handoff docs
+- Task 16 — month calendar: the book date step and the reschedule screen use a month grid (Sunday-first columns, month navigation, no past months) with a 30 day booking window instead of the 14 day carousel; the Agenda tab keeps the strip. Plan: `docs/superpowers/plans/2026-09-28-month-calendar.md`.
 - Task 15 — device language: the whole app (customer, auth, legal, owner screens, error messages) follows the device language in Portuguese (Brazil), English or Spanish, with English as the fallback; push notifications now carry real text in the token's language instead of the raw event code (see `docs/decisions/012-device-language.md`).
 - Task 14 — customer frontend: signup, redesigned auth, customer tab navigation (Home/Book/Agenda/Profile), agenda calendar with cancel/reschedule, profile edit, LGPD consent/export/account deletion, and the `0023` self-service RPCs (see `docs/decisions/011-customer-self-service-and-lgpd.md`). Also fixed two defects that left the design system unstyled: `global.css` was never imported, and Reanimated animated components dropped NativeWind classes on web.
 
@@ -72,6 +73,12 @@ Verified on 2026-08-13:
 - Task 11 seed contract: `npm test -- --runInBand tests/integration/seed-contract.test.ts` — PASS (`2` tests); full RLS audit `010_full_rls.sql` — PASS (`29` pgTAP assertions).
 - Task 12 Web E2E: `npm run test:e2e:web` — PASS (`9` Playwright tests); static export: `npm run export:web` — PASS (`42` routes).
 - Task 13 clean-state gate: `HOME=/tmp SUPABASE_DISABLE_TELEMETRY=1 npx supabase db reset --local` followed by `HOME=/tmp SUPABASE_DISABLE_TELEMETRY=1 npm run verify` — PASS: `20` Jest suites/`76` tests, `3` Node Web-runner tests, and `264` pgTAP assertions across `10` files.
+
+Verified on 2026-09-28 (Task 16):
+
+- Jest `64` suites / `302` tests, `3` Node Web-runner tests, typecheck and lint clean; `npm run test:e2e:web` `36` passed (the booking spec now walks the month navigation); `npm run export:web` OK.
+- pgTAP: `292` of `294` assertions passed locally. The two failures are `010_full_rls.sql` tests 3 and 21 ("three customers"), which count a fourth customer created by manual testing on the local database (a real sign-up on a phone); this task changes no SQL. Run `npx supabase db reset` first when a pristine database is needed (CI does).
+- Layout checked in a browser at 360x640 (`en`, `pt`) and 1100x800 (`es`): columns align with the weekday header, past days are dimmed, the selected day is `ink`, the continue button stays on screen, no horizontal overflow.
 
 Verified on 2026-09-25 (Task 15), on a freshly reset local database:
 

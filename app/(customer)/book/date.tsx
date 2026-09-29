@@ -3,13 +3,10 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 
-import { CalendarStrip } from "../../../src/components/domain/CalendarStrip";
+import { MonthCalendar } from "../../../src/components/domain/MonthCalendar";
 import { Button } from "../../../src/components/ui/Button";
-import { useLanguage } from "../../../src/i18n/use-language";
-import { buildCalendarStripDays } from "../../../src/lib/dates/calendar-strip-days";
+import { formatInstantInShopTime } from "../../../src/lib/dates/shop-time";
 import { Screen } from "../../../src/components/ui/Screen";
-
-const DAYS_AHEAD = 14;
 
 function param(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";
@@ -22,9 +19,8 @@ export default function BookDateScreen() {
   const barberServiceId = param(params.barberServiceId);
   const shopId = param(params.shopId);
   const { t } = useTranslation();
-  const language = useLanguage();
-  const days = useMemo(() => buildCalendarStripDays(new Date(), DAYS_AHEAD, language), [language]);
-  const [localDate, setLocalDate] = useState(days[0].date);
+  const today = useMemo(() => formatInstantInShopTime(new Date()).localDate, []);
+  const [localDate, setLocalDate] = useState(today);
 
   return (
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
@@ -32,9 +28,7 @@ export default function BookDateScreen() {
         <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
           {t("book.dateTitle")}
         </Text>
-        <View className="w-full">
-          <CalendarStrip days={days} onSelectDate={setLocalDate} selectedDate={localDate} />
-        </View>
+        <MonthCalendar onSelectDate={setLocalDate} selectedDate={localDate} today={today} />
         <View className="w-full max-w-[420px]">
           <Button
             label={t("book.continue")}
