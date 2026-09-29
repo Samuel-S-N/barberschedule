@@ -22,3 +22,5 @@ export { Toast } from "./Toast";
 export type { ToastProps, ToastVariant } from "./Toast";
 export { SkeletonBlock, SkeletonCircle, SkeletonText } from "./SkeletonLoader";
 export type { SkeletonBlockProps, SkeletonCircleProps, SkeletonTextProps } from "./SkeletonLoader";
+export { StatTile } from "./StatTile";
+export type { StatTileProps } from "./StatTile";

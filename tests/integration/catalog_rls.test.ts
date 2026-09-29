@@ -85,7 +85,11 @@ describe("task 3 catalog and customer helpers", () => {
       {
         active: true,
         archivedAt: null,
+        avatarUrl: null,
+        bio: null,
+        compensation: { commissionPercent: 0, type: "commission" },
         id: "barber-1",
+        invitedAt: null,
         name: "Alice Barber",
         shopId: "shop-1",
         userId: "user-1",
