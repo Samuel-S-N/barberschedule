@@ -4,16 +4,16 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
 
-import { AppointmentCard } from "../../src/components/domain/AppointmentCard";
-import { EmptyState } from "../../src/components/domain/EmptyState";
-import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
-import { Toast } from "../../src/components/domain/Toast";
-import { Button } from "../../src/components/ui/Button";
-import { listMyAppointments } from "../../src/features/appointments/lifecycle";
-import { useAppointmentCards } from "../../src/features/appointments/use-appointment-cards";
-import { listMyCustomers } from "../../src/features/customers/api";
-import { useSupabaseSession } from "../../src/providers/AppProviders";
-import { Screen } from "../../src/components/ui/Screen";
+import { AppointmentCard } from "../../../src/components/domain/AppointmentCard";
+import { EmptyState } from "../../../src/components/domain/EmptyState";
+import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
+import { Toast } from "../../../src/components/domain/Toast";
+import { Button } from "../../../src/components/ui/Button";
+import { listMyAppointments } from "../../../src/features/appointments/lifecycle";
+import { useAppointmentCards } from "../../../src/features/appointments/use-appointment-cards";
+import { listMyCustomers } from "../../../src/features/customers/api";
+import { useSupabaseSession } from "../../../src/providers/AppProviders";
+import { Screen } from "../../../src/components/ui/Screen";
 
 export default function CustomerHomeScreen() {
   const router = useRouter();

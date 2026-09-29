@@ -3,12 +3,12 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 
-import { BarberCard } from "../../../src/components/domain/BarberCard";
-import { EmptyState } from "../../../src/components/domain/EmptyState";
-import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
-import { listPublicBarbers } from "../../../src/features/barbers/api";
-import { useSupabaseSession } from "../../../src/providers/AppProviders";
-import { Screen } from "../../../src/components/ui/Screen";
+import { BarberCard } from "../../../../src/components/domain/BarberCard";
+import { EmptyState } from "../../../../src/components/domain/EmptyState";
+import { SkeletonBlock } from "../../../../src/components/domain/SkeletonLoader";
+import { listPublicBarbers } from "../../../../src/features/barbers/api";
+import { useSupabaseSession } from "../../../../src/providers/AppProviders";
+import { Screen } from "../../../../src/components/ui/Screen";
 
 function param(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";

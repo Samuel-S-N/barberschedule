@@ -455,6 +455,8 @@ git commit -m "feat(navigation): swipeable customer tabs with a pager"
 
 ---
 
+> **Amendment (during execution):** `screenOptions` receives `route` with only `name` and `key`, so `nestedRouteName` could not work. The lock became `isTabSwipeEnabled(pathname: string)` (false for `/book/date`), fed by `usePathname()` in `(tabs)/_layout.tsx`; `nestedRouteName` was dropped. `BottomTabBar` also gained `aria-selected` because React Native Web does not map `accessibilityState.selected`, which the e2e needs. The e2e drag for the tab test starts in an empty area (a drag that starts and ends on one button is a DOM click).
+
 ### Task 4: Verify, document, review, ship
 
 **Files:**

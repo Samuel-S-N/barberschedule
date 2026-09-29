@@ -51,7 +51,9 @@ URLs do not change (groups are not part of the URL): `/home`, `/book`, `/appoint
 
 ### Swipe lock on the calendar step
 
-`MonthCalendar` needs horizontal drags, so on the book date step the pager must not steal them. `screenOptions` sets `swipeEnabled` per tab route: false when the route is `book` and the focused screen of its nested stack (`route.state?.routes[route.state.index]?.name`) is `date`; true otherwise. The rule is a small pure function `isTabSwipeEnabled(routeName, nestedRouteName)` with a unit test. The other booking steps (shop, barber, service, review) keep tab swipe: the nested stack state survives leaving and returning to the tab. Reschedule is outside the pager, so it needs no lock.
+`MonthCalendar` needs horizontal drags, so on the book date step the pager must not steal them (the pager sits above the calendar and its capture handlers run first). The layout sets `swipeEnabled: isTabSwipeEnabled(usePathname())`, a small pure function that returns false for `/book/date` and true otherwise, with a unit test. The other booking steps (shop, barber, service, review) keep tab swipe: the nested stack state survives leaving and returning to the tab. Reschedule is outside the pager, so it needs no lock.
+
+*Amendment (during implementation):* the first version read the nested stack state from `route.state` inside `screenOptions`, but expo-router only passes `{ name, key }` there, so the lock never engaged. The pathname is the reliable source.
 
 ### Month swipe
 

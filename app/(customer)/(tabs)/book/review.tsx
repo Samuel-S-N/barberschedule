@@ -5,20 +5,20 @@ import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
 import { z } from "zod";
 
-import { EmptyState } from "../../../src/components/domain/EmptyState";
-import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
-import { TimeSlotPicker } from "../../../src/components/domain/TimeSlotPicker";
-import type { TimeSlot } from "../../../src/components/domain/TimeSlotPicker";
-import { Toast } from "../../../src/components/domain/Toast";
-import { Button } from "../../../src/components/ui/Button";
-import { Input } from "../../../src/components/ui/Input";
-import { bookAppointment } from "../../../src/features/appointments/api";
-import { getAvailableSlotsQueryOptions } from "../../../src/features/availability/query";
-import type { AvailableSlot } from "../../../src/features/availability/types";
-import { listMyCustomers } from "../../../src/features/customers/api";
-import { errorMessage } from "../../../src/i18n/errors";
-import { useSupabaseSession } from "../../../src/providers/AppProviders";
-import { Screen } from "../../../src/components/ui/Screen";
+import { EmptyState } from "../../../../src/components/domain/EmptyState";
+import { SkeletonBlock } from "../../../../src/components/domain/SkeletonLoader";
+import { TimeSlotPicker } from "../../../../src/components/domain/TimeSlotPicker";
+import type { TimeSlot } from "../../../../src/components/domain/TimeSlotPicker";
+import { Toast } from "../../../../src/components/domain/Toast";
+import { Button } from "../../../../src/components/ui/Button";
+import { Input } from "../../../../src/components/ui/Input";
+import { bookAppointment } from "../../../../src/features/appointments/api";
+import { getAvailableSlotsQueryOptions } from "../../../../src/features/availability/query";
+import type { AvailableSlot } from "../../../../src/features/availability/types";
+import { listMyCustomers } from "../../../../src/features/customers/api";
+import { errorMessage } from "../../../../src/i18n/errors";
+import { useSupabaseSession } from "../../../../src/providers/AppProviders";
+import { Screen } from "../../../../src/components/ui/Screen";
 
 const notesSchema = z.object({ notes: z.string().trim().max(500) });
 // The button is disabled until a time is chosen, so this is only a safety net; it is mapped to text in onError.
