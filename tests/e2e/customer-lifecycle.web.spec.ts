@@ -139,8 +139,8 @@ test("a customer can edit their name and phone", async ({ page }) => {
     }
   });
 
-  await page.goto("/profile");
-  await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
+  await page.goto("/me/account");
+  await expect(page.getByRole("heading", { name: "My data" })).toBeVisible();
   await expect(page.getByLabel("Full name")).toHaveValue("Browser Customer");
 
   await page.getByLabel("Full name").fill("Browser Renamed");
@@ -160,7 +160,7 @@ test("a customer can download their data as a JSON file", async ({ page }) => {
     }
   });
 
-  await page.goto("/profile");
+  await page.goto("/me/settings");
   const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId("profile-export").click()]);
 
   expect(download.suggestedFilename()).toMatch(/^barberschedule-my-data-\d{4}-\d{2}-\d{2}\.json$/);
@@ -172,7 +172,7 @@ test("deleting the account is blocked while appointments are upcoming", async ({
   await page.route("**/functions/v1/delete-account", (route) =>
     json(route, { code: "ACCOUNT_DELETION_BLOCKED" }, 409));
 
-  await page.goto("/profile");
+  await page.goto("/me/privacy");
   await page.getByTestId("profile-delete").click();
   await page.getByTestId("profile-delete-confirm").click();
 
