@@ -62,6 +62,11 @@ function useEvent() {
   return () => {};
 }
 
+// No UI thread in Jest: a function scheduled "on the JS thread" is just the function.
+function runOnJS(fn) {
+  return fn;
+}
+
 function createAnimatedComponent(Component) {
   return React.forwardRef(function AnimatedMockComponent(props, ref) {
     return React.createElement(Component, { ...props, ref });
@@ -80,6 +85,7 @@ module.exports = {
   __esModule: true,
   default: Animated,
   createAnimatedComponent,
+  runOnJS,
   useSharedValue,
   useAnimatedStyle,
   useEvent,

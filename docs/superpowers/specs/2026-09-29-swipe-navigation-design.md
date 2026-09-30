@@ -14,7 +14,7 @@ Dragging sideways navigates:
 ## Decisions (from brainstorming)
 
 - Tab swipe follows the finger (pager), not "switch on release".
-- Month swipe switches on release (threshold), it does not follow the finger.
+- Month swipe: first built as "switch on release"; after testing on a phone the calendar now follows the finger like the tabs do (see "Month swipe").
 - Scope is the customer app. The owner screens have no tab bar.
 
 ## Findings that shaped this design
@@ -61,9 +61,12 @@ URLs do not change (groups are not part of the URL): `/home`, `/book`, `/appoint
 
 `MonthCalendar` wraps its root `View` in a `GestureDetector` with a native `Gesture.Pan()` from `react-native-gesture-handler` (`~2.32.0`, the version Expo Go 57 embeds; `GestureHandlerRootView` wraps the app in `app/_layout.tsx`):
 
-- `activeOffsetX([-20, 20])` claims the gesture after 20 dp sideways, `failOffsetY([-25, 25])` lets vertical movement fail it, so taps on day cells and the arrows are untouched. `runOnJS(true)` because the callbacks call `setState`.
-- On end (only when the gesture succeeded, not when it was cancelled), `swipeDirection(translationX, translationY)` returns `next` at `dx <= -40` and `previous` at `dx >= 40` with `|dx| > 2 * |dy|`; both call the same handlers as the arrows, guarded by `canGoForward` / `canGoBack`.
-- Pure helper `swipeDirection(dx, dy): "next" | "previous" | null` in `src/lib/gestures/swipe.ts`, unit tested; the component test plays the pan with gesture-handler's `fireGestureHandler`.
+- `activeOffsetX([-12, 12])` claims the gesture after 12 dp sideways, `failOffsetY([-25, 25])` lets vertical movement fail it, so taps on day cells and the arrows are untouched.
+- **The calendar follows the finger.** The months of the booking window (two, sometimes three) sit side by side in a strip inside an `overflow: hidden` viewport (measured with `onLayout`); the strip's `translateX` is a Reanimated shared value driven from the pan's `onUpdate` on the UI thread, so the current month slides out and the neighbour slides in under the finger with no JS round trip. The claim distance is subtracted (`onStart` records it) so the strip does not jump when the pan activates.
+- On end, `settleIndex` picks the page to settle on: a flick faster than 600 px/s decides the direction (the last movement wins over the distance dragged), otherwise the page changes once the drag passes 30% of a page, otherwise it snaps back. The strip animates there (`withTiming`, 220 ms) and the chosen month goes to React state through `runOnJS`; a cancelled gesture also snaps back. Dragging past the first or last month is damped (`rubberBand`, a quarter of the drag) and never changes month.
+- The month arrows call the same `goTo` and animate the same strip. The month title and the arrows' enabled state follow the React state, so the title changes when the page is chosen (release), not mid-drag.
+- Neighbouring pages are hidden from assistive technology and ignore touches (`importantForAccessibility`, `accessibilityElementsHidden`, `pointerEvents`). Before the first layout only the current month is rendered.
+- Pure helpers in `src/lib/gestures/swipe.ts` (`rubberBand`, `settleIndex`, both `"worklet"` because they run on the UI thread) and `monthRange` in `src/lib/dates/month-calendar.ts`, unit tested. The component test plays whole pans with gesture-handler's `fireGestureHandler` and reaches the middle of a drag through the gesture's own `onStart`/`onUpdate` callbacks, because `fireGestureHandler` always closes the gesture.
 
 *Amendment (found on a device):* the first version used React Native responder handlers, which worked on web but never on Android. Inside the tab pager, `react-native-pager-view`'s `NestedScrollableHost` calls `NativeGestureUtil.notifyNativeGestureStarted` as soon as a touch passes the touch slop, even with `scrollEnabled=false`, and React Native then sends `touchCancel` to the JS touch system: every JS responder or `PanResponder` gesture inside the pager is cancelled after about 8 dp (seen in the device log). A native pan is not cancelled. Verified on the device log: `gh active` then `gh end` with `success true` and translations of about ±120 to ±175 dp.
 

@@ -1,5 +1,6 @@
 import React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
+import { StyleSheet } from "react-native";
 import { State } from "react-native-gesture-handler";
 import { fireGestureHandler, getByGestureTestId } from "react-native-gesture-handler/jest-utils";
 
@@ -93,68 +94,165 @@ describe("MonthCalendar", () => {
   });
 });
 
-// Plays the native pan the way gesture-handler reports it: began, active, then ended with the total translation.
-// A native gesture is used because inside the Android pager a JS responder is cancelled after ~8 dp.
-async function drag(translationX: number, translationY = 0) {
+// The swipe is a native pan (inside the Android pager a JS responder is cancelled after ~8 dp) that moves a strip of
+// month pages with the finger. The strip's translateX is 0 on the first month and -PAGE on the second.
+const PAGE = 300;
+
+async function renderMeasured() {
+  const view = await renderCalendar();
+
+  await act(async () => {
+    fireEvent(view.getByTestId("month-calendar-viewport"), "layout", { nativeEvent: { layout: { height: 300, width: PAGE, x: 0, y: 0 } } });
+  });
+
+  return view;
+}
+
+function stripX(view: Awaited<ReturnType<typeof renderMeasured>>) {
+  const style = StyleSheet.flatten(view.getByTestId("month-pages").props.style) as { transform: { translateX: number }[] };
+
+  return style.transform[0].translateX;
+}
+
+// Plays a whole pan the way gesture-handler reports it; `end` is how it finishes.
+async function drag(translationX: number, options: { end?: "end" | "cancel"; velocityX?: number } = {}) {
+  const { end = "end", velocityX = 0 } = options;
+
   await act(async () => {
     fireGestureHandler(getByGestureTestId("month-swipe"), [
       { state: State.BEGAN },
-      { state: State.ACTIVE, translationX: 0, translationY: 0 },
-      { state: State.ACTIVE, translationX, translationY },
-      { state: State.END, translationX, translationY },
+      { state: State.ACTIVE, translationX: 0, translationY: 0, velocityX: 0 },
+      { state: State.ACTIVE, translationX, translationY: 4, velocityX },
+      { state: end === "end" ? State.END : State.CANCELLED, translationX, translationY: 4, velocityX },
     ]);
   });
 }
 
-describe("MonthCalendar swipe", () => {
-  it("goes to the next month when dragged left", async () => {
-    const view = await renderCalendar();
+// fireGestureHandler always closes the gesture, so the middle of a drag is reached through the gesture's own callbacks.
+async function dragMidway(translationX: number) {
+  const { handlers } = getByGestureTestId("month-swipe") as unknown as {
+    handlers: { onStart: (event: unknown) => void; onUpdate: (event: unknown) => void };
+  };
 
-    await drag(-120, 5);
+  await act(async () => {
+    handlers.onStart({ translationX: 0 });
+    handlers.onUpdate({ translationX });
+  });
+}
+
+describe("MonthCalendar swipe", () => {
+  it("lays the months side by side once it is measured", async () => {
+    const view = await renderMeasured();
+
+    expect(view.getByTestId("month-calendar-day-2026-09-30")).toBeTruthy();
+    // The next month is already there, off screen and hidden from assistive technology.
+    expect(view.getByTestId("month-calendar-day-2026-10-05", { includeHiddenElements: true })).toBeTruthy();
+    expect(view.queryByTestId("month-calendar-day-2026-10-05")).toBeNull();
+    expect(stripX(view)).toBe(0);
+  });
+
+  it("follows the finger while dragging", async () => {
+    const view = await renderMeasured();
+
+    await dragMidway(-100);
+
+    expect(stripX(view)).toBe(-100);
+    expect(view.getByTestId("month-calendar-title")).toHaveTextContent("September 2026");
+  });
+
+  it("finishes the change to the next month past 30% of a page", async () => {
+    const view = await renderMeasured();
+
+    await drag(-120);
+
+    expect(stripX(view)).toBe(-PAGE);
+    expect(view.getByTestId("month-calendar-title")).toHaveTextContent("October 2026");
+    expect(view.getByTestId("month-calendar-next")).toBeDisabled();
+  });
+
+  it("snaps back from a short drag", async () => {
+    const view = await renderMeasured();
+
+    await drag(-40);
+
+    expect(stripX(view)).toBe(0);
+    expect(view.getByTestId("month-calendar-title")).toHaveTextContent("September 2026");
+  });
+
+  it("changes month on a quick flick even when the drag is short", async () => {
+    const view = await renderMeasured();
+
+    await drag(-30, { velocityX: -900 });
 
     expect(view.getByTestId("month-calendar-title")).toHaveTextContent("October 2026");
   });
 
-  it("goes back when dragged right", async () => {
-    const view = await renderCalendar();
+  it("goes back to the previous month when dragged right", async () => {
+    const view = await renderMeasured();
 
     await fireEvent.press(view.getByTestId("month-calendar-next"));
     await drag(130);
 
+    expect(stripX(view)).toBe(0);
     expect(view.getByTestId("month-calendar-title")).toHaveTextContent("September 2026");
   });
 
-  it("stops at the current month and at the last month of the window", async () => {
-    const view = await renderCalendar();
+  it("resists past the first month and stays there", async () => {
+    const view = await renderMeasured();
 
-    await drag(130);
+    await dragMidway(100);
+    expect(stripX(view)).toBe(25);
+
+    await drag(100);
+    expect(stripX(view)).toBe(0);
     expect(view.getByTestId("month-calendar-title")).toHaveTextContent("September 2026");
+  });
 
-    await drag(-120);
-    await drag(-120);
+  it("resists past the last month and stays there", async () => {
+    const view = await renderMeasured();
+
+    await fireEvent.press(view.getByTestId("month-calendar-next"));
+    await dragMidway(-100);
+    expect(stripX(view)).toBe(-PAGE - 25);
+
+    await drag(-100);
+    expect(stripX(view)).toBe(-PAGE);
     expect(view.getByTestId("month-calendar-title")).toHaveTextContent("October 2026");
   });
 
-  it("ignores a short drag and a mostly vertical one", async () => {
-    const view = await renderCalendar();
+  it("snaps back when the gesture is cancelled", async () => {
+    const view = await renderMeasured();
 
-    await drag(-30);
-    await drag(-80, 60);
+    await drag(-120, { end: "cancel" });
 
+    expect(stripX(view)).toBe(0);
     expect(view.getByTestId("month-calendar-title")).toHaveTextContent("September 2026");
   });
 
-  it("does nothing when the gesture is cancelled", async () => {
-    const view = await renderCalendar();
+  it("slides the strip when a month arrow is pressed", async () => {
+    const view = await renderMeasured();
 
-    await act(async () => {
-      fireGestureHandler(getByGestureTestId("month-swipe"), [
-        { state: State.BEGAN },
-        { state: State.ACTIVE, translationX: -120, translationY: 0 },
-        { state: State.CANCELLED, translationX: -120, translationY: 0 },
-      ]);
-    });
+    await fireEvent.press(view.getByTestId("month-calendar-next"));
+    expect(stripX(view)).toBe(-PAGE);
 
-    expect(view.getByTestId("month-calendar-title")).toHaveTextContent("September 2026");
+    await fireEvent.press(view.getByTestId("month-calendar-prev"));
+    expect(stripX(view)).toBe(0);
+  });
+
+  it("still selects a day of the month in view", async () => {
+    const onSelectDate = jest.fn();
+    const view = await (async () => {
+      const rendered = await renderCalendar(onSelectDate);
+
+      await act(async () => {
+        fireEvent(rendered.getByTestId("month-calendar-viewport"), "layout", { nativeEvent: { layout: { height: 300, width: PAGE, x: 0, y: 0 } } });
+      });
+
+      return rendered;
+    })();
+
+    await fireEvent.press(view.getByTestId("month-calendar-day-2026-09-30"));
+
+    expect(onSelectDate).toHaveBeenCalledWith("2026-09-30");
   });
 });

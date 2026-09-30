@@ -18,6 +18,7 @@ Status: Tasks 1-16 implemented; credentialed EAS build remains deployment-only
 - Task 11 — deterministic fictional seed, complete RLS matrix audit, seed contract tests, and database/security boundary docs
 - Task 12 — password-reset/profile/settings routes, EAS/static-web configuration, release checks, and authenticated Web E2E coverage
 - Task 13 — clean-state regression gate, acceptance matrix, decision records, and final release/testing handoff docs
+- Task 19 — month calendar follows the finger: the months of the booking window sit in a strip that slides under the finger (native pan driving a Reanimated shared value on the UI thread), then settles on the next month, the previous one, or snaps back (distance past 30% of a page or a flick); damped at the first and last month. Design: the "Month swipe" section of `docs/superpowers/specs/2026-09-29-swipe-navigation-design.md`.
 - Task 18 — swipe navigation: dragging sideways changes month in the calendar (switches on release, as a native `react-native-gesture-handler` pan because JS gestures are cancelled inside the Android pager) and moves between the customer tabs with the page following the finger. Tabs moved into `app/(customer)/(tabs)/` and render through expo-router's `TopTabs` (new dependencies `react-native-tab-view`, `react-native-pager-view`, `react-native-gesture-handler`); the pager is locked on `/book/date`, and `/reschedule` is now a stack screen above the tabs. Spec: `docs/superpowers/specs/2026-09-29-swipe-navigation-design.md`, plans: `docs/superpowers/plans/2026-09-29-swipe-navigation.md` and `2026-09-30-native-month-swipe.md`.
 - Task 17 — month calendar: the book date step and the reschedule screen use a month grid (Sunday-first columns, month navigation, no past months) with a 30 day booking window instead of the 14 day carousel; the Agenda tab keeps the strip. Plan: `docs/superpowers/plans/2026-09-28-month-calendar.md`.
 - Task 16 — barber side: `barber` role (owner invite through the `invite-barber` Edge Function), barber-scoped agenda/status/profile/earnings RPCs, own schedule blocks, per-barber compensation (commission or chair rental, owner-managed), report-only earnings dashboard, `(barber)` screens (`/my-agenda`, `/earnings`, `/my-profile`) and owner invite/compensation controls, in pt/en/es (see `docs/decisions/013-barber-role.md`). Migrations `0025`/`0026`.
@@ -75,6 +76,12 @@ Verified on 2026-08-13:
 - Task 11 seed contract: `npm test -- --runInBand tests/integration/seed-contract.test.ts` — PASS (`2` tests); full RLS audit `010_full_rls.sql` — PASS (`29` pgTAP assertions).
 - Task 12 Web E2E: `npm run test:e2e:web` — PASS (`9` Playwright tests); static export: `npm run export:web` — PASS (`42` routes).
 - Task 13 clean-state gate: `HOME=/tmp SUPABASE_DISABLE_TELEMETRY=1 npx supabase db reset --local` followed by `HOME=/tmp SUPABASE_DISABLE_TELEMETRY=1 npm run verify` — PASS: `20` Jest suites/`76` tests, `3` Node Web-runner tests, and `264` pgTAP assertions across `10` files.
+
+Verified on 2026-09-30 (Task 19, the calendar follows the finger):
+
+- Typecheck and lint clean, Jest `69` suites / `354` tests, `npm run test:e2e:web` `45` passed, run with `.env.local` moved aside (it points the e2e sessions at the LAN host and sends every test to `/login`). Not rerun: `npm run test:db` (this task changes no SQL).
+- In the browser at 390x700 the strip's transform followed the pointer (`translateX` 0, then -100 and -160 while dragging), settled on one page width at release and showed October; a short drag back returned to October. The mid-drag screenshot shows September sliding out and the first columns of October sliding in.
+- Not confirmed by me: how it feels on the phone (frame rate, flick sensitivity, the 30% threshold). Those three numbers are constants in `src/lib/gestures/swipe.ts` (`COMMIT_FRACTION`, `FLICK_VELOCITY`, `SWIPE_CLAIM_PX`) and in `SETTLE_MS` in `MonthCalendar.tsx`.
 
 Verified on 2026-09-30 (Task 18 fix, month swipe on Android):
 

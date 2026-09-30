@@ -14,6 +14,15 @@ export function addMonths(month: string, delta: number) {
   return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, "0")}`;
 }
 
+// Every month from `first` to `last` (both "YYYY-MM"): the pages the calendar can slide through.
+export function monthRange(first: string, last: string) {
+  const months = [first];
+
+  while (months[months.length - 1] < last) months.push(addMonths(months[months.length - 1], 1));
+
+  return months;
+}
+
 export function isDateBookable(date: string, today: string, maxDaysAhead = BOOKING_DAYS_AHEAD) {
   return date >= today && date <= addLocalDays(today, maxDaysAhead);
 }
