@@ -20,6 +20,15 @@ describe("Avatar", () => {
     expect(view.getByTestId("av-image")).toBeTruthy();
   });
 
+  it("falls back to the initial when the photo fails to load", async () => {
+    const view = await render(React.createElement(Avatar, { name: "samuel", testID: "av", uri: "http://x/broken.jpg" }));
+
+    await fireEvent(view.getByTestId("av-image"), "error");
+
+    expect(view.queryByTestId("av-image")).toBeNull();
+    expect(view.getByText("S")).toBeTruthy();
+  });
+
   it("is a button only when onPress is given", async () => {
     const onPress = jest.fn();
     const view = await render(React.createElement(Avatar, { accessibilityLabel: "Change photo", name: "s", onPress }));

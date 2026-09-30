@@ -5,6 +5,7 @@ export type AppRole = "barber" | "customer" | "owner";
 export type Profile = {
   avatarPath?: string | null;
   fullName?: string | null;
+  nickname?: string | null;
   role: AppRole;
   userId: string;
 };

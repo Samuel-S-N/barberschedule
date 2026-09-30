@@ -11,6 +11,7 @@ import { Toast } from "../../../src/components/domain/Toast";
 import { Button } from "../../../src/components/ui/Button";
 import { listMyAppointments } from "../../../src/features/appointments/lifecycle";
 import { useAppointmentCards } from "../../../src/features/appointments/use-appointment-cards";
+import { useMyProfile } from "../../../src/features/account/use-my-profile";
 import { listMyCustomers } from "../../../src/features/customers/api";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 import { Screen } from "../../../src/components/ui/Screen";
@@ -30,7 +31,8 @@ export default function CustomerHomeScreen() {
   const upcoming = useQuery({ queryFn: () => listMyAppointments(supabase), queryKey: ["my-appointments", "upcoming"] });
   const toCardProps = useAppointmentCards(upcoming.data ?? []);
   const next = upcoming.data?.[0];
-  const firstName = customers.data?.[0]?.fullName.split(" ")[0];
+  const profile = useMyProfile();
+  const firstName = profile.data?.nickname || customers.data?.[0]?.fullName.split(" ")[0];
 
   return (
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">

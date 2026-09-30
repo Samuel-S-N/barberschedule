@@ -96,14 +96,15 @@ test("a visitor can create an account and is asked to confirm their email", asyn
   // The login screen stays mounted under signup in the Stack, so target signup's own fields.
   await page.getByTestId("signup-name").fill("Ana Silva");
   await page.getByTestId("signup-email").fill("Ana@Example.test");
-  await page.getByTestId("signup-phone").fill("+55 11 90000-0000");
+  await page.getByTestId("signup-nickname").fill("Aninha");
+  await page.getByTestId("signup-phone").fill("11900000000");
   await page.getByTestId("signup-password").fill("correct-password");
   await page.getByRole("checkbox", { name: "I accept the terms and privacy policy" }).click();
   await page.getByRole("button", { name: "Create account" }).click();
 
   await expect(page.getByText("Check your email")).toBeVisible();
   expect(signUpPayload).toMatchObject({
-    data: { accepted_terms_version: "2026-09-23", full_name: "Ana Silva", phone: "+55 11 90000-0000" },
+    data: { accepted_terms_version: "2026-09-23", full_name: "Ana Silva", nickname: "Aninha", phone: "(11)90000-0000" },
     email: "ana@example.test",
     password: "correct-password",
   });

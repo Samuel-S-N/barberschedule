@@ -1,4 +1,5 @@
 import { Camera } from "lucide-react-native";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { avatarInitial } from "../../features/account/avatar";
@@ -15,11 +16,15 @@ export type AvatarProps = {
 };
 
 export function Avatar({ name, uri, size = 96, onPress, busy = false, accessibilityLabel, testID }: AvatarProps) {
+  const [failed, setFailed] = useState(false);
   const circle = { borderRadius: size / 2, height: size, width: size };
+
+  // A broken or unreachable photo must never leave an empty circle: fall back to the initial.
+  useEffect(() => setFailed(false), [uri]);
   const body = (
     <View className="items-center justify-center overflow-hidden bg-primary-100" style={circle}>
-      {uri ? (
-        <Image accessibilityIgnoresInvertColors source={{ uri }} style={circle} testID={testID ? `${testID}-image` : undefined} />
+      {uri && !failed ? (
+        <Image accessibilityIgnoresInvertColors onError={() => setFailed(true)} source={{ uri }} style={circle} testID={testID ? `${testID}-image` : undefined} />
       ) : (
         <Text className="font-display-bold text-primary-700" style={{ fontSize: size * 0.42 }}>{avatarInitial(name)}</Text>
       )}

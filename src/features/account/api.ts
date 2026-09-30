@@ -33,10 +33,11 @@ export async function ensureMyCustomer(supabase: RpcClient) {
 
 export async function updateMyProfile(
   supabase: RpcClient,
-  input: { fullName: string; phone: string | null },
+  input: { fullName: string; nickname: string | null; phone: string | null },
 ) {
   const row = await callRpc(supabase, "update_my_profile", {
     p_full_name: input.fullName,
+    p_nickname: input.nickname?.trim() || null,
     p_phone: input.phone,
   });
 

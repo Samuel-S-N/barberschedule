@@ -12,6 +12,7 @@ import { Screen } from "../../src/components/ui/Screen";
 import { signUpCustomer } from "../../src/features/auth/api";
 import { parseSignupInput } from "../../src/features/auth/validation";
 import { errorMessage } from "../../src/i18n/errors";
+import { formatPhone } from "../../src/features/account/phone";
 import { colors } from "../../src/lib/design/colors";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
@@ -19,7 +20,7 @@ export default function SignupScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { supabase } = useSupabaseSession();
-  const [form, setForm] = useState({ email: "", fullName: "", password: "", phone: "" });
+  const [form, setForm] = useState({ email: "", fullName: "", nickname: "", password: "", phone: "" });
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const [serverError, setServerError] = useState<string | null>(null);
@@ -69,8 +70,9 @@ export default function SignupScreen() {
           <View className="w-full max-w-[420px] gap-4">
             <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("auth.signup.title")}</Text>
             <Input error={fieldError("fullName")} label={t("common.fullName")} onChangeText={set("fullName")} testID="signup-name" value={form.fullName} />
+            <Input error={fieldError("nickname")} label={t("common.nicknameOptional")} onChangeText={set("nickname")} testID="signup-nickname" value={form.nickname} />
             <Input error={fieldError("email")} label={t("common.email")} onChangeText={set("email")} testID="signup-email" value={form.email} />
-            <Input error={fieldError("phone")} label={t("common.phoneOptional")} onChangeText={set("phone")} testID="signup-phone" value={form.phone} />
+            <Input error={fieldError("phone")} label={t("common.phoneOptional")} onChangeText={(value) => set("phone")(formatPhone(value))} testID="signup-phone" value={form.phone} />
             <Input error={fieldError("password")} label={t("common.password")} onChangeText={set("password")} secureTextEntry testID="signup-password" value={form.password} />
             <Pressable
               accessibilityLabel={t("auth.signup.acceptTerms")}

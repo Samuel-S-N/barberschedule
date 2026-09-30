@@ -22,7 +22,7 @@ export default function CustomerProfileScreen() {
   const { session, supabase } = useSupabaseSession();
   const profile = useMyProfile();
   const customers = useQuery({ queryFn: () => listMyCustomers(supabase), queryKey: ["my-customers"] });
-  const name = customers.data?.[0]?.fullName ?? profile.data?.fullName ?? "";
+  const name = profile.data?.nickname || customers.data?.[0]?.fullName || profile.data?.fullName || "";
   const [error, setError] = useState<string | null>(null);
 
   return (

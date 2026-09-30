@@ -12,7 +12,8 @@ import { Button } from "../../../src/components/ui/Button";
 import { Input } from "../../../src/components/ui/Input";
 import { Screen } from "../../../src/components/ui/Screen";
 import { changeEmail, updateMyProfile, uploadMyAvatar } from "../../../src/features/account/api";
-import { validateAvatar } from "../../../src/features/account/avatar";
+import { base64ToArrayBuffer, validateAvatar } from "../../../src/features/account/avatar";
+import { formatPhone } from "../../../src/features/account/phone";
 import { isValidEmail } from "../../../src/features/account/security";
 import { useMyProfile } from "../../../src/features/account/use-my-profile";
 import { listMyCustomers } from "../../../src/features/customers/api";
@@ -32,6 +33,7 @@ export default function AccountScreen() {
   const customer = customers.data?.[0];
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [nickname, setNickname] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [changingEmail, setChangingEmail] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -41,12 +43,14 @@ export default function AccountScreen() {
   useEffect(() => {
     if (customer) {
       setFullName(customer.fullName);
-      setPhone(customer.phone ?? "");
+      setPhone(formatPhone(customer.phone ?? ""));
     }
   }, [customer]);
 
+  useEffect(() => setNickname(profile.data?.nickname ?? ""), [profile.data?.nickname]);
+
   const save = useMutation({
-    mutationFn: () => updateMyProfile(supabase, { fullName, phone: phone.trim() || null }),
+    mutationFn: () => updateMyProfile(supabase, { fullName, nickname: nickname.trim() || null, phone: phone.trim() || null }),
     onError: (caught) => fail(caught, t("profile.saveError")),
     onSuccess: () => {
       setFeedback({ message: t("profile.saved"), variant: "success" });
@@ -62,11 +66,12 @@ export default function AccountScreen() {
 
       if (picked.canceled) return "canceled" as const;
 
-      // Always a small JPEG: phone photos are several MB and their MIME type is unreliable on native.
+      // Always a small JPEG, with its bytes taken from the manipulator: fetch().arrayBuffer() returns
+      // broken data on React Native (a 14-byte "photo").
       const small = await ImageManipulator.manipulateAsync(picked.assets[0].uri, [{ resize: { width: 512 } }], {
-        compress: 0.8, format: ImageManipulator.SaveFormat.JPEG,
+        base64: true, compress: 0.8, format: ImageManipulator.SaveFormat.JPEG,
       });
-      const data = await (await fetch(small.uri)).arrayBuffer();
+      const data = base64ToArrayBuffer(small.base64 ?? "");
 
       if (validateAvatar({ size: data.byteLength, type: "image/jpeg" })) return "invalid" as const;
 
@@ -110,7 +115,8 @@ export default function AccountScreen() {
             </View>
 
             <Input label={t("common.fullName")} onChangeText={setFullName} testID="profile-name" value={fullName} />
-            <Input label={t("common.phoneOptional")} onChangeText={setPhone} testID="profile-phone" value={phone} />
+            <Input label={t("common.nicknameOptional")} onChangeText={setNickname} testID="profile-nickname" value={nickname} />
+            <Input label={t("common.phoneOptional")} onChangeText={(value) => setPhone(formatPhone(value))} testID="profile-phone" value={phone} />
             <Button disabled={save.isPending || !customer} label={t("profile.save")} onPress={() => save.mutate()} testID="profile-save" />
 
             <Text className="pt-2 text-sm font-sans-medium text-neutral-600">{t("profile.account.emailLabel")}</Text>

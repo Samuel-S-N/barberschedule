@@ -27,15 +27,23 @@ describe("account api", () => {
   it("updateMyProfile sends p_-prefixed parameters", async () => {
     const rpc = jest.fn().mockResolvedValue({ data: { ...customerRow, full_name: "Ana B", phone: "+55 11 90000-0000" }, error: null });
 
-    await expect(updateMyProfile({ rpc } as never, { fullName: "Ana B", phone: "+55 11 90000-0000" }))
+    await expect(updateMyProfile({ rpc } as never, { fullName: "Ana B", nickname: " Bia ", phone: "+55 11 90000-0000" }))
       .resolves.toMatchObject({ fullName: "Ana B", phone: "+55 11 90000-0000" });
-    expect(rpc).toHaveBeenCalledWith("update_my_profile", { p_full_name: "Ana B", p_phone: "+55 11 90000-0000" });
+    expect(rpc).toHaveBeenCalledWith("update_my_profile", { p_full_name: "Ana B", p_nickname: "Bia", p_phone: "+55 11 90000-0000" });
+  });
+
+  it("updateMyProfile sends a null nickname when it is blank", async () => {
+    const rpc = jest.fn().mockResolvedValue({ data: customerRow, error: null });
+
+    await updateMyProfile({ rpc } as never, { fullName: "Ana", nickname: "   ", phone: null });
+
+    expect(rpc).toHaveBeenCalledWith("update_my_profile", { p_full_name: "Ana", p_nickname: null, p_phone: null });
   });
 
   it("maps P0017 to PROFILE_INVALID", async () => {
     const rpc = jest.fn().mockResolvedValue({ data: null, error: { code: "P0017" } });
 
-    await expect(updateMyProfile({ rpc } as never, { fullName: " ", phone: null }))
+    await expect(updateMyProfile({ rpc } as never, { fullName: " ", nickname: null, phone: null }))
       .rejects.toMatchObject({ code: "PROFILE_INVALID" });
   });
 
