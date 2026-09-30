@@ -84,33 +84,29 @@ describe("account api", () => {
       .rejects.toMatchObject({ code: "ACCOUNT_REQUEST_FAILED" });
   });
 
-  it("uploadMyAvatar uploads, saves the url and removes the previous file", async () => {
+  it("uploadMyAvatar uploads, saves the path and removes the previous file", async () => {
     const upload = jest.fn().mockResolvedValue({ error: null });
     const remove = jest.fn().mockResolvedValue({ error: null });
-    const getPublicUrl = jest.fn().mockReturnValue({ data: { publicUrl: "http://x/storage/v1/object/public/avatars/u1/avatar-9.jpg" } });
     const rpc = jest.fn().mockResolvedValue({ data: {}, error: null });
-    const supabase = { rpc, storage: { from: jest.fn().mockReturnValue({ getPublicUrl, remove, upload }) } };
-    const blob = new Blob(["x"], { type: "image/jpeg" });
+    const supabase = { rpc, storage: { from: jest.fn().mockReturnValue({ remove, upload }) } };
+    const data = new ArrayBuffer(8);
 
-    const url = await uploadMyAvatar(supabase as never, "u1", blob, "http://x/storage/v1/object/public/avatars/u1/avatar-1.jpg");
+    const path = await uploadMyAvatar(supabase as never, "u1", data, "image/jpeg", "u1/avatar-1.jpg");
 
-    expect(url).toBe("http://x/storage/v1/object/public/avatars/u1/avatar-9.jpg");
-    expect(upload).toHaveBeenCalledWith(expect.stringMatching(/^u1\/avatar-\d+\.jpg$/), blob, { contentType: "image/jpeg" });
-    expect(rpc).toHaveBeenCalledWith("set_my_avatar", { p_url: url });
+    expect(path).toMatch(/^u1\/avatar-\d+\.jpg$/);
+    expect(upload).toHaveBeenCalledWith(path, data, { contentType: "image/jpeg" });
+    expect(rpc).toHaveBeenCalledWith("set_my_avatar", { p_path: path });
     expect(remove).toHaveBeenCalledWith(["u1/avatar-1.jpg"]);
   });
 
-  it("uploadMyAvatar removes the new file when saving the url fails", async () => {
+  it("uploadMyAvatar removes the new file when saving the path fails", async () => {
     const remove = jest.fn().mockResolvedValue({ error: null });
     const supabase = {
       rpc: jest.fn().mockResolvedValue({ data: null, error: { code: "XX000" } }),
-      storage: { from: jest.fn().mockReturnValue({
-        getPublicUrl: () => ({ data: { publicUrl: "http://x/storage/v1/object/public/avatars/u1/avatar-9.jpg" } }),
-        remove, upload: jest.fn().mockResolvedValue({ error: null }),
-      }) },
+      storage: { from: jest.fn().mockReturnValue({ remove, upload: jest.fn().mockResolvedValue({ error: null }) }) },
     };
 
-    await expect(uploadMyAvatar(supabase as never, "u1", new Blob(["x"], { type: "image/png" }), null))
+    await expect(uploadMyAvatar(supabase as never, "u1", new ArrayBuffer(8), "image/png", null))
       .rejects.toMatchObject({ code: "ACCOUNT_REQUEST_FAILED" });
     expect(remove).toHaveBeenCalledWith([expect.stringMatching(/^u1\/avatar-\d+\.png$/)]);
   });

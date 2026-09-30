@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(10);
+select plan(11);
 
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_user_meta_data)
 values
@@ -20,18 +20,21 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 select public.ensure_my_customer();
 
 select is(
-  (select avatar_url from public.set_my_avatar('http://127.0.0.1:54321/storage/v1/object/public/avatars/80000000-0000-0000-0000-000000000002/avatar-1.jpg')),
-  'http://127.0.0.1:54321/storage/v1/object/public/avatars/80000000-0000-0000-0000-000000000002/avatar-1.jpg',
-  'set_my_avatar stores a url inside the caller''s own folder');
+  (select avatar_path from public.set_my_avatar('80000000-0000-0000-0000-000000000002/avatar-1.jpg')),
+  '80000000-0000-0000-0000-000000000002/avatar-1.jpg',
+  'set_my_avatar stores a path inside the caller''s own folder');
 select is(
-  (select avatar_url from public.get_current_profile()),
-  'http://127.0.0.1:54321/storage/v1/object/public/avatars/80000000-0000-0000-0000-000000000002/avatar-1.jpg',
-  'get_current_profile returns avatar_url');
+  (select avatar_path from public.get_current_profile()),
+  '80000000-0000-0000-0000-000000000002/avatar-1.jpg',
+  'get_current_profile returns avatar_path');
 select throws_ok(
-  $$ select public.set_my_avatar('http://127.0.0.1:54321/storage/v1/object/public/avatars/80000000-0000-0000-0000-000000000003/avatar-1.jpg') $$,
-  'P0017', null, 'a url in another user''s folder is rejected');
-select throws_ok($$ select public.set_my_avatar('not a url') $$, 'P0017', null, 'a non-url is rejected');
-select is((select avatar_url from public.set_my_avatar(null)), null, 'null clears the avatar');
+  $$ select public.set_my_avatar('80000000-0000-0000-0000-000000000003/avatar-1.jpg') $$,
+  'P0017', null, 'a path in another user''s folder is rejected');
+select throws_ok(
+  $$ select public.set_my_avatar('http://evil.example/storage/v1/object/public/avatars/80000000-0000-0000-0000-000000000002/avatar-1.jpg') $$,
+  'P0017', null, 'a url (any host) is rejected');
+select throws_ok($$ select public.set_my_avatar('80000000-0000-0000-0000-000000000002/../80000000-0000-0000-0000-000000000003/avatar-1.jpg') $$, 'P0017', null, 'a traversal path is rejected');
+select is((select avatar_path from public.set_my_avatar(null)), null, 'null clears the avatar');
 
 -- storage policies
 select lives_ok(

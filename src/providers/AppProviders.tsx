@@ -81,7 +81,14 @@ export function AppProviders({ children }: PropsWithChildren) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      // The same user, refreshed or edited (password/e-mail change): keep the session current without the
+      // loading gate, which would unmount the navigator and send the user back to the first screen.
+      if ((event === "USER_UPDATED" || event === "TOKEN_REFRESHED") && nextSession) {
+        setSession(nextSession);
+        return;
+      }
+
       void syncSession(nextSession);
     });
 

@@ -32,7 +32,7 @@ export default function CustomerProfileScreen() {
           <View className="w-full max-w-[420px] gap-6">
             <View className="items-center gap-1 pt-4">
               <Avatar
-                accessibilityLabel={t("profile.account.changePhoto")}
+                accessibilityLabel={t("profile.menu.account")}
                 name={name}
                 onPress={() => router.push("/me/account")}
                 testID="profile-avatar"

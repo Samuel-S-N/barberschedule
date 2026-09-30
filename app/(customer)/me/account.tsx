@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -56,27 +57,25 @@ export default function AccountScreen() {
 
   const photo = useMutation({
     mutationFn: async () => {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (!permission.granted) return "permission" as const;
-
-      const picked = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: true, aspect: [1, 1], mediaTypes: ["images"], quality: 0.7,
-      });
+      // No permission request: the system photo pickers work without one.
+      const picked = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, aspect: [1, 1], mediaTypes: ["images"] });
 
       if (picked.canceled) return "canceled" as const;
 
-      const blob = await (await fetch(picked.assets[0].uri)).blob();
+      // Always a small JPEG: phone photos are several MB and their MIME type is unreliable on native.
+      const small = await ImageManipulator.manipulateAsync(picked.assets[0].uri, [{ resize: { width: 512 } }], {
+        compress: 0.8, format: ImageManipulator.SaveFormat.JPEG,
+      });
+      const data = await (await fetch(small.uri)).arrayBuffer();
 
-      if (validateAvatar(blob)) return "invalid" as const;
+      if (validateAvatar({ size: data.byteLength, type: "image/jpeg" })) return "invalid" as const;
 
-      await uploadMyAvatar(supabase, session!.user.id, blob, profile.data?.avatarUrl ?? null);
+      await uploadMyAvatar(supabase, session!.user.id, data, "image/jpeg", profile.data?.avatarPath ?? null);
 
       return "saved" as const;
     },
     onError: (caught) => fail(caught, t("profile.account.photoError")),
     onSuccess: (result) => {
-      if (result === "permission") setFeedback({ message: t("profile.account.photoPermission"), variant: "error" });
       if (result === "invalid") setFeedback({ message: t("profile.account.photoInvalid"), variant: "error" });
       if (result === "saved") void queryClient.invalidateQueries({ queryKey: ["my-profile"] });
     },

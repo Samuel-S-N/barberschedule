@@ -137,7 +137,6 @@ export const pt: DeepStringRecord<typeof en> = {
       newEmail: "Novo e-mail",
       photoError: "Não foi possível atualizar sua foto.",
       photoInvalid: "Use uma imagem JPEG, PNG ou WebP de até 2 MB.",
-      photoPermission: "Permita o acesso às fotos para escolher uma imagem.",
       sendLink: "Enviar link de confirmação",
       title: "Meus dados",
     },

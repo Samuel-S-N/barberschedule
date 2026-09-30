@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { DomainError, toDomainError } from "../../lib/errors/domain-errors";
 import { toCustomer } from "../customers/api";
 import type { CustomerRow } from "../customers/types";
-import { AVATAR_BUCKET, avatarPath, avatarPathFromUrl } from "./avatar";
+import { AVATAR_BUCKET, avatarPath } from "./avatar";
 
 const REQUEST_FAILED = "Something went wrong. Please try again.";
 
@@ -73,33 +73,30 @@ export async function deleteMyAccount(supabase: Pick<SupabaseClient, "functions"
 export async function uploadMyAvatar(
   supabase: Pick<SupabaseClient, "rpc" | "storage">,
   userId: string,
-  blob: Blob,
-  previousUrl: string | null,
+  data: ArrayBuffer,
+  mimeType: string,
+  previousPath: string | null,
 ) {
   const bucket = supabase.storage.from(AVATAR_BUCKET);
-  const path = avatarPath(userId, blob.type);
-  const { error } = await bucket.upload(path, blob, { contentType: blob.type });
+  const path = avatarPath(userId, mimeType);
+  const { error } = await bucket.upload(path, data, { contentType: mimeType });
 
   if (error) {
     throw new DomainError("ACCOUNT_REQUEST_FAILED", REQUEST_FAILED);
   }
 
-  const { publicUrl } = bucket.getPublicUrl(path).data;
-
   try {
-    await callRpc(supabase, "set_my_avatar", { p_url: publicUrl });
+    await callRpc(supabase, "set_my_avatar", { p_path: path });
   } catch (caught) {
     await bucket.remove([path]).catch(() => undefined);
     throw caught;
   }
 
-  const previous = previousUrl ? avatarPathFromUrl(previousUrl, userId) : null;
-
-  if (previous) {
-    await bucket.remove([previous]).catch(() => undefined); // ponytail: orphaned file if this fails; a cleanup job if it ever matters
+  if (previousPath) {
+    await bucket.remove([previousPath]).catch(() => undefined); // ponytail: orphaned file if this fails; a cleanup job if it ever matters
   }
 
-  return publicUrl;
+  return path;
 }
 
 export async function changePassword(

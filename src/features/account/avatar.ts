@@ -17,11 +17,3 @@ export function validateAvatar(file: { size: number; type: string }) {
 export function avatarPath(userId: string, mimeType: string, now = Date.now()) {
   return `${userId}/avatar-${now}.${EXTENSIONS[mimeType] ?? "jpg"}`;
 }
-
-export function avatarPathFromUrl(url: string, userId: string) {
-  const marker = `/storage/v1/object/public/${AVATAR_BUCKET}/`;
-  const index = url.indexOf(marker);
-  const path = index === -1 ? "" : url.slice(index + marker.length);
-
-  return path.startsWith(`${userId}/`) ? path : null;
-}

@@ -24,7 +24,8 @@ export function Avatar({ name, uri, size = 96, onPress, busy = false, accessibil
         <Text className="font-display-bold text-primary-700" style={{ fontSize: size * 0.42 }}>{avatarInitial(name)}</Text>
       )}
       {busy ? (
-        <View className="items-center justify-center" style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(23,20,18,0.4)" }]}>
+        <View className="items-center justify-center" style={StyleSheet.absoluteFill}>
+          <View className="bg-ink opacity-40" style={StyleSheet.absoluteFill} />
           <ActivityIndicator color={colors.white} />
         </View>
       ) : null}

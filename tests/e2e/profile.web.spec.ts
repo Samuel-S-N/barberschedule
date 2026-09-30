@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { mockCustomerRest, signInAsCustomer } from "./customer-helpers";
+import { json, mockCustomerRest, signInAsCustomer } from "./customer-helpers";
 
 test("the profile tab is a hub of blocks that open each inner screen", async ({ page }) => {
   await signInAsCustomer(page);
@@ -50,4 +50,73 @@ test("the security screen only enables the button for a valid new password", asy
   await expect(page.getByTestId("security-submit")).toBeDisabled();
   await page.getByTestId("security-confirm").fill("new-password-1");
   await expect(page.getByTestId("security-submit")).toBeEnabled();
+});
+
+const authUser = {
+  app_metadata: {}, aud: "authenticated", created_at: "2026-01-01T00:00:00Z", email: "customer@example.com",
+  id: "55555555-5555-4555-8555-555555555555", user_metadata: {},
+};
+
+test("a wrong current password is reported and nothing is changed", async ({ page }) => {
+  let updated = false;
+
+  await signInAsCustomer(page);
+  await mockCustomerRest(page);
+  await page.route("**/auth/v1/token**", (route) =>
+    json(route, { code: 400, error_code: "invalid_credentials", msg: "Invalid login credentials" }, 400));
+  await page.route("**/auth/v1/user", (route) => {
+    updated = true;
+    return json(route, authUser);
+  });
+
+  await page.goto("/me/security");
+  await page.getByTestId("security-current").fill("wrong-password-1");
+  await page.getByTestId("security-next").fill("new-password-1");
+  await page.getByTestId("security-confirm").fill("new-password-1");
+  await page.getByTestId("security-submit").click();
+
+  await expect(page.getByText("The current password is incorrect.")).toBeVisible();
+  expect(updated).toBe(false);
+});
+
+test("a correct current password changes the password", async ({ page }) => {
+  let payload: Record<string, unknown> | null = null;
+
+  await signInAsCustomer(page);
+  await mockCustomerRest(page);
+  await page.route("**/auth/v1/token**", (route) =>
+    json(route, { access_token: "e2e-check-token", expires_in: 3600, refresh_token: "e2e-check-refresh", token_type: "bearer", user: authUser }));
+  await page.route("**/auth/v1/logout**", (route) => route.fulfill({ status: 204 }));
+  await page.route("**/auth/v1/user", (route) => {
+    payload = route.request().postDataJSON() as Record<string, unknown>;
+    return json(route, authUser);
+  });
+
+  await page.goto("/me/security");
+  await page.getByTestId("security-current").fill("old-password-1");
+  await page.getByTestId("security-next").fill("new-password-1");
+  await page.getByTestId("security-confirm").fill("new-password-1");
+  await page.getByTestId("security-submit").click();
+
+  await expect(page.getByText("Password changed.")).toBeVisible();
+  expect(payload).toMatchObject({ password: "new-password-1" });
+});
+
+test("changing the e-mail asks for confirmation through a link", async ({ page }) => {
+  let payload: Record<string, unknown> | null = null;
+
+  await signInAsCustomer(page);
+  await mockCustomerRest(page);
+  await page.route("**/auth/v1/user", (route) => {
+    payload = route.request().postDataJSON() as Record<string, unknown>;
+    return json(route, { ...authUser, new_email: "new@example.com" });
+  });
+
+  await page.goto("/me/account");
+  await page.getByTestId("account-change-email").click();
+  await page.getByTestId("account-new-email").fill("new@example.com");
+  await page.getByTestId("account-send-link").click();
+
+  await expect(page.getByText(/We sent a confirmation link to new@example\.com/)).toBeVisible();
+  expect(payload).toMatchObject({ email: "new@example.com" });
 });

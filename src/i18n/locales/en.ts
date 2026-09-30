@@ -138,7 +138,6 @@ export const en = {
       newEmail: "New e-mail",
       photoError: "Unable to update your photo.",
       photoInvalid: "Use a JPEG, PNG or WebP image up to 2 MB.",
-      photoPermission: "Allow photo access to choose an image.",
       sendLink: "Send confirmation link",
       title: "My data",
     },

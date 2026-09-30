@@ -1,4 +1,4 @@
-alter table public.profiles add column avatar_url text;
+alter table public.profiles add column avatar_path text;
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('avatars', 'avatars', true, 2097152, array['image/jpeg', 'image/png', 'image/webp'])
@@ -21,7 +21,7 @@ create policy "avatars_delete_own" on storage.objects
 for delete to authenticated
 using (bucket_id = 'avatars' and (storage.foldername(name))[1] = (select auth.uid())::text);
 
-create function public.set_my_avatar(p_url text)
+create function public.set_my_avatar(p_path text)
 returns public.profiles
 language plpgsql
 security definer
@@ -29,21 +29,19 @@ set search_path = pg_catalog, public, pg_temp
 as $$
 declare
   actor uuid := auth.uid();
-  clean text := nullif(btrim(p_url), '');
+  clean text := nullif(btrim(p_path), '');
   result public.profiles;
 begin
   if actor is null then
     raise exception using errcode = '42501', message = 'FORBIDDEN';
   end if;
-  if clean is not null and (
-    clean !~* '^https?://[^\s]+$'
-    or position('/storage/v1/object/public/avatars/' || actor::text || '/' in clean) = 0
-  ) then
+  -- Only an object path inside the caller's own folder is stored; the app builds the public URL from it.
+  if clean is not null and clean !~ ('^' || actor::text || '/avatar-[0-9]+\.(jpg|png|webp)$') then
     raise exception using errcode = 'P0017', message = 'PROFILE_INVALID';
   end if;
 
   update public.profiles
-  set avatar_url = clean, updated_at = clock_timestamp()
+  set avatar_path = clean, updated_at = clock_timestamp()
   where user_id = actor
   returning * into result;
 

@@ -3,7 +3,7 @@ import type { AuthSupabaseClient, Profile } from "./types";
 import type { SignupInput } from "./validation";
 
 type CurrentProfileRow = {
-  avatar_url?: string | null;
+  avatar_path?: string | null;
   full_name?: string | null;
   role: Profile["role"];
   user_id: string;
@@ -17,7 +17,7 @@ function throwIfError(error: Error | null) {
 
 function toProfile(row: CurrentProfileRow): Profile {
   return {
-    ...(typeof row.avatar_url !== "undefined" ? { avatarUrl: row.avatar_url } : {}),
+    ...(typeof row.avatar_path !== "undefined" ? { avatarPath: row.avatar_path } : {}),
     ...(typeof row.full_name !== "undefined"
       ? { fullName: row.full_name ?? null }
       : {}),
