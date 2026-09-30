@@ -48,6 +48,11 @@ export default function CustomerLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="reschedule" />
+      <Stack.Screen name="me/account" />
+      <Stack.Screen name="me/security" />
+      <Stack.Screen name="me/settings" />
+      <Stack.Screen name="me/privacy" />
+      <Stack.Screen name="me/about" />
     </Stack>
   );
 }

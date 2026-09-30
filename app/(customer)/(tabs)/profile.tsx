@@ -1,120 +1,78 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { Info, LogOut, Settings, ShieldCheck, User, UserCog } from "lucide-react-native";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
+import { Avatar } from "../../../src/components/domain/Avatar";
+import { MenuBlock } from "../../../src/components/domain/MenuBlock";
 import { Toast } from "../../../src/components/domain/Toast";
-import { Button } from "../../../src/components/ui/Button";
-import { Input } from "../../../src/components/ui/Input";
 import { Screen } from "../../../src/components/ui/Screen";
-import { buildExportFile, deleteMyAccount, exportMyData, updateMyProfile } from "../../../src/features/account/api";
-import { saveExportFile } from "../../../src/features/account/export-file";
+import { useMyProfile } from "../../../src/features/account/use-my-profile";
 import { signOut } from "../../../src/features/auth/api";
 import { listMyCustomers } from "../../../src/features/customers/api";
 import { errorMessage } from "../../../src/i18n/errors";
+import { colors } from "../../../src/lib/design/colors";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 
 export default function CustomerProfileScreen() {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const { t } = useTranslation();
   const { session, supabase } = useSupabaseSession();
+  const profile = useMyProfile();
   const customers = useQuery({ queryFn: () => listMyCustomers(supabase), queryKey: ["my-customers"] });
-  const customer = customers.data?.[0];
-  const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [feedback, setFeedback] = useState<{ message: string; variant: "success" | "error" } | null>(null);
-  const fail = (caught: unknown, fallback: string) =>
-    setFeedback({ message: errorMessage(caught, t as never, fallback), variant: "error" });
-
-  useEffect(() => {
-    if (customer) {
-      setFullName(customer.fullName);
-      setPhone(customer.phone ?? "");
-    }
-  }, [customer]);
-
-  const save = useMutation({
-    mutationFn: () => updateMyProfile(supabase, { fullName, phone: phone.trim() || null }),
-    onError: (caught) => fail(caught, t("profile.saveError")),
-    onSuccess: () => {
-      setFeedback({ message: t("profile.saved"), variant: "success" });
-      void queryClient.invalidateQueries({ queryKey: ["my-customers"] });
-    },
-  });
-  const exportData = useMutation({
-    mutationFn: async () => saveExportFile(buildExportFile(await exportMyData(supabase))),
-    onError: (caught) => fail(caught, t("profile.exportError")),
-    onSuccess: () => setFeedback({ message: t("profile.exportReady"), variant: "success" }),
-  });
-  const remove = useMutation({
-    mutationFn: async () => {
-      await deleteMyAccount(supabase);
-      await supabase.auth.signOut().catch(() => undefined);
-    },
-    onSuccess: () => queryClient.clear(),
-    onError: (caught) => {
-      setConfirmingDelete(false);
-      fail(caught, t("profile.deleteError"));
-    },
-  });
+  const name = customers.data?.[0]?.fullName ?? profile.data?.fullName ?? "";
+  const [error, setError] = useState<string | null>(null);
 
   return (
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
       <ScrollView className="flex-1">
         <View className="items-center p-5">
-          <View className="w-full max-w-[420px] gap-4">
-            <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("profile.title")}</Text>
-            <Text className="text-sm font-sans text-neutral-600">{session?.user.email}</Text>
-            <Input label={t("common.fullName")} onChangeText={setFullName} testID="profile-name" value={fullName} />
-            <Input label={t("common.phoneOptional")} onChangeText={setPhone} testID="profile-phone" value={phone} />
-            <Button disabled={save.isPending || !customer} label={t("profile.save")} onPress={() => save.mutate()} testID="profile-save" />
+          <View className="w-full max-w-[420px] gap-6">
+            <View className="items-center gap-1 pt-4">
+              <Avatar
+                accessibilityLabel={t("profile.account.changePhoto")}
+                name={name}
+                onPress={() => router.push("/me/account")}
+                testID="profile-avatar"
+                uri={profile.data?.avatarUrl}
+              />
+              <Text accessibilityRole="header" className="pt-3 text-2xl font-display-bold text-ink">{name}</Text>
+              <Text className="text-sm font-sans text-neutral-600">{session?.user.email}</Text>
+            </View>
 
-            <Text className="pt-2 text-lg font-display-semibold text-ink">{t("profile.yourData")}</Text>
-            <Button
-              disabled={exportData.isPending}
-              label={t("profile.download")}
-              onPress={() => exportData.mutate()}
-              testID="profile-export"
-              variant="outline"
+            <MenuBlock
+              items={[
+                { icon: User, key: "account", label: t("profile.menu.account"), onPress: () => router.push("/me/account") },
+                { icon: ShieldCheck, key: "security", label: t("profile.menu.security"), onPress: () => router.push("/me/security") },
+              ]}
             />
-            <Button label={t("profile.terms")} onPress={() => router.push("/legal")} variant="ghost" />
-
-            {confirmingDelete ? (
-              <View className="gap-2">
-                <Text className="text-base font-sans text-neutral-700">{t("profile.deleteWarning")}</Text>
-                <Button
-                  disabled={remove.isPending}
-                  label={t("profile.deleteConfirm")}
-                  onPress={() => remove.mutate()}
-                  testID="profile-delete-confirm"
-                  variant="danger"
-                />
-                <Button label={t("profile.keep")} onPress={() => setConfirmingDelete(false)} variant="ghost" />
-              </View>
-            ) : (
-              <Button label={t("profile.delete")} onPress={() => setConfirmingDelete(true)} testID="profile-delete" variant="outline" />
-            )}
-
-            <Toast
-              message={feedback?.message ?? ""}
-              onDismiss={() => setFeedback(null)}
-              variant={feedback?.variant ?? "info"}
-              visible={feedback !== null}
+            <MenuBlock
+              items={[
+                { icon: Settings, key: "settings", label: t("profile.menu.settings"), onPress: () => router.push("/me/settings") },
+                { icon: UserCog, key: "privacy", label: t("profile.menu.privacy"), onPress: () => router.push("/me/privacy") },
+                { icon: Info, key: "about", label: t("profile.menu.about"), onPress: () => router.push("/me/about") },
+              ]}
             />
-            <Button
-              label={t("profile.signOut")}
+
+            <Pressable
+              accessibilityRole="button"
+              className="min-h-[56px] flex-row items-center justify-center gap-2 rounded-[20px] border border-neutral-200 bg-surface"
               onPress={async () => {
                 try {
                   await signOut(supabase);
                 } catch (caught) {
-                  fail(caught, t("profile.signOutError"));
+                  setError(errorMessage(caught, t as never, t("profile.signOutError")));
                 }
               }}
-              variant="dark"
-            />
+              testID="profile-signout"
+            >
+              <LogOut color={colors.danger[500]} size={20} />
+              <Text className="text-base font-sans-semibold text-danger-500">{t("profile.signOut")}</Text>
+            </Pressable>
+
+            <Toast message={error ?? ""} onDismiss={() => setError(null)} variant="error" visible={error !== null} />
           </View>
         </View>
       </ScrollView>
