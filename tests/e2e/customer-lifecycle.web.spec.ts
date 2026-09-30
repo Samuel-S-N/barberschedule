@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import {
-  appointmentRow, customerRow, isHistoryQuery, json, mockCustomerRest, signInAsCustomer,
+  appointmentRow, customerRow, customerUserId, isHistoryQuery, json, mockCustomerRest, signInAsCustomer,
 } from "./customer-helpers";
 
 test("the home tab greets the customer and shows the next appointment", async ({ page }) => {
@@ -139,16 +139,44 @@ test("a customer can edit their name and phone", async ({ page }) => {
     }
   });
 
-  await page.goto("/profile");
-  await expect(page.getByRole("heading", { name: "Profile" })).toBeVisible();
+  await page.goto("/me/account");
+  await expect(page.getByRole("heading", { name: "My data" })).toBeVisible();
   await expect(page.getByLabel("Full name")).toHaveValue("Browser Customer");
 
   await page.getByLabel("Full name").fill("Browser Renamed");
-  await page.getByLabel("Phone (optional)").fill("+55 11 90000-0000");
+  await page.getByLabel("What should we call you? (optional)").fill("Bia");
+  await page.getByLabel("Phone (optional)").fill("11900000000");
+  await expect(page.getByLabel("Phone (optional)")).toHaveValue("(11)90000-0000");
   await page.getByTestId("profile-save").click();
 
   await expect(page.getByText("Profile saved.")).toBeVisible();
-  expect(updatePayload).toEqual({ p_full_name: "Browser Renamed", p_phone: "+55 11 90000-0000" });
+  expect(updatePayload).toEqual({ p_full_name: "Browser Renamed", p_nickname: "Bia", p_phone: "(11)90000-0000" });
+});
+
+test("the home tab greets the customer by the nickname they chose", async ({ page }) => {
+  await signInAsCustomer(page);
+  await mockCustomerRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/rpc/get_current_profile")) {
+      await json(route, [{ full_name: "Browser Customer", nickname: "Bia", role: "customer", user_id: customerUserId }]);
+      return true;
+    }
+  });
+
+  await page.goto("/home");
+  await expect(page.getByRole("heading", { name: "Hi, Bia" })).toBeVisible();
+});
+
+test("a stored phone is shown with the mask", async ({ page }) => {
+  await signInAsCustomer(page);
+  await mockCustomerRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/customers")) {
+      await json(route, [customerRow({ phone: "+55 11 90000-0000" })]);
+      return true;
+    }
+  });
+
+  await page.goto("/me/account");
+  await expect(page.getByLabel("Phone (optional)")).toHaveValue("(11)90000-0000");
 });
 
 test("a customer can download their data as a JSON file", async ({ page }) => {
@@ -160,7 +188,7 @@ test("a customer can download their data as a JSON file", async ({ page }) => {
     }
   });
 
-  await page.goto("/profile");
+  await page.goto("/me/settings");
   const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId("profile-export").click()]);
 
   expect(download.suggestedFilename()).toMatch(/^barberschedule-my-data-\d{4}-\d{2}-\d{2}\.json$/);
@@ -172,7 +200,7 @@ test("deleting the account is blocked while appointments are upcoming", async ({
   await page.route("**/functions/v1/delete-account", (route) =>
     json(route, { code: "ACCOUNT_DELETION_BLOCKED" }, 409));
 
-  await page.goto("/profile");
+  await page.goto("/me/privacy");
   await page.getByTestId("profile-delete").click();
   await page.getByTestId("profile-delete-confirm").click();
 

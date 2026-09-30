@@ -67,12 +67,12 @@ function createSupabaseStub(initialSession: Session | null) {
       },
       rpc: jest.fn(),
     },
-    emit(session: Session | null) {
+    emit(session: Session | null, event = "SIGNED_IN") {
       if (!authStateCallback) {
         throw new Error("Auth state callback not registered");
       }
 
-      authStateCallback("SIGNED_IN", session);
+      authStateCallback(event, session);
     },
   };
 }
@@ -143,6 +143,31 @@ describe("AppProviders session sync", () => {
       expect(view.getByText("idle|user-2|user-2|customer")).toBeTruthy();
     });
   });
+
+  it.each(["USER_UPDATED", "TOKEN_REFRESHED"])(
+    "%s keeps the settled app as it is instead of reloading the profile behind a spinner",
+    async (event) => {
+      const supabase = createSupabaseStub(createSession("user-1"));
+
+      mockedGetSupabaseBrowserClient.mockReturnValue(supabase.client as never);
+      mockedGetCurrentProfile.mockResolvedValue({ role: "customer", userId: "user-1" } as never);
+
+      const view = await render(
+        React.createElement(AppProviders, null, React.createElement(SessionProbe)),
+      );
+
+      await waitFor(() => {
+        expect(view.getByText("idle|user-1|user-1|customer")).toBeTruthy();
+      });
+
+      await act(async () => {
+        supabase.emit(createSession("user-1"), event);
+      });
+
+      expect(view.getByText("idle|user-1|user-1|customer")).toBeTruthy();
+      expect(mockedGetCurrentProfile).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it("falls back to a cleared profile when the profile RPC fails", async () => {
     const supabase = createSupabaseStub(createSession("user-1"));

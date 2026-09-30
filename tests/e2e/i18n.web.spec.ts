@@ -64,8 +64,9 @@ test.describe("Portuguese customer", () => {
     await expect(page.getByTestId("appointment-card-appointment-upcoming").getByText("Agendado")).toBeVisible();
 
     await page.getByTestId("tab-profile").click();
-    await expect(page.getByRole("heading", { name: "Perfil" })).toBeVisible();
-    await expect(page.getByTestId("profile-save")).toContainText("Salvar alterações");
+    await expect(page.getByTestId("menu-account")).toContainText("Meus dados");
+    await expect(page.getByTestId("menu-security")).toContainText("Segurança");
+    await expect(page.getByTestId("profile-signout")).toContainText("Sair");
   });
 
   test("the calendar strip uses Portuguese weekday names", async ({ page }) => {

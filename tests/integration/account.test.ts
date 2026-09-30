@@ -1,9 +1,12 @@
 import {
   buildExportFile,
+  changeEmail,
+  changePassword,
   deleteMyAccount,
   ensureMyCustomer,
   exportMyData,
   updateMyProfile,
+  uploadMyAvatar,
 } from "../../src/features/account/api";
 
 const customerRow = {
@@ -24,15 +27,23 @@ describe("account api", () => {
   it("updateMyProfile sends p_-prefixed parameters", async () => {
     const rpc = jest.fn().mockResolvedValue({ data: { ...customerRow, full_name: "Ana B", phone: "+55 11 90000-0000" }, error: null });
 
-    await expect(updateMyProfile({ rpc } as never, { fullName: "Ana B", phone: "+55 11 90000-0000" }))
+    await expect(updateMyProfile({ rpc } as never, { fullName: "Ana B", nickname: " Bia ", phone: "+55 11 90000-0000" }))
       .resolves.toMatchObject({ fullName: "Ana B", phone: "+55 11 90000-0000" });
-    expect(rpc).toHaveBeenCalledWith("update_my_profile", { p_full_name: "Ana B", p_phone: "+55 11 90000-0000" });
+    expect(rpc).toHaveBeenCalledWith("update_my_profile", { p_full_name: "Ana B", p_nickname: "Bia", p_phone: "+55 11 90000-0000" });
+  });
+
+  it("updateMyProfile sends a null nickname when it is blank", async () => {
+    const rpc = jest.fn().mockResolvedValue({ data: customerRow, error: null });
+
+    await updateMyProfile({ rpc } as never, { fullName: "Ana", nickname: "   ", phone: null });
+
+    expect(rpc).toHaveBeenCalledWith("update_my_profile", { p_full_name: "Ana", p_nickname: null, p_phone: null });
   });
 
   it("maps P0017 to PROFILE_INVALID", async () => {
     const rpc = jest.fn().mockResolvedValue({ data: null, error: { code: "P0017" } });
 
-    await expect(updateMyProfile({ rpc } as never, { fullName: " ", phone: null }))
+    await expect(updateMyProfile({ rpc } as never, { fullName: " ", nickname: null, phone: null }))
       .rejects.toMatchObject({ code: "PROFILE_INVALID" });
   });
 
@@ -79,5 +90,65 @@ describe("account api", () => {
 
     await expect(deleteMyAccount({ functions: { invoke } } as never))
       .rejects.toMatchObject({ code: "ACCOUNT_REQUEST_FAILED" });
+  });
+
+  it("uploadMyAvatar uploads, saves the path and removes the previous file", async () => {
+    const upload = jest.fn().mockResolvedValue({ error: null });
+    const remove = jest.fn().mockResolvedValue({ error: null });
+    const rpc = jest.fn().mockResolvedValue({ data: {}, error: null });
+    const supabase = { rpc, storage: { from: jest.fn().mockReturnValue({ remove, upload }) } };
+    const data = new ArrayBuffer(8);
+
+    const path = await uploadMyAvatar(supabase as never, "u1", data, "image/jpeg", "u1/avatar-1.jpg");
+
+    expect(path).toMatch(/^u1\/avatar-\d+\.jpg$/);
+    expect(upload).toHaveBeenCalledWith(path, data, { contentType: "image/jpeg" });
+    expect(rpc).toHaveBeenCalledWith("set_my_avatar", { p_path: path });
+    expect(remove).toHaveBeenCalledWith(["u1/avatar-1.jpg"]);
+  });
+
+  it("uploadMyAvatar removes the new file when saving the path fails", async () => {
+    const remove = jest.fn().mockResolvedValue({ error: null });
+    const supabase = {
+      rpc: jest.fn().mockResolvedValue({ data: null, error: { code: "XX000" } }),
+      storage: { from: jest.fn().mockReturnValue({ remove, upload: jest.fn().mockResolvedValue({ error: null }) }) },
+    };
+
+    await expect(uploadMyAvatar(supabase as never, "u1", new ArrayBuffer(8), "image/png", null))
+      .rejects.toMatchObject({ code: "ACCOUNT_REQUEST_FAILED" });
+    expect(remove).toHaveBeenCalledWith([expect.stringMatching(/^u1\/avatar-\d+\.png$/)]);
+  });
+
+  it("changePassword verifies the current password on a separate client, then updates", async () => {
+    const verifier = { auth: { signInWithPassword: jest.fn().mockResolvedValue({ error: null }), signOut: jest.fn().mockResolvedValue({ error: null }) } };
+    const updateUser = jest.fn().mockResolvedValue({ error: null });
+
+    await expect(changePassword({ auth: { updateUser } } as never, verifier as never, "a@b.co", "old-pass-1", "new-pass-1"))
+      .resolves.toBe("ok");
+    expect(verifier.auth.signInWithPassword).toHaveBeenCalledWith({ email: "a@b.co", password: "old-pass-1" });
+    expect(updateUser).toHaveBeenCalledWith({ password: "new-pass-1" });
+  });
+
+  it("changePassword reports a wrong current password without updating", async () => {
+    const verifier = { auth: { signInWithPassword: jest.fn().mockResolvedValue({ error: { code: "invalid_credentials" } }), signOut: jest.fn() } };
+    const updateUser = jest.fn();
+
+    await expect(changePassword({ auth: { updateUser } } as never, verifier as never, "a@b.co", "bad", "new-pass-1"))
+      .resolves.toBe("wrong-password");
+    expect(updateUser).not.toHaveBeenCalled();
+  });
+
+  it("changePassword surfaces other failures", async () => {
+    const verifier = { auth: { signInWithPassword: jest.fn().mockResolvedValue({ error: { code: "over_request_rate_limit" } }), signOut: jest.fn() } };
+
+    await expect(changePassword({ auth: { updateUser: jest.fn() } } as never, verifier as never, "a@b.co", "x", "new-pass-1"))
+      .rejects.toMatchObject({ code: "ACCOUNT_REQUEST_FAILED" });
+  });
+
+  it("changeEmail asks Supabase to send a confirmation link", async () => {
+    const updateUser = jest.fn().mockResolvedValue({ error: null });
+
+    await expect(changeEmail({ auth: { updateUser } } as never, " new@b.co ")).resolves.toBeUndefined();
+    expect(updateUser).toHaveBeenCalledWith({ email: "new@b.co" });
   });
 });

@@ -3,7 +3,9 @@ import type { AuthSupabaseClient, Profile } from "./types";
 import type { SignupInput } from "./validation";
 
 type CurrentProfileRow = {
+  avatar_path?: string | null;
   full_name?: string | null;
+  nickname?: string | null;
   role: Profile["role"];
   user_id: string;
 };
@@ -16,6 +18,8 @@ function throwIfError(error: Error | null) {
 
 function toProfile(row: CurrentProfileRow): Profile {
   return {
+    ...(typeof row.avatar_path !== "undefined" ? { avatarPath: row.avatar_path } : {}),
+    ...(typeof row.nickname !== "undefined" ? { nickname: row.nickname } : {}),
     ...(typeof row.full_name !== "undefined"
       ? { fullName: row.full_name ?? null }
       : {}),
@@ -69,6 +73,7 @@ export async function signUpCustomer(
       data: {
         accepted_terms_version: TERMS_VERSION,
         full_name: input.fullName,
+        ...(input.nickname ? { nickname: input.nickname } : {}),
         ...(input.phone ? { phone: input.phone } : {}),
       },
     },

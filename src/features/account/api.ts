@@ -3,6 +3,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { DomainError, toDomainError } from "../../lib/errors/domain-errors";
 import { toCustomer } from "../customers/api";
 import type { CustomerRow } from "../customers/types";
+import { AVATAR_BUCKET, avatarPath } from "./avatar";
+
+const REQUEST_FAILED = "Something went wrong. Please try again.";
 
 type RpcClient = Pick<SupabaseClient, "rpc">;
 
@@ -30,10 +33,11 @@ export async function ensureMyCustomer(supabase: RpcClient) {
 
 export async function updateMyProfile(
   supabase: RpcClient,
-  input: { fullName: string; phone: string | null },
+  input: { fullName: string; nickname: string | null; phone: string | null },
 ) {
   const row = await callRpc(supabase, "update_my_profile", {
     p_full_name: input.fullName,
+    p_nickname: input.nickname?.trim() || null,
     p_phone: input.phone,
   });
 
@@ -65,4 +69,61 @@ export async function deleteMyAccount(supabase: Pick<SupabaseClient, "functions"
   throw body?.code === "ACCOUNT_DELETION_BLOCKED"
     ? toDomainError({ code: "P0018" })
     : new DomainError("ACCOUNT_REQUEST_FAILED", "Something went wrong. Please try again.");
+}
+
+export async function uploadMyAvatar(
+  supabase: Pick<SupabaseClient, "rpc" | "storage">,
+  userId: string,
+  data: ArrayBuffer,
+  mimeType: string,
+  previousPath: string | null,
+) {
+  const bucket = supabase.storage.from(AVATAR_BUCKET);
+  const path = avatarPath(userId, mimeType);
+  const { error } = await bucket.upload(path, data, { contentType: mimeType });
+
+  if (error) {
+    throw new DomainError("ACCOUNT_REQUEST_FAILED", REQUEST_FAILED);
+  }
+
+  try {
+    await callRpc(supabase, "set_my_avatar", { p_path: path });
+  } catch (caught) {
+    await bucket.remove([path]).catch(() => undefined);
+    throw caught;
+  }
+
+  if (previousPath) {
+    await bucket.remove([previousPath]).catch(() => undefined); // ponytail: orphaned file if this fails; a cleanup job if it ever matters
+  }
+
+  return path;
+}
+
+export async function changePassword(
+  supabase: Pick<SupabaseClient, "auth">,
+  verifier: Pick<SupabaseClient, "auth">,
+  email: string,
+  current: string,
+  next: string,
+) {
+  const { error: verifyError } = await verifier.auth.signInWithPassword({ email, password: current });
+
+  if (verifyError) {
+    if ((verifyError as { code?: string }).code === "invalid_credentials") return "wrong-password" as const;
+    throw new DomainError("ACCOUNT_REQUEST_FAILED", REQUEST_FAILED);
+  }
+
+  await verifier.auth.signOut({ scope: "local" }).catch(() => undefined);
+  const { error } = await supabase.auth.updateUser({ password: next });
+
+  if (error) throw new DomainError("ACCOUNT_REQUEST_FAILED", REQUEST_FAILED);
+
+  return "ok" as const;
+}
+
+export async function changeEmail(supabase: Pick<SupabaseClient, "auth">, email: string) {
+  const { error } = await supabase.auth.updateUser({ email: email.trim() });
+
+  if (error) throw new DomainError("ACCOUNT_REQUEST_FAILED", REQUEST_FAILED);
 }
