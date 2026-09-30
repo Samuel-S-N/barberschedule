@@ -122,3 +122,13 @@ export function getSupabaseBrowserClient() {
 
   return browserClient;
 }
+
+// A throwaway client used only to verify a password: it never persists a session and uses its own storage key,
+// so its sign-in cannot fire the main client's auth events (the root layout blocks the UI while it re-syncs).
+export function createPasswordCheckClient() {
+  const { publishableKey, url } = readPublicSupabaseConfig();
+
+  return createClient(url, publishableKey, {
+    auth: { autoRefreshToken: false, detectSessionInUrl: false, persistSession: false, storageKey: "sb-password-check" },
+  });
+}

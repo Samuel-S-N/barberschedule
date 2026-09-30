@@ -1,9 +1,12 @@
 import {
   buildExportFile,
+  changeEmail,
+  changePassword,
   deleteMyAccount,
   ensureMyCustomer,
   exportMyData,
   updateMyProfile,
+  uploadMyAvatar,
 } from "../../src/features/account/api";
 
 const customerRow = {
@@ -79,5 +82,69 @@ describe("account api", () => {
 
     await expect(deleteMyAccount({ functions: { invoke } } as never))
       .rejects.toMatchObject({ code: "ACCOUNT_REQUEST_FAILED" });
+  });
+
+  it("uploadMyAvatar uploads, saves the url and removes the previous file", async () => {
+    const upload = jest.fn().mockResolvedValue({ error: null });
+    const remove = jest.fn().mockResolvedValue({ error: null });
+    const getPublicUrl = jest.fn().mockReturnValue({ data: { publicUrl: "http://x/storage/v1/object/public/avatars/u1/avatar-9.jpg" } });
+    const rpc = jest.fn().mockResolvedValue({ data: {}, error: null });
+    const supabase = { rpc, storage: { from: jest.fn().mockReturnValue({ getPublicUrl, remove, upload }) } };
+    const blob = new Blob(["x"], { type: "image/jpeg" });
+
+    const url = await uploadMyAvatar(supabase as never, "u1", blob, "http://x/storage/v1/object/public/avatars/u1/avatar-1.jpg");
+
+    expect(url).toBe("http://x/storage/v1/object/public/avatars/u1/avatar-9.jpg");
+    expect(upload).toHaveBeenCalledWith(expect.stringMatching(/^u1\/avatar-\d+\.jpg$/), blob, { contentType: "image/jpeg" });
+    expect(rpc).toHaveBeenCalledWith("set_my_avatar", { p_url: url });
+    expect(remove).toHaveBeenCalledWith(["u1/avatar-1.jpg"]);
+  });
+
+  it("uploadMyAvatar removes the new file when saving the url fails", async () => {
+    const remove = jest.fn().mockResolvedValue({ error: null });
+    const supabase = {
+      rpc: jest.fn().mockResolvedValue({ data: null, error: { code: "XX000" } }),
+      storage: { from: jest.fn().mockReturnValue({
+        getPublicUrl: () => ({ data: { publicUrl: "http://x/storage/v1/object/public/avatars/u1/avatar-9.jpg" } }),
+        remove, upload: jest.fn().mockResolvedValue({ error: null }),
+      }) },
+    };
+
+    await expect(uploadMyAvatar(supabase as never, "u1", new Blob(["x"], { type: "image/png" }), null))
+      .rejects.toMatchObject({ code: "ACCOUNT_REQUEST_FAILED" });
+    expect(remove).toHaveBeenCalledWith([expect.stringMatching(/^u1\/avatar-\d+\.png$/)]);
+  });
+
+  it("changePassword verifies the current password on a separate client, then updates", async () => {
+    const verifier = { auth: { signInWithPassword: jest.fn().mockResolvedValue({ error: null }), signOut: jest.fn().mockResolvedValue({ error: null }) } };
+    const updateUser = jest.fn().mockResolvedValue({ error: null });
+
+    await expect(changePassword({ auth: { updateUser } } as never, verifier as never, "a@b.co", "old-pass-1", "new-pass-1"))
+      .resolves.toBe("ok");
+    expect(verifier.auth.signInWithPassword).toHaveBeenCalledWith({ email: "a@b.co", password: "old-pass-1" });
+    expect(updateUser).toHaveBeenCalledWith({ password: "new-pass-1" });
+  });
+
+  it("changePassword reports a wrong current password without updating", async () => {
+    const verifier = { auth: { signInWithPassword: jest.fn().mockResolvedValue({ error: { code: "invalid_credentials" } }), signOut: jest.fn() } };
+    const updateUser = jest.fn();
+
+    await expect(changePassword({ auth: { updateUser } } as never, verifier as never, "a@b.co", "bad", "new-pass-1"))
+      .resolves.toBe("wrong-password");
+    expect(updateUser).not.toHaveBeenCalled();
+  });
+
+  it("changePassword surfaces other failures", async () => {
+    const verifier = { auth: { signInWithPassword: jest.fn().mockResolvedValue({ error: { code: "over_request_rate_limit" } }), signOut: jest.fn() } };
+
+    await expect(changePassword({ auth: { updateUser: jest.fn() } } as never, verifier as never, "a@b.co", "x", "new-pass-1"))
+      .rejects.toMatchObject({ code: "ACCOUNT_REQUEST_FAILED" });
+  });
+
+  it("changeEmail asks Supabase to send a confirmation link", async () => {
+    const updateUser = jest.fn().mockResolvedValue({ error: null });
+
+    await expect(changeEmail({ auth: { updateUser } } as never, " new@b.co ")).resolves.toBeUndefined();
+    expect(updateUser).toHaveBeenCalledWith({ email: "new@b.co" });
   });
 });
