@@ -81,7 +81,7 @@ Verified on 2026-09-30 (Task 19, the calendar follows the finger):
 
 - Typecheck and lint clean, Jest `69` suites / `356` tests, `npm run test:e2e:web` `47` passed, run with `.env.local` moved aside (it points the e2e sessions at the LAN host and sends every test to `/login`). Not rerun: `npm run test:db` (this task changes no SQL).
 - In the browser at 390x700 the strip's transform followed the pointer (`translateX` 0, then -100 and -160 while dragging), settled on one page width at release and showed October; a short drag back returned to October. The mid-drag screenshot shows September sliding out and the first columns of October sliding in.
-- Not confirmed by me: how it feels on the phone (frame rate, flick sensitivity, the 30% threshold). Those three numbers are constants in `src/lib/gestures/swipe.ts` (`COMMIT_FRACTION`, `FLICK_VELOCITY`, `SWIPE_CLAIM_PX`) and in `SETTLE_MS` in `MonthCalendar.tsx`.
+- Confirmed on the phone: the user tested it manually (Android, Expo Go) on 2026-09-30 and it behaves as wanted. The feel is tuned by constants if it ever needs adjusting: `COMMIT_FRACTION`, `FLICK_VELOCITY`, `SWIPE_CLAIM_PX` in `src/lib/gestures/swipe.ts` and `SETTLE_MS` in `MonthCalendar.tsx`.
 
 Verified on 2026-09-30 (Task 18 fix, month swipe on Android):
 
