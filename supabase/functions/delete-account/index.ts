@@ -53,6 +53,22 @@ Deno.serve(async (request) => {
     return json(500, { code: "DELETION_FAILED" });
   }
 
+  // Best effort: a failed cleanup must not block the account deletion the user asked for.
+  const listed = await fetch(`${url}/storage/v1/object/list/avatars`, {
+    body: JSON.stringify({ limit: 100, prefix: userId }),
+    headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
+    method: "POST",
+  }).catch(() => null);
+  const files = listed?.ok ? await listed.json().catch(() => []) as { name: string }[] : [];
+
+  if (files.length > 0) {
+    await fetch(`${url}/storage/v1/object/avatars`, {
+      body: JSON.stringify({ prefixes: files.map((file) => `${userId}/${file.name}`) }),
+      headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
+      method: "DELETE",
+    }).catch(() => undefined);
+  }
+
   const deleted = await fetch(`${url}/auth/v1/admin/users/${userId}`, {
     headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
     method: "DELETE",
