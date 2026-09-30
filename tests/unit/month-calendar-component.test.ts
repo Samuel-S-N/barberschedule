@@ -129,13 +129,14 @@ async function drag(translationX: number, options: { end?: "end" | "cancel"; vel
 }
 
 // fireGestureHandler always closes the gesture, so the middle of a drag is reached through the gesture's own callbacks.
-async function dragMidway(translationX: number) {
+// `claimed` is how far the finger had already moved when the pan took over (the claim distance).
+async function dragMidway(translationX: number, claimed = 0) {
   const { handlers } = getByGestureTestId("month-swipe") as unknown as {
     handlers: { onStart: (event: unknown) => void; onUpdate: (event: unknown) => void };
   };
 
   await act(async () => {
-    handlers.onStart({ translationX: 0 });
+    handlers.onStart({ translationX: claimed });
     handlers.onUpdate({ translationX });
   });
 }
@@ -158,6 +159,30 @@ describe("MonthCalendar swipe", () => {
 
     expect(stripX(view)).toBe(-100);
     expect(view.getByTestId("month-calendar-title")).toHaveTextContent("September 2026");
+  });
+
+  it("does not jump by the distance the finger moved before the pan took over", async () => {
+    const view = await renderMeasured();
+
+    await fireEvent.press(view.getByTestId("month-calendar-next"));
+
+    // The finger had moved 12 px when the pan took over, then 50 px more to the right: the strip moves by those 50 only.
+    await dragMidway(62, 12);
+
+    expect(stripX(view)).toBe(-PAGE + 50);
+  });
+
+  it("hides the neighbouring months from assistive technology with aria-hidden", async () => {
+    const view = await renderMeasured();
+    const hidden = (month: string) => view.getByTestId(`month-page-${month}`, { includeHiddenElements: true }).props["aria-hidden"];
+
+    expect(hidden("2026-09")).toBe(false);
+    expect(hidden("2026-10")).toBe(true);
+
+    await fireEvent.press(view.getByTestId("month-calendar-next"));
+
+    expect(hidden("2026-09")).toBe(true);
+    expect(hidden("2026-10")).toBe(false);
   });
 
   it("finishes the change to the next month past 30% of a page", async () => {

@@ -25,12 +25,15 @@ export type MonthCalendarProps = {
 };
 
 type MonthGridProps = Pick<MonthCalendarProps, "onSelectDate" | "selectedDate" | "today"> & {
+  // The month in view. The others are off screen: their days stay out of the tab order so the browser never
+  // scrolls the clipped viewport to reach one.
+  active: boolean;
   language: Language;
   maxDaysAhead: number;
   month: string;
 };
 
-function MonthGrid({ language, maxDaysAhead, month, onSelectDate, selectedDate, today }: MonthGridProps) {
+function MonthGrid({ active, language, maxDaysAhead, month, onSelectDate, selectedDate, today }: MonthGridProps) {
   const grid = buildMonthGrid(month, language);
 
   return (
@@ -59,6 +62,7 @@ function MonthGrid({ language, maxDaysAhead, month, onSelectDate, selectedDate, 
                 disabled={!bookable}
                 key={date}
                 onPress={() => onSelectDate(date)}
+                tabIndex={active ? 0 : -1}
                 testID={`month-calendar-day-${date}`}
               >
                 <Text
@@ -91,8 +95,7 @@ export function MonthCalendar({ maxDaysAhead = BOOKING_DAYS_AHEAD, onSelectDate,
   // The months sit side by side in a strip; `position` is its translateX (0 on the first month, -width on the second).
   // It lives on the UI thread so the strip follows the finger without waiting for JS.
   const position = useSharedValue(0);
-  const origin = useSharedValue(0);
-  const grab = useSharedValue(0);
+  const origin = useSharedValue(0); // strip position minus the finger's travel when the pan took over
 
   // Re-seat the strip without animation when it is first measured, resized, or the window's first month moves on.
   useEffect(() => {
@@ -112,12 +115,11 @@ export function MonthCalendar({ maxDaysAhead = BOOKING_DAYS_AHEAD, onSelectDate,
     .activeOffsetX([-SWIPE_CLAIM_PX, SWIPE_CLAIM_PX])
     .failOffsetY([-SWIPE_FAIL_Y_PX, SWIPE_FAIL_Y_PX])
     .onStart((event) => {
-      origin.value = position.value;
-      // The claim distance is already in translationX; start from it so the strip does not jump.
-      grab.value = event.translationX;
+      // The claim distance is already in translationX; measuring from it keeps the strip from jumping.
+      origin.value = position.value - event.translationX;
     })
     .onUpdate((event) => {
-      position.value = rubberBand(origin.value + event.translationX - grab.value, width, pages);
+      position.value = rubberBand(origin.value + event.translationX, width, pages);
     })
     .onEnd((event, success) => {
       const target = success ? settleIndex(index, position.value, event.velocityX, width, pages) : index;
@@ -165,18 +167,18 @@ export function MonthCalendar({ maxDaysAhead = BOOKING_DAYS_AHEAD, onSelectDate,
             <Animated.View style={[{ flexDirection: "row", width: width * pages }, stripStyle]} testID="month-pages">
               {months.map((month, pageIndex) => (
                 <View
-                  accessibilityElementsHidden={pageIndex !== index}
-                  importantForAccessibility={pageIndex === index ? "auto" : "no-hide-descendants"}
+                  aria-hidden={pageIndex !== index}
                   key={month}
                   pointerEvents={pageIndex === index ? "auto" : "none"}
                   style={{ width }}
+                  testID={`month-page-${month}`}
                 >
-                  <MonthGrid month={month} {...gridProps} />
+                  <MonthGrid active={pageIndex === index} month={month} {...gridProps} />
                 </View>
               ))}
             </Animated.View>
           ) : (
-            <MonthGrid month={months[index]} {...gridProps} />
+            <MonthGrid active month={months[index]} {...gridProps} />
           )}
         </View>
       </View>

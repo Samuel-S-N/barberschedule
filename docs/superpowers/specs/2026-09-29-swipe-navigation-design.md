@@ -76,7 +76,7 @@ The Jest reanimated mock gained `useEvent`, because gesture-handler takes its Re
 
 ## Testing
 
-- Jest: `swipeDirection` (thresholds, vertical-dominant, sign), the swipe-lock rule, `MonthCalendar` drag next/previous and limits.
+- Jest: `rubberBand`, `settleIndex` (distance, flick, edges, three pages), `monthRange`, the swipe-lock rule, and `MonthCalendar` (the strip follows the finger, settles or snaps back, damping at both ends, cancel, arrows, hidden neighbours).
 - Playwright (web, touch-like drag with the mouse): dragging left on Home lands on Agendar and the tab bar updates; dragging right on Home stays put (first tab); on `/book/date` dragging left changes the month and does not change the tab; `/reschedule` still opens from an appointment and returns to Agenda.
 - Existing e2e for booking, lifecycle and i18n must stay green.
 - Full gate: `npm run verify`, `npm run test:e2e:web`, `npm run export:web`, then code review.
