@@ -3,6 +3,7 @@ import {
   addMonths,
   buildMonthGrid,
   isDateBookable,
+  monthRange,
 } from "../../src/lib/dates/month-calendar";
 
 describe("addMonths", () => {
@@ -13,6 +14,16 @@ describe("addMonths", () => {
     ["2026-09", 0, "2026-09"],
   ])("%s %p -> %s", (month, delta, expected) => {
     expect(addMonths(month, delta)).toBe(expected);
+  });
+});
+
+describe("monthRange", () => {
+  it.each([
+    ["2026-09", "2026-09", ["2026-09"]],
+    ["2026-09", "2026-10", ["2026-09", "2026-10"]],
+    ["2026-12", "2027-02", ["2026-12", "2027-01", "2027-02"]],
+  ])("%s to %s", (first, last, expected) => {
+    expect(monthRange(first, last)).toEqual(expected);
   });
 });
 
