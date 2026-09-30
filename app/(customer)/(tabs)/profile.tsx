@@ -4,16 +4,16 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
 
-import { Toast } from "../../src/components/domain/Toast";
-import { Button } from "../../src/components/ui/Button";
-import { Input } from "../../src/components/ui/Input";
-import { Screen } from "../../src/components/ui/Screen";
-import { buildExportFile, deleteMyAccount, exportMyData, updateMyProfile } from "../../src/features/account/api";
-import { saveExportFile } from "../../src/features/account/export-file";
-import { signOut } from "../../src/features/auth/api";
-import { listMyCustomers } from "../../src/features/customers/api";
-import { errorMessage } from "../../src/i18n/errors";
-import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { Toast } from "../../../src/components/domain/Toast";
+import { Button } from "../../../src/components/ui/Button";
+import { Input } from "../../../src/components/ui/Input";
+import { Screen } from "../../../src/components/ui/Screen";
+import { buildExportFile, deleteMyAccount, exportMyData, updateMyProfile } from "../../../src/features/account/api";
+import { saveExportFile } from "../../../src/features/account/export-file";
+import { signOut } from "../../../src/features/auth/api";
+import { listMyCustomers } from "../../../src/features/customers/api";
+import { errorMessage } from "../../../src/i18n/errors";
+import { useSupabaseSession } from "../../../src/providers/AppProviders";
 
 export default function CustomerProfileScreen() {
   const router = useRouter();

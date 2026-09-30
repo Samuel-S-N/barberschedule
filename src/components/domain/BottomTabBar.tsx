@@ -24,6 +24,7 @@ export function BottomTabBar({ items, activeKey, onSelect, testID }: BottomTabBa
             accessibilityLabel={item.label}
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}
+            aria-selected={active}
             className="min-h-[56px] min-w-[44px] flex-1 items-center justify-center gap-0.5"
             key={item.key}
             onPress={() => onSelect(item.key)}

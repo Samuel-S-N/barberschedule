@@ -4,21 +4,21 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
 
-import { AppointmentCard } from "../../src/components/domain/AppointmentCard";
-import { CalendarStrip } from "../../src/components/domain/CalendarStrip";
-import { EmptyState } from "../../src/components/domain/EmptyState";
-import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
-import { Toast } from "../../src/components/domain/Toast";
-import { Button } from "../../src/components/ui/Button";
-import { groupByLocalDate, markAppointmentDays, pickInitialDate } from "../../src/features/appointments/agenda-view";
-import { cancelAppointment, isLifecycleWindowOpen, listMyAppointments } from "../../src/features/appointments/lifecycle";
-import type { Appointment } from "../../src/features/appointments/types";
-import { useAppointmentCards } from "../../src/features/appointments/use-appointment-cards";
-import { errorMessage } from "../../src/i18n/errors";
-import { useLanguage } from "../../src/i18n/use-language";
-import { buildCalendarStripDays } from "../../src/lib/dates/calendar-strip-days";
-import { useSupabaseSession } from "../../src/providers/AppProviders";
-import { Screen } from "../../src/components/ui/Screen";
+import { AppointmentCard } from "../../../src/components/domain/AppointmentCard";
+import { CalendarStrip } from "../../../src/components/domain/CalendarStrip";
+import { EmptyState } from "../../../src/components/domain/EmptyState";
+import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
+import { Toast } from "../../../src/components/domain/Toast";
+import { Button } from "../../../src/components/ui/Button";
+import { groupByLocalDate, markAppointmentDays, pickInitialDate } from "../../../src/features/appointments/agenda-view";
+import { cancelAppointment, isLifecycleWindowOpen, listMyAppointments } from "../../../src/features/appointments/lifecycle";
+import type { Appointment } from "../../../src/features/appointments/types";
+import { useAppointmentCards } from "../../../src/features/appointments/use-appointment-cards";
+import { errorMessage } from "../../../src/i18n/errors";
+import { useLanguage } from "../../../src/i18n/use-language";
+import { buildCalendarStripDays } from "../../../src/lib/dates/calendar-strip-days";
+import { useSupabaseSession } from "../../../src/providers/AppProviders";
+import { Screen } from "../../../src/components/ui/Screen";
 
 const DAYS_AHEAD = 30;
 

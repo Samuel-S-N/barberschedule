@@ -56,6 +56,12 @@ function withRepeat(animation) {
   return animation;
 }
 
+// react-native-gesture-handler's GestureDetector calls `Reanimated.useEvent` on every render (even for
+// `runOnJS(true)` gestures) whenever Reanimated is installed, so the detector cannot mount without it.
+function useEvent() {
+  return () => {};
+}
+
 function createAnimatedComponent(Component) {
   return React.forwardRef(function AnimatedMockComponent(props, ref) {
     return React.createElement(Component, { ...props, ref });
@@ -76,6 +82,7 @@ module.exports = {
   createAnimatedComponent,
   useSharedValue,
   useAnimatedStyle,
+  useEvent,
   withTiming,
   withSpring: withTiming,
   withRepeat,

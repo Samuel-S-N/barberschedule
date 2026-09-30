@@ -1,6 +1,6 @@
 import "../global.css";
 
-import { Stack, useRouter, useSegments } from "expo-router";
+import { DefaultTheme, Stack, ThemeProvider, useRouter, useSegments } from "expo-router";
 import { useFonts } from "expo-font";
 import {
   Oswald_500Medium,
@@ -15,10 +15,15 @@ import {
 } from "@expo-google-fonts/inter";
 import { useEffect, useMemo } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { resolveAuthRedirect } from "../src/features/auth/session";
+import { colors } from "../src/lib/design/colors";
 import { AppProviders } from "../src/providers/AppProviders";
 import { useSupabaseSession } from "../src/providers/AppProviders";
+
+// The navigators paint their own scene background from this theme; the default grey showed between pages.
+const theme = { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: colors.canvas } };
 
 export function RootNavigator() {
   const router = useRouter();
@@ -57,18 +62,28 @@ export function RootNavigator() {
     );
   }
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <ThemeProvider value={theme}>
+      <Stack screenOptions={{ headerShown: false }} />
+    </ThemeProvider>
+  );
 }
 
 export default function RootLayout() {
   return (
-    <AppProviders>
-      <RootNavigator />
-    </AppProviders>
+    // Native gestures (MonthCalendar's swipe) need this root; JS responders are cancelled inside the Android pager.
+    <GestureHandlerRootView style={styles.root}>
+      <AppProviders>
+        <RootNavigator />
+      </AppProviders>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   loadingScreen: {
     alignItems: "center",
     flex: 1,

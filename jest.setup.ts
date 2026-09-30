@@ -3,6 +3,7 @@ jest.mock("expo-localization", () => ({
   getLocales: jest.fn(() => [{ languageCode: "en", languageTag: "en-US" }]),
 }));
 
+import "react-native-gesture-handler/jestSetup";
 import "./src/i18n";
 
 // The published mock (`react-native-reanimated/mock`) eagerly initializes the

@@ -3,12 +3,12 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 
-import { EmptyState } from "../../../src/components/domain/EmptyState";
-import { ServiceCard } from "../../../src/components/domain/ServiceCard";
-import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
-import { resolveEffectiveServiceFields } from "../../../src/features/services/resolve-effective-fields";
-import { useSupabaseSession } from "../../../src/providers/AppProviders";
-import { Screen } from "../../../src/components/ui/Screen";
+import { EmptyState } from "../../../../src/components/domain/EmptyState";
+import { ServiceCard } from "../../../../src/components/domain/ServiceCard";
+import { SkeletonBlock } from "../../../../src/components/domain/SkeletonLoader";
+import { resolveEffectiveServiceFields } from "../../../../src/features/services/resolve-effective-fields";
+import { useSupabaseSession } from "../../../../src/providers/AppProviders";
+import { Screen } from "../../../../src/components/ui/Screen";
 
 type BarberServiceRow = {
   id: string;

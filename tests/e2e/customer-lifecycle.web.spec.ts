@@ -122,6 +122,8 @@ test("a customer can reschedule by picking a new date and time", async ({ page }
   await page.getByTestId("reschedule-confirm").click();
 
   await expect(page).toHaveURL(/\/appointments$/);
+  // Returning must pop back to the existing tabs, not push a second tab navigator (and a second tab bar) on top.
+  await expect(page.locator('[role="tablist"]')).toHaveCount(1);
   expect(reschedulePayload).toMatchObject({ appointment_id: "appointment-upcoming", new_starts_at: newStart.toISOString() });
 });
 

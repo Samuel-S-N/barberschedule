@@ -3,12 +3,12 @@ import { Redirect, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 
-import { EmptyState } from "../../../src/components/domain/EmptyState";
-import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
-import { Button } from "../../../src/components/ui/Button";
-import { listPublicShops } from "../../../src/features/shops/api";
-import { useSupabaseSession } from "../../../src/providers/AppProviders";
-import { Screen } from "../../../src/components/ui/Screen";
+import { EmptyState } from "../../../../src/components/domain/EmptyState";
+import { SkeletonBlock } from "../../../../src/components/domain/SkeletonLoader";
+import { Button } from "../../../../src/components/ui/Button";
+import { listPublicShops } from "../../../../src/features/shops/api";
+import { useSupabaseSession } from "../../../../src/providers/AppProviders";
+import { Screen } from "../../../../src/components/ui/Screen";
 
 export default function BookIndexScreen() {
   const router = useRouter();

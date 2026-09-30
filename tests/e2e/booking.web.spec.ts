@@ -49,6 +49,10 @@ async function walkToReview(page: import("@playwright/test").Page) {
   // One shop: the picker is skipped and the barber list opens directly.
   await page.getByRole("button", { name: "Browser Barber" }).click();
   await page.getByRole("button", { name: "Browser Cut" }).click();
+  await expect(page.getByTestId("month-calendar-title")).toBeVisible();
+  await expect(page.getByTestId("month-calendar-prev")).toBeDisabled();
+  await page.getByTestId("month-calendar-next").click();
+  await page.getByTestId("month-calendar-prev").click();
   await page.getByRole("button", { name: "Continue to review" }).click();
   await expect(page.getByTestId("booking-review-scroll")).toBeVisible();
   await page.getByRole("button", { name: "09:00" }).click();

@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
 
-import { CalendarStrip } from "../../src/components/domain/CalendarStrip";
 import { EmptyState } from "../../src/components/domain/EmptyState";
+import { MonthCalendar } from "../../src/components/domain/MonthCalendar";
 import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
 import { TimeSlotPicker } from "../../src/components/domain/TimeSlotPicker";
 import type { TimeSlot } from "../../src/components/domain/TimeSlotPicker";
@@ -15,12 +15,9 @@ import { rescheduleAppointment } from "../../src/features/appointments/lifecycle
 import { getAvailableSlotsQueryOptions } from "../../src/features/availability/query";
 import type { AvailableSlot } from "../../src/features/availability/types";
 import { errorMessage } from "../../src/i18n/errors";
-import { useLanguage } from "../../src/i18n/use-language";
-import { buildCalendarStripDays } from "../../src/lib/dates/calendar-strip-days";
+import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { Screen } from "../../src/components/ui/Screen";
-
-const DAYS_AHEAD = 14;
 
 function param(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";
@@ -34,10 +31,9 @@ export default function RescheduleScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
-  const language = useLanguage();
   const { supabase } = useSupabaseSession();
-  const days = useMemo(() => buildCalendarStripDays(new Date(), DAYS_AHEAD, language), [language]);
-  const [localDate, setLocalDate] = useState(days[0].date);
+  const today = formatInstantInShopTime(new Date()).localDate;
+  const [localDate, setLocalDate] = useState(today);
   const [startsAt, setStartsAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,22 +51,21 @@ export default function RescheduleScreen() {
     onError: (caught) => setError(errorMessage(caught, t as never, t("reschedule.error"))),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["my-appointments"] });
-      router.replace("/appointments");
+      // dismissTo pops back to the tabs already underneath; replace would mount a second tab navigator.
+      router.dismissTo("/appointments");
     },
   });
 
   return (
-    <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
+    <Screen edges={["top", "bottom", "left", "right"]} className="flex-1 bg-canvas">
       <ScrollView className="flex-1">
         <View className="items-center gap-4 p-5">
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">{t("reschedule.title")}</Text>
-          <View className="w-full">
-            <CalendarStrip
-              days={days}
-              onSelectDate={(date) => { setLocalDate(date); setStartsAt(null); }}
-              selectedDate={localDate}
-            />
-          </View>
+          <MonthCalendar
+            onSelectDate={(date) => { setLocalDate(date); setStartsAt(null); }}
+            selectedDate={localDate}
+            today={today}
+          />
           <View className="w-full max-w-[420px] gap-2">
             {availability.isLoading ? <SkeletonBlock height={56} width={320} /> : null}
             {availability.error ? <Text className="text-sm font-sans text-danger-500">{t("reschedule.loadError")}</Text> : null}

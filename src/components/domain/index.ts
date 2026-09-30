@@ -8,6 +8,8 @@ export { ServiceCard, formatPriceBRL } from "./ServiceCard";
 export type { ServiceCardProps } from "./ServiceCard";
 export { CalendarStrip } from "./CalendarStrip";
 export type { CalendarStripDay, CalendarStripProps } from "./CalendarStrip";
+export { MonthCalendar } from "./MonthCalendar";
+export type { MonthCalendarProps } from "./MonthCalendar";
 export { TimeSlotPicker } from "./TimeSlotPicker";
 export type { TimeSlot, TimeSlotPickerProps, TimeSlotStatus } from "./TimeSlotPicker";
 export { AppointmentCard } from "./AppointmentCard";
