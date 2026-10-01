@@ -349,7 +349,7 @@ describe("topServices", () => {
   });
 
   it("adds no other slice when everything fits", () => {
-    expect(topServices(services.slice(0, 3), 4).map((i) => i.key)).toEqual(["a", "b", "c"]);
+    expect(topServices(services.slice(0, 3), 4).map((i) => i.key)).toEqual(["a", "b", "e"]);
   });
 });
 ```
