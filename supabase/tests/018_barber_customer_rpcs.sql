@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(12);
+select plan(14);
 
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at)
 values
@@ -46,31 +46,31 @@ select set_config('request.jwt.claim.sub', 'e0000000-0000-0000-0000-000000000002
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select is((select full_name from public.barber_find_or_create_customer('  Ana Souza ')), 'Ana Souza', 'name-only customer is created with a trimmed name');
-select is(
-  (select created_by_barber_id from public.barber_find_or_create_customer('Caio Lima')),
-  'e2000000-0000-0000-0000-000000000001'::uuid, 'name-only rows record the creating barber'
-);
+select is((select has_account from public.barber_find_or_create_customer('Caio Lima')), false, 'a name-only customer has no account');
 select is(
   (select id from public.barber_find_or_create_customer('Bia', 'Bia@Example.com', '(11) 99999-0000')),
   (select id from public.barber_find_or_create_customer('Someone else', 'bia@example.com')),
   'the same email (any case) returns the same customer instead of a duplicate'
 );
-select is((select phone from public.barber_find_or_create_customer('Bia', 'bia@example.com')), '11999990000', 'phone is stored as digits only');
-select is(
-  (select user_id from public.barber_find_or_create_customer('Acc', 't18-account@example.com')),
-  'e0000000-0000-0000-0000-000000000004'::uuid, 'a confirmed existing account is linked immediately'
-);
-select is(
-  (select user_id from public.barber_find_or_create_customer('Unc', 't18-unconfirmed@example.com')),
-  null::uuid, 'an unconfirmed account is not linked'
-);
+select is((select full_name from public.barber_find_or_create_customer('Zed Probe', 'zed@example.com')), 'Zed Client', 'an existing email returns only the stored name, id and has_account');
+select is((select has_account from public.barber_find_or_create_customer('Acc', 't18-account@example.com')), true, 'a confirmed existing account is linked immediately');
+select is((select has_account from public.barber_find_or_create_customer('Unc', 't18-unconfirmed@example.com')), false, 'an unconfirmed account is not linked');
 select throws_ok($$ select * from public.barber_find_or_create_customer('   ') $$, 'P0024', null, 'blank name is rejected');
 select throws_ok($$ select * from public.barber_find_or_create_customer('X', 'not-an-email') $$, 'P0025', null, 'malformed email is rejected');
 
 select is((select count(*)::int from public.barber_search_customers('zed')), 0, 'barber A does not see barber B''s clients');
 select is((select count(*)::int from public.barber_search_customers('ana')), 1, 'barber A finds the customer they created, by name');
 
+reset role;
+select is(
+  (select created_by_barber_id from public.customers where full_name = 'Caio Lima'),
+  'e2000000-0000-0000-0000-000000000001'::uuid, 'name-only rows record the creating barber'
+);
+select is((select phone from public.customers where lower(email) = 'bia@example.com'), '11999990000', 'phone is stored as digits only');
+
+set local role authenticated;
 select set_config('request.jwt.claim.sub', 'e0000000-0000-0000-0000-000000000004', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
 select throws_ok($$ select * from public.barber_find_or_create_customer('Hack') $$, 'P0008', null, 'a non-barber cannot create customers');
 select throws_ok($$ select * from public.barber_search_customers('a') $$, 'P0008', null, 'a non-barber cannot search customers');
 

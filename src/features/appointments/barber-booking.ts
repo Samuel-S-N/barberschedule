@@ -52,9 +52,11 @@ export async function findOrCreateCustomer(supabase: BarberBookingClient, input:
   });
   if (error) throw toDomainError(error);
 
-  const r = data as { email: string | null; full_name: string; id: string; phone: string | null; user_id: string | null };
+  // The RPC deliberately returns only id, name and account state; email and phone are what the barber typed.
+  const row = (Array.isArray(data) ? data[0] : data) as { full_name: string; has_account: boolean; id: string } | undefined;
+  if (!row) throw toDomainError({ code: "unknown" });
 
-  return { email: r.email, fullName: r.full_name, hasAccount: r.user_id !== null, id: r.id, phone: r.phone };
+  return { email: parsed.email, fullName: row.full_name, hasAccount: row.has_account, id: row.id, phone: parsed.phone };
 }
 
 export async function bookAsBarber(supabase: BarberBookingClient, input: BarberBookingInput): Promise<Appointment> {

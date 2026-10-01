@@ -8,7 +8,7 @@ import {
 import { toDomainError } from "../../src/lib/errors/domain-errors";
 
 const customerRow = { email: "ana@example.com", full_name: "Ana", has_account: true, id: "customer-1", phone: null };
-const createdRow = { active: true, email: null, full_name: "Walk In", id: "customer-2", phone: null, user_id: null };
+const createdRows = [{ full_name: "Walk In", has_account: false, id: "customer-2" }];
 const appointmentRow = {
   barber_buffer_minutes_snapshot: 0, barber_id: "barber-1", barber_service_id: "bs-1", created_at: "2026-10-01T10:00:00Z",
   customer_id: "customer-2", ends_at: "2026-10-02T12:30:00Z", id: "appt-1", notes: null, occupied_until: "2026-10-02T12:30:00Z",
@@ -48,15 +48,17 @@ describe("barber booking RPCs", () => {
   });
 
   it("creates or finds a customer with the target_* parameters", async () => {
-    const rpc = jest.fn().mockResolvedValue({ data: createdRow, error: null });
+    const rpc = jest.fn().mockResolvedValue({ data: createdRows, error: null });
 
-    await expect(findOrCreateCustomer({ rpc } as never, { name: "Walk In" })).resolves.toMatchObject({ fullName: "Walk In", hasAccount: false, id: "customer-2" });
-    expect(rpc).toHaveBeenCalledWith("barber_find_or_create_customer", { target_email: null, target_name: "Walk In", target_phone: null });
+    await expect(findOrCreateCustomer({ rpc } as never, { email: " Walk@In.com ", name: "Walk In", phone: "(11) 9" })).resolves.toEqual({
+      email: "walk@in.com", fullName: "Walk In", hasAccount: false, id: "customer-2", phone: "119",
+    });
+    expect(rpc).toHaveBeenCalledWith("barber_find_or_create_customer", { target_email: "walk@in.com", target_name: "Walk In", target_phone: "119" });
   });
 
   it("books for a new customer: find-or-create, then book with source barber", async () => {
     const rpc = jest.fn().mockImplementation((name: string) =>
-      Promise.resolve(name === "book_appointment" ? { data: [appointmentRow], error: null } : { data: createdRow, error: null }),
+      Promise.resolve(name === "book_appointment" ? { data: [appointmentRow], error: null } : { data: createdRows, error: null }),
     );
 
     await expect(
