@@ -43,6 +43,8 @@ export default function OwnerShopScreen() {
     setDays((current) => ({ ...current, [weekday]: { ...current[weekday], ...patch } }));
 
   const save = async () => {
+    // Hours that failed to load must never be saved as "all closed".
+    if (WEEKDAYS.some((weekday) => !days[weekday])) return;
     const periods: ShopPeriod[] = [];
     for (const weekday of WEEKDAYS) {
       const result = draftToPeriods(days[weekday]);
