@@ -526,6 +526,7 @@ export const en = {
       BARBER_REQUEST_FAILED: "Unable to complete the barber request.",
       CUSTOMER_EMAIL_INVALID: "Enter a valid email or leave it blank.",
       CUSTOMER_NAME_REQUIRED: "Enter the customer's name.",
+      SERVICE_STANDARD_LOCKED: "This service is standard and cannot be turned off.",
       COMPENSATION_INVALID: "Enter a valid commission or chair rental.",
       EARNINGS_INVALID_RANGE: "Choose a period of up to 92 days.",
       ACCOUNT_DELETION_BLOCKED:

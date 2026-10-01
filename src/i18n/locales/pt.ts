@@ -525,6 +525,7 @@ export const pt: DeepStringRecord<typeof en> = {
       BARBER_REQUEST_FAILED: "Não foi possível concluir a solicitação do barbeiro.",
       CUSTOMER_EMAIL_INVALID: "Informe um email válido ou deixe em branco.",
       CUSTOMER_NAME_REQUIRED: "Informe o nome do cliente.",
+      SERVICE_STANDARD_LOCKED: "Este serviço é padrão e não pode ser desligado.",
       COMPENSATION_INVALID: "Informe uma comissão ou aluguel de cadeira válidos.",
       EARNINGS_INVALID_RANGE: "Escolha um período de até 92 dias.",
       ACCOUNT_DELETION_BLOCKED:
