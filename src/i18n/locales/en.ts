@@ -507,6 +507,8 @@ export const en = {
       BARBER_INVITE_CONFLICT: "This barber already has an account or the email is in use.",
       BARBER_NOT_LINKED: "This account is not linked to an active barber.",
       BARBER_REQUEST_FAILED: "Unable to complete the barber request.",
+      CUSTOMER_EMAIL_INVALID: "Enter a valid email or leave it blank.",
+      CUSTOMER_NAME_REQUIRED: "Enter the customer's name.",
       COMPENSATION_INVALID: "Enter a valid commission or chair rental.",
       EARNINGS_INVALID_RANGE: "Choose a period of up to 92 days.",
       ACCOUNT_DELETION_BLOCKED:

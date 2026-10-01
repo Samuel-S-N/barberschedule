@@ -506,6 +506,8 @@ export const es: DeepStringRecord<typeof en> = {
       BARBER_INVITE_CONFLICT: "Este barbero ya tiene cuenta o el correo ya está en uso.",
       BARBER_NOT_LINKED: "Esta cuenta no está vinculada a un barbero activo.",
       BARBER_REQUEST_FAILED: "No se pudo completar la solicitud del barbero.",
+      CUSTOMER_EMAIL_INVALID: "Ingresa un email válido o déjalo en blanco.",
+      CUSTOMER_NAME_REQUIRED: "Ingresa el nombre del cliente.",
       COMPENSATION_INVALID: "Ingresa una comisión o alquiler de silla válidos.",
       EARNINGS_INVALID_RANGE: "Elige un período de hasta 92 días.",
       ACCOUNT_DELETION_BLOCKED:
