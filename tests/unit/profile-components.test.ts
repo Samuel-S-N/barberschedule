@@ -4,6 +4,7 @@ import React from "react";
 
 import { Avatar } from "../../src/components/domain/Avatar";
 import { MenuBlock } from "../../src/components/domain/MenuBlock";
+import { RadioBlock } from "../../src/components/domain/RadioBlock";
 import { ScreenHeader } from "../../src/components/domain/ScreenHeader";
 
 describe("Avatar", () => {
@@ -47,6 +48,31 @@ describe("MenuBlock", () => {
 
     expect(view.getByText("Security")).toBeTruthy();
     fireEvent.press(view.getByTestId("menu-account"));
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("RadioBlock", () => {
+  const items = (onPress = jest.fn()) => [
+    { key: "device", label: "Follow device", onPress, selected: false },
+    { key: "pt", label: "Português", onPress: jest.fn(), selected: true },
+  ];
+
+  it("renders a radio row per item and marks the selected one", async () => {
+    const view = await render(React.createElement(RadioBlock, { items: items() }));
+
+    expect(view.getByText("Follow device")).toBeTruthy();
+    expect(view.getByTestId("option-pt").props.accessibilityState).toMatchObject({ checked: true });
+    expect(view.getByTestId("option-device").props.accessibilityState).toMatchObject({ checked: false });
+    expect(view.getAllByRole("radio")).toHaveLength(2);
+  });
+
+  it("fires the onPress of the row that was pressed", async () => {
+    const onPress = jest.fn();
+    const view = await render(React.createElement(RadioBlock, { items: items(onPress) }));
+
+    fireEvent.press(view.getByTestId("option-device"));
+
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 });
