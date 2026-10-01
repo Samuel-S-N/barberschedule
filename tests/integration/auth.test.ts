@@ -81,6 +81,11 @@ describe("auth session routing", () => {
     expect(getRedirect({ role: "customer", segments: ["legal"], session: createSession() })).toBeNull();
   });
 
+  it("lets the password-reset screen open with or without a session", () => {
+    expect(getRedirect({ segments: ["reset-password"] })).toBeNull();
+    expect(getRedirect({ role: "customer", segments: ["reset-password"], session: createSession() })).toBeNull();
+  });
+
   it("redirects a signed-in user whose profile role is unknown away from role groups", () => {
     expect(getRedirect({ role: null, segments: ["(customer)", "home"], session: createSession() })).toBe("/");
   });
