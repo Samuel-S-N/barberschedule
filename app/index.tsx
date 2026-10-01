@@ -18,7 +18,7 @@ export default function HomeScreen() {
       setFeedback(null);
       await signOut(supabase);
     } catch (error) {
-      setFeedback(errorMessage(error, t as never, t("profile.signOutError")));
+      setFeedback(errorMessage(error, t, t("profile.signOutError")));
     }
   };
 

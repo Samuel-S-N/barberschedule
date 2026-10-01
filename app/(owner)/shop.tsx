@@ -61,7 +61,7 @@ export default function OwnerShopScreen() {
       await queryClient.invalidateQueries({ queryKey: ["shop-hours"] });
       setFeedback(t("owner.shop.saved"));
     } catch (error) {
-      setFeedback(errorMessage(error, t as never, t("owner.shop.saveError")));
+      setFeedback(errorMessage(error, t, t("owner.shop.saveError")));
     }
   };
 

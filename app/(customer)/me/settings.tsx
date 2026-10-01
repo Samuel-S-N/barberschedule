@@ -24,7 +24,7 @@ export default function SettingsScreen() {
   const [feedback, setFeedback] = useState<{ message: string; variant: "error" | "success" } | null>(null);
   const exportData = useMutation({
     mutationFn: async () => saveExportFile(buildExportFile(await exportMyData(supabase))),
-    onError: (caught) => setFeedback({ message: errorMessage(caught, t as never, t("profile.exportError")), variant: "error" }),
+    onError: (caught) => setFeedback({ message: errorMessage(caught, t, t("profile.exportError")), variant: "error" }),
     onSuccess: () => setFeedback({ message: t("profile.exportReady"), variant: "success" }),
   });
 

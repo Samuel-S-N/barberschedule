@@ -28,7 +28,7 @@ export default function PrivacyScreen() {
     },
     onError: (caught) => {
       setConfirmingDelete(false);
-      setError(errorMessage(caught, t as never, t("profile.deleteError")));
+      setError(errorMessage(caught, t, t("profile.deleteError")));
     },
     onSuccess: () => queryClient.clear(),
   });

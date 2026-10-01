@@ -101,6 +101,7 @@ export const en = {
     cancelled: "Appointment cancelled.",
     confirmCancel: "Confirm cancellation",
     emptyDay: "No appointments this day",
+    loadMore: "Load more",
     emptyHistory: "No past appointments yet",
     emptyUpcoming: "Nothing scheduled yet",
     fallbackBarber: "Barber",

@@ -27,7 +27,7 @@ export default function OwnerSettingsScreen() {
             try {
               await signOut(supabase);
             } catch (error) {
-              setFeedback(errorMessage(error, t as never, t("profile.signOutError")));
+              setFeedback(errorMessage(error, t, t("profile.signOutError")));
             }
           }}
           title={t("common.signOut")}

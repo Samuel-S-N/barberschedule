@@ -54,7 +54,7 @@ export default function RescheduleScreen() {
   const reschedule = useMutation({
     mutationFn: (newStartsAt: string) => rescheduleAppointment(supabase, appointmentId, newStartsAt),
     onError: (caught) => {
-      setError(errorMessage(caught, t as never, t("reschedule.error")));
+      setError(errorMessage(caught, t, t("reschedule.error")));
       // The slot may have just been taken by someone else; drop the stale choice and refetch the list.
       setStartsAt(null);
       void queryClient.invalidateQueries({ queryKey: ["available-slots"] });

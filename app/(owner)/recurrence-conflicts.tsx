@@ -32,7 +32,7 @@ export default function RecurrenceConflictsScreen() {
         const nextConflicts = await listOwnerRecurrenceConflicts(supabase, shopId);
         if (active) setConflicts(nextConflicts);
       } catch (error) {
-        if (active) setFeedback(errorMessage(error, t as never, t("owner.conflicts.loadError")));
+        if (active) setFeedback(errorMessage(error, t, t("owner.conflicts.loadError")));
       } finally {
         if (active) setIsLoading(false);
       }

@@ -1,5 +1,5 @@
 import {
-  formatAppointmentLabels, groupByLocalDate, markAppointmentDays, pendingClosure, visibleAppointments,
+  formatAppointmentLabels, groupByLocalDate, markAppointmentDays, pendingClosure, stripLength, visibleAppointments,
 } from "../../src/features/appointments/agenda-view";
 import type { Appointment } from "../../src/features/appointments/types";
 
@@ -74,5 +74,22 @@ describe("pendingClosure", () => {
     );
 
     expect(result.map((a) => a.id)).toEqual(["earlier", "later"]);
+  });
+});
+
+describe("stripLength", () => {
+  const from = new Date("2026-10-01T15:00:00Z");
+
+  it("keeps the 30-day minimum", () => {
+    expect(stripLength([], from)).toBe(30);
+    expect(stripLength([appointment("a", "2026-10-11T15:00:00Z")], from)).toBe(30);
+  });
+
+  it("grows to cover the last appointment, inclusive", () => {
+    expect(stripLength([appointment("a", "2026-11-30T15:00:00Z")], from)).toBe(61);
+  });
+
+  it("stops at the 90-day recurrence horizon", () => {
+    expect(stripLength([appointment("a", "2027-04-01T15:00:00Z")], from)).toBe(90);
   });
 });

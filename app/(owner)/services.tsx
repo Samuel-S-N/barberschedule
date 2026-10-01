@@ -75,7 +75,7 @@ export default function OwnerServicesScreen() {
         setServices(await listOwnerServices(supabase, nextShopId));
       } catch (error) {
         if (active) {
-          setFeedback(errorMessage(error, t as never, t("owner.services.loadError")));
+          setFeedback(errorMessage(error, t, t("owner.services.loadError")));
         }
       } finally {
         if (active) {
@@ -124,7 +124,7 @@ export default function OwnerServicesScreen() {
       resetForm();
       await refresh();
     } catch (error) {
-      setFeedback(errorMessage(error, t as never, t("owner.services.saveError")));
+      setFeedback(errorMessage(error, t, t("owner.services.saveError")));
     } finally {
       setIsSaving(false);
     }
@@ -138,7 +138,7 @@ export default function OwnerServicesScreen() {
       await setServiceActive(supabase, service.id, !service.active);
       await refresh();
     } catch (error) {
-      setFeedback(errorMessage(error, t as never, t("owner.services.updateError")));
+      setFeedback(errorMessage(error, t, t("owner.services.updateError")));
     } finally {
       setIsSaving(false);
     }

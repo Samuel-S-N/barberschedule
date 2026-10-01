@@ -106,7 +106,7 @@ export default function OwnerScheduleScreen() {
         await refresh(nextShopId);
       } catch (error) {
         if (active) {
-          setFeedback(errorMessage(error, t as never, t("owner.schedule.loadError")));
+          setFeedback(errorMessage(error, t, t("owner.schedule.loadError")));
         }
       } finally {
         if (active) {
@@ -147,7 +147,7 @@ export default function OwnerScheduleScreen() {
       await createWorkingPeriod(supabase, input);
       await refresh();
     } catch (error) {
-      setFeedback(errorMessage(error, t as never, t("owner.schedule.addPeriodError")));
+      setFeedback(errorMessage(error, t, t("owner.schedule.addPeriodError")));
     } finally {
       setIsSaving(false);
     }
@@ -172,7 +172,7 @@ export default function OwnerScheduleScreen() {
       });
       await refresh();
     } catch (error) {
-      setFeedback(errorMessage(error, t as never, t("owner.schedule.addOverrideError")));
+      setFeedback(errorMessage(error, t, t("owner.schedule.addOverrideError")));
     } finally {
       setIsSaving(false);
     }
@@ -186,7 +186,7 @@ export default function OwnerScheduleScreen() {
       await remove();
       await refresh();
     } catch (error) {
-      setFeedback(errorMessage(error, t as never, t("owner.schedule.removeError")));
+      setFeedback(errorMessage(error, t, t("owner.schedule.removeError")));
     } finally {
       setIsSaving(false);
     }

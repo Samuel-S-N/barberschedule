@@ -63,7 +63,7 @@ export default function BarberEarningsScreen() {
           <View className="w-full max-w-[420px] gap-3">
             {rows.isLoading || barber.isLoading ? <SkeletonBlock height={96} width={320} /> : null}
             {rows.error ? (
-              <Text className="text-sm font-sans text-danger-500">{errorMessage(rows.error, t as never, t("barber.earnings.loadError"))}</Text>
+              <Text className="text-sm font-sans text-danger-500">{errorMessage(rows.error, t, t("barber.earnings.loadError"))}</Text>
             ) : null}
             {summary ? (
               <>

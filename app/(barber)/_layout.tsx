@@ -31,7 +31,7 @@ export default function BarberLayout() {
     return (
       <Screen className="flex-1 bg-canvas">
         <View className="flex-1 items-center justify-center gap-4 p-5">
-          <Text className="text-base font-sans text-danger-500">{errorMessage(barber.error, t as never, t("barber.profile.loadError"))}</Text>
+          <Text className="text-base font-sans text-danger-500">{errorMessage(barber.error, t, t("barber.profile.loadError"))}</Text>
           <Button label={t("common.tryAgain")} onPress={() => void barber.refetch()} />
         </View>
       </Screen>

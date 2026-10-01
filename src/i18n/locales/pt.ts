@@ -100,6 +100,7 @@ export const pt: DeepStringRecord<typeof en> = {
     cancelled: "Agendamento cancelado.",
     confirmCancel: "Confirmar cancelamento",
     emptyDay: "Nenhum agendamento neste dia",
+    loadMore: "Carregar mais",
     emptyHistory: "Nenhum agendamento anterior ainda",
     emptyUpcoming: "Nada agendado por enquanto",
     fallbackBarber: "Barbeiro",

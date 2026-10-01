@@ -7,6 +7,7 @@ import { MonthCalendar } from "../../../../src/components/domain/MonthCalendar";
 import { Button } from "../../../../src/components/ui/Button";
 import { formatInstantInShopTime } from "../../../../src/lib/dates/shop-time";
 import { Screen } from "../../../../src/components/ui/Screen";
+import { useNow } from "../../../../src/lib/use-now";
 
 function param(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";
@@ -19,8 +20,9 @@ export default function BookDateScreen() {
   const barberServiceId = param(params.barberServiceId);
   const shopId = param(params.shopId);
   const { t } = useTranslation();
-  const today = formatInstantInShopTime(new Date()).localDate;
-  const [localDate, setLocalDate] = useState(today);
+  const today = formatInstantInShopTime(useNow()).localDate;
+  const [picked, setLocalDate] = useState(today);
+  const localDate = picked < today ? today : picked;
 
   return (
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">

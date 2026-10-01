@@ -84,7 +84,7 @@ export default function BookReviewScreen() {
       setFeedback({
         message: errorMessage(
           error,
-          t as never,
+          t,
           error instanceof Error && error.message === NO_SLOT_SELECTED ? t("book.chooseTime") : t("book.error"),
         ),
         variant: "error",

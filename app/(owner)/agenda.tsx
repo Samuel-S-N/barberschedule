@@ -74,7 +74,7 @@ export default function OwnerAgendaScreen() {
         }
         await refresh(nextShopId);
       } catch (error) {
-        if (active) setFeedback(errorMessage(error, t as never, t("owner.agenda.loadError")));
+        if (active) setFeedback(errorMessage(error, t, t("owner.agenda.loadError")));
       } finally {
         if (active) setIsLoading(false);
       }
@@ -92,7 +92,7 @@ export default function OwnerAgendaScreen() {
       else await setOwnerAppointmentStatus(supabase, appointmentId, status);
       await refresh();
     } catch (error) {
-      setFeedback(errorMessage(error, t as never, t("owner.agenda.updateError")));
+      setFeedback(errorMessage(error, t, t("owner.agenda.updateError")));
     } finally {
       setIsSaving(false);
     }
