@@ -33,7 +33,9 @@
       [
         "expo-image-picker",
         { "photosPermission": "Allow Barberschedule to access your photos to set your profile picture." }
-      ]
+      ],
+      "expo-notifications",
+      "expo-sharing"
     ]
   }
 }
