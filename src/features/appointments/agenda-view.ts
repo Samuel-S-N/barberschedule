@@ -38,3 +38,14 @@ export function pendingClosure<T extends Appointment>(appointments: T[], now = n
     .filter((a) => (a.status === "scheduled" || a.status === "confirmed") && new Date(a.endsAt) < now)
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
 }
+
+// Strip length in days: at least `min`, grown to reach the last appointment, capped at `max`
+// (the server's recurrence horizon, see ensureRecurrenceWindow).
+export function stripLength(appointments: Appointment[], from: Date, min = 30, max = 90) {
+  const start = Date.parse(`${formatInstantInShopTime(from).localDate}T00:00:00Z`);
+  const last = appointments.reduce((latest, a) => (a.startsAt > latest ? a.startsAt : latest), "");
+  if (!last) return min;
+  const end = Date.parse(`${formatInstantInShopTime(new Date(last)).localDate}T00:00:00Z`);
+
+  return Math.min(max, Math.max(min, Math.round((end - start) / 86_400_000) + 1));
+}

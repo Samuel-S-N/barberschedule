@@ -12,7 +12,7 @@ import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
 import { ShopContactButtons } from "../../../src/components/domain/ShopInfoCard";
 import { Toast } from "../../../src/components/domain/Toast";
 import { Button } from "../../../src/components/ui/Button";
-import { groupByLocalDate, markAppointmentDays, visibleAppointments } from "../../../src/features/appointments/agenda-view";
+import { groupByLocalDate, markAppointmentDays, stripLength, visibleAppointments } from "../../../src/features/appointments/agenda-view";
 import { buildAppointmentIcs } from "../../../src/features/appointments/ics";
 import { saveCalendarFile } from "../../../src/features/appointments/save-calendar-file";
 import { cancelAppointment, isLifecycleWindowOpen, listMyAppointments } from "../../../src/features/appointments/lifecycle";
@@ -26,8 +26,6 @@ import { useNow } from "../../../src/lib/use-now";
 import { useRefresh } from "../../../src/lib/use-refresh";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 import { Screen } from "../../../src/components/ui/Screen";
-
-const DAYS_AHEAD = 30;
 
 export default function AgendaScreen() {
   const router = useRouter();
@@ -50,8 +48,8 @@ export default function AgendaScreen() {
 
   const grouped = useMemo(() => groupByLocalDate(upcoming.data ?? []), [upcoming.data]);
   const days = useMemo(
-    () => markAppointmentDays(buildCalendarStripDays(new Date(), DAYS_AHEAD, language), grouped),
-    [grouped, language],
+    () => markAppointmentDays(buildCalendarStripDays(now, stripLength(upcoming.data ?? [], now), language), grouped),
+    [grouped, language, now, upcoming.data],
   );
   const shown = visibleAppointments(grouped, pickedDate);
   const selectDate = (date: string) => setPickedDate((current) => (current === date ? null : date));
