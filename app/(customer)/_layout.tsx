@@ -50,6 +50,7 @@ export default function CustomerLayout() {
       <Stack.Screen name="reschedule" />
       <Stack.Screen name="me/account" />
       <Stack.Screen name="me/security" />
+      <Stack.Screen name="me/security/password" />
       <Stack.Screen name="me/settings" />
       <Stack.Screen name="me/language" />
       <Stack.Screen name="me/privacy" />

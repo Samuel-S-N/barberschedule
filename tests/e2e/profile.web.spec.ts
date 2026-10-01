@@ -39,11 +39,27 @@ test("the account screen shows the login e-mail and reveals the change-e-mail fo
   await expect(page.getByTestId("account-send-link")).toBeEnabled();
 });
 
-test("the security screen only enables the button for a valid new password", async ({ page }) => {
+test("security is a menu that opens the dedicated password screen", async ({ page }) => {
   await signInAsCustomer(page);
   await mockCustomerRest(page);
 
   await page.goto("/me/security");
+  await expect(page.getByRole("heading", { name: "Security" })).toBeVisible();
+  await expect(page.getByTestId("security-current")).toHaveCount(0);
+  await page.getByTestId("menu-password").click();
+  await expect(page).toHaveURL(/\/me\/security\/password$/);
+  await expect(page.getByRole("heading", { name: "Password" })).toBeVisible();
+  await expect(page.getByTestId("security-current")).toBeVisible();
+  // The Security menu stays mounted under the Password screen, so the top screen's back button is the last one.
+  await page.getByTestId("back").last().click();
+  await expect(page).toHaveURL(/\/me\/security$/);
+});
+
+test("the security screen only enables the button for a valid new password", async ({ page }) => {
+  await signInAsCustomer(page);
+  await mockCustomerRest(page);
+
+  await page.goto("/me/security/password");
   await page.getByTestId("security-current").fill("old-password-1");
   await page.getByTestId("security-next").fill("new-password-1");
   await page.getByTestId("security-confirm").fill("different-1");
@@ -69,7 +85,7 @@ test("a wrong current password is reported and nothing is changed", async ({ pag
     return json(route, authUser);
   });
 
-  await page.goto("/me/security");
+  await page.goto("/me/security/password");
   await page.getByTestId("security-current").fill("wrong-password-1");
   await page.getByTestId("security-next").fill("new-password-1");
   await page.getByTestId("security-confirm").fill("new-password-1");
@@ -92,7 +108,7 @@ test("a correct current password changes the password", async ({ page }) => {
     return json(route, authUser);
   });
 
-  await page.goto("/me/security");
+  await page.goto("/me/security/password");
   await page.getByTestId("security-current").fill("old-password-1");
   await page.getByTestId("security-next").fill("new-password-1");
   await page.getByTestId("security-confirm").fill("new-password-1");
