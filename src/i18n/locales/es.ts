@@ -123,6 +123,8 @@ export const es: DeepStringRecord<typeof en> = {
     chooseTime: "Elige un horario disponible antes de reservar.",
     confirm: "Confirmar reserva",
     continue: "Continuar a la revisión",
+    customerError: "No se pudo cargar tu perfil de cliente.",
+    customerMissing: "No encontramos un perfil de cliente activo para tu cuenta.",
     dateTitle: "Elige una fecha",
     error: "No se pudo hacer esta reserva.",
     fallbackService: "Servicio",

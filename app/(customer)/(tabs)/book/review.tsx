@@ -143,7 +143,16 @@ export default function BookReviewScreen() {
             variant={feedback?.variant ?? "info"}
             visible={feedback !== null}
           />
-          <View className="w-full max-w-[420px]">
+          <View className="w-full max-w-[420px] gap-2">
+            {customers.error ? (
+              <>
+                <Text className="text-sm font-sans text-danger-500">{t("book.customerError")}</Text>
+                <Button label={t("common.tryAgain")} onPress={() => void customers.refetch()} variant="outline" />
+              </>
+            ) : null}
+            {customers.isSuccess && !customer ? (
+              <Text className="text-sm font-sans text-danger-500">{t("book.customerMissing")}</Text>
+            ) : null}
             <Button
               disabled={!startsAt || !customer || booking.isPending}
               label={t("book.confirm")}

@@ -121,6 +121,54 @@ test("a customer sees an unavailable error when booking loses the slot", async (
   expect(bookingPayload).toMatchObject({ customer_id: customerId, source: "customer", starts_at: "2026-08-17T12:00:00Z" });
 });
 
+async function openReview(page: import("@playwright/test").Page) {
+  await page.goto("/book");
+  await page.getByRole("button", { name: "Browser Barber" }).click();
+  await page.getByRole("button", { name: "Browser Cut" }).click();
+  await page.getByRole("button", { name: "Continue to review" }).click();
+  await page.getByRole("button", { name: "09:00" }).click();
+}
+
+test("review explains the disabled confirm button when the customer lookup fails, and retry recovers", async ({ page }) => {
+  let failLookup = true;
+  await signInAsCustomer(page);
+  await bookingRest(page, () => undefined, 200, async (route, url) => {
+    if (failLookup && url.pathname.endsWith("/customers")) {
+      await json(route, { message: "boom" }, 500);
+      return true;
+    }
+  });
+
+  await openReview(page);
+
+  // React Query retries a failing query before surfacing the error.
+  const message = page.getByText("Unable to load your customer profile.");
+  await expect(message).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("button", { name: "Confirm booking" })).toBeDisabled();
+  expect(await message.evaluate((el) => getComputedStyle(el).fontSize)).toBe("14px");
+
+  failLookup = false;
+  await page.getByRole("button", { name: "Try again" }).click();
+  await expect(message).not.toBeVisible();
+  await expect(page.getByRole("button", { name: "Confirm booking" })).toBeEnabled();
+});
+
+test("review explains the disabled confirm button when no active customer is found", async ({ page }) => {
+  await signInAsCustomer(page);
+  await bookingRest(page, () => undefined, 200, async (route, url) => {
+    if (url.pathname.endsWith("/customers")) {
+      await json(route, []);
+      return true;
+    }
+  });
+
+  await openReview(page);
+
+  await expect(page.getByText("We couldn't find an active customer profile for your account.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Confirm booking" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Try again" })).not.toBeVisible();
+});
+
 test("a new account is bootstrapped with ensure_my_customer before booking", async ({ page }) => {
   let ensureCalls = 0;
   await signInAsCustomer(page);
