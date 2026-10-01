@@ -1,4 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
+import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import { act, render, waitFor } from "@testing-library/react-native";
 import React from "react";
 import { Text } from "react-native";
@@ -205,6 +206,73 @@ describe("AppProviders session sync", () => {
       expect(mockedGetCurrentProfile).toHaveBeenCalledTimes(1);
     },
   );
+
+  describe("query cache across users", () => {
+    let cache: QueryClient;
+
+    function CacheProbe() {
+      cache = useQueryClient();
+
+      return null;
+    }
+
+    async function renderSettled(userId: string) {
+      const supabase = createSupabaseStub(createSession(userId));
+
+      mockedGetSupabaseBrowserClient.mockReturnValue(supabase.client as never);
+      mockedGetCurrentProfile.mockResolvedValue({ role: "customer", userId } as never);
+
+      const view = await render(
+        React.createElement(
+          AppProviders,
+          null,
+          React.createElement(SessionProbe),
+          React.createElement(CacheProbe),
+        ),
+      );
+
+      await waitFor(() => {
+        expect(view.getByText(`idle|${userId}|${userId}|customer`)).toBeTruthy();
+      });
+
+      cache.setQueryData(["my-profile"], { name: "previous user" });
+
+      return supabase;
+    }
+
+    it("drops the cached data on SIGNED_OUT so the next login cannot see it", async () => {
+      const supabase = await renderSettled("user-1");
+
+      await act(async () => {
+        supabase.emit(null, "SIGNED_OUT");
+      });
+
+      expect(cache.getQueryData(["my-profile"])).toBeUndefined();
+    });
+
+    it("drops the cached data when a different user signs in without a SIGNED_OUT", async () => {
+      const supabase = await renderSettled("user-1");
+
+      await act(async () => {
+        supabase.emit(createSession("user-2"), "SIGNED_IN");
+      });
+
+      expect(cache.getQueryData(["my-profile"])).toBeUndefined();
+    });
+
+    it.each(["SIGNED_IN", "TOKEN_REFRESHED", "USER_UPDATED"])(
+      "keeps the cached data when %s repeats for the same user",
+      async (event) => {
+        const supabase = await renderSettled("user-1");
+
+        await act(async () => {
+          supabase.emit(createSession("user-1"), event);
+        });
+
+        expect(cache.getQueryData(["my-profile"])).toEqual({ name: "previous user" });
+      },
+    );
+  });
 
   it("falls back to a cleared profile when the profile RPC fails", async () => {
     const supabase = createSupabaseStub(createSession("user-1"));
