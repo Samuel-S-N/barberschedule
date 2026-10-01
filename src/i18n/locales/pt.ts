@@ -123,6 +123,8 @@ export const pt: DeepStringRecord<typeof en> = {
     chooseTime: "Escolha um horário disponível antes de agendar.",
     confirm: "Confirmar agendamento",
     continue: "Continuar para a revisão",
+    customerError: "Não foi possível carregar seu cadastro de cliente.",
+    customerMissing: "Não encontramos um cadastro de cliente ativo para sua conta.",
     dateTitle: "Escolha uma data",
     error: "Não foi possível fazer este agendamento.",
     fallbackService: "Serviço",

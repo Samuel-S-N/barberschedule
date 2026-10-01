@@ -124,6 +124,8 @@ export const en = {
     chooseTime: "Choose an available time before booking.",
     confirm: "Confirm booking",
     continue: "Continue to review",
+    customerError: "Unable to load your customer profile.",
+    customerMissing: "We couldn't find an active customer profile for your account.",
     dateTitle: "Choose a date",
     error: "Unable to book this appointment.",
     fallbackService: "Service",
