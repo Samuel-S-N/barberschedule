@@ -30,14 +30,14 @@ A barber books appointments for themself, fast, from their own agenda: pick a da
 7. Claim on signup: `ensure_my_customer` first looks for a customer in the shop with `user_id is null` and `lower(email) = lower(account_email)`, **only if** `auth.users.email_confirmed_at is not null`, and sets its `user_id` (plus fills `full_name` only if it was blank); otherwise it inserts as today. Hosted projects must keep email confirmation on for the claim to be safe; unconfirmed accounts never claim.
 8. Owner can already edit `customers`; completing a missing email there makes the next signup/login claim work (claim also runs from `ensure_my_customer`, which the customer app calls on each bootstrap).
 
-Error codes reused: `SLOT_UNAVAILABLE`, `SERVICE_UNAVAILABLE`, `CUSTOMER_UNAVAILABLE`, `BOOKING_FORBIDDEN`, `INVALID_BOOKING_START`. New: `CUSTOMER_NAME_REQUIRED` (`P0016`), `CUSTOMER_EMAIL_INVALID` (`P0017`).
+Error codes reused: `SLOT_UNAVAILABLE`, `SERVICE_UNAVAILABLE`, `CUSTOMER_UNAVAILABLE`, `BOOKING_FORBIDDEN`, `INVALID_BOOKING_START`. New: `CUSTOMER_NAME_REQUIRED` (`P0024`), `CUSTOMER_EMAIL_INVALID` (`P0025`).
 
 ## Front
 
 - `src/features/appointments/barber-booking.ts`: `findOrCreateCustomer`, `searchMyCustomers`, `bookAsBarber` (find-or-create then `book_appointment` with source `'barber'`), plus `normalizePhone`, `parseBarberBookingInput` (zod-free, matching `validation.ts` style).
 - `AppointmentSource` gains `'barber'`.
 - `src/features/appointments/day-slots.ts`: pure `buildDaySlots(appointments, blocks, slots)` merging available start times (computed with the barber's **shortest** service), booked appointments and blocks into one ordered timeline. Free slots are the tap targets.
-- `my-agenda.tsx`: add the day timeline under the calendar strip. A free slot opens `BarberBookingSheet`.
+- `my-agenda.tsx`: add the day timeline under the calendar strip. A free slot opens `BarberBookingSheet` (an RN `Modal`, slide animation).
 - `src/components/domain/BarberBookingSheet.tsx`: name (required, with autocomplete from `barber_search_customers`), email, phone, service picker (pre-selected most used; services that do not fit the slot are disabled with a reason), recent-client chips, a muted "no email: the customer will not see this in the app" hint, Confirm button. Uses `Input`/`useFieldChain`, `Button`, `Card`, `KeyboardAwareScrollView`; strings in i18n pt and en.
 - On success: Toast, invalidate `barber-agenda`, close sheet. On `SLOT_UNAVAILABLE`: message plus slot refetch.
 
