@@ -55,6 +55,8 @@ async function walkToReview(page: import("@playwright/test").Page) {
   await page.getByTestId("month-calendar-prev").click();
   await page.getByRole("button", { name: "Continue to review" }).click();
   await expect(page.getByTestId("booking-review-scroll")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Choose a time" })).toBeVisible();
+  await expect(page.getByText(/^\d{2}\/\d{2}\/\d{4}$/)).toBeVisible();
   await page.getByRole("button", { name: "09:00" }).click();
   await page.getByRole("button", { name: "Confirm booking" }).click();
 }

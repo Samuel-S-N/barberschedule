@@ -119,7 +119,7 @@ export const pt: DeepStringRecord<typeof en> = {
     noTimes: "Nenhum horário disponível neste dia",
     notes: "Observações (opcional)",
     notesTooLong: "As observações devem ter no máximo 500 caracteres.",
-    reviewTitle: "Revise seu agendamento",
+    reviewTitle: "Escolha um horário",
     serviceTitle: "Escolha um serviço",
     servicesError: "Não foi possível carregar os serviços.",
     shopTitle: "Agendar um horário",

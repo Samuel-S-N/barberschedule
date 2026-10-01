@@ -17,6 +17,8 @@ import { getAvailableSlotsQueryOptions } from "../../../../src/features/availabi
 import type { AvailableSlot } from "../../../../src/features/availability/types";
 import { listMyCustomers } from "../../../../src/features/customers/api";
 import { errorMessage } from "../../../../src/i18n/errors";
+import { useLanguage } from "../../../../src/i18n/use-language";
+import { formatDateNumeric } from "../../../../src/lib/i18n/format";
 import { useSupabaseSession } from "../../../../src/providers/AppProviders";
 import { Screen } from "../../../../src/components/ui/Screen";
 
@@ -36,6 +38,7 @@ export default function BookReviewScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
+  const language = useLanguage();
   const { profile, supabase } = useSupabaseSession();
   const [startsAt, setStartsAt] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
@@ -110,7 +113,7 @@ export default function BookReviewScreen() {
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
             {t("book.reviewTitle")}
           </Text>
-          <Text className="w-full max-w-[420px] text-base font-sans text-neutral-600">{localDate}</Text>
+          <Text className="w-full max-w-[420px] text-base font-sans text-neutral-600">{localDate ? formatDateNumeric(localDate, language) : ""}</Text>
           <View className="w-full max-w-[420px] gap-2">
             {availability.isLoading ? (
               <>
