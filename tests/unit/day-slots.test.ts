@@ -4,11 +4,14 @@ const slot = (startsAt: string, localTime: string) => ({ endsAt: startsAt, local
 const appt = (id: string, startsAt: string, occupiedUntil: string, status = "scheduled") =>
   ({ id, occupiedUntil, startsAt, status }) as never;
 
+const NOW = new Date("2026-10-01T00:00:00.000Z");
+
 describe("buildDayTimeline", () => {
   it("merges appointments and free slots in time order", () => {
     const timeline = buildDayTimeline(
       [appt("a1", "2026-10-02T13:00:00.000Z", "2026-10-02T13:30:00.000Z")],
       [slot("2026-10-02T12:00:00.000Z", "09:00"), slot("2026-10-02T14:00:00.000Z", "11:00")],
+      NOW,
     );
 
     expect(timeline.map((entry) => entry.kind)).toEqual(["free", "appointment", "free"]);
@@ -18,13 +21,20 @@ describe("buildDayTimeline", () => {
     const timeline = buildDayTimeline(
       [appt("a1", "2026-10-02T13:00:00.000Z", "2026-10-02T14:00:00.000Z")],
       [slot("2026-10-02T13:30:00.000Z", "10:30")],
+      NOW,
     );
 
     expect(timeline.map((entry) => entry.kind)).toEqual(["appointment"]);
   });
 
+  it("drops free slots that already started", () => {
+    const timeline = buildDayTimeline([], [slot("2026-10-01T12:00:00.000Z", "09:00"), slot("2026-10-01T20:00:00.000Z", "17:00")], new Date("2026-10-01T15:00:00.000Z"));
+
+    expect(timeline.map((entry) => entry.time)).toEqual(["17:00"]);
+  });
+
   it("ignores cancelled appointments", () => {
-    const timeline = buildDayTimeline([appt("a1", "2026-10-02T13:00:00.000Z", "2026-10-02T13:30:00.000Z", "cancelled")], []);
+    const timeline = buildDayTimeline([appt("a1", "2026-10-02T13:00:00.000Z", "2026-10-02T13:30:00.000Z", "cancelled")], [], NOW);
 
     expect(timeline).toEqual([]);
   });

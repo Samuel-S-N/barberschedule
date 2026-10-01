@@ -62,7 +62,7 @@ export function BarberBookingSheet({ busy = false, fitsService, onClose, onSearc
   };
 
   return (
-    <Modal animationType="slide" onRequestClose={onClose} transparent visible={visible}>
+    <Modal animationType="fade" onRequestClose={onClose} transparent visible={visible}>
       <View className="flex-1 justify-end bg-black/40">
         <View className="max-h-[90%] w-full rounded-t-2xl bg-surface">
           <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled">

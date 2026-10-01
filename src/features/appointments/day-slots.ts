@@ -6,9 +6,10 @@ export type DayEntry =
   | { appointment: BarberAgendaAppointment; kind: "appointment"; time: string }
   | { kind: "free"; slot: AvailableSlot; time: string };
 
-export function buildDayTimeline(appointments: BarberAgendaAppointment[], slots: AvailableSlot[]): DayEntry[] {
+export function buildDayTimeline(appointments: BarberAgendaAppointment[], slots: AvailableSlot[], now = new Date()): DayEntry[] {
   const live = appointments.filter((appointment) => appointment.status !== "cancelled");
-  const free = slots.filter((slot) => !live.some((a) => slot.startsAt >= a.startsAt && slot.startsAt < a.occupiedUntil));
+  // The server rejects bookings that start in the past, so those times are not offered.
+  const free = slots.filter((slot) => new Date(slot.startsAt) > now && !live.some((a) => slot.startsAt >= a.startsAt && slot.startsAt < a.occupiedUntil));
 
   const entries: Array<{ at: string; entry: DayEntry }> = [
     ...live.map((appointment) => ({

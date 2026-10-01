@@ -18,7 +18,7 @@ A barber books appointments for themself, fast, from their own agenda: pick a da
 
 1. `alter type appointment_source add value 'barber'`.
 2. Relax `customers_contact_present` so a customer may have only a name (barber walk-ins). New check: `email is not null or phone is not null or user_id is not null or anonymized_at is not null or created_by_barber_id is not null`. Add `customers.created_by_barber_id uuid references barbers(id)` so the relaxation only applies to barber-created rows.
-3. Unique index `customers_shop_email_key on customers (shop_id, lower(email)) where email is not null`. The migration first fails loudly if duplicates exist; the local seed has none.
+3. Unique index `customers_shop_email_key on customers (shop_id, lower(email)) where email is not null`. The migration fails loudly if duplicates exist; the local seed has none. The old `002_catalog_and_customers.sql` case that inserted a second customer with an existing email is updated (the walk-in gets its own email; the no-auto-link-by-phone assertion stays).
 4. `barber_find_or_create_customer(full_name text, email text default null, phone text default null) returns customers`
    - `security definer`, caller must satisfy `is_own_barber` for their active barber row; shop = that barber's shop.
    - Normalises: trims, `lower(email)`, phone to digits only (kept as typed digits, no DDI rewriting).
@@ -37,7 +37,7 @@ Error codes reused: `SLOT_UNAVAILABLE`, `SERVICE_UNAVAILABLE`, `CUSTOMER_UNAVAIL
 - `src/features/appointments/barber-booking.ts`: `findOrCreateCustomer`, `searchMyCustomers`, `bookAsBarber` (find-or-create then `book_appointment` with source `'barber'`), plus `normalizePhone`, `parseBarberBookingInput` (zod-free, matching `validation.ts` style).
 - `AppointmentSource` gains `'barber'`.
 - `src/features/appointments/day-slots.ts`: pure `buildDaySlots(appointments, blocks, slots)` merging available start times (computed with the barber's **shortest** service), booked appointments and blocks into one ordered timeline. Free slots are the tap targets.
-- `my-agenda.tsx`: add the day timeline under the calendar strip. A free slot opens `BarberBookingSheet` (an RN `Modal`, slide animation).
+- `my-agenda.tsx`: add the day timeline under the calendar strip. A free slot opens `BarberBookingSheet` (an RN `Modal`, fade animation so the backdrop blocks taps from the first frame).
 - `src/components/domain/BarberBookingSheet.tsx`: name (required, with autocomplete from `barber_search_customers`), email, phone, service picker (pre-selected most used; services that do not fit the slot are disabled with a reason), recent-client chips, a muted "no email: the customer will not see this in the app" hint, Confirm button. Uses `Input`/`useFieldChain`, `Button`, `Card`, `KeyboardAwareScrollView`; strings in i18n pt and en.
 - On success: Toast, invalidate `barber-agenda`, close sheet. On `SLOT_UNAVAILABLE`: message plus slot refetch.
 
@@ -58,4 +58,4 @@ Barber profile hub, reports and charts (specs 2 and 3), recurring bookings by ba
 
 ## Test data
 
-`barber@teste.com` / `barber1234`, created only in local Supabase, with a **new** barber row (not a seed barber). Added to `supabase/seed.sql` so `db reset` recreates it.
+`barber@teste.com` / `barber1234`, created only in local Supabase, with a **new** barber row `Barber Teste`. The script is `supabase/dev-barber.sql` (idempotent, run with `docker exec ... psql`), deliberately **not** in `seed.sql`: `010_full_rls.sql` asserts the seed has exactly one active barber, so seeding a second one would break a clean `db reset` + `test:db`.
