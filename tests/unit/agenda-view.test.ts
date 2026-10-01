@@ -1,5 +1,5 @@
 import {
-  formatAppointmentLabels, groupByLocalDate, markAppointmentDays, visibleAppointments,
+  formatAppointmentLabels, groupByLocalDate, markAppointmentDays, pendingClosure, visibleAppointments,
 } from "../../src/features/appointments/agenda-view";
 import type { Appointment } from "../../src/features/appointments/types";
 
@@ -52,5 +52,27 @@ describe("agenda view helpers", () => {
     expect(visibleAppointments(grouped, null).map((a) => a.id)).toEqual(["a", "b", "c"]);
     expect(visibleAppointments(grouped, "2026-08-18").map((a) => a.id)).toEqual(["b", "c"]);
     expect(visibleAppointments(grouped, "2026-08-19")).toEqual([]);
+  });
+});
+
+describe("pendingClosure", () => {
+  const now = new Date("2026-08-18T12:00:00Z");
+  const ended = (id: string, endsAt: string, status: Appointment["status"] = "scheduled") => ({
+    ...appointment(id, endsAt), endsAt, status,
+  });
+
+  it("keeps only finished appointments still scheduled or confirmed, oldest first", () => {
+    const result = pendingClosure(
+      [
+        ended("later", "2026-08-17T15:00:00Z", "confirmed"),
+        ended("earlier", "2026-08-16T15:00:00Z"),
+        ended("running", "2026-08-18T12:30:00Z"),
+        ended("done", "2026-08-16T10:00:00Z", "completed"),
+        ended("gone", "2026-08-16T11:00:00Z", "cancelled"),
+      ],
+      now,
+    );
+
+    expect(result.map((a) => a.id)).toEqual(["earlier", "later"]);
   });
 });

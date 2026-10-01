@@ -13,8 +13,8 @@ import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Input } from "../../src/components/ui/Input";
 import { Screen } from "../../src/components/ui/Screen";
-import { listMyBarberAgenda, setMyAppointmentStatus } from "../../src/features/appointments/barber-agenda";
-import { groupByLocalDate, markAppointmentDays } from "../../src/features/appointments/agenda-view";
+import { listMyBarberAgenda, setMyAppointmentStatus, type BarberAgendaAppointment, type BarberAppointmentStatus } from "../../src/features/appointments/barber-agenda";
+import { groupByLocalDate, markAppointmentDays, pendingClosure } from "../../src/features/appointments/agenda-view";
 import { getMyBarberProfile } from "../../src/features/barbers/api";
 import { createScheduleOverride, deleteScheduleOverride, listMyScheduleOverrides } from "../../src/features/schedule/api";
 import { errorMessage } from "../../src/i18n/errors";
@@ -24,6 +24,7 @@ import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 const DAYS_AHEAD = 30;
+const PENDING_DAYS_BACK = 30;
 
 export default function BarberAgendaScreen() {
   const { t } = useTranslation();
@@ -43,12 +44,18 @@ export default function BarberAgendaScreen() {
     queryFn: () => listMyBarberAgenda(supabase, { limit: 100, offset: 0, rangeEnd, rangeStart: today }),
     queryKey: ["barber-agenda", today, rangeEnd],
   });
+  const pendingStart = formatInstantInShopTime(new Date(Date.now() - PENDING_DAYS_BACK * 86_400_000)).localDate;
+  const pendingAgenda = useQuery({
+    queryFn: () => listMyBarberAgenda(supabase, { limit: 100, offset: 0, rangeEnd: today, rangeStart: pendingStart }),
+    queryKey: ["barber-agenda", "pending", pendingStart, today],
+  });
   const blocks = useQuery({
     enabled: Boolean(barber.data),
     queryFn: () => listMyScheduleOverrides(supabase, barber.data?.id ?? "", today),
     queryKey: ["barber-blocks", barber.data?.id, today],
   });
 
+  const pending = useMemo(() => pendingClosure(pendingAgenda.data ?? []), [pendingAgenda.data]);
   const grouped = useMemo(() => groupByLocalDate(agenda.data ?? []), [agenda.data]);
   const days = useMemo(() => markAppointmentDays(buildCalendarStripDays(new Date(), DAYS_AHEAD, language), grouped), [grouped, language]);
   const dayAppointments = grouped.get(selectedDate) ?? [];
@@ -57,7 +64,7 @@ export default function BarberAgendaScreen() {
   const fail = (error: unknown, fallback: string) => setFeedback({ message: errorMessage(error, t as never, fallback), variant: "error" });
 
   const setStatus = useMutation({
-    mutationFn: (input: { id: string; status: "completed" | "no_show" }) => setMyAppointmentStatus(supabase, input.id, input.status),
+    mutationFn: (input: { id: string; status: BarberAppointmentStatus }) => setMyAppointmentStatus(supabase, input.id, input.status),
     onError: (error) => fail(error, t("barber.agenda.updateError")),
     onSuccess: () => {
       setFeedback({ message: t("barber.agenda.updated"), variant: "success" });
@@ -100,6 +107,60 @@ export default function BarberAgendaScreen() {
 
   const busy = setStatus.isPending || addBlock.isPending || removeBlock.isPending;
 
+  const renderAppointment = (appointment: BarberAgendaAppointment, withDate = false) => {
+    const startsAt = formatInstantInShopTime(new Date(appointment.startsAt));
+    const open = appointment.status === "scheduled" || appointment.status === "confirmed";
+    const canConfirm = appointment.status === "scheduled" && new Date(appointment.endsAt) >= new Date();
+
+    return (
+      <Card key={appointment.id} testID={`barber-appointment-${appointment.id}`}>
+        <View className="gap-2">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-lg font-display-semibold text-ink" style={{ fontVariant: ["tabular-nums"] }}>
+              {withDate ? `${startsAt.localDate} ` : ""}
+              {startsAt.localTime}
+            </Text>
+            <StatusBadge status={appointment.status} />
+          </View>
+          <Text className="text-base font-sans-medium text-ink">
+            {t("barber.agenda.customerLine", { customer: appointment.customerName, service: appointment.serviceNameSnapshot })}
+          </Text>
+          <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>
+            {formatPriceBRL(appointment.servicePriceCentsSnapshot)}
+          </Text>
+          {open ? (
+            <View className="flex-row flex-wrap gap-2">
+              {canConfirm ? (
+                <Button
+                  disabled={busy}
+                  label={t("barber.agenda.confirm")}
+                  onPress={() => setStatus.mutate({ id: appointment.id, status: "confirmed" })}
+                  size="sm"
+                  testID={`barber-confirm-${appointment.id}`}
+                />
+              ) : null}
+              <Button
+                disabled={busy}
+                label={t("barber.agenda.complete")}
+                onPress={() => setStatus.mutate({ id: appointment.id, status: "completed" })}
+                size="sm"
+                testID={`barber-complete-${appointment.id}`}
+              />
+              <Button
+                disabled={busy}
+                label={t("barber.agenda.noShow")}
+                onPress={() => setStatus.mutate({ id: appointment.id, status: "no_show" })}
+                size="sm"
+                testID={`barber-noshow-${appointment.id}`}
+                variant="outline"
+              />
+            </View>
+          ) : null}
+        </View>
+      </Card>
+    );
+  };
+
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
       <ScrollView className="flex-1">
@@ -107,6 +168,15 @@ export default function BarberAgendaScreen() {
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
             {t("barber.agenda.title")}
           </Text>
+          {pending.length > 0 ? (
+            <View className="w-full max-w-[420px] gap-3" testID="barber-pending-closure">
+              <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">
+                {t("barber.agenda.pendingTitle")}
+              </Text>
+              <Text className="text-sm font-sans text-neutral-600">{t("barber.agenda.pendingHint")}</Text>
+              {pending.map((appointment) => renderAppointment(appointment, true))}
+            </View>
+          ) : null}
           <View className="w-full">
             <CalendarStrip days={days} onSelectDate={setPickedDate} selectedDate={selectedDate} />
           </View>
@@ -116,43 +186,7 @@ export default function BarberAgendaScreen() {
               <Text className="text-sm font-sans text-danger-500">{errorMessage(agenda.error, t as never, t("barber.agenda.loadError"))}</Text>
             ) : null}
             {!agenda.isLoading && !agenda.error && dayAppointments.length === 0 ? <EmptyState title={t("barber.agenda.emptyDay")} /> : null}
-            {dayAppointments.map((appointment) => (
-              <Card key={appointment.id} testID={`barber-appointment-${appointment.id}`}>
-                <View className="gap-2">
-                  <View className="flex-row items-center justify-between">
-                    <Text className="text-lg font-display-semibold text-ink" style={{ fontVariant: ["tabular-nums"] }}>
-                      {formatInstantInShopTime(new Date(appointment.startsAt)).localTime}
-                    </Text>
-                    <StatusBadge status={appointment.status} />
-                  </View>
-                  <Text className="text-base font-sans-medium text-ink">
-                    {t("barber.agenda.customerLine", { customer: appointment.customerName, service: appointment.serviceNameSnapshot })}
-                  </Text>
-                  <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>
-                    {formatPriceBRL(appointment.servicePriceCentsSnapshot)}
-                  </Text>
-                  {appointment.status === "scheduled" || appointment.status === "confirmed" ? (
-                    <View className="flex-row gap-2">
-                      <Button
-                        disabled={busy}
-                        label={t("barber.agenda.complete")}
-                        onPress={() => setStatus.mutate({ id: appointment.id, status: "completed" })}
-                        size="sm"
-                        testID={`barber-complete-${appointment.id}`}
-                      />
-                      <Button
-                        disabled={busy}
-                        label={t("barber.agenda.noShow")}
-                        onPress={() => setStatus.mutate({ id: appointment.id, status: "no_show" })}
-                        size="sm"
-                        testID={`barber-noshow-${appointment.id}`}
-                        variant="outline"
-                      />
-                    </View>
-                  ) : null}
-                </View>
-              </Card>
-            ))}
+            {dayAppointments.map((appointment) => renderAppointment(appointment))}
           </View>
 
           <View className="w-full max-w-[420px] gap-3">
