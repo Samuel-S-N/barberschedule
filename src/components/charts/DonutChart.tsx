@@ -3,7 +3,7 @@ import { Text, View } from "react-native";
 import Svg, { Circle, G, Path } from "react-native-svg";
 
 import { colors } from "../../lib/design/colors";
-import { donutArcs } from "./geometry";
+import { centerFontSize, donutArcs } from "./geometry";
 
 export type DonutSlice = { color: string; icon?: LucideIcon; key: string; label: string; value: number };
 
@@ -26,7 +26,7 @@ export function DonutChart({ centerLabel, centerValue, formatValue = String, siz
           )}
         </Svg>
         <View className="absolute inset-0 items-center justify-center" pointerEvents="none">
-          <Text className="text-4xl font-display-bold text-ink">{centerValue}</Text>
+          <Text className="font-display-bold text-ink" numberOfLines={1} style={{ fontSize: centerFontSize(centerValue, inner * 2) }}>{centerValue}</Text>
           <Text className="text-xs font-sans text-neutral-600">{centerLabel}</Text>
         </View>
       </View>

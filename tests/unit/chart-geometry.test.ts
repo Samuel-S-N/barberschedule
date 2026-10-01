@@ -1,4 +1,4 @@
-import { barPath, donutArcs, niceMax, yTicks } from "../../src/components/charts/geometry";
+import { barPath, centerFontSize, donutArcs, labelPlacement, niceMax, yTicks } from "../../src/components/charts/geometry";
 
 describe("scale", () => {
   it("rounds the axis maximum up to a clean number", () => {
@@ -41,5 +41,36 @@ describe("donutArcs", () => {
     const [arc] = donutArcs([4], opts);
 
     expect(arc.d).toContain("A 50 50 0 1 1");
+  });
+});
+
+describe("labelPlacement", () => {
+  it("centres a label that fits", () => {
+    expect(labelPlacement(150, 320, 34, 4, 50)).toEqual({ anchor: "middle", x: 150 });
+  });
+
+  it("anchors a label that would overflow the right edge to the plot's right end", () => {
+    expect(labelPlacement(310, 320, 34, 4, 50)).toEqual({ anchor: "end", x: 316 });
+  });
+
+  it("anchors a label that would overflow the left edge to the plot's left start", () => {
+    expect(labelPlacement(40, 320, 34, 4, 50)).toEqual({ anchor: "start", x: 34 });
+  });
+});
+
+describe("centerFontSize", () => {
+  it("uses the largest size for short values", () => {
+    expect(centerFontSize("55", 110)).toBe(36);
+  });
+
+  it("shrinks long values so they fit inside the hole", () => {
+    const size = centerFontSize("R$ 3965,00", 110);
+
+    expect(size).toBeLessThan(24);
+    expect(size * 0.55 * "R$ 3965,00".length).toBeLessThanOrEqual(110);
+  });
+
+  it("never goes below a readable minimum", () => {
+    expect(centerFontSize("R$ 123456789,00", 60)).toBe(14);
   });
 });
