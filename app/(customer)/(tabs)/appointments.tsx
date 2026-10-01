@@ -13,6 +13,8 @@ import { ShopContactButtons } from "../../../src/components/domain/ShopInfoCard"
 import { Toast } from "../../../src/components/domain/Toast";
 import { Button } from "../../../src/components/ui/Button";
 import { groupByLocalDate, markAppointmentDays, visibleAppointments } from "../../../src/features/appointments/agenda-view";
+import { buildAppointmentIcs } from "../../../src/features/appointments/ics";
+import { saveCalendarFile } from "../../../src/features/appointments/save-calendar-file";
 import { cancelAppointment, isLifecycleWindowOpen, listMyAppointments } from "../../../src/features/appointments/lifecycle";
 import type { Appointment } from "../../../src/features/appointments/types";
 import { useAppointmentCards } from "../../../src/features/appointments/use-appointment-cards";
@@ -63,6 +65,25 @@ export default function AgendaScreen() {
     },
   });
 
+  const addToCalendar = async (appointment: Appointment) => {
+    const card = toCardProps(appointment);
+    try {
+      await saveCalendarFile(
+        `appointment-${appointment.id}.ics`,
+        buildAppointmentIcs({
+          description: card.barberName,
+          endsAt: appointment.endsAt,
+          id: appointment.id,
+          location: shop?.address ?? null,
+          startsAt: appointment.startsAt,
+          summary: `${card.serviceName} — ${card.shopName}`,
+        }),
+      );
+    } catch {
+      setFeedback({ message: t("appointments.calendarError"), variant: "error" });
+    }
+  };
+
   const renderAppointment = (appointment: Appointment, withActions: boolean) => {
     const open = isLifecycleWindowOpen(appointment.startsAt, new Date());
 
@@ -73,48 +94,68 @@ export default function AgendaScreen() {
           onPress={() => setSelectedId(selectedId === appointment.id ? null : appointment.id)}
           testID={`appointment-card-${appointment.id}`}
         />
-        {withActions && selectedId === appointment.id ? (
+        {selectedId === appointment.id ? (
           <View className="gap-2 px-1">
-            {!open ? (
-              <View className="gap-2">
-                <Text className="text-sm font-sans text-neutral-600">{t("appointments.locked")}</Text>
-                {shop?.phone || shop?.whatsapp ? (
-                  <Text className="text-sm font-sans text-neutral-600">{t("shop.contactToChange")}</Text>
-                ) : null}
-                {shop ? <ShopContactButtons phone={shop.phone} whatsapp={shop.whatsapp} /> : null}
-              </View>
-            ) : null}
-            {confirmingId === appointment.id ? (
-              <>
-                <Button
-                  disabled={cancel.isPending}
-                  label={t("appointments.confirmCancel")}
-                  onPress={() => cancel.mutate(appointment.id)}
-                  testID={`appointment-cancel-confirm-${appointment.id}`}
-                  variant="danger"
-                />
-                <Button label={t("appointments.keep")} onPress={() => setConfirmingId(null)} variant="ghost" />
-              </>
+            {withActions ? (
+              <Button
+                label={t("appointments.addToCalendar")}
+                onPress={() => void addToCalendar(appointment)}
+                testID={`appointment-calendar-${appointment.id}`}
+                variant="outline"
+              />
             ) : (
-              <>
-                <Button
-                  disabled={!open}
-                  label={t("appointments.reschedule")}
-                  onPress={() => router.push(
-                    `/reschedule?appointmentId=${encodeURIComponent(appointment.id)}&barberId=${encodeURIComponent(appointment.barberId)}&barberServiceId=${encodeURIComponent(appointment.barberServiceId)}`,
-                  )}
-                  testID={`appointment-reschedule-${appointment.id}`}
-                  variant="outline"
-                />
-                <Button
-                  disabled={!open}
-                  label={t("appointments.cancel")}
-                  onPress={() => setConfirmingId(appointment.id)}
-                  testID={`appointment-cancel-${appointment.id}`}
-                  variant="danger"
-                />
-              </>
+              <Button
+                label={t("appointments.bookAgain")}
+                onPress={() => router.push(
+                  `/book/date?shopId=${encodeURIComponent(appointment.shopId)}&barberId=${encodeURIComponent(appointment.barberId)}&barberServiceId=${encodeURIComponent(appointment.barberServiceId)}`,
+                )}
+                testID={`appointment-rebook-${appointment.id}`}
+              />
             )}
+            {withActions ? (
+              <>
+              {!open ? (
+                <View className="gap-2">
+                  <Text className="text-sm font-sans text-neutral-600">{t("appointments.locked")}</Text>
+                  {shop?.phone || shop?.whatsapp ? (
+                    <Text className="text-sm font-sans text-neutral-600">{t("shop.contactToChange")}</Text>
+                  ) : null}
+                  {shop ? <ShopContactButtons phone={shop.phone} whatsapp={shop.whatsapp} /> : null}
+                </View>
+              ) : null}
+              {confirmingId === appointment.id ? (
+                <>
+                  <Button
+                    disabled={cancel.isPending}
+                    label={t("appointments.confirmCancel")}
+                    onPress={() => cancel.mutate(appointment.id)}
+                    testID={`appointment-cancel-confirm-${appointment.id}`}
+                    variant="danger"
+                  />
+                  <Button label={t("appointments.keep")} onPress={() => setConfirmingId(null)} variant="ghost" />
+                </>
+              ) : (
+                <>
+                  <Button
+                    disabled={!open}
+                    label={t("appointments.reschedule")}
+                    onPress={() => router.push(
+                      `/reschedule?appointmentId=${encodeURIComponent(appointment.id)}&barberId=${encodeURIComponent(appointment.barberId)}&barberServiceId=${encodeURIComponent(appointment.barberServiceId)}`,
+                    )}
+                    testID={`appointment-reschedule-${appointment.id}`}
+                    variant="outline"
+                  />
+                  <Button
+                    disabled={!open}
+                    label={t("appointments.cancel")}
+                    onPress={() => setConfirmingId(appointment.id)}
+                    testID={`appointment-cancel-${appointment.id}`}
+                    variant="danger"
+                  />
+                </>
+              )}
+              </>
+            ) : null}
           </View>
         ) : null}
       </View>

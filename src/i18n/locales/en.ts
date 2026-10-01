@@ -93,6 +93,9 @@ export const en = {
     welcome: "Welcome",
   },
   appointments: {
+    addToCalendar: "Add to calendar",
+    bookAgain: "Book again",
+    calendarError: "Could not create the calendar file.",
     cancel: "Cancel appointment",
     cancelError: "Unable to cancel.",
     cancelled: "Appointment cancelled.",

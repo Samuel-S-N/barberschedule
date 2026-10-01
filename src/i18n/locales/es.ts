@@ -92,6 +92,9 @@ export const es: DeepStringRecord<typeof en> = {
     welcome: "Bienvenido",
   },
   appointments: {
+    addToCalendar: "Añadir al calendario",
+    bookAgain: "Reservar de nuevo",
+    calendarError: "No se pudo crear el archivo de calendario.",
     cancel: "Cancelar cita",
     cancelError: "No se pudo cancelar.",
     cancelled: "Cita cancelada.",
