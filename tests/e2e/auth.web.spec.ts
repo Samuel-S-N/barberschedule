@@ -103,6 +103,7 @@ test("a visitor can create an account and is asked to confirm their email", asyn
   await page.getByTestId("signup-nickname").fill("Aninha");
   await page.getByTestId("signup-phone").fill("11900000000");
   await page.getByTestId("signup-password").fill("correct-password");
+  await page.getByTestId("signup-confirm-password").fill("correct-password");
   await page.getByRole("checkbox", { name: "I accept the terms and privacy policy" }).click();
   await page.getByRole("button", { name: "Create account" }).click();
 

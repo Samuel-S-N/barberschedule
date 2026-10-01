@@ -62,6 +62,7 @@ export const en = {
       title: "Reset password",
     },
     signup: {
+      confirmPassword: "Confirm password",
       acceptTerms: "I accept the terms and privacy policy",
       backToSignIn: "Back to sign in",
       checkEmailBody: "We sent a confirmation link to {{email}}. Open it, then sign in.",
@@ -73,6 +74,7 @@ export const en = {
       title: "Create account",
     },
     validation: {
+      passwordMismatch: "Passwords do not match.",
       acceptTerms: "Accept the terms and privacy policy to continue.",
       email: "Enter a valid email.",
       fullName: "Enter your full name.",

@@ -10,7 +10,8 @@ export type SignupInput = {
 };
 
 // Error messages are translation keys; the screen translates them with t().
-const signupSchema = z.object({
+const signupSchema = z
+  .object({
   acceptedTerms: z.literal(true, { error: "auth.validation.acceptTerms" }),
   email: z.string().trim().toLowerCase().pipe(z.email("auth.validation.email")),
   fullName: z.string().trim().min(2, "auth.validation.fullName"),
@@ -25,20 +26,28 @@ const signupSchema = z.object({
     .trim()
     .transform((value) => (value === "" ? null : value))
     .refine((value) => value === null || /^[0-9+()\s-]{8,20}$/.test(value), "auth.validation.phone"),
-});
+  confirmPassword: z.string(),
+})
+  .refine((value) => value.password === value.confirmPassword, {
+    error: "auth.validation.passwordMismatch",
+    path: ["confirmPassword"],
+  });
 
 export function parseSignupInput(input: unknown):
   | { ok: true; value: SignupInput }
-  | { errors: Partial<Record<keyof SignupInput, string>>; ok: false } {
+  | { errors: Partial<Record<keyof SignupInput | "confirmPassword", string>>; ok: false } {
   const parsed = signupSchema.safeParse(input);
 
   if (parsed.success) {
-    return { ok: true, value: parsed.data as SignupInput };
+    // The confirmation only exists to be compared; it never leaves validation.
+    const { confirmPassword: _confirmPassword, ...value } = parsed.data;
+
+    return { ok: true, value: value as SignupInput };
   }
 
-  const errors: Partial<Record<keyof SignupInput, string>> = {};
+  const errors: Partial<Record<keyof SignupInput | "confirmPassword", string>> = {};
   for (const issue of parsed.error.issues) {
-    const key = issue.path[0] as keyof SignupInput;
+    const key = issue.path[0] as keyof SignupInput | "confirmPassword";
     errors[key] ??= issue.message;
   }
 

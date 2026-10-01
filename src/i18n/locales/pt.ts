@@ -61,6 +61,7 @@ export const pt: DeepStringRecord<typeof en> = {
       title: "Redefinir senha",
     },
     signup: {
+      confirmPassword: "Confirmar senha",
       acceptTerms: "Aceito os termos e a política de privacidade",
       backToSignIn: "Voltar para entrar",
       checkEmailBody: "Enviamos um link de confirmação para {{email}}. Abra-o e depois entre.",
@@ -72,6 +73,7 @@ export const pt: DeepStringRecord<typeof en> = {
       title: "Criar conta",
     },
     validation: {
+      passwordMismatch: "As senhas não coincidem.",
       acceptTerms: "Aceite os termos e a política de privacidade para continuar.",
       email: "Informe um e-mail válido.",
       fullName: "Informe seu nome completo.",
