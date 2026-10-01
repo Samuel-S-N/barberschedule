@@ -56,6 +56,9 @@ export default function HomeScreen() {
             <Link href="/agenda" style={styles.link}>
               {t("owner.hub.manageAgenda")}
             </Link>
+            <Link href="/revenue" style={styles.link}>
+              {t("owner.hub.revenue")}
+            </Link>
             <Link href="/settings" style={styles.link}>
               {t("owner.hub.settings")}
             </Link>
