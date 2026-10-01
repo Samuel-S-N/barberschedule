@@ -11,31 +11,27 @@ import { Input } from "../src/components/ui/Input";
 import { Screen } from "../src/components/ui/Screen";
 import { validateNewPassword } from "../src/features/account/security";
 import { completePasswordReset, startRecoverySession } from "../src/features/auth/api";
-import { hasRecovery, parseRecoveryUrl } from "../src/features/auth/recovery";
+import { hasRecovery, parseRecoveryUrl, resolveRecoveryStatus, type RecoveryStatus } from "../src/features/auth/recovery";
 import { errorMessage } from "../src/i18n/errors";
 import { useSupabaseSession } from "../src/providers/AppProviders";
-
-type Status = "checking" | "ready" | "invalid";
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { isLoading, session, supabase } = useSupabaseSession();
-  const [status, setStatus] = useState<Status>("checking");
+  const [linkFailed, setLinkFailed] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const resolved = resolveRecoveryStatus({ hasSession: session !== null, isLoading, platform: Platform.OS, proof: hasRecovery() });
+  const status: RecoveryStatus = linkFailed || (timedOut && resolved === "checking") ? "invalid" : resolved;
   const problem = next || confirm ? validateNewPassword(next, confirm) : null;
   const problemText = problem === "password" ? t("profile.security.tooShort") : problem === "mismatch" ? t("profile.security.mismatch") : undefined;
 
-  // Web: detectSessionInUrl already turned the link into a session; the provider recorded the PASSWORD_RECOVERY proof.
-  useEffect(() => {
-    if (Platform.OS !== "web" || isLoading) return;
-    setStatus(session && hasRecovery() ? "ready" : "invalid");
-  }, [isLoading, session]);
-
-  // Native: the deep link carries the tokens in its fragment.
+  // Native: the deep link carries the tokens in its fragment. Web needs nothing here: detectSessionInUrl already
+  // turned the link into a session and the provider recorded the PASSWORD_RECOVERY proof.
   useEffect(() => {
     if (Platform.OS === "web") return;
 
@@ -44,22 +40,15 @@ export default function ResetPasswordScreen() {
       const link = parseRecoveryUrl(url);
 
       if (link.kind === "none") return;
-      if (link.kind === "error") {
-        if (active) setStatus("invalid");
-        return;
+      if (link.kind === "error" || !(await startRecoverySession(supabase, link))) {
+        if (active) setLinkFailed(true);
       }
-
-      const ok = await startRecoverySession(supabase, link);
-
-      if (active) setStatus(ok ? "ready" : "invalid");
     };
 
     void Linking.getInitialURL().then(handle);
     const subscription = Linking.addEventListener("url", (event) => void handle(event.url));
-    // Opened without a recovery link (typed URL, stale tab): do not spin forever.
-    const timeout = setTimeout(() => {
-      if (active) setStatus((current) => (current === "checking" ? "invalid" : current));
-    }, 8000);
+    // Opened without a recovery link (typed URL, stale screen): do not spin forever.
+    const timeout = setTimeout(() => active && setTimedOut(true), 8000);
 
     return () => {
       active = false;

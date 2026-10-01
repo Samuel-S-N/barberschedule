@@ -33,3 +33,20 @@ export const hasRecovery = () => recoveryProof;
 export const clearRecovery = () => {
   recoveryProof = false;
 };
+
+export type RecoveryStatus = "checking" | "ready" | "invalid";
+
+// Derived from state that survives a remount: setSession fires SIGNED_IN, the loading gate then remounts the screen,
+// and the new instance no longer receives the deep-link event.
+export function resolveRecoveryStatus(input: {
+  hasSession: boolean;
+  isLoading: boolean;
+  platform: string;
+  proof: boolean;
+}): RecoveryStatus {
+  if (input.isLoading) return "checking";
+  if (input.hasSession && input.proof) return "ready";
+
+  // On web the link was already consumed by detectSessionInUrl; on native the deep link may still be on its way.
+  return input.platform === "web" ? "invalid" : "checking";
+}
