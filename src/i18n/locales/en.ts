@@ -430,6 +430,10 @@ export const en = {
     },
   },
   barber: {
+    reports: {
+      hideData: "Hide data",
+      showData: "Show data",
+    },
     compensation: {
       ownerHint: "Set by the shop owner.",
     },

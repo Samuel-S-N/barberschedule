@@ -429,6 +429,10 @@ export const pt: DeepStringRecord<typeof en> = {
     },
   },
   barber: {
+    reports: {
+      hideData: "Ocultar dados",
+      showData: "Ver dados",
+    },
     compensation: {
       ownerHint: "Definida pelo dono da barbearia.",
     },

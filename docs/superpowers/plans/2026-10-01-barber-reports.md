@@ -535,7 +535,7 @@ DonutChart props: { centerLabel: string; centerValue: string; size?: number; sli
 ChartSection props: { children: ReactNode; rows: Array<{ label: string; value: string }>; testID: string; title: string }
 ```
 
-- [ ] **Step 1: Validate the donut palette** (colour is computable): run, from the skill's directory, `node scripts/validate_palette.js "#2a78d6,#eb6834,#1baf7a,#eda100,#e87ba4" --mode light` (path: `/tmp/claude-1000/bundled-skills/*/dataviz/scripts/validate_palette.js`; `ls` the glob first). Record the result in the commit message. If any hard gate FAILs, re-run with the brand-tuned candidate `#DB9A34,#2a78d6,#1baf7a,#7A1F2B,#9C8E7B` and use whichever passes; the "other" slice always uses `colors.neutral[300]`. The chosen list is exported as `SERVICE_SLICE_COLORS` from `src/components/charts/geometry.ts`. Status slices use `colors.success[500]`, `colors.danger[500]`, `colors.warning[500]` with icons.
+- [ ] **Step 1: Validate the donut palette** (colour is computable): run, from the skill's directory, `node scripts/validate_palette.js "#2a78d6,#eb6834,#1baf7a,#eda100,#e87ba4" --mode light` (path: `/tmp/claude-1000/bundled-skills/*/dataviz/scripts/validate_palette.js`; `ls` the glob first). Record the result in the commit message. If any hard gate FAILs, re-run with the brand-tuned candidate `#DB9A34,#2a78d6,#1baf7a,#7A1F2B,#9C8E7B` and use whichever passes; the "other" slice uses `colors.neutral[500]` (>= 20 Delta E from every neighbour; the lighter neutral[300] was only 14.3 from yellow). The chosen list is exported as `SERVICE_SLICE_COLORS` from `src/components/charts/geometry.ts`. Status slices use `colors.success[500]`, `colors.danger[500]`, `colors.warning[500]` with icons.
 
 - [ ] **Step 2: Failing tests** — `tests/unit/chart-geometry.test.ts`
 
@@ -1105,7 +1105,7 @@ export default function BarberReportsScreen() {
                           centerLabel={t("barber.reports.completed")}
                           centerValue={String(totals.completed)}
                           slices={serviceItems.map((s, i) => ({
-                            color: s.key === "other" ? colors.neutral[300] : SERVICE_SLICE_COLORS[i % SERVICE_SLICE_COLORS.length],
+                            color: s.key === "other" ? colors.neutral[500] : SERVICE_SLICE_COLORS[i % SERVICE_SLICE_COLORS.length],
                             key: s.key,
                             label: s.key === "other" ? t("barber.reports.other") : s.name,
                             value: s.value,
