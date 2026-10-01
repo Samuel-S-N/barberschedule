@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { z } from "zod";
 
 import { BookingSummary } from "../../../../src/components/domain/BookingSummary";
@@ -125,7 +126,7 @@ export default function BookReviewScreen() {
 
   return (
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
-      <ScrollView className="flex-1" testID="booking-review-scroll">
+      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled" testID="booking-review-scroll">
         <View className="items-center gap-4 p-5">
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
             {t("book.reviewTitle")}
@@ -184,7 +185,7 @@ export default function BookReviewScreen() {
             />
           </View>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 }

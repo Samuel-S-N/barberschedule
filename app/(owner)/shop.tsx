@@ -1,7 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
+import { Button, StyleSheet, Switch, Text, TextInput, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { Screen } from "../../src/components/ui/Screen";
 import { listPublicShops, listShopHours, saveShopHours, updateShopContact } from "../../src/features/shops/api";
@@ -82,7 +83,7 @@ export default function OwnerShopScreen() {
 
   return (
     <Screen style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>{t("owner.shop.title")}</Text>
         {field("address", t("owner.shop.address"))}
         {field("phone", t("owner.shop.phone"))}
@@ -122,7 +123,7 @@ export default function OwnerShopScreen() {
         })}
         {feedback ? <Text>{feedback}</Text> : null}
         <Button onPress={() => void save()} title={t("owner.shop.save")} />
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 }

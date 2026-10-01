@@ -4,6 +4,7 @@ jest.mock("expo-localization", () => ({
 }));
 
 import "react-native-gesture-handler/jestSetup";
+jest.mock("react-native-keyboard-controller", () => require("react-native-keyboard-controller/jest"));
 import "./src/i18n";
 
 // The published mock (`react-native-reanimated/mock`) eagerly initializes the

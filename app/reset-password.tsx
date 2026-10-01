@@ -2,12 +2,13 @@ import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Platform, ScrollView, Text, View } from "react-native";
+import { Platform, Text, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { SkeletonBlock } from "../src/components/domain/SkeletonLoader";
 import { Toast } from "../src/components/domain/Toast";
 import { Button } from "../src/components/ui/Button";
-import { Input } from "../src/components/ui/Input";
+import { Input, useFieldChain } from "../src/components/ui/Input";
 import { Screen } from "../src/components/ui/Screen";
 import { validateNewPassword } from "../src/features/account/security";
 import { completePasswordReset, startRecoverySession } from "../src/features/auth/api";
@@ -18,6 +19,7 @@ import { useSupabaseSession } from "../src/providers/AppProviders";
 export default function ResetPasswordScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const field = useFieldChain(2);
   const { isLoading, session, supabase } = useSupabaseSession();
   const [linkFailed, setLinkFailed] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
@@ -70,9 +72,11 @@ export default function ResetPasswordScreen() {
     }
   };
 
+  const canSave = !saving && Boolean(next) && validateNewPassword(next, confirm) === null;
+
   return (
     <Screen className="flex-1 bg-canvas">
-      <ScrollView className="flex-1">
+      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             {status === "checking" ? (
@@ -93,11 +97,11 @@ export default function ResetPasswordScreen() {
               <>
                 <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("auth.reset.setTitle")}</Text>
                 <Text className="text-base font-sans text-neutral-600">{t("auth.reset.setSubtitle")}</Text>
-                <Input label={t("auth.reset.newPassword")} onChangeText={setNext} secureTextEntry testID="reset-new" value={next} />
-                <Input error={problemText} label={t("auth.reset.confirm")} onChangeText={setConfirm} secureTextEntry testID="reset-confirm" value={confirm} />
+                <Input {...field(0)} autoComplete="new-password" label={t("auth.reset.newPassword")} onChangeText={setNext} secureTextEntry testID="reset-new" textContentType="newPassword" value={next} />
+                <Input {...field(1)} autoComplete="new-password" error={problemText} label={t("auth.reset.confirm")} onChangeText={setConfirm} secureTextEntry onSubmitEditing={() => canSave && void save()} returnKeyType="go" testID="reset-confirm" textContentType="newPassword" value={confirm} />
                 <Toast message={error ?? ""} onDismiss={() => setError(null)} variant="error" visible={error !== null} />
                 <Button
-                  disabled={saving || !next || validateNewPassword(next, confirm) !== null}
+                  disabled={!canSave}
                   label={t("auth.reset.saveSubmit")}
                   onPress={() => void save()}
                   size="lg"
@@ -107,7 +111,7 @@ export default function ResetPasswordScreen() {
             ) : null}
           </View>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 }

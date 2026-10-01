@@ -1,7 +1,8 @@
 import { Link } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { errorMessage } from "../../src/i18n/errors";
 import { listOwnerAgenda, listOwnerAgendaOverrides } from "../../src/features/appointments/agenda-query";
@@ -111,7 +112,7 @@ export default function OwnerAgendaScreen() {
 
   return (
     <Screen style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>{t("owner.agenda.title")}</Text>
         <Link href="/appointment-form" style={styles.link}>{t("owner.agenda.newAppointment")}</Link>
         <Text style={styles.note}>{t("owner.agenda.note")}</Text>
@@ -151,7 +152,7 @@ export default function OwnerAgendaScreen() {
           <Button disabled={offset === 0 || isLoading} onPress={() => setOffset(Math.max(0, offset - 100))} title={t("owner.agenda.previousPage")} />
           <Button disabled={appointments.length < 100 || isLoading} onPress={() => setOffset(offset + 100)} title={t("owner.agenda.nextPage")} />
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 }

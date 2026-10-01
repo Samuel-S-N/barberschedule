@@ -1,12 +1,13 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, View } from "react-native";
+import { View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { ScreenHeader } from "../../../../src/components/domain/ScreenHeader";
 import { Toast } from "../../../../src/components/domain/Toast";
 import { Button } from "../../../../src/components/ui/Button";
-import { Input } from "../../../../src/components/ui/Input";
+import { Input, useFieldChain } from "../../../../src/components/ui/Input";
 import { Screen } from "../../../../src/components/ui/Screen";
 import { changePassword } from "../../../../src/features/account/api";
 import { validateNewPassword } from "../../../../src/features/account/security";
@@ -17,6 +18,7 @@ import { useSupabaseSession } from "../../../../src/providers/AppProviders";
 
 export default function PasswordScreen() {
   const { t } = useTranslation();
+  const field = useFieldChain(3);
   const back = useBack();
   const { session, supabase } = useSupabaseSession();
   const [current, setCurrent] = useState("");
@@ -41,17 +43,19 @@ export default function PasswordScreen() {
     },
   });
 
+  const canChange = !change.isPending && Boolean(current) && Boolean(next) && validateNewPassword(next, confirm) === null;
+
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
-      <ScrollView className="flex-1">
+      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("profile.security.passwordTitle")} />
-            <Input label={t("profile.security.current")} onChangeText={setCurrent} secureTextEntry testID="security-current" value={current} />
-            <Input label={t("profile.security.next")} onChangeText={setNext} secureTextEntry testID="security-next" value={next} />
-            <Input error={problemText} label={t("profile.security.confirm")} onChangeText={setConfirm} secureTextEntry testID="security-confirm" value={confirm} />
+            <Input {...field(0)} autoComplete="current-password" label={t("profile.security.current")} onChangeText={setCurrent} secureTextEntry testID="security-current" textContentType="password" value={current} />
+            <Input {...field(1)} autoComplete="new-password" label={t("profile.security.next")} onChangeText={setNext} secureTextEntry testID="security-next" textContentType="newPassword" value={next} />
+            <Input {...field(2)} autoComplete="new-password" error={problemText} label={t("profile.security.confirm")} onChangeText={setConfirm} secureTextEntry onSubmitEditing={() => canChange && change.mutate()} returnKeyType="go" testID="security-confirm" textContentType="newPassword" value={confirm} />
             <Button
-              disabled={change.isPending || !current || !next || validateNewPassword(next, confirm) !== null}
+              disabled={!canChange}
               label={t("profile.security.submit")}
               onPress={() => change.mutate()}
               testID="security-submit"
@@ -59,7 +63,7 @@ export default function PasswordScreen() {
             <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
           </View>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 }

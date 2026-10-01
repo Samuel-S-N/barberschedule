@@ -1,11 +1,12 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
-import { Input } from "../../src/components/ui/Input";
+import { Input, useFieldChain } from "../../src/components/ui/Input";
 import { Screen } from "../../src/components/ui/Screen";
 import { signInWithPassword } from "../../src/features/auth/api";
 import { errorMessage } from "../../src/i18n/errors";
@@ -16,6 +17,7 @@ export default function LoginScreen() {
   const { notice } = useLocalSearchParams<{ notice?: string }>();
   const { t } = useTranslation();
   const { isLoading, supabase } = useSupabaseSession();
+  const field = useFieldChain(2);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -34,19 +36,24 @@ export default function LoginScreen() {
     }
   };
 
+  const canSubmit = Boolean(email.trim() && password && !isLoading && !isSubmitting);
+  const submitFromKeyboard = () => {
+    if (canSubmit) void handleSignIn();
+  };
+
   return (
     <Screen className="flex-1 bg-canvas">
-      <ScrollView className="flex-1">
+      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("auth.login.title")}</Text>
             <Text className="text-base font-sans text-neutral-600">{t("auth.login.subtitle")}</Text>
-            <Input label={t("common.email")} onChangeText={setEmail} testID="login-email" value={email} />
-            <Input label={t("common.password")} onChangeText={setPassword} secureTextEntry testID="login-password" value={password} />
+            <Input {...field(0)} autoCapitalize="none" autoComplete="email" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" label={t("common.email")} onChangeText={setEmail} testID="login-email" value={email} />
+            <Input {...field(1)} autoComplete="current-password" label={t("common.password")} onChangeText={setPassword} onSubmitEditing={submitFromKeyboard} returnKeyType="go" textContentType="password" secureTextEntry testID="login-password" value={password} />
             <Toast message={t("auth.login.passwordReset")} onDismiss={() => setNoticeDismissed(true)} variant="success" visible={notice === "password-reset" && !noticeDismissed} />
             <Toast message={error ?? ""} onDismiss={() => setError(null)} variant="error" visible={error !== null} />
             <Button
-              disabled={!email.trim() || !password || isLoading || isSubmitting}
+              disabled={!canSubmit}
               label={t("auth.login.submit")}
               onPress={handleSignIn}
               size="lg"
@@ -55,7 +62,7 @@ export default function LoginScreen() {
             <Button label={t("auth.login.createAccount")} onPress={() => router.push("/signup")} variant="outline" />
           </View>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 }

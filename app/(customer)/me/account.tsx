@@ -3,13 +3,14 @@ import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { Avatar } from "../../../src/components/domain/Avatar";
 import { ScreenHeader } from "../../../src/components/domain/ScreenHeader";
 import { Toast } from "../../../src/components/domain/Toast";
 import { Button } from "../../../src/components/ui/Button";
-import { Input } from "../../../src/components/ui/Input";
+import { Input, useFieldChain } from "../../../src/components/ui/Input";
 import { Screen } from "../../../src/components/ui/Screen";
 import { changeEmail, updateMyProfile, uploadMyAvatar } from "../../../src/features/account/api";
 import { base64ToArrayBuffer, validateAvatar } from "../../../src/features/account/avatar";
@@ -25,6 +26,7 @@ type Feedback = { message: string; variant: "error" | "success" };
 
 export default function AccountScreen() {
   const { t } = useTranslation();
+  const field = useFieldChain(3);
   const back = useBack();
   const queryClient = useQueryClient();
   const { session, supabase } = useSupabaseSession();
@@ -98,7 +100,7 @@ export default function AccountScreen() {
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
-      <ScrollView className="flex-1">
+      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("profile.account.title")} />
@@ -114,9 +116,9 @@ export default function AccountScreen() {
               <Button label={t("profile.account.changePhoto")} onPress={() => photo.mutate()} size="sm" variant="ghost" />
             </View>
 
-            <Input label={t("common.fullName")} onChangeText={setFullName} testID="profile-name" value={fullName} />
-            <Input label={t("common.nicknameOptional")} onChangeText={setNickname} testID="profile-nickname" value={nickname} />
-            <Input label={t("common.phoneOptional")} onChangeText={(value) => setPhone(formatPhone(value))} testID="profile-phone" value={phone} />
+            <Input {...field(0)} autoCapitalize="words" autoComplete="name" label={t("common.fullName")} onChangeText={setFullName} testID="profile-name" value={fullName} />
+            <Input {...field(1)} autoCapitalize="words" label={t("common.nicknameOptional")} onChangeText={setNickname} testID="profile-nickname" value={nickname} />
+            <Input {...field(2)} autoComplete="tel" keyboardType="phone-pad" label={t("common.phoneOptional")} onChangeText={(value) => setPhone(formatPhone(value))} onSubmitEditing={() => !save.isPending && customer && save.mutate()} returnKeyType="done" testID="profile-phone" value={phone} />
             <Button disabled={save.isPending || !customer} label={t("profile.save")} onPress={() => save.mutate()} testID="profile-save" />
 
             <Text className="pt-2 text-sm font-sans-medium text-neutral-600">{t("profile.account.emailLabel")}</Text>
@@ -124,6 +126,11 @@ export default function AccountScreen() {
             {changingEmail ? (
               <View className="gap-2">
                 <Input
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                  textContentType="emailAddress"
                   error={newEmail && !isValidEmail(newEmail) ? t("profile.account.emailInvalid") : undefined}
                   label={t("profile.account.newEmail")}
                   onChangeText={setNewEmail}
@@ -145,7 +152,7 @@ export default function AccountScreen() {
             <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
           </View>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 }

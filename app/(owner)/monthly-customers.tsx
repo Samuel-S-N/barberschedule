@@ -1,7 +1,8 @@
 import { Link } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { errorMessage } from "../../src/i18n/errors";
 import { listOwnerBarberServices } from "../../src/features/services/api";
@@ -163,7 +164,7 @@ export default function MonthlyCustomersScreen() {
 
   return (
     <Screen style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>{t("owner.recurring.title")}</Text>
         <Link href="/recurrence-conflicts" style={styles.link}>{t("owner.recurring.conflictsLink")}</Link>
         <Text style={styles.note}>{t("owner.recurring.note")}</Text>
@@ -198,7 +199,7 @@ export default function MonthlyCustomersScreen() {
             <Button disabled={isSaving || !item.active} onPress={() => void mutate(() => endRecurrenceSeries(supabase, item.id))} title={t("owner.recurring.endSeries")} />
           </View>
         </View>)}
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 }
