@@ -430,6 +430,9 @@ export const en = {
     },
   },
   barber: {
+    compensation: {
+      ownerHint: "Set by the shop owner.",
+    },
     account: {
       bioHint: "Shown to customers on your card.",
       nameHint: "Your public name is set by the shop owner.",

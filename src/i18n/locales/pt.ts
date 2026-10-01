@@ -429,6 +429,9 @@ export const pt: DeepStringRecord<typeof en> = {
     },
   },
   barber: {
+    compensation: {
+      ownerHint: "Definida pelo dono da barbearia.",
+    },
     account: {
       bioHint: "Mostrada aos clientes no seu cartão.",
       nameHint: "Seu nome público é definido pelo dono da barbearia.",

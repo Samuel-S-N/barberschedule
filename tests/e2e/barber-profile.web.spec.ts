@@ -102,3 +102,12 @@ test("a barber turns an optional service on; the standard one is locked", async 
   await page.getByTestId("service-switch-s2").click();
   await expect.poll(() => togglePayload).toEqual({ new_enabled: true, target_service_id: "s2" });
 });
+
+test("a barber reads how they are paid, read-only", async ({ page }) => {
+  await signIn(page, barberUserId);
+  await mockBarberRest(page);
+
+  await page.goto("/my-profile/compensation");
+  await expect(page.getByTestId("barber-compensation")).toContainText("Commission: 40% of each completed service.");
+  await expect(page.getByText("Set by the shop owner.")).toBeVisible();
+});
