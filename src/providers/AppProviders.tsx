@@ -130,11 +130,14 @@ export function AppProviders({ children }: PropsWithChildren) {
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") {
         void syncLanguage();
+        void supabase.auth.startAutoRefresh();
+      } else {
+        void supabase.auth.stopAutoRefresh();
       }
     });
 
     return () => subscription.remove();
-  }, []);
+  }, [supabase]);
 
   return (
     <I18nextProvider i18n={i18n}>

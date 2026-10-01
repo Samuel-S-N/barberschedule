@@ -6,9 +6,14 @@ import { useTranslation } from "react-i18next";
 
 jest.mock("../../src/features/auth/api", () => ({ getCurrentProfile: jest.fn() }));
 
+const mockStartAutoRefresh = jest.fn();
+const mockStopAutoRefresh = jest.fn();
+
 jest.mock("../../src/lib/supabase/client", () => ({
   getSupabaseBrowserClient: jest.fn(() => ({
     auth: {
+      startAutoRefresh: mockStartAutoRefresh,
+      stopAutoRefresh: mockStopAutoRefresh,
       getSession: jest.fn().mockResolvedValue({ data: { session: null } }),
       onAuthStateChange: jest.fn(() => ({ data: { subscription: { unsubscribe: jest.fn() } } })),
     },
@@ -94,5 +99,28 @@ describe("AppProviders language sync", () => {
     await view.unmount();
 
     expect(remove).toHaveBeenCalled();
+  });
+
+  it("stops the token auto-refresh in the background and restarts it when the app is active again", async () => {
+    let onChange: (state: string) => void = () => undefined;
+    jest.spyOn(AppState, "addEventListener").mockImplementation(((_type: string, listener: (state: string) => void) => {
+      onChange = listener;
+
+      return { remove: jest.fn() };
+    }) as never);
+    mockStartAutoRefresh.mockClear();
+    mockStopAutoRefresh.mockClear();
+
+    await render(React.createElement(AppProviders, null, React.createElement(HomeLabel)));
+
+    await act(async () => {
+      onChange("background");
+    });
+    expect(mockStopAutoRefresh).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      onChange("active");
+    });
+    expect(mockStartAutoRefresh).toHaveBeenCalledTimes(1);
   });
 });
