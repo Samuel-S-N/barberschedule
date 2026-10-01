@@ -34,3 +34,5 @@ export { RadioBlock } from "./RadioBlock";
 export type { RadioBlockProps, RadioOption } from "./RadioBlock";
 export { BarberBookingSheet } from "./BarberBookingSheet";
 export type { BarberBookingSheetProps } from "./BarberBookingSheet";
+export { DaySummaryCard } from "./DaySummaryCard";
+export type { DaySummaryCardProps } from "./DaySummaryCard";

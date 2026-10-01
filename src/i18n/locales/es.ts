@@ -429,6 +429,15 @@ export const es: DeepStringRecord<typeof en> = {
     },
   },
   barber: {
+    summary: {
+      appointments: "Citas",
+      done: "{{count}} completadas",
+      earned: "Ganado hasta ahora",
+      free: "Horarios libres",
+      next: "Siguiente",
+      nextNone: "Nada más",
+      title: "Resumen del día",
+    },
     clients: {
       call: "Llamar",
       detailError: "No se pudo cargar este cliente.",

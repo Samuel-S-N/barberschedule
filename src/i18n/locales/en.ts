@@ -430,6 +430,15 @@ export const en = {
     },
   },
   barber: {
+    summary: {
+      appointments: "Appointments",
+      done: "{{count}} done",
+      earned: "Earned so far",
+      free: "Free times",
+      next: "Next",
+      nextNone: "Nothing left",
+      title: "Day summary",
+    },
     clients: {
       call: "Call",
       detailError: "Unable to load this client.",
