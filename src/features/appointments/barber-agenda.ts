@@ -18,7 +18,7 @@ export type BarberAgendaAppointment = Appointment & {
   customerName: string;
 };
 
-export type BarberAppointmentStatus = "completed" | "no_show";
+export type BarberAppointmentStatus = "confirmed" | "completed" | "no_show";
 
 function toBarberError(error: { code?: string }) {
   const domainError = toDomainError(error);

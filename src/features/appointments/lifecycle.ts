@@ -59,15 +59,15 @@ export function rescheduleAppointment(
 export async function listMyAppointments(
   supabase: Pick<LifecycleSupabaseClient, "from">,
   history = false,
+  now = new Date(),
 ): Promise<Appointment[]> {
-  const statuses = history
-    ? ["cancelled", "completed", "no_show"]
-    : ["scheduled", "confirmed"];
-  const { data, error } = await supabase
-    .from("appointments")
-    .select(appointmentColumns)
-    .in("status", statuses)
-    .order("starts_at", { ascending: !history });
+  const nowIso = now.toISOString();
+  const query = supabase.from("appointments").select(appointmentColumns);
+  // Finished appointments nobody closed (still scheduled/confirmed) belong to history, not "upcoming".
+  const { data, error } = await (history
+    ? query.or(`status.in.(cancelled,completed,no_show),and(status.in.(scheduled,confirmed),ends_at.lt.${nowIso})`)
+    : query.in("status", ["scheduled", "confirmed"]).gte("ends_at", nowIso)
+  ).order("starts_at", { ascending: !history });
 
   if (error) {
     throw toDomainError(error);

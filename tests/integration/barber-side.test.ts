@@ -71,6 +71,18 @@ describe("barber-scoped agenda", () => {
     });
   });
 
+  it("confirms through the same barber status RPC", async () => {
+    const rpc = jest.fn().mockResolvedValue({ data: [{ ...appointmentRow, status: "confirmed" }], error: null });
+
+    await expect(setMyAppointmentStatus({ rpc } as never, "appointment-1", "confirmed")).resolves.toMatchObject({
+      status: "confirmed",
+    });
+    expect(rpc).toHaveBeenCalledWith("set_my_appointment_status", {
+      appointment_id: "appointment-1",
+      new_status: "confirmed",
+    });
+  });
+
   it("surfaces forbidden and invalid transitions with stable codes", async () => {
     await expect(
       setMyAppointmentStatus({ rpc: jest.fn().mockResolvedValue({ data: null, error: { code: "P0010" } }) } as never, "a", "no_show"),

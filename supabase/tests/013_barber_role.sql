@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(37);
+select plan(41);
 
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at)
 values
@@ -107,6 +107,23 @@ select is(
   (select status::text from public.set_my_appointment_status('86000000-0000-0000-0000-000000000001', 'no_show')),
   'no_show',
   'barber marks own scheduled appointment no_show'
+);
+select is(
+  (select status::text from public.set_my_appointment_status('86000000-0000-0000-0000-000000000002', 'confirmed')),
+  'confirmed',
+  'barber confirms own scheduled appointment'
+);
+select throws_ok(
+  $$ select * from public.set_my_appointment_status('86000000-0000-0000-0000-000000000002', 'confirmed') $$,
+  'P0013', null, 'an already confirmed appointment cannot be confirmed again'
+);
+select throws_ok(
+  $$ select * from public.set_my_appointment_status('86000000-0000-0000-0000-000000000003', 'confirmed') $$,
+  'P0013', null, 'a completed appointment cannot be confirmed'
+);
+select throws_ok(
+  $$ select * from public.set_my_appointment_status('86000000-0000-0000-0000-000000000005', 'confirmed') $$,
+  'P0010', null, 'barber cannot confirm another barber appointment'
 );
 select throws_ok(
   $$ select * from public.set_my_appointment_status('86000000-0000-0000-0000-000000000005', 'completed') $$,

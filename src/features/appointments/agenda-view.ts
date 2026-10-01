@@ -32,3 +32,9 @@ export function markAppointmentDays(days: CalendarStripDay[], grouped: Map<strin
 export function visibleAppointments<T extends Appointment>(grouped: Map<string, T[]>, selectedDate: string | null) {
   return selectedDate ? grouped.get(selectedDate) ?? [] : [...grouped.values()].flat();
 }
+
+export function pendingClosure<T extends Appointment>(appointments: T[], now = new Date()) {
+  return appointments
+    .filter((a) => (a.status === "scheduled" || a.status === "confirmed") && new Date(a.endsAt) < now)
+    .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+}

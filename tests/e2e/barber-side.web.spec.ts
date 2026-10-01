@@ -81,6 +81,48 @@ test("a barber lands on their own agenda and marks an appointment completed", as
   expect(statusPayload).toEqual({ appointment_id: "appt-1", new_status: "completed" });
 });
 
+test("a barber confirms a scheduled appointment", async ({ page }) => {
+  let statusPayload: Record<string, unknown> | null = null;
+
+  await signIn(page, barberUserId);
+  await mockBarberRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/rpc/set_my_appointment_status")) {
+      statusPayload = route.request().postDataJSON() as Record<string, unknown>;
+      return json(route, [agendaRow({ status: "confirmed" })]).then(() => true);
+    }
+  });
+
+  await page.goto("/");
+  await page.getByTestId("barber-confirm-appt-1").click();
+  await expect(page.getByText("Appointment updated.")).toBeVisible();
+  expect(statusPayload).toEqual({ appointment_id: "appt-1", new_status: "confirmed" });
+});
+
+test("a barber closes a past appointment from the awaiting-closure section", async ({ page }) => {
+  const start = new Date(Date.now() - 26 * 60 * 60 * 1000);
+  const end = new Date(start.getTime() + 30 * 60 * 1000);
+  const pastRow = agendaRow({ ends_at: end.toISOString(), id: "appt-old", occupied_until: end.toISOString(), starts_at: start.toISOString() });
+  let statusPayload: Record<string, unknown> | null = null;
+
+  await signIn(page, barberUserId);
+  await mockBarberRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/rpc/list_my_barber_agenda")) return json(route, [pastRow]).then(() => true);
+    if (url.pathname.endsWith("/rpc/set_my_appointment_status")) {
+      statusPayload = route.request().postDataJSON() as Record<string, unknown>;
+      return json(route, [{ ...pastRow, status: "no_show" }]).then(() => true);
+    }
+  });
+
+  await page.goto("/");
+  const section = page.getByTestId("barber-pending-closure");
+  await expect(section.getByRole("heading", { name: "Awaiting closure" })).toBeVisible();
+  await expect(section.getByTestId("barber-confirm-appt-old")).toHaveCount(0);
+
+  await section.getByTestId("barber-noshow-appt-old").click();
+  await expect(page.getByText("Appointment updated.")).toBeVisible();
+  expect(statusPayload).toEqual({ appointment_id: "appt-old", new_status: "no_show" });
+});
+
 test("a barber blocks a whole day and it is sent as a block for their own barber row", async ({ page }) => {
   let insertPayload: Record<string, unknown> | null = null;
 
