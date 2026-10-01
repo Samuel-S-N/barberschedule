@@ -77,3 +77,28 @@ test("a barber edits their bio from My details and the name is read-only", async
   await expect(page.getByText("Profile saved.")).toBeVisible();
   expect(profilePayload).toEqual({ new_avatar_url: null, new_bio: "New bio" });
 });
+
+test("a barber turns an optional service on; the standard one is locked", async ({ page }) => {
+  let togglePayload: Record<string, unknown> | null = null;
+  const options = [
+    { description: null, duration_minutes: 30, enabled: true, is_standard: true, price_cents: 4000, service_id: "s1", service_name: "Cut" },
+    { description: null, duration_minutes: 20, enabled: false, is_standard: false, price_cents: 2500, service_id: "s2", service_name: "Beard" },
+  ];
+
+  await signIn(page, barberUserId);
+  await mockBarberRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/rpc/list_my_service_options")) return json(route, options).then(() => true);
+    if (url.pathname.endsWith("/rpc/set_my_service_enabled")) {
+      togglePayload = route.request().postDataJSON() as Record<string, unknown>;
+      return json(route, [{ enabled: true, service_id: "s2" }]).then(() => true);
+    }
+  });
+
+  await page.goto("/my-profile/services");
+  await expect(page.getByTestId("service-standard-s1")).toBeVisible();
+  await expect(page.getByTestId("service-switch-s1")).toHaveCount(0);
+  await expect(page.getByText("R$ 25,00")).toBeVisible();
+
+  await page.getByTestId("service-switch-s2").click();
+  await expect.poll(() => togglePayload).toEqual({ new_enabled: true, target_service_id: "s2" });
+});

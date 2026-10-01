@@ -434,6 +434,15 @@ export const en = {
       bioHint: "Shown to customers on your card.",
       nameHint: "Your public name is set by the shop owner.",
     },
+    myServices: {
+      empty: "The shop has no services yet.",
+      loadError: "Unable to load the services.",
+      optionalHint: "Turn on if you perform this service.",
+      standard: "Standard",
+      standardHint: "Every barber offers this service.",
+      title: "My services",
+      toggleError: "Unable to update this service.",
+    },
     hub: {
       menu: { account: "My details", compensation: "Compensation", services: "My services" },
       role: "Barber",

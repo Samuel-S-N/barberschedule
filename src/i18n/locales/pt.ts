@@ -433,6 +433,15 @@ export const pt: DeepStringRecord<typeof en> = {
       bioHint: "Mostrada aos clientes no seu cartão.",
       nameHint: "Seu nome público é definido pelo dono da barbearia.",
     },
+    myServices: {
+      empty: "A barbearia ainda não tem serviços.",
+      loadError: "Não foi possível carregar os serviços.",
+      optionalHint: "Ative se você realiza este serviço.",
+      standard: "Padrão",
+      standardHint: "Todos os barbeiros fazem este serviço.",
+      title: "Meus serviços",
+      toggleError: "Não foi possível atualizar este serviço.",
+    },
     hub: {
       menu: { account: "Meus dados", compensation: "Remuneração", services: "Meus serviços" },
       role: "Barbeiro",
