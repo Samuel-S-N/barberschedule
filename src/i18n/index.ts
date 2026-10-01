@@ -49,7 +49,7 @@ export async function loadLanguagePreference() {
   try {
     preference = parseLanguagePreference(await storage.getItem(PREFERENCE_KEY));
   } catch {
-    preference = "device";
+    // Unreadable storage: keep the current preference (the device language on a fresh start).
   }
 
   await syncLanguage();
