@@ -40,7 +40,8 @@ export function parseSignupInput(input: unknown):
 
   if (parsed.success) {
     // The confirmation only exists to be compared; it never leaves validation.
-    const { confirmPassword: _confirmPassword, ...value } = parsed.data;
+    const value: Record<string, unknown> = { ...parsed.data };
+    delete value.confirmPassword;
 
     return { ok: true, value: value as SignupInput };
   }
