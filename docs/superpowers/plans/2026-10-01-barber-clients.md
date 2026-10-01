@@ -149,6 +149,10 @@ select throws_ok(
   $$ select public.get_my_customer('ad300000-0000-0000-0000-000000000002') $$,
   'P0007', null, 'a barber cannot open another barber''s client'
 );
+select throws_ok(
+  $$ select public.set_my_customer_note('ad300000-0000-0000-0000-000000000002', 'sneaky') $$,
+  'P0007', null, 'a barber cannot write a note on another barber''s client'
+);
 
 select set_config('request.jwt.claim.sub', 'ad000000-0000-0000-0000-000000000004', true);
 select throws_ok($$ select * from public.list_my_customers() $$, 'P0019', null, 'a customer cannot list clients');
