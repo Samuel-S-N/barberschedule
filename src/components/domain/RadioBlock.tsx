@@ -14,6 +14,7 @@ export function RadioBlock({ items, testID }: RadioBlockProps) {
         <Pressable
           accessibilityRole="radio"
           accessibilityState={{ checked: item.selected }}
+          aria-checked={item.selected}
           className={`min-h-[56px] flex-row items-center gap-3 px-4 ${index > 0 ? "border-t border-neutral-200" : ""}`}
           key={item.key}
           onPress={item.onPress}

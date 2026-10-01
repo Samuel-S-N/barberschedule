@@ -120,3 +120,24 @@ test("changing the e-mail asks for confirmation through a link", async ({ page }
   await expect(page.getByText(/We sent a confirmation link to new@example\.com/)).toBeVisible();
   expect(payload).toMatchObject({ email: "new@example.com" });
 });
+
+test("the language can be chosen in Settings, survives a reload and can go back to the device language", async ({ page }) => {
+  await signInAsCustomer(page);
+  await mockCustomerRest(page);
+
+  await page.goto("/me/settings");
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByTestId("option-device")).toHaveAttribute("aria-checked", "true");
+
+  await page.getByTestId("option-es").click();
+  await expect(page.getByRole("heading", { name: "Configuración" })).toBeVisible();
+  await expect(page.getByTestId("option-es")).toHaveAttribute("aria-checked", "true");
+
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Configuración" })).toBeVisible();
+  await expect(page.getByTestId("option-es")).toHaveAttribute("aria-checked", "true");
+
+  await page.getByTestId("option-device").click();
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByTestId("option-device")).toHaveAttribute("aria-checked", "true");
+});
