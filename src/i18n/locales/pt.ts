@@ -112,6 +112,7 @@ export const pt: DeepStringRecord<typeof en> = {
     upcoming: "Próximos",
   },
   reschedule: {
+    current: "Agendamento atual",
     confirm: "Confirmar novo horário",
     error: "Não foi possível remarcar.",
     keep: "Manter horário atual",

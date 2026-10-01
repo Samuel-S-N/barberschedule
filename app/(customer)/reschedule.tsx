@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
 
+import { AppointmentCard } from "../../src/components/domain/AppointmentCard";
 import { EmptyState } from "../../src/components/domain/EmptyState";
 import { MonthCalendar } from "../../src/components/domain/MonthCalendar";
 import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
@@ -11,7 +12,8 @@ import { TimeSlotPicker } from "../../src/components/domain/TimeSlotPicker";
 import type { TimeSlot } from "../../src/components/domain/TimeSlotPicker";
 import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
-import { rescheduleAppointment } from "../../src/features/appointments/lifecycle";
+import { listMyAppointments, rescheduleAppointment } from "../../src/features/appointments/lifecycle";
+import { useAppointmentCards } from "../../src/features/appointments/use-appointment-cards";
 import { getAvailableSlotsQueryOptions } from "../../src/features/availability/query";
 import type { AvailableSlot } from "../../src/features/availability/types";
 import { errorMessage } from "../../src/i18n/errors";
@@ -37,6 +39,9 @@ export default function RescheduleScreen() {
   const [startsAt, setStartsAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const upcoming = useQuery({ queryFn: () => listMyAppointments(supabase), queryKey: ["my-appointments", "upcoming"] });
+  const current = upcoming.data?.find((appointment) => appointment.id === appointmentId);
+  const toCardProps = useAppointmentCards(current ? [current] : []);
   const availability = useQuery({
     ...getAvailableSlotsQueryOptions(supabase, { barberId, barberServiceId, localDate }),
     enabled: Boolean(barberId && barberServiceId),
@@ -67,6 +72,12 @@ export default function RescheduleScreen() {
       <ScrollView className="flex-1">
         <View className="items-center gap-4 p-5">
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">{t("reschedule.title")}</Text>
+          {current ? (
+            <View className="w-full max-w-[420px] gap-2">
+              <Text className="text-sm font-sans-medium text-neutral-600">{t("reschedule.current")}</Text>
+              <AppointmentCard {...toCardProps(current)} testID="reschedule-current" />
+            </View>
+          ) : null}
           <MonthCalendar
             onSelectDate={(date) => { setLocalDate(date); setStartsAt(null); }}
             selectedDate={localDate}

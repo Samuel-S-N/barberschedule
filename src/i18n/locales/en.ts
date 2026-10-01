@@ -113,6 +113,7 @@ export const en = {
     upcoming: "Upcoming",
   },
   reschedule: {
+    current: "Current appointment",
     confirm: "Confirm new time",
     error: "Unable to reschedule.",
     keep: "Keep current time",

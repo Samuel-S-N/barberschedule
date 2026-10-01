@@ -112,6 +112,7 @@ export const es: DeepStringRecord<typeof en> = {
     upcoming: "Próximas",
   },
   reschedule: {
+    current: "Cita actual",
     confirm: "Confirmar nuevo horario",
     error: "No se pudo reprogramar.",
     keep: "Mantener horario actual",
