@@ -120,7 +120,7 @@ export const en = {
     noTimes: "No times available this day",
     notes: "Notes (optional)",
     notesTooLong: "Notes must be 500 characters or fewer.",
-    reviewTitle: "Review your booking",
+    reviewTitle: "Choose a time",
     serviceTitle: "Choose a service",
     servicesError: "Unable to load services.",
     shopTitle: "Book an appointment",

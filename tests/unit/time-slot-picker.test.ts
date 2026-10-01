@@ -79,4 +79,12 @@ describe("TimeSlotPicker", () => {
     expect(getScale(view, "time-slot-09:00")).toBe(1.03);
     expect(getScale(view, "time-slot-09:30")).toBe(1);
   });
+
+  it("centers a fixed four-column block whose rows stay left-aligned", async () => {
+    const view = await render(React.createElement(TimeSlotPicker, { slots, onSelectSlot: jest.fn(), testID: "picker" }));
+
+    expect(view.getByTestId("picker").props.className).toContain("items-center");
+    expect(view.getByTestId("picker-grid").props.className).toContain("w-[328px]");
+    expect(view.getByTestId("time-slot-09:00").props.className).toContain("w-[76px]");
+  });
 });

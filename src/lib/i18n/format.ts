@@ -21,3 +21,12 @@ export function formatDateLabel(localDate: string, language: Language) {
 
   return language === "en" ? text.replace(/^(\w+),? /, "$1, ") : text;
 }
+
+export function formatDateNumeric(localDate: string, language: Language) {
+  return new Intl.DateTimeFormat(language === "en" ? "en-US" : DATE_LOCALE[language], {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "UTC",
+    year: "numeric",
+  }).format(noonUtc(localDate));
+}

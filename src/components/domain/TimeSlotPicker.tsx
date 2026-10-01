@@ -58,7 +58,7 @@ function Slot({ slot, onSelectSlot }: { slot: TimeSlot; onSelectSlot: (time: str
         accessibilityLabel={slot.time}
         accessibilityRole="button"
         accessibilityState={{ disabled: occupied, selected }}
-        className={`h-slot-height min-w-[68px] items-center justify-center rounded-xl px-3 ${className}`}
+        className={`h-slot-height w-[76px] items-center justify-center rounded-xl ${className}`}
         disabled={occupied}
         onPress={handlePress}
         testID={`time-slot-${slot.time}`}
@@ -73,10 +73,13 @@ function Slot({ slot, onSelectSlot }: { slot: TimeSlot; onSelectSlot: (time: str
 
 export function TimeSlotPicker({ slots, onSelectSlot, testID }: TimeSlotPickerProps) {
   return (
-    <View className="flex-row flex-wrap gap-2" testID={testID}>
-      {slots.map((slot) => (
-        <Slot key={slot.time} onSelectSlot={onSelectSlot} slot={slot} />
-      ))}
+    // Fixed 4-column grid (4 x 76 + 3 x 8 gap = 328): the block is centered, rows stay left-aligned.
+    <View className="items-center" testID={testID}>
+      <View className="w-[328px] max-w-full flex-row flex-wrap gap-2" testID={testID ? `${testID}-grid` : undefined}>
+        {slots.map((slot) => (
+          <Slot key={slot.time} onSelectSlot={onSelectSlot} slot={slot} />
+        ))}
+      </View>
     </View>
   );
 }
