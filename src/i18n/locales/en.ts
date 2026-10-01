@@ -430,6 +430,10 @@ export const en = {
     },
   },
   barber: {
+    hub: {
+      menu: { account: "My details", compensation: "Compensation", services: "My services" },
+      role: "Barber",
+    },
     agenda: {
       bookCancel: "Cancel",
       bookConfirm: "Book",

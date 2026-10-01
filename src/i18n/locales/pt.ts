@@ -429,6 +429,10 @@ export const pt: DeepStringRecord<typeof en> = {
     },
   },
   barber: {
+    hub: {
+      menu: { account: "Meus dados", compensation: "Remuneração", services: "Meus serviços" },
+      role: "Barbeiro",
+    },
     agenda: {
       bookCancel: "Cancelar",
       bookConfirm: "Agendar",
