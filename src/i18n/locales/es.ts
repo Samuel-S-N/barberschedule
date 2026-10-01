@@ -120,6 +120,7 @@ export const es: DeepStringRecord<typeof en> = {
     title: "Reprogramar",
   },
   book: {
+    summary: { barber: "Barbero", date: "Fecha", duration: "Duración", price: "Precio", service: "Servicio" },
     barberTitle: "Elige tu barbero",
     barbersError: "No se pudieron cargar los barberos.",
     chooseTime: "Elige un horario disponible antes de reservar.",

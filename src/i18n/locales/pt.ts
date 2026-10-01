@@ -120,6 +120,7 @@ export const pt: DeepStringRecord<typeof en> = {
     title: "Remarcar",
   },
   book: {
+    summary: { barber: "Barbeiro", date: "Data", duration: "Duração", price: "Preço", service: "Serviço" },
     barberTitle: "Escolha seu barbeiro",
     barbersError: "Não foi possível carregar os barbeiros.",
     chooseTime: "Escolha um horário disponível antes de agendar.",

@@ -121,6 +121,7 @@ export const en = {
     title: "Reschedule",
   },
   book: {
+    summary: { barber: "Barber", date: "Date", duration: "Duration", price: "Price", service: "Service" },
     barberTitle: "Choose your barber",
     barbersError: "Unable to load barbers.",
     chooseTime: "Choose an available time before booking.",
