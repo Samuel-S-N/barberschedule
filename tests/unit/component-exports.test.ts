@@ -25,6 +25,7 @@ describe("component barrel exports", () => {
     expect(domain.StatTile).toBeDefined();
     expect(domain.Avatar).toBeDefined();
     expect(domain.MenuBlock).toBeDefined();
+    expect(domain.RadioBlock).toBeDefined();
     expect(domain.ScreenHeader).toBeDefined();
   });
 });

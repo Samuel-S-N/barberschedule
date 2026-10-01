@@ -157,7 +157,12 @@ export const en = {
       tooShort: "Use at least 8 characters.",
       wrongCurrent: "The current password is incorrect.",
     },
-    settings: { title: "Settings" },
+    settings: {
+      language: "Language",
+      languageDevice: "Follow device",
+      languageNames: { en: "English", es: "Español", pt: "Português" },
+      title: "Settings",
+    },
     delete: "Delete my account",
     deleteConfirm: "Yes, delete my account",
     deleteError: "Unable to delete your account.",

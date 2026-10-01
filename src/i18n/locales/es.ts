@@ -156,7 +156,12 @@ export const es: DeepStringRecord<typeof en> = {
       tooShort: "Usa al menos 8 caracteres.",
       wrongCurrent: "La contraseña actual es incorrecta.",
     },
-    settings: { title: "Configuración" },
+    settings: {
+      language: "Idioma",
+      languageDevice: "Seguir el dispositivo",
+      languageNames: { en: "English", es: "Español", pt: "Português" },
+      title: "Configuración",
+    },
     delete: "Eliminar mi cuenta",
     deleteConfirm: "Sí, eliminar mi cuenta",
     deleteError: "No se pudo eliminar tu cuenta.",
