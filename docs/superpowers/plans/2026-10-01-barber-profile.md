@@ -51,7 +51,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(14);
+select plan(13);
 
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at)
 values
@@ -268,7 +268,7 @@ begin
 
   insert into public.barber_services (shop_id, barber_id, service_id, active, archived_at)
   values (me.shop_id, me.id, target.id, new_enabled, case when new_enabled then null else now() end)
-  on conflict (shop_id, barber_id, service_id)
+  on conflict on constraint barber_services_unique
   do update set
     active = new_enabled,
     archived_at = case when new_enabled then null else coalesce(public.barber_services.archived_at, now()) end,
@@ -290,7 +290,7 @@ Note: inside plpgsql functions with `returns table (service_id …)`, qualify `b
 ```bash
 rtk npx supabase migration up && rtk npx supabase test db supabase/tests/020_standard_services.sql
 ```
-Expected: 14 tests pass. Then regression: `rtk npx supabase test db supabase/tests/002_catalog_and_customers.sql supabase/tests/013_barber_role.sql supabase/tests/017_barber_booking.sql supabase/tests/018_barber_customer_rpcs.sql` → pass.
+Expected: 13 tests pass. Then regression: `rtk npx supabase test db supabase/tests/002_catalog_and_customers.sql supabase/tests/013_barber_role.sql supabase/tests/017_barber_booking.sql supabase/tests/018_barber_customer_rpcs.sql` → pass.
 
 - [ ] **Step 5: Commit**
 
