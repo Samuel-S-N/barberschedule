@@ -105,3 +105,52 @@ test("a client detail shows stats, history, contact links and saves a private no
   await expect(page.getByText("Note saved.")).toBeVisible();
   expect(notePayload).toEqual({ new_note: "Low fade, no clippers on the neck", target_customer_id: "c1" });
 });
+
+test("a barber books a known client again from the client screen", async ({ page }) => {
+  const calls: string[] = [];
+  let bookPayload: Record<string, unknown> | null = null;
+  const slotStart = new Date(Date.now() + 3 * 60 * 60 * 1000);
+  const appointment = {
+    barber_buffer_minutes_snapshot: 0, barber_id: barberId, barber_name: "Browser Barber", barber_service_id: "bs1", created_at: "2026-10-01T10:00:00Z",
+    customer_id: "c1", customer_name: "Ana Souza", ends_at: new Date(slotStart.getTime() + 1_800_000).toISOString(), id: "appt-new", notes: null,
+    occupied_until: new Date(slotStart.getTime() + 1_800_000).toISOString(), service_duration_minutes_snapshot: 30, service_id: "s1",
+    service_name_snapshot: "Browser Cut", service_price_cents_snapshot: 4000, shop_id: shopId, source: "barber", starts_at: slotStart.toISOString(),
+    status: "scheduled", updated_at: "2026-10-01T10:00:00Z",
+  };
+
+  await signIn(page, barberUserId);
+  await mockBarberRest(page, async (route, url) => {
+    const name = url.pathname.split("/rpc/")[1];
+    if (name) calls.push(name);
+    if (name === "get_my_customer") {
+      return json(route, {
+        customer: { email: "ana@x.com", full_name: "Ana Souza", has_account: true, id: "c1", phone: "11988887777" },
+        history: [], note: null,
+        stats: { cancelled: 0, favorite_service: "Browser Cut", last_visit_at: null, next_visit_at: null, no_show: 0, visits: 3 },
+      }).then(() => true);
+    }
+    if (name === "get_available_slots") {
+      return json(route, [{ ends_at: appointment.ends_at, local_date: "2026-10-01", local_time: "09:30:00", starts_at: slotStart.toISOString() }]).then(() => true);
+    }
+    if (name === "barber_search_customers") return json(route, []).then(() => true);
+    if (name === "book_appointment") {
+      bookPayload = route.request().postDataJSON() as Record<string, unknown>;
+      return json(route, [appointment]).then(() => true);
+    }
+  });
+
+  await page.goto("/clients/c1");
+  await page.getByTestId("client-book").click();
+  await expect(page).toHaveURL(/\/my-agenda/);
+  await expect(page.getByTestId("barber-booking-for")).toContainText("Ana Souza");
+
+  await page.getByTestId("barber-free-slot").first().click();
+  await expect(page.getByTestId("barber-book-name")).toHaveValue("Ana Souza");
+  await expect(page.getByTestId("barber-book-service-bs1")).toBeVisible();
+  await page.getByTestId("barber-book-confirm").click();
+
+  await expect(page.getByText("Appointment booked.")).toBeVisible();
+  await expect(page.getByTestId("barber-booking-for")).toHaveCount(0);
+  expect(bookPayload).toMatchObject({ barber_service_id: "bs1", customer_id: "c1", source: "barber" });
+  expect(calls).not.toContain("barber_find_or_create_customer");
+});
