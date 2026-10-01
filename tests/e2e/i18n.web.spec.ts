@@ -15,6 +15,7 @@ test.describe("Portuguese device", () => {
     await page.getByTestId("signup-name").fill("Ana Silva");
     await page.getByTestId("signup-email").fill("ana@example.test");
     await page.getByTestId("signup-password").fill("correct-password");
+    await page.getByTestId("signup-confirm-password").fill("correct-password");
     await page.getByRole("button", { name: "Criar conta" }).click();
     await expect(page.getByText("Aceite os termos e a política de privacidade para continuar.")).toBeVisible();
   });

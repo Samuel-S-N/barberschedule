@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
 import { z } from "zod";
 
+import { BookingSummary } from "../../../../src/components/domain/BookingSummary";
 import { EmptyState } from "../../../../src/components/domain/EmptyState";
 import { SkeletonBlock } from "../../../../src/components/domain/SkeletonLoader";
 import { TimeSlotPicker } from "../../../../src/components/domain/TimeSlotPicker";
@@ -15,7 +16,9 @@ import { Input } from "../../../../src/components/ui/Input";
 import { bookAppointment } from "../../../../src/features/appointments/api";
 import { getAvailableSlotsQueryOptions } from "../../../../src/features/availability/query";
 import type { AvailableSlot } from "../../../../src/features/availability/types";
+import { listPublicBarbers } from "../../../../src/features/barbers/api";
 import { listMyCustomers } from "../../../../src/features/customers/api";
+import { useBarberServices } from "../../../../src/features/services/use-barber-services";
 import { errorMessage } from "../../../../src/i18n/errors";
 import { useLanguage } from "../../../../src/i18n/use-language";
 import { formatDateNumeric } from "../../../../src/lib/i18n/format";
@@ -31,7 +34,8 @@ function param(value: string | string[] | undefined) {
 }
 
 export default function BookReviewScreen() {
-  const params = useLocalSearchParams<{ barberId?: string; barberServiceId?: string; localDate?: string }>();
+  const params = useLocalSearchParams<{ barberId?: string; barberServiceId?: string; localDate?: string; shopId?: string }>();
+  const shopId = param(params.shopId);
   const barberId = param(params.barberId);
   const barberServiceId = param(params.barberServiceId);
   const localDate = param(params.localDate);
@@ -47,6 +51,14 @@ export default function BookReviewScreen() {
     ...getAvailableSlotsQueryOptions(supabase, { barberId, barberServiceId, localDate }),
     enabled: Boolean(barberId && barberServiceId && localDate),
   });
+  const barbers = useQuery({
+    enabled: Boolean(shopId),
+    queryFn: () => listPublicBarbers(supabase, shopId),
+    queryKey: ["public-barbers", shopId],
+  });
+  const services = useBarberServices(barberId);
+  const option = services.data?.find((candidate) => candidate.barberServiceId === barberServiceId);
+  const barber = barbers.data?.find((candidate) => candidate.id === barberId);
   const customers = useQuery({
     enabled: profile?.role === "customer",
     queryFn: () => listMyCustomers(supabase),
@@ -118,7 +130,19 @@ export default function BookReviewScreen() {
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
             {t("book.reviewTitle")}
           </Text>
-          <Text className="w-full max-w-[420px] text-base font-sans text-neutral-600">{localDate ? formatDateNumeric(localDate, language) : ""}</Text>
+          {option && barber && localDate ? (
+            <View className="w-full max-w-[420px]">
+              <BookingSummary
+                barberName={barber.name}
+                dateLabel={formatDateNumeric(localDate, language)}
+                durationMinutes={option.durationMinutes}
+                priceCents={option.priceCents}
+                serviceName={option.name ?? t("book.fallbackService")}
+              />
+            </View>
+          ) : (
+            <Text className="w-full max-w-[420px] text-base font-sans text-neutral-600">{localDate ? formatDateNumeric(localDate, language) : ""}</Text>
+          )}
           <View className="w-full max-w-[420px] gap-2">
             {availability.isLoading ? (
               <>

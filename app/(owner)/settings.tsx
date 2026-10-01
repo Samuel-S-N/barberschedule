@@ -1,3 +1,4 @@
+import { Link } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, StyleSheet, Text, View } from "react-native";
@@ -19,6 +20,7 @@ export default function OwnerSettingsScreen() {
         <Text>{t("owner.settings.signedInAs", { name: profile?.fullName ?? t("owner.settings.ownerFallback") })}</Text>
         <Text>{t("owner.settings.timezone", { timezone: "America/Sao_Paulo" })}</Text>
         <Text style={styles.note}>{t("owner.settings.note")}</Text>
+        <Link href="/shop" style={styles.link}>{t("owner.settings.shopLink")}</Link>
         {feedback ? <Text>{feedback}</Text> : null}
         <Button
           onPress={async () => {
@@ -37,6 +39,7 @@ export default function OwnerSettingsScreen() {
 
 const styles = StyleSheet.create({
   content: { gap: 16, maxWidth: 520, width: "100%" },
+  link: { color: "#2563eb", fontSize: 16 },
   note: { color: "#4b5563" },
   screen: { alignItems: "center", backgroundColor: "#fff", flex: 1, padding: 24 },
   title: { color: "#111827", fontSize: 28, fontWeight: "700" },

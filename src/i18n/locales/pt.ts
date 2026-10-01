@@ -61,6 +61,7 @@ export const pt: DeepStringRecord<typeof en> = {
       title: "Redefinir senha",
     },
     signup: {
+      confirmPassword: "Confirmar senha",
       acceptTerms: "Aceito os termos e a política de privacidade",
       backToSignIn: "Voltar para entrar",
       checkEmailBody: "Enviamos um link de confirmação para {{email}}. Abra-o e depois entre.",
@@ -72,6 +73,7 @@ export const pt: DeepStringRecord<typeof en> = {
       title: "Criar conta",
     },
     validation: {
+      passwordMismatch: "As senhas não coincidem.",
       acceptTerms: "Aceite os termos e a política de privacidade para continuar.",
       email: "Informe um e-mail válido.",
       fullName: "Informe seu nome completo.",
@@ -90,6 +92,9 @@ export const pt: DeepStringRecord<typeof en> = {
     welcome: "Bem-vindo",
   },
   appointments: {
+    addToCalendar: "Adicionar ao calendário",
+    bookAgain: "Agendar de novo",
+    calendarError: "Não foi possível criar o arquivo do calendário.",
     cancel: "Cancelar agendamento",
     cancelError: "Não foi possível cancelar.",
     cancelled: "Agendamento cancelado.",
@@ -110,6 +115,7 @@ export const pt: DeepStringRecord<typeof en> = {
     upcoming: "Próximos",
   },
   reschedule: {
+    current: "Agendamento atual",
     confirm: "Confirmar novo horário",
     error: "Não foi possível remarcar.",
     keep: "Manter horário atual",
@@ -118,6 +124,7 @@ export const pt: DeepStringRecord<typeof en> = {
     title: "Remarcar",
   },
   book: {
+    summary: { barber: "Barbeiro", date: "Data", duration: "Duração", price: "Preço", service: "Serviço" },
     barberTitle: "Escolha seu barbeiro",
     barbersError: "Não foi possível carregar os barbeiros.",
     chooseTime: "Escolha um horário disponível antes de agendar.",
@@ -198,6 +205,7 @@ export const pt: DeepStringRecord<typeof en> = {
     title: "Perfil",
     yourData: "Seus dados",
   },
+  shop: { call: "Ligar", contactToChange: "Para alterar este agendamento, fale com a barbearia.", whatsapp: "WhatsApp" },
   layout: { bootstrapError: "Não foi possível configurar sua conta." },
   legal: {
     sections: {
@@ -221,6 +229,22 @@ export const pt: DeepStringRecord<typeof en> = {
     version: "Versão {{version}}",
   },
   owner: {
+    shop: {
+      address: "Endereço",
+      addBreak: "Adicionar pausa",
+      breakEnd: "Fim da pausa (HH:mm)",
+      breakStart: "Início da pausa (HH:mm)",
+      closed: "Fechado",
+      errors: { break: "As pausas devem ficar dentro do expediente e sem se sobrepor.", range: "A abertura deve ser antes do fechamento.", time: "Use o formato HH:mm." },
+      open: "Aberto",
+      phone: "Telefone",
+      removeBreak: "Remover",
+      save: "Salvar",
+      saved: "Dados da barbearia salvos.",
+      saveError: "Não foi possível salvar os dados da barbearia.",
+      title: "Dados da barbearia",
+      whatsapp: "WhatsApp",
+    },
     roles: { account: "conta", owner: "dono" },
     hub: {
       manageAgenda: "Gerenciar agenda",
@@ -241,6 +265,7 @@ export const pt: DeepStringRecord<typeof en> = {
       title: "Área do dono",
     },
     settings: {
+      shopLink: "Dados e horários da barbearia",
       note: "As configurações do negócio ficam no banco de dados; a configuração de publicação está documentada em docs/release.md.",
       ownerFallback: "Dono",
       signedInAs: "Conectado como {{name}}.",
@@ -503,6 +528,7 @@ export const pt: DeepStringRecord<typeof en> = {
       RECURRENCE_INVALID: "Escolha uma regra de recorrência válida dentro de 90 dias.",
       RECURRENCE_REQUEST_FAILED: "Não foi possível atualizar os agendamentos recorrentes.",
       SCHEDULE_UNAVAILABLE: "Esse horário está fora da agenda de atendimento.",
+      SHOP_HOURS_INVALID: "Confira os horários e as pausas.",
       SERVICE_UNAVAILABLE: "Esse serviço não está mais disponível.",
       SLOT_UNAVAILABLE: "Esse horário não está mais disponível.",
     },

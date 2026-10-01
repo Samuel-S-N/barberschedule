@@ -20,7 +20,7 @@ export default function SignupScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { supabase } = useSupabaseSession();
-  const [form, setForm] = useState({ email: "", fullName: "", nickname: "", password: "", phone: "" });
+  const [form, setForm] = useState({ confirmPassword: "", email: "", fullName: "", nickname: "", password: "", phone: "" });
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const [serverError, setServerError] = useState<string | null>(null);
@@ -74,6 +74,7 @@ export default function SignupScreen() {
             <Input error={fieldError("email")} label={t("common.email")} onChangeText={set("email")} testID="signup-email" value={form.email} />
             <Input error={fieldError("phone")} label={t("common.phoneOptional")} onChangeText={(value) => set("phone")(formatPhone(value))} testID="signup-phone" value={form.phone} />
             <Input error={fieldError("password")} label={t("common.password")} onChangeText={set("password")} secureTextEntry testID="signup-password" value={form.password} />
+            <Input error={fieldError("confirmPassword")} label={t("auth.signup.confirmPassword")} onChangeText={set("confirmPassword")} secureTextEntry testID="signup-confirm-password" value={form.confirmPassword} />
             <Pressable
               accessibilityLabel={t("auth.signup.acceptTerms")}
               accessibilityRole="checkbox"

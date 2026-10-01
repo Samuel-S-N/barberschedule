@@ -62,6 +62,7 @@ export const en = {
       title: "Reset password",
     },
     signup: {
+      confirmPassword: "Confirm password",
       acceptTerms: "I accept the terms and privacy policy",
       backToSignIn: "Back to sign in",
       checkEmailBody: "We sent a confirmation link to {{email}}. Open it, then sign in.",
@@ -73,6 +74,7 @@ export const en = {
       title: "Create account",
     },
     validation: {
+      passwordMismatch: "Passwords do not match.",
       acceptTerms: "Accept the terms and privacy policy to continue.",
       email: "Enter a valid email.",
       fullName: "Enter your full name.",
@@ -91,6 +93,9 @@ export const en = {
     welcome: "Welcome",
   },
   appointments: {
+    addToCalendar: "Add to calendar",
+    bookAgain: "Book again",
+    calendarError: "Could not create the calendar file.",
     cancel: "Cancel appointment",
     cancelError: "Unable to cancel.",
     cancelled: "Appointment cancelled.",
@@ -111,6 +116,7 @@ export const en = {
     upcoming: "Upcoming",
   },
   reschedule: {
+    current: "Current appointment",
     confirm: "Confirm new time",
     error: "Unable to reschedule.",
     keep: "Keep current time",
@@ -119,6 +125,7 @@ export const en = {
     title: "Reschedule",
   },
   book: {
+    summary: { barber: "Barber", date: "Date", duration: "Duration", price: "Price", service: "Service" },
     barberTitle: "Choose your barber",
     barbersError: "Unable to load barbers.",
     chooseTime: "Choose an available time before booking.",
@@ -199,6 +206,7 @@ export const en = {
     title: "Profile",
     yourData: "Your data",
   },
+  shop: { call: "Call", contactToChange: "To change this appointment, contact the shop.", whatsapp: "WhatsApp" },
   layout: { bootstrapError: "Unable to set up your account." },
   legal: {
     sections: {
@@ -222,6 +230,22 @@ export const en = {
     version: "Version {{version}}",
   },
   owner: {
+    shop: {
+      address: "Address",
+      addBreak: "Add break",
+      breakEnd: "Break end (HH:mm)",
+      breakStart: "Break start (HH:mm)",
+      closed: "Closed",
+      errors: { break: "Breaks must fit inside opening hours without overlapping.", range: "Opening must be before closing.", time: "Use the HH:mm format." },
+      open: "Open",
+      phone: "Phone",
+      removeBreak: "Remove",
+      save: "Save",
+      saved: "Shop details saved.",
+      saveError: "Could not save the shop details.",
+      title: "Shop details",
+      whatsapp: "WhatsApp",
+    },
     roles: { account: "account", owner: "owner" },
     hub: {
       manageAgenda: "Manage agenda",
@@ -242,6 +266,7 @@ export const en = {
       title: "Owner workspace",
     },
     settings: {
+      shopLink: "Shop details and hours",
       note: "Business settings remain database-owned; release configuration is documented in docs/release.md.",
       ownerFallback: "Owner",
       signedInAs: "Signed in as {{name}}.",
@@ -504,6 +529,7 @@ export const en = {
       RECURRENCE_INVALID: "Choose a valid recurrence rule and 90-day window.",
       RECURRENCE_REQUEST_FAILED: "Unable to update recurring bookings.",
       SCHEDULE_UNAVAILABLE: "That time is outside the schedule.",
+      SHOP_HOURS_INVALID: "Check the opening hours and breaks.",
       SERVICE_UNAVAILABLE: "That service is no longer available.",
       SLOT_UNAVAILABLE: "That time is no longer available.",
     } satisfies Record<DomainErrorCode, string>,

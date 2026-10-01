@@ -1,6 +1,6 @@
 import { parseSignupInput } from "../../src/features/auth/validation";
 
-const valid = { acceptedTerms: true, email: "Ana@Example.com ", fullName: " Ana Silva ", password: "12345678", phone: "", nickname: "" };
+const valid = { acceptedTerms: true, email: "Ana@Example.com ", fullName: " Ana Silva ", confirmPassword: "12345678", password: "12345678", phone: "", nickname: "" };
 
 function errorsOf(result: ReturnType<typeof parseSignupInput>) {
   return (result as { errors: Record<string, string> }).errors;
@@ -23,6 +23,12 @@ describe("parseSignupInput", () => {
     expect(errorsOf(result).nickname).toBe("auth.validation.nickname");
   });
 
+  it("rejects a confirmation that differs from the password", () => {
+    const result = parseSignupInput({ ...valid, confirmPassword: "different-1" });
+
+    expect(result).toEqual({ errors: { confirmPassword: "auth.validation.passwordMismatch" }, ok: false });
+  });
+
   it("uses a translation key for the terms error", () => {
     const result = parseSignupInput({ ...valid, acceptedTerms: false });
 
@@ -33,7 +39,7 @@ describe("parseSignupInput", () => {
   it.each([
     ["fullName", { fullName: "A" }, "auth.validation.fullName"],
     ["email", { email: "not-an-email" }, "auth.validation.email"],
-    ["password", { password: "short" }, "auth.validation.password"],
+    ["password", { confirmPassword: "short", password: "short" }, "auth.validation.password"],
     ["phone", { phone: "abc" }, "auth.validation.phone"],
   ])("rejects a bad %s with a translation key", (field, patch, key) => {
     const result = parseSignupInput({ ...valid, ...patch });

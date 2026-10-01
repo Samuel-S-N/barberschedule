@@ -6,6 +6,7 @@ import { Text, View } from "react-native";
 import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
 import { Button } from "../../src/components/ui/Button";
 import { ensureMyCustomer } from "../../src/features/account/api";
+import { usePushRegistration } from "../../src/features/notifications/use-push-registration";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { Screen } from "../../src/components/ui/Screen";
 
@@ -21,6 +22,8 @@ export default function CustomerLayout() {
     queryKey: ["ensure-my-customer", profile?.userId],
     staleTime: Infinity,
   });
+
+  usePushRegistration(Boolean(bootstrap.data));
 
   if (bootstrap.isError) {
     return (

@@ -127,6 +127,20 @@ Verified on 2026-09-23 (Task 14), on a freshly reset local database:
 
 No Web smoke was run for Task 5 because it changes no route or rendered UI; the availability client is covered at the RPC/query contract boundary.
 
+## Missing customer features batch (2026-10-01)
+
+Branch `feat-missing-features`; spec `docs/superpowers/specs/2026-10-01-missing-features-design.md`, plan `docs/superpowers/plans/2026-10-01-missing-features.md`, decision `docs/decisions/014-shop-info-and-hours.md`.
+
+- Signup asks for the password twice.
+- Home, Agenda and the barber list show an error with a "Try again" button and support pull-to-refresh.
+- The booking review shows barber, service, duration, price and date; reschedule shows the appointment being moved.
+- Shop info: address, phone/WhatsApp and weekly hours with breaks (owner editor at `/shop`, migration `0030`); the customer Home shows them and a locked cancel/reschedule offers Call/WhatsApp.
+- Agenda: "Add to calendar" (`.ics`) on upcoming items and "Book again" on history items.
+- Push token registration runs after customer sign-in (`expo-notifications`).
+- Checked in a browser against the local stack: signup mismatch error, owner editor (validation, save, persisted rows), Home card, review summary, reschedule card, `.ics` content, locked-state contact buttons, "Book again". Not browser-checked: the error/retry state and pull-to-refresh (unit-tested only).
+
+**Pending / limits of this batch:** push delivery needs a dev build on a real device and an EAS `projectId` (`eas init`; without it registration returns without a token); the native `.ics` share sheet (`expo-file-system` + `expo-sharing`) is untested on a device; apply migration `0030` to the hosted Supabase project; hours are informational and do not limit booking.
+
 ## Known limitations
 
 - Task 20: the `avatars` bucket is public-read with UUID paths (not listable); an avatar file can be orphaned if removing the previous one fails; the native (Expo Go) photo upload path is not covered by any automated test and needs a device check; owner and barber profile screens do not use the hub yet; `npm run test:e2e:web` fails on a machine whose `.env.local` holds a LAN Supabase URL (move the file aside to run it).
