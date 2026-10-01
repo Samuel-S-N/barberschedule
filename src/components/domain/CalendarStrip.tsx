@@ -17,7 +17,7 @@ export type CalendarStripProps = {
 export function CalendarStrip({ days, selectedDate, onSelectDate, testID }: CalendarStripProps) {
   return (
     <ScrollView className="flex-none" horizontal showsHorizontalScrollIndicator={false} testID={testID}>
-      <View className="flex-row gap-2 px-safe-horizontal">
+      <View className="flex-row gap-2" testID={testID ? `${testID}-row` : undefined}>
         {days.map((day) => {
           const selected = day.date === selectedDate;
 
