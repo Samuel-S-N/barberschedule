@@ -49,7 +49,11 @@ export function AppProviders({ children }: PropsWithChildren) {
       const currentSync = syncSequence.current + 1;
       syncSequence.current = currentSync;
 
-      syncedUserId.current = nextSession?.user.id ?? null;
+      // Query keys carry no user id, so a shared device would show the previous user's data to the next login.
+      const nextUserId = nextSession?.user.id ?? null;
+      if (nextUserId !== syncedUserId.current) queryClient.clear();
+
+      syncedUserId.current = nextUserId;
       setIsLoading(true);
       setSession(nextSession);
       setProfile(null);
@@ -105,7 +109,7 @@ export function AppProviders({ children }: PropsWithChildren) {
       active = false;
       subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [queryClient, supabase]);
 
   // The saved language is applied before the first screen, so the app never flashes the device language.
   useEffect(() => {
