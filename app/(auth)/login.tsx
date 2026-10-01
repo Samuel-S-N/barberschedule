@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
@@ -13,12 +13,14 @@ import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { notice } = useLocalSearchParams<{ notice?: string }>();
   const { t } = useTranslation();
   const { isLoading, supabase } = useSupabaseSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [noticeDismissed, setNoticeDismissed] = useState(false);
 
   const handleSignIn = async () => {
     setIsSubmitting(true);
@@ -41,6 +43,7 @@ export default function LoginScreen() {
             <Text className="text-base font-sans text-neutral-600">{t("auth.login.subtitle")}</Text>
             <Input label={t("common.email")} onChangeText={setEmail} testID="login-email" value={email} />
             <Input label={t("common.password")} onChangeText={setPassword} secureTextEntry testID="login-password" value={password} />
+            <Toast message={t("auth.login.passwordReset")} onDismiss={() => setNoticeDismissed(true)} variant="success" visible={notice === "password-reset" && !noticeDismissed} />
             <Toast message={error ?? ""} onDismiss={() => setError(null)} variant="error" visible={error !== null} />
             <Button
               disabled={!email.trim() || !password || isLoading || isSubmitting}

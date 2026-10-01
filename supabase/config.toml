@@ -38,7 +38,9 @@ file_size_limit = "50MiB"
 [auth]
 enabled = true
 site_url = "http://127.0.0.1:3000"
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+# Password-recovery redirects: web dev origins, the app scheme, and Expo Go. The local auth rejects an exp:// URL whose host is a
+# bare IP (Expo Go on the LAN), so that case is not covered here.
+additional_redirect_urls = ["https://127.0.0.1:3000", "http://127.0.0.1:4173/**", "http://localhost:4173/**", "http://127.0.0.1:8081/**", "http://localhost:8081/**", "barberschedule://**", "exp://**"]
 jwt_expiry = 3600
 enable_signup = true
 enable_anonymous_sign_ins = false

@@ -27,7 +27,7 @@ export function resolveAuthRedirect({
   segments,
   session,
 }: ResolveAuthRedirectInput) {
-  if (segments[0] === "legal") {
+  if (segments[0] === "legal" || segments[0] === "reset-password") {
     return null;
   }
 

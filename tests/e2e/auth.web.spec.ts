@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { customerRow, json } from "./customer-helpers";
+import { customerRow, customerUserId, json, mockCustomerRest, signInAsCustomer } from "./customer-helpers";
 
 test("a customer can sign in and land on the home tab", async ({ page }) => {
   let signInPayload: Record<string, unknown> | null = null;
@@ -67,7 +67,10 @@ test("an owner can sign in and see owner links", async ({ page }) => {
 });
 
 test("a visitor can request a password reset", async ({ page }) => {
-  await page.route("**/auth/v1/recover", async (route) => {
+  let redirectTo: string | null = null;
+
+  await page.route("**/auth/v1/recover**", async (route) => {
+    redirectTo = new URL(route.request().url()).searchParams.get("redirect_to");
     await json(route, {});
   });
 
@@ -76,6 +79,7 @@ test("a visitor can request a password reset", async ({ page }) => {
   await page.getByLabel("Email", { exact: true }).fill("customer@example.test");
   await page.getByRole("button", { name: "Send reset email" }).click();
   await expect(page.getByText("Password reset email sent.")).toBeVisible();
+  expect(redirectTo).toMatch(/\/reset-password$/);
 });
 
 test("a visitor can create an account and is asked to confirm their email", async ({ page }) => {
@@ -139,4 +143,56 @@ test("the terms and privacy page is reachable while signed out", async ({ page }
 
   await expect(page.getByRole("heading", { name: "Terms and privacy" })).toBeVisible();
   await expect(page.getByText("Your rights (LGPD)")).toBeVisible();
+});
+
+function recoveryHash() {
+  const now = Math.floor(Date.now() / 1000);
+  const header = btoa(JSON.stringify({ alg: "none" })).replace(/=+$/, "");
+  const token = `${header}.${btoa(JSON.stringify({ exp: now + 3600, sub: customerUserId }))}.`;
+
+  return `#access_token=${token}&refresh_token=e2e-recovery&token_type=bearer&expires_in=3600&type=recovery`;
+}
+
+const recoveryUser = { app_metadata: {}, aud: "authenticated", created_at: "2026-09-23T10:00:00Z", email: "customer@example.com", id: customerUserId, user_metadata: {} };
+
+test("the recovery link opens the new-password screen, saves it and returns to login", async ({ page }) => {
+  let updated: Record<string, unknown> | null = null;
+  let loggedOutGlobally = false;
+
+  await mockCustomerRest(page);
+  await page.route("**/auth/v1/user", (route) => {
+    if (route.request().method() === "PUT") updated = route.request().postDataJSON() as Record<string, unknown>;
+    return json(route, recoveryUser);
+  });
+  await page.route("**/auth/v1/logout**", (route) => {
+    loggedOutGlobally = route.request().url().includes("scope=global");
+    return route.fulfill({ status: 204 });
+  });
+
+  await page.goto(`/reset-password${recoveryHash()}`);
+  await expect(page.getByRole("heading", { name: "New password" })).toBeVisible();
+  await page.getByTestId("reset-new").fill("brand-new-1");
+  await page.getByTestId("reset-confirm").fill("different-1");
+  await expect(page.getByTestId("reset-submit")).toBeDisabled();
+  await page.getByTestId("reset-confirm").fill("brand-new-1");
+  await page.getByTestId("reset-submit").click();
+
+  await expect(page).toHaveURL(/\/login/);
+  await expect(page.getByText("Password reset. Sign in with your new password.")).toBeVisible();
+  expect(updated).toMatchObject({ password: "brand-new-1" });
+  expect(loggedOutGlobally).toBe(true);
+});
+
+test("an expired recovery link shows the invalid state with a way to request another", async ({ page }) => {
+  await page.goto("/reset-password#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid");
+  await expect(page.getByRole("heading", { name: "Invalid link" })).toBeVisible();
+  await page.getByRole("button", { name: "Request a new link" }).click();
+  await expect(page).toHaveURL(/\/forgot-password$/);
+});
+
+test("opening /reset-password with an ordinary session does not offer the form", async ({ page }) => {
+  await signInAsCustomer(page);
+  await mockCustomerRest(page);
+  await page.goto("/reset-password");
+  await expect(page.getByRole("heading", { name: "Invalid link" })).toBeVisible();
 });

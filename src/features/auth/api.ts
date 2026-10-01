@@ -1,4 +1,5 @@
 import { TERMS_VERSION } from "../account/legal";
+import { clearRecovery, markRecovery } from "./recovery";
 import type { AuthSupabaseClient, Profile } from "./types";
 import type { SignupInput } from "./validation";
 
@@ -92,7 +93,38 @@ export async function signOut(supabase: Pick<AuthSupabaseClient, "auth">) {
 export async function requestPasswordReset(
   supabase: Pick<AuthSupabaseClient, "auth">,
   email: string,
+  redirectTo: string,
 ) {
-  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
   throwIfError(error);
+}
+
+// The loading gate remounts the reset screen after setSession fires SIGNED_IN, so the consumed token is kept at
+// module level: a remount must not spend the same refresh token twice.
+let consumedRefreshToken: string | null = null;
+
+export async function startRecoverySession(
+  supabase: Pick<AuthSupabaseClient, "auth">,
+  link: { accessToken: string; refreshToken: string },
+) {
+  if (consumedRefreshToken === link.refreshToken) return true;
+
+  consumedRefreshToken = link.refreshToken;
+  const { error } = await supabase.auth.setSession({ access_token: link.accessToken, refresh_token: link.refreshToken });
+
+  if (error) {
+    consumedRefreshToken = null;
+    return false;
+  }
+
+  markRecovery();
+  return true;
+}
+
+export async function completePasswordReset(supabase: Pick<AuthSupabaseClient, "auth">, password: string) {
+  const { error } = await supabase.auth.updateUser({ password });
+  throwIfError(error);
+  clearRecovery();
+  consumedRefreshToken = null;
+  await supabase.auth.signOut({ scope: "global" });
 }
