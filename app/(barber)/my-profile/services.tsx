@@ -68,8 +68,11 @@ export default function BarberServicesScreen() {
                       disabled={toggle.isPending}
                       onValueChange={(enabled) => toggle.mutate({ enabled, id: service.serviceId })}
                       testID={`service-switch-${service.serviceId}`}
+                      thumbColor={colors.white}
                       trackColor={{ false: colors.neutral[200], true: colors.primary[400] }}
                       value={service.enabled}
+                      // react-native-web paints the "on" thumb from activeThumbColor (browser default: teal); not in RN's types.
+                      {...({ activeThumbColor: colors.white } as object)}
                     />
                   )}
                 </View>
