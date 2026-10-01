@@ -51,8 +51,11 @@ async function walkToReview(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "Browser Cut" }).click();
   await expect(page.getByTestId("month-calendar-title")).toBeVisible();
   await expect(page.getByTestId("month-calendar-prev")).toBeDisabled();
-  await page.getByTestId("month-calendar-next").click();
-  await page.getByTestId("month-calendar-prev").click();
+  // On the 1st of a 31-day month the booking window fits in one month, so there is nothing to page to.
+  if (await page.getByTestId("month-calendar-next").isEnabled()) {
+    await page.getByTestId("month-calendar-next").click();
+    await page.getByTestId("month-calendar-prev").click();
+  }
   await page.getByRole("button", { name: "Continue to review" }).click();
   await expect(page.getByTestId("booking-review-scroll")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Choose a time" })).toBeVisible();
