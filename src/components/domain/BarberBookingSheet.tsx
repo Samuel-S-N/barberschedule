@@ -12,16 +12,19 @@ import { formatPriceBRL } from "./ServiceCard";
 export type BarberBookingSheetProps = {
   busy?: boolean;
   fitsService: (service: MyBarberService) => boolean;
+  // A known client (e.g. booking again from the client screen): the form opens filled in and submits their id.
+  initialCustomer?: BarberCustomer | null;
   onClose: () => void;
   onSearch: (term: string) => void;
   onSubmit: (input: { barberServiceId: string; customer: BarberCustomerInput | { id: string } }) => void;
+  preferredServiceName?: string | null;
   recent: BarberCustomer[];
   services: MyBarberService[];
   slotLabel: string;
   visible: boolean;
 };
 
-export function BarberBookingSheet({ busy = false, fitsService, onClose, onSearch, onSubmit, recent, services, slotLabel, visible }: BarberBookingSheetProps) {
+export function BarberBookingSheet({ busy = false, fitsService, initialCustomer = null, onClose, onSearch, onSubmit, preferredServiceName = null, recent, services, slotLabel, visible }: BarberBookingSheetProps) {
   const { t } = useTranslation();
   const field = useFieldChain(3);
   const [name, setName] = useState("");
@@ -30,18 +33,24 @@ export function BarberBookingSheet({ busy = false, fitsService, onClose, onSearc
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [serviceId, setServiceId] = useState<string | null>(null);
 
-  const firstFit = useMemo(() => services.find((service) => fitsService(service))?.barberServiceId ?? null, [fitsService, services]);
-  const selected = serviceId && services.some((s) => s.barberServiceId === serviceId && fitsService(s)) ? serviceId : firstFit;
+  const defaultService = useMemo(
+    () =>
+      (preferredServiceName ? services.find((service) => service.serviceName === preferredServiceName && fitsService(service)) : undefined)?.barberServiceId
+      ?? services.find((service) => fitsService(service))?.barberServiceId
+      ?? null,
+    [fitsService, preferredServiceName, services],
+  );
+  const selected = serviceId && services.some((s) => s.barberServiceId === serviceId && fitsService(s)) ? serviceId : defaultService;
 
   useEffect(() => {
     if (visible) {
-      setName("");
-      setEmail("");
-      setPhone("");
-      setPickedId(null);
+      setName(initialCustomer?.fullName ?? "");
+      setEmail(initialCustomer?.email ?? "");
+      setPhone(initialCustomer?.phone ?? "");
+      setPickedId(initialCustomer?.id ?? null);
       setServiceId(null);
     }
-  }, [visible, slotLabel]);
+  }, [visible, slotLabel, initialCustomer?.id]);
 
   const edit = (setter: (value: string) => void) => (value: string) => {
     setPickedId(null);

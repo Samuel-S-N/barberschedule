@@ -79,4 +79,28 @@ describe("BarberBookingSheet", () => {
     await fireEvent.changeText(v.getByTestId("barber-book-name"), "An");
     expect(props.onSearch).toHaveBeenCalledWith("An");
   });
+
+  it("opens pre-filled with the initial customer and submits their id", async () => {
+    const { props, view } = setup({ initialCustomer: recent[0] });
+    const v = await view;
+
+    expect(v.getByTestId("barber-book-name").props.value).toBe("Ana Souza");
+    expect(v.getByTestId("barber-book-email").props.value).toBe("ana@example.com");
+    await fireEvent.press(v.getByTestId("barber-book-confirm"));
+
+    expect(props.onSubmit).toHaveBeenCalledWith({ barberServiceId: "bs-cut", customer: { id: "c1" } });
+  });
+
+  it("suggests the preferred service when it fits", async () => {
+    const v = await setup({ fitsService: () => true, preferredServiceName: "Cut" }).view;
+
+    expect(v.getByTestId("barber-book-service-bs-cut").props.accessibilityState?.selected).toBe(true);
+    expect(v.getByTestId("barber-book-service-bs-long").props.accessibilityState?.selected).toBe(false);
+  });
+
+  it("falls back to the first fitting service when the preferred one does not fit", async () => {
+    const v = await setup({ preferredServiceName: "Cut and beard" }).view;
+
+    expect(v.getByTestId("barber-book-service-bs-cut").props.accessibilityState?.selected).toBe(true);
+  });
 });
