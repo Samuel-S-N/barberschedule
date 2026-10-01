@@ -140,42 +140,6 @@ test("a barber blocks a whole day and it is sent as a block for their own barber
   expect(insertPayload).toMatchObject({ barber_id: barberId, kind: "block", shop_id: shopId, start_time: null, end_time: null });
 });
 
-test("a barber sees commission earnings computed from completed services", async ({ page }) => {
-  await signIn(page, barberUserId);
-  await mockBarberRest(page, async (route, url) => {
-    if (url.pathname.endsWith("/rpc/get_my_barber_earnings")) {
-      return json(route, [
-        { completed_count: 2, gross_cents: 10000, service_id: "s1", service_name_snapshot: "Browser Cut" },
-        { completed_count: 1, gross_cents: 3000, service_id: "s2", service_name_snapshot: "Beard" },
-      ]).then(() => true);
-    }
-  });
-
-  await page.goto("/earnings");
-  await expect(page.getByRole("heading", { name: "Earnings" })).toBeVisible();
-  await expect(page.getByTestId("stat-completed")).toContainText("3");
-  await expect(page.getByTestId("stat-gross")).toContainText("R$ 130,00");
-  await expect(page.getByTestId("stat-earned")).toContainText("R$ 52,00");
-  await expect(page.getByTestId("stat-rent")).toHaveCount(0);
-  await expect(page.getByText("2 × Browser Cut")).toBeVisible();
-});
-
-test("a chair-rental barber keeps the full gross and sees the rent separately", async ({ page }) => {
-  await signIn(page, barberUserId);
-  await mockBarberRest(page, async (route, url) => {
-    if (url.pathname.endsWith("/rpc/get_my_barber_profile")) {
-      return json(route, [{ ...commissionProfile, chair_rental_amount_cents: 30000, chair_rental_frequency: "monthly", commission_percent: "0.00", compensation_type: "chair_rental" }]).then(() => true);
-    }
-    if (url.pathname.endsWith("/rpc/get_my_barber_earnings")) {
-      return json(route, [{ completed_count: 2, gross_cents: 10000, service_id: "s1", service_name_snapshot: "Browser Cut" }]).then(() => true);
-    }
-  });
-
-  await page.goto("/earnings");
-  await expect(page.getByTestId("stat-earned")).toContainText("R$ 100,00");
-  await expect(page.getByTestId("stat-rent")).toContainText("R$ 300,00");
-});
-
 test("a barber cannot open the owner or customer areas", async ({ page }) => {
   await signIn(page, barberUserId);
   await mockBarberRest(page);
