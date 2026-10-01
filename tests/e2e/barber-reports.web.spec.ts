@@ -69,6 +69,10 @@ test("the reports tab shows the barber's own numbers, charts and no revenue", as
   await expect(page.getByTestId("donut-outcome")).toContainText("Cancelled");
   await expect(page.getByTestId("donut-services")).toContainText("Browser Cut");
   await expect(page.getByTestId("chart-weekdays")).toBeVisible();
+
+  // Tapping a column reveals its value (the hit targets are RN views over the SVG so this also works on web).
+  await page.getByTestId("chart-earnings-bar-0").click();
+  await expect(page.getByTestId("chart-earnings").getByText(/: R\$ /)).toBeVisible();
   await expect(page.getByText(/Revenue|Faturamento/)).toHaveCount(0);
 
   await page.getByTestId("earnings-period-quarter").click();

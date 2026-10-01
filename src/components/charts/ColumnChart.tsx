@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Text, View } from "react-native";
-import Svg, { G, Line, Path, Rect, Text as SvgText } from "react-native-svg";
+import { Pressable, Text, View } from "react-native";
+import Svg, { G, Line, Path, Text as SvgText } from "react-native-svg";
 
 import { colors } from "../../lib/design/colors";
 import { barPath, niceMax, yTicks } from "./geometry";
@@ -41,6 +41,7 @@ export function ColumnChart({ accessibilityLabel, color = colors.primary[400], d
         {selected !== null && data[selected] ? `${data[selected].label}: ${formatValue(data[selected].value)}` : ""}
       </Text>
       {width > 0 ? (
+        <View style={{ height, width }}>
         <Svg height={height} width={width}>
           {yTicks(max).map((tick) => (
             <G key={tick}>
@@ -53,13 +54,10 @@ export function ColumnChart({ accessibilityLabel, color = colors.primary[400], d
           {data.map((d, i) => {
             const barHeight = (d.value / max) * plotHeight;
             const x = LEFT + i * slot + (slot - barWidth) / 2;
-            const select = () => setSelected(selected === i ? null : i);
 
             return (
               <G key={d.key}>
                 <Path d={barPath(x, y(d.value), barWidth, barHeight, 4)} fill={i === peak ? color : (mutedColor ?? color)} />
-                {/* Hit target wider than the mark so thin bars stay tappable. */}
-                <Rect fill="transparent" height={plotHeight} onPress={select} testID={`${testID}-bar-${i}`} width={slot} x={LEFT + i * slot} y={TOP} />
                 {i % labelStep === 0 ? (
                   <SvgText fill={colors.neutral[500]} fontSize={10} textAnchor="middle" x={LEFT + i * slot + slot / 2} y={height - 6}>
                     {d.label}
@@ -74,6 +72,18 @@ export function ColumnChart({ accessibilityLabel, color = colors.primary[400], d
             </SvgText>
           ) : null}
         </Svg>
+        {/* Hit targets are RN views over the SVG (wider than the mark, so thin bars stay tappable); SVG-level onPress is ignored by the DOM on web. */}
+        {data.map((d, i) => (
+          <Pressable
+            accessibilityLabel={`${d.label}: ${formatValue(d.value)}`}
+            accessibilityRole="button"
+            key={d.key}
+            onPress={() => setSelected(selected === i ? null : i)}
+            style={{ height: plotHeight, left: LEFT + i * slot, position: "absolute", top: TOP, width: slot }}
+            testID={`${testID}-bar-${i}`}
+          />
+        ))}
+        </View>
       ) : null}
     </View>
   );
