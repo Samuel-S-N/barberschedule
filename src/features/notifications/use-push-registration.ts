@@ -1,4 +1,4 @@
-import Constants from "expo-constants";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import { useEffect } from "react";
 import { Platform } from "react-native";
 
@@ -7,6 +7,8 @@ import { saveExpoPushToken } from "./register-token";
 
 export async function registerPushToken(supabase: Parameters<typeof saveExpoPushToken>[0]) {
   if (Platform.OS === "web") return null;
+  // Expo Go (SDK 53+) removed remote push: the module logs an error and throws as soon as it is loaded.
+  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) return null;
   // Loaded lazily: on web the module only logs a "not supported" warning at import time.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const Notifications = require("expo-notifications") as typeof import("expo-notifications");

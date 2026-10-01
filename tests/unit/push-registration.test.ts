@@ -10,13 +10,15 @@ jest.mock("expo-notifications", () => ({
 }));
 jest.mock("expo-constants", () => ({
   __esModule: true,
-  default: { easConfig: { projectId: "proj" }, expoConfig: { extra: {} } },
+  ExecutionEnvironment: { StoreClient: "storeClient" },
+  default: { easConfig: { projectId: "proj" }, executionEnvironment: "bare", expoConfig: { extra: {} } },
 }));
 jest.mock("../../src/providers/AppProviders", () => ({ useSupabaseSession: () => ({ supabase: {} }) }));
 jest.mock("../../src/features/notifications/register-token", () => ({
   saveExpoPushToken: jest.fn().mockResolvedValue(undefined),
 }));
 
+import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 
 import { saveExpoPushToken } from "../../src/features/notifications/register-token";
@@ -33,6 +35,14 @@ describe("registerPushToken", () => {
 
   it("does nothing on web", async () => {
     setOs("web");
+
+    expect(await registerPushToken(supabase)).toBeNull();
+    expect(Notifications.getPermissionsAsync).not.toHaveBeenCalled();
+  });
+
+  it("skips Expo Go, where expo-notifications throws when loaded", async () => {
+    setOs("android");
+    jest.replaceProperty(Constants as { executionEnvironment: string }, "executionEnvironment", "storeClient");
 
     expect(await registerPushToken(supabase)).toBeNull();
     expect(Notifications.getPermissionsAsync).not.toHaveBeenCalled();
