@@ -429,6 +429,10 @@ export const pt: DeepStringRecord<typeof en> = {
     },
   },
   barber: {
+    account: {
+      bioHint: "Mostrada aos clientes no seu cartão.",
+      nameHint: "Seu nome público é definido pelo dono da barbearia.",
+    },
     hub: {
       menu: { account: "Meus dados", compensation: "Remuneração", services: "Meus serviços" },
       role: "Barbeiro",

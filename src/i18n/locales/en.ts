@@ -430,6 +430,10 @@ export const en = {
     },
   },
   barber: {
+    account: {
+      bioHint: "Shown to customers on your card.",
+      nameHint: "Your public name is set by the shop owner.",
+    },
     hub: {
       menu: { account: "My details", compensation: "Compensation", services: "My services" },
       role: "Barber",

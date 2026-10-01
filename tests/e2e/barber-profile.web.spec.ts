@@ -58,3 +58,22 @@ test("the barber profile is a hub with barber and account sections", async ({ pa
   await page.getByTestId("menu-language").click();
   await expect(page).toHaveURL(/\/my-profile\/language/);
 });
+
+test("a barber edits their bio from My details and the name is read-only", async ({ page }) => {
+  let profilePayload: Record<string, unknown> | null = null;
+
+  await signIn(page, barberUserId);
+  await mockBarberRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/rpc/update_my_barber_profile")) {
+      profilePayload = route.request().postDataJSON() as Record<string, unknown>;
+      return json(route, [{ avatar_url: null, bio: "New bio", id: barberId }]).then(() => true);
+    }
+  });
+
+  await page.goto("/my-profile/account");
+  await expect(page.getByTestId("barber-name")).toHaveText("Browser Barber");
+  await page.getByTestId("barber-bio").fill("New bio");
+  await page.getByTestId("barber-save").click();
+  await expect(page.getByText("Profile saved.")).toBeVisible();
+  expect(profilePayload).toEqual({ new_avatar_url: null, new_bio: "New bio" });
+});
