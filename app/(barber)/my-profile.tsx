@@ -44,7 +44,7 @@ export default function BarberProfileScreen() {
 
   const signOutMutation = useMutation({
     mutationFn: () => signOut(supabase),
-    onError: (error) => setFeedback({ message: errorMessage(error, t as never, t("profile.signOutError")), variant: "error" }),
+    onError: (error) => setFeedback({ message: errorMessage(error, t, t("profile.signOutError")), variant: "error" }),
   });
 
   const compensation = barber.data?.compensation;
@@ -59,7 +59,7 @@ export default function BarberProfileScreen() {
           <View className="w-full max-w-[420px] gap-3">
             {barber.isLoading ? <SkeletonBlock height={120} width={320} /> : null}
             {barber.error ? (
-              <Text className="text-sm font-sans text-danger-500">{errorMessage(barber.error, t as never, t("barber.profile.loadError"))}</Text>
+              <Text className="text-sm font-sans text-danger-500">{errorMessage(barber.error, t, t("barber.profile.loadError"))}</Text>
             ) : null}
             {barber.data ? (
               <>

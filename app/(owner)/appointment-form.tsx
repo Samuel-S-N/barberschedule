@@ -65,7 +65,7 @@ export default function OwnerAppointmentFormScreen() {
         setCustomers(nextCustomers.filter((customer) => customer.active));
         setServices(nextServices.filter((service) => service.active));
       } catch (error) {
-        if (active) setFeedback(errorMessage(error, t as never, t("owner.appointmentForm.loadError")));
+        if (active) setFeedback(errorMessage(error, t, t("owner.appointmentForm.loadError")));
       } finally {
         if (active) setIsLoading(false);
       }
@@ -94,7 +94,7 @@ export default function OwnerAppointmentFormScreen() {
       }));
       setSelectedStartsAt(null);
     } catch (error) {
-      setFeedback(errorMessage(error, t as never, t("owner.appointmentForm.timesError")));
+      setFeedback(errorMessage(error, t, t("owner.appointmentForm.timesError")));
     } finally {
       setIsSaving(false);
     }
@@ -115,7 +115,7 @@ export default function OwnerAppointmentFormScreen() {
       setSlots([]);
       setSelectedStartsAt(null);
     } catch (error) {
-      setFeedback(errorMessage(error, t as never, t("owner.appointmentForm.createError")));
+      setFeedback(errorMessage(error, t, t("owner.appointmentForm.createError")));
     } finally {
       setIsSaving(false);
     }

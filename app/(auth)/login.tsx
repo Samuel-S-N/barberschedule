@@ -28,7 +28,7 @@ export default function LoginScreen() {
     try {
       await signInWithPassword(supabase, email.trim(), password);
     } catch (caught) {
-      setError(errorMessage(caught, t as never, t("auth.login.error")));
+      setError(errorMessage(caught, t, t("auth.login.error")));
     } finally {
       setIsSubmitting(false);
     }

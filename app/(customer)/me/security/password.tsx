@@ -28,7 +28,7 @@ export default function PasswordScreen() {
 
   const change = useMutation({
     mutationFn: () => changePassword(supabase, createPasswordCheckClient(), session!.user.email!, current, next),
-    onError: (caught) => setFeedback({ message: errorMessage(caught, t as never, t("profile.security.error")), variant: "error" }),
+    onError: (caught) => setFeedback({ message: errorMessage(caught, t, t("profile.security.error")), variant: "error" }),
     onSuccess: (result) => {
       if (result === "wrong-password") {
         setFeedback({ message: t("profile.security.wrongCurrent"), variant: "error" });

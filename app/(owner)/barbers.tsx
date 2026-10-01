@@ -91,7 +91,7 @@ export default function OwnerBarbersScreen() {
         await loadSignedIn(initial);
       } catch (error) {
         if (active) {
-          setFeedback(errorMessage(error, t as never, t("owner.barbers.loadError")));
+          setFeedback(errorMessage(error, t, t("owner.barbers.loadError")));
         }
       } finally {
         if (active) {
@@ -130,7 +130,7 @@ export default function OwnerBarbersScreen() {
       resetForm();
       await refresh();
     } catch (error) {
-      setFeedback(errorMessage(error, t as never, t("owner.barbers.saveError")));
+      setFeedback(errorMessage(error, t, t("owner.barbers.saveError")));
     } finally {
       setIsSaving(false);
     }
@@ -144,7 +144,7 @@ export default function OwnerBarbersScreen() {
       await setBarberActive(supabase, barber.id, !barber.active);
       await refresh();
     } catch (error) {
-      setFeedback(errorMessage(error, t as never, t("owner.barbers.updateError")));
+      setFeedback(errorMessage(error, t, t("owner.barbers.updateError")));
     } finally {
       setIsSaving(false);
     }
@@ -175,7 +175,7 @@ export default function OwnerBarbersScreen() {
       await refresh();
       setFeedback(t("owner.barbers.compensationSaved"));
     } catch (error) {
-      setFeedback(errorMessage(error, t as never, t("owner.barbers.compensationError")));
+      setFeedback(errorMessage(error, t, t("owner.barbers.compensationError")));
     } finally {
       setIsSaving(false);
     }
@@ -193,7 +193,7 @@ export default function OwnerBarbersScreen() {
       await refresh();
       setFeedback(t("owner.barbers.inviteSent"));
     } catch (error) {
-      setFeedback(errorMessage(error, t as never, t("owner.barbers.inviteError")));
+      setFeedback(errorMessage(error, t, t("owner.barbers.inviteError")));
     } finally {
       setIsSaving(false);
     }

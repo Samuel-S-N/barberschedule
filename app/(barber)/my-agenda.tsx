@@ -61,7 +61,7 @@ export default function BarberAgendaScreen() {
   const dayAppointments = grouped.get(selectedDate) ?? [];
   const dayBlocks = (blocks.data ?? []).filter((block) => block.localDate === selectedDate && block.kind === "block");
 
-  const fail = (error: unknown, fallback: string) => setFeedback({ message: errorMessage(error, t as never, fallback), variant: "error" });
+  const fail = (error: unknown, fallback: string) => setFeedback({ message: errorMessage(error, t, fallback), variant: "error" });
 
   const setStatus = useMutation({
     mutationFn: (input: { id: string; status: BarberAppointmentStatus }) => setMyAppointmentStatus(supabase, input.id, input.status),
@@ -183,7 +183,7 @@ export default function BarberAgendaScreen() {
           <View className="w-full max-w-[420px] gap-3">
             {agenda.isLoading ? <SkeletonBlock height={96} width={320} /> : null}
             {agenda.error ? (
-              <Text className="text-sm font-sans text-danger-500">{errorMessage(agenda.error, t as never, t("barber.agenda.loadError"))}</Text>
+              <Text className="text-sm font-sans text-danger-500">{errorMessage(agenda.error, t, t("barber.agenda.loadError"))}</Text>
             ) : null}
             {!agenda.isLoading && !agenda.error && dayAppointments.length === 0 ? <EmptyState title={t("barber.agenda.emptyDay")} /> : null}
             {dayAppointments.map((appointment) => renderAppointment(appointment))}

@@ -62,7 +62,7 @@ export default function AgendaScreen() {
 
   const cancel = useMutation({
     mutationFn: (appointmentId: string) => cancelAppointment(supabase, appointmentId),
-    onError: (error) => setFeedback({ message: errorMessage(error, t as never, t("appointments.cancelError")), variant: "error" }),
+    onError: (error) => setFeedback({ message: errorMessage(error, t, t("appointments.cancelError")), variant: "error" }),
     onSuccess: () => {
       setConfirmingId(null);
       setSelectedId(null);

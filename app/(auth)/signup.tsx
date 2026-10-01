@@ -43,7 +43,7 @@ export default function SignupScreen() {
       const { needsEmailConfirmation } = await signUpCustomer(supabase, parsed.value);
       setConfirmationSent(needsEmailConfirmation);
     } catch (caught) {
-      setServerError(errorMessage(caught, t as never, t("auth.signup.error")));
+      setServerError(errorMessage(caught, t, t("auth.signup.error")));
     } finally {
       setIsSubmitting(false);
     }

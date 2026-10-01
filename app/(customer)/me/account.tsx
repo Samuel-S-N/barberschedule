@@ -38,7 +38,7 @@ export default function AccountScreen() {
   const [changingEmail, setChangingEmail] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const fail = (caught: unknown, fallback: string) =>
-    setFeedback({ message: errorMessage(caught, t as never, fallback), variant: "error" });
+    setFeedback({ message: errorMessage(caught, t, fallback), variant: "error" });
 
   useEffect(() => {
     if (customer) {

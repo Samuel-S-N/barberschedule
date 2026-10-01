@@ -63,7 +63,7 @@ export default function CustomerProfileScreen() {
                 try {
                   await signOut(supabase);
                 } catch (caught) {
-                  setError(errorMessage(caught, t as never, t("profile.signOutError")));
+                  setError(errorMessage(caught, t, t("profile.signOutError")));
                 }
               }}
               testID="profile-signout"

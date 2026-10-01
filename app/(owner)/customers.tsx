@@ -71,7 +71,7 @@ export default function OwnerCustomersScreen() {
         setCustomers(await listOwnerCustomers(supabase, nextShopId));
       } catch (error) {
         if (active) {
-          setFeedback(errorMessage(error, t as never, t("owner.customers.loadError")));
+          setFeedback(errorMessage(error, t, t("owner.customers.loadError")));
         }
       } finally {
         if (active) {
@@ -118,7 +118,7 @@ export default function OwnerCustomersScreen() {
       resetForm();
       await refresh();
     } catch (error) {
-      setFeedback(errorMessage(error, t as never, t("owner.customers.saveError")));
+      setFeedback(errorMessage(error, t, t("owner.customers.saveError")));
     } finally {
       setIsSaving(false);
     }
@@ -132,7 +132,7 @@ export default function OwnerCustomersScreen() {
       await setCustomerActive(supabase, customer.id, !customer.active);
       await refresh();
     } catch (error) {
-      setFeedback(errorMessage(error, t as never, t("owner.customers.updateError")));
+      setFeedback(errorMessage(error, t, t("owner.customers.updateError")));
     } finally {
       setIsSaving(false);
     }

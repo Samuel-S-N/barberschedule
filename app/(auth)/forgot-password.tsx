@@ -28,7 +28,7 @@ export default function ForgotPasswordScreen() {
       await requestPasswordReset(supabase, email.trim(), Linking.createURL("/reset-password"));
       setFeedback({ message: t("auth.reset.sent"), variant: "success" });
     } catch (caught) {
-      setFeedback({ message: errorMessage(caught, t as never, t("auth.reset.error")), variant: "error" });
+      setFeedback({ message: errorMessage(caught, t, t("auth.reset.error")), variant: "error" });
     } finally {
       setIsSubmitting(false);
     }

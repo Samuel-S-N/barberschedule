@@ -81,7 +81,7 @@ export default function MonthlyCustomersScreen() {
         setBarberServices(nextBarberServices.filter((service) => service.active));
         setSeries(nextSeries);
       } catch (error) {
-        if (active) setFeedback(errorMessage(error, t as never, t("owner.recurring.loadError")));
+        if (active) setFeedback(errorMessage(error, t, t("owner.recurring.loadError")));
       } finally {
         if (active) setIsLoading(false);
       }
@@ -135,7 +135,7 @@ export default function MonthlyCustomersScreen() {
       setFeedback(editing ? t("owner.recurring.updated") : t("owner.recurring.saved"));
       resetForm();
     } catch (error) {
-      setFeedback(errorMessage(error, t as never, t("owner.recurring.saveError")));
+      setFeedback(errorMessage(error, t, t("owner.recurring.saveError")));
     } finally {
       setIsSaving(false);
     }
@@ -148,7 +148,7 @@ export default function MonthlyCustomersScreen() {
       await operation();
       await refresh();
     } catch (error) {
-      setFeedback(errorMessage(error, t as never, t("owner.recurring.updateError")));
+      setFeedback(errorMessage(error, t, t("owner.recurring.updateError")));
     } finally {
       setIsSaving(false);
     }

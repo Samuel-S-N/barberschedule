@@ -64,7 +64,7 @@ export default function ResetPasswordScreen() {
       await completePasswordReset(supabase, next);
       router.replace({ params: { notice: "password-reset" }, pathname: "/login" });
     } catch (caught) {
-      setError(errorMessage(caught, t as never, t("auth.reset.saveError")));
+      setError(errorMessage(caught, t, t("auth.reset.saveError")));
     } finally {
       setSaving(false);
     }
