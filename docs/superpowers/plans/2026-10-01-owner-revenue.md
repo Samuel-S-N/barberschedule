@@ -143,8 +143,8 @@ select is(
   16000, 'another shop''s revenue never leaks in'
 );
 select is(
-  (select sum((d ->> 'gross_cents')::int)::int from jsonb_array_elements(public.get_shop_report(current_date - 6, current_date) -> 'days') d where false),
-  null::int, 'sanity: an empty aggregate is null'
+  jsonb_array_length(public.get_shop_report(current_date - 200, current_date - 190) -> 'days'),
+  0, 'an empty range returns no days'
 );
 
 select throws_ok($$ select public.get_shop_report(current_date - 100, current_date) $$, 'P0022', null, 'a range over 92 days is rejected');
