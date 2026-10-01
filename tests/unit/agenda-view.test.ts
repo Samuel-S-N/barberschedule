@@ -1,5 +1,5 @@
 import {
-  formatAppointmentLabels, groupByLocalDate, markAppointmentDays, pickInitialDate,
+  formatAppointmentLabels, groupByLocalDate, markAppointmentDays, visibleAppointments,
 } from "../../src/features/appointments/agenda-view";
 import type { Appointment } from "../../src/features/appointments/types";
 
@@ -44,8 +44,13 @@ describe("agenda view helpers", () => {
     expect(markAppointmentDays(days, grouped).map((d) => d.hasAppointment)).toEqual([false, true]);
   });
 
-  it("selects the first day with an appointment, else the first day", () => {
-    expect(pickInitialDate(days, groupByLocalDate([appointment("a", "2026-08-18T13:00:00Z")]))).toBe("2026-08-18");
-    expect(pickInitialDate(days, new Map())).toBe("2026-08-17");
+  it("lists every appointment in order when no date is selected, else only that day", () => {
+    const grouped = groupByLocalDate([
+      appointment("b", "2026-08-18T13:00:00Z"), appointment("a", "2026-08-17T12:00:00Z"), appointment("c", "2026-08-18T15:00:00Z"),
+    ]);
+
+    expect(visibleAppointments(grouped, null).map((a) => a.id)).toEqual(["a", "b", "c"]);
+    expect(visibleAppointments(grouped, "2026-08-18").map((a) => a.id)).toEqual(["b", "c"]);
+    expect(visibleAppointments(grouped, "2026-08-19")).toEqual([]);
   });
 });

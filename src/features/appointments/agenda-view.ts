@@ -29,6 +29,6 @@ export function markAppointmentDays(days: CalendarStripDay[], grouped: Map<strin
   return days.map((day) => ({ ...day, hasAppointment: grouped.has(day.date) }));
 }
 
-export function pickInitialDate(days: CalendarStripDay[], grouped: Map<string, unknown[]>) {
-  return days.find((day) => grouped.has(day.date))?.date ?? days[0].date;
+export function visibleAppointments<T extends Appointment>(grouped: Map<string, T[]>, selectedDate: string | null) {
+  return selectedDate ? grouped.get(selectedDate) ?? [] : [...grouped.values()].flat();
 }

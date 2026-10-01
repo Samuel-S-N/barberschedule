@@ -60,4 +60,14 @@ describe("CalendarStrip", () => {
     expect(view.queryByTestId("calendar-strip-day-2026-08-18-dot")).toBeTruthy();
     expect(view.queryByTestId("calendar-strip-day-2026-08-19-dot")).toBeNull();
   });
+
+  it("adds no horizontal padding of its own, so it aligns with the screen's content edge", async () => {
+    const view = await render(
+      React.createElement(CalendarStrip, {
+        days, selectedDate: "2026-08-18", onSelectDate: jest.fn(), testID: "strip",
+      }),
+    );
+
+    expect(view.getByTestId("strip-row").props.className).not.toMatch(/\bpx-/);
+  });
 });
