@@ -107,13 +107,13 @@ export default function ClientDetailScreen() {
                   <StatTile label={t("barber.clients.statVisits")} testID="client-stat-visits" value={String(data.stats.visits)} />
                   <StatTile label={t("barber.clients.statCancelled")} testID="client-stat-cancelled" value={String(data.stats.cancelled)} />
                   <StatTile label={t("barber.clients.statNoShow")} testID="client-stat-noshow" value={String(data.stats.noShow)} />
+                  <StatTile label={t("barber.clients.statFavorite")} testID="client-stat-favorite" value={data.stats.favoriteService ?? t("barber.clients.none")} />
                 </View>
 
                 <Card variant="outlined">
                   <View className="gap-2">
                     <Line label={t("barber.clients.statLast")}>{data.stats.lastVisitAt ? date(data.stats.lastVisitAt) : t("barber.clients.none")}</Line>
                     <Line label={t("barber.clients.statNext")}>{data.stats.nextVisitAt ? date(data.stats.nextVisitAt) : t("barber.clients.none")}</Line>
-                    <Line label={t("barber.clients.statFavorite")}>{data.stats.favoriteService ?? t("barber.clients.none")}</Line>
                   </View>
                 </Card>
 
