@@ -48,8 +48,14 @@ export default function RescheduleScreen() {
 
   const reschedule = useMutation({
     mutationFn: (newStartsAt: string) => rescheduleAppointment(supabase, appointmentId, newStartsAt),
-    onError: (caught) => setError(errorMessage(caught, t as never, t("reschedule.error"))),
+    onError: (caught) => {
+      setError(errorMessage(caught, t as never, t("reschedule.error")));
+      // The slot may have just been taken by someone else; drop the stale choice and refetch the list.
+      setStartsAt(null);
+      void queryClient.invalidateQueries({ queryKey: ["available-slots"] });
+    },
     onSuccess: async () => {
+      void queryClient.invalidateQueries({ queryKey: ["available-slots"] });
       await queryClient.invalidateQueries({ queryKey: ["my-appointments"] });
       // dismissTo pops back to the tabs already underneath; replace would mount a second tab navigator.
       router.dismissTo("/appointments");

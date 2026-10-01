@@ -68,14 +68,19 @@ export default function BookReviewScreen() {
         startsAt,
       });
     },
-    onError: (error) => setFeedback({
-      message: errorMessage(
-        error,
-        t as never,
-        error instanceof Error && error.message === NO_SLOT_SELECTED ? t("book.chooseTime") : t("book.error"),
-      ),
-      variant: "error",
-    }),
+    onError: (error) => {
+      setFeedback({
+        message: errorMessage(
+          error,
+          t as never,
+          error instanceof Error && error.message === NO_SLOT_SELECTED ? t("book.chooseTime") : t("book.error"),
+        ),
+        variant: "error",
+      });
+      // The slot may have just been taken by someone else; drop the stale choice and refetch the list.
+      setStartsAt(null);
+      void queryClient.invalidateQueries({ queryKey: ["available-slots"] });
+    },
     onSuccess: () => {
       // Home and Agenda stay mounted under the tab bar, so their cached lists must be refreshed explicitly.
       void queryClient.invalidateQueries({ queryKey: ["my-appointments"] });
