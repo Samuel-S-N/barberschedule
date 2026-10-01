@@ -30,7 +30,8 @@ export type DomainErrorCode =
   | "CUSTOMER_NAME_REQUIRED"
   | "CUSTOMER_EMAIL_INVALID"
   | "SERVICE_STANDARD_LOCKED"
-  | "CUSTOMER_NOTE_INVALID";
+  | "CUSTOMER_NOTE_INVALID"
+  | "REPORT_FORBIDDEN";
 
 export class DomainError extends Error {
   constructor(
@@ -115,6 +116,8 @@ export function toDomainError(error: { code?: string; message?: string }): Domai
       return new DomainError("SERVICE_STANDARD_LOCKED", "This service is standard and cannot be turned off.");
     case "P0028":
       return new DomainError("CUSTOMER_NOTE_INVALID", "The note must have up to 500 characters.");
+    case "P0029":
+      return new DomainError("REPORT_FORBIDDEN", "Only the shop owner can see this report.");
     default:
       return new DomainError("BOOKING_REQUEST_FAILED", "Unable to create the appointment.");
   }

@@ -7,9 +7,9 @@ import { donutArcs } from "./geometry";
 
 export type DonutSlice = { color: string; icon?: LucideIcon; key: string; label: string; value: number };
 
-type Props = { centerLabel: string; centerValue: string; size?: number; slices: DonutSlice[]; testID: string };
+type Props = { centerLabel: string; centerValue: string; formatValue?: (value: number) => string; size?: number; slices: DonutSlice[]; testID: string };
 
-export function DonutChart({ centerLabel, centerValue, size = 180, slices, testID }: Props) {
+export function DonutChart({ centerLabel, centerValue, formatValue = String, size = 180, slices, testID }: Props) {
   const total = slices.reduce((sum, s) => sum + s.value, 0);
   const outer = size / 2 - 2;
   const inner = outer * 0.62;
@@ -40,7 +40,7 @@ export function DonutChart({ centerLabel, centerValue, size = 180, slices, testI
               {Icon ? <Icon color={colors.neutral[600]} size={16} /> : null}
               <Text className="flex-1 text-sm font-sans text-ink">{slice.label}</Text>
               <Text className="text-sm font-sans-medium text-neutral-700" style={{ fontVariant: ["tabular-nums"] }}>
-                {total > 0 ? `${slice.value} · ${Math.round((slice.value / total) * 100)}%` : String(slice.value)}
+                {total > 0 ? `${formatValue(slice.value)} · ${Math.round((slice.value / total) * 100)}%` : formatValue(slice.value)}
               </Text>
             </View>
           );

@@ -38,7 +38,7 @@ export function percentChange(current: number, previous: number) {
   return previous === 0 ? null : Math.round(((current - previous) / previous) * 100);
 }
 
-export function dailySeries(days: ReportDay[], start: string, end: string, pick: (day: ReportDay) => number): SeriesPoint[] {
+export function dailySeries<T extends { date: string }>(days: T[], start: string, end: string, pick: (day: T) => number): SeriesPoint[] {
   const length = daysBetween(start, end);
   const byDate = new Map(days.map((d) => [d.date, pick(d)]));
   const bucket = length > WEEKLY_THRESHOLD_DAYS ? 7 : 1;

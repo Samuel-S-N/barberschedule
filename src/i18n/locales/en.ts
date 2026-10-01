@@ -607,6 +607,7 @@ export const en = {
       CUSTOMER_EMAIL_INVALID: "Enter a valid email or leave it blank.",
       CUSTOMER_NAME_REQUIRED: "Enter the customer's name.",
       CUSTOMER_NOTE_INVALID: "The note must have up to 500 characters.",
+      REPORT_FORBIDDEN: "Only the shop owner can see this report.",
       SERVICE_STANDARD_LOCKED: "This service is standard and cannot be turned off.",
       COMPENSATION_INVALID: "Enter a valid commission or chair rental.",
       EARNINGS_INVALID_RANGE: "Choose a period of up to 92 days.",

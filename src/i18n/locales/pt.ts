@@ -606,6 +606,7 @@ export const pt: DeepStringRecord<typeof en> = {
       CUSTOMER_EMAIL_INVALID: "Informe um email válido ou deixe em branco.",
       CUSTOMER_NAME_REQUIRED: "Informe o nome do cliente.",
       CUSTOMER_NOTE_INVALID: "A nota deve ter até 500 caracteres.",
+      REPORT_FORBIDDEN: "Só o dono da barbearia pode ver este relatório.",
       SERVICE_STANDARD_LOCKED: "Este serviço é padrão e não pode ser desligado.",
       COMPENSATION_INVALID: "Informe uma comissão ou aluguel de cadeira válidos.",
       EARNINGS_INVALID_RANGE: "Escolha um período de até 92 dias.",
