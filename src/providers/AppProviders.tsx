@@ -36,6 +36,7 @@ export function AppProviders({ children }: PropsWithChildren) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const syncSequence = useRef(0);
+  const syncedUserId = useRef<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -48,6 +49,7 @@ export function AppProviders({ children }: PropsWithChildren) {
       const currentSync = syncSequence.current + 1;
       syncSequence.current = currentSync;
 
+      syncedUserId.current = nextSession?.user.id ?? null;
       setIsLoading(true);
       setSession(nextSession);
       setProfile(null);
@@ -87,8 +89,11 @@ export function AppProviders({ children }: PropsWithChildren) {
       if (event === "PASSWORD_RECOVERY") markRecovery();
 
       // The same user, refreshed or edited (password/e-mail change): keep the session current without the
-      // loading gate, which would unmount the navigator and send the user back to the first screen.
-      if ((event === "USER_UPDATED" || event === "TOKEN_REFRESHED") && nextSession) {
+      // loading gate, which would unmount the navigator and send the user back to the first screen. The browser
+      // also re-emits SIGNED_IN for the same user whenever the tab regains focus.
+      const sameUserSignIn = event === "SIGNED_IN" && nextSession?.user.id === syncedUserId.current;
+
+      if ((event === "USER_UPDATED" || event === "TOKEN_REFRESHED" || sameUserSignIn) && nextSession) {
         setSession(nextSession);
         return;
       }

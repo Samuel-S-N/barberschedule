@@ -112,6 +112,26 @@ describe("AppProviders session sync", () => {
     expect(hasRecovery()).toBe(true);
   });
 
+  it("keeps the navigator mounted when the tab regains focus and SIGNED_IN repeats for the same user", async () => {
+    const supabase = createSupabaseStub(createSession("user-1"));
+
+    mockedGetSupabaseBrowserClient.mockReturnValue(supabase.client as never);
+    mockedGetCurrentProfile.mockResolvedValue({ role: "customer", userId: "user-1" } as never);
+
+    const view = await render(React.createElement(AppProviders, null, React.createElement(SessionProbe)));
+
+    await waitFor(() => {
+      expect(view.getByText("idle|user-1|user-1|customer")).toBeTruthy();
+    });
+
+    await act(async () => {
+      supabase.emit(createSession("user-1"), "SIGNED_IN");
+    });
+
+    expect(view.getByText("idle|user-1|user-1|customer")).toBeTruthy();
+    expect(mockedGetCurrentProfile).toHaveBeenCalledTimes(1);
+  });
+
   it("clears stale profile state and ignores an older async profile read", async () => {
     const firstProfile = createDeferred<ProfileSnapshot | null>();
     const secondProfile = createDeferred<ProfileSnapshot | null>();
