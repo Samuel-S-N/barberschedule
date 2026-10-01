@@ -1,12 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { Text, View } from "react-native";
+import { RefreshControl, ScrollView, Text, View } from "react-native";
 
 import { BarberCard } from "../../../../src/components/domain/BarberCard";
 import { EmptyState } from "../../../../src/components/domain/EmptyState";
+import { ErrorRetry } from "../../../../src/components/domain/ErrorRetry";
 import { SkeletonBlock } from "../../../../src/components/domain/SkeletonLoader";
 import { listPublicBarbers } from "../../../../src/features/barbers/api";
+import { useRefresh } from "../../../../src/lib/use-refresh";
 import { useSupabaseSession } from "../../../../src/providers/AppProviders";
 import { Screen } from "../../../../src/components/ui/Screen";
 
@@ -26,9 +28,12 @@ export default function BookBarberScreen() {
     queryKey: ["public-barbers", shopId],
   });
 
+  const refresh = useRefresh([barbers.refetch]);
+
   return (
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
-      <View className="flex-1 items-center gap-4 p-5">
+      <ScrollView className="flex-1" refreshControl={<RefreshControl onRefresh={refresh.onRefresh} refreshing={refresh.refreshing} />}>
+      <View className="items-center gap-4 p-5">
         <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
           {t("book.barberTitle")}
         </Text>
@@ -40,7 +45,7 @@ export default function BookBarberScreen() {
             </>
           ) : null}
           {barbers.error ? (
-            <Text className="text-sm font-sans text-danger-500">{t("book.barbersError")}</Text>
+            <ErrorRetry message={t("book.barbersError")} onRetry={() => void barbers.refetch()} testID="barbers-retry" />
           ) : null}
           {!barbers.isLoading && !barbers.error && barbers.data?.length === 0 ? (
             <EmptyState title={t("book.noBarbers")} />
@@ -57,6 +62,7 @@ export default function BookBarberScreen() {
           ))}
         </View>
       </View>
+      </ScrollView>
     </Screen>
   );
 }

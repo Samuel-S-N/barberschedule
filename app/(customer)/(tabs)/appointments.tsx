@@ -2,11 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, Text, View } from "react-native";
+import { RefreshControl, ScrollView, Text, View } from "react-native";
 
 import { AppointmentCard } from "../../../src/components/domain/AppointmentCard";
 import { CalendarStrip } from "../../../src/components/domain/CalendarStrip";
 import { EmptyState } from "../../../src/components/domain/EmptyState";
+import { ErrorRetry } from "../../../src/components/domain/ErrorRetry";
 import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
 import { Toast } from "../../../src/components/domain/Toast";
 import { Button } from "../../../src/components/ui/Button";
@@ -17,6 +18,7 @@ import { useAppointmentCards } from "../../../src/features/appointments/use-appo
 import { errorMessage } from "../../../src/i18n/errors";
 import { useLanguage } from "../../../src/i18n/use-language";
 import { buildCalendarStripDays } from "../../../src/lib/dates/calendar-strip-days";
+import { useRefresh } from "../../../src/lib/use-refresh";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 import { Screen } from "../../../src/components/ui/Screen";
 
@@ -36,6 +38,7 @@ export default function AgendaScreen() {
 
   const upcoming = useQuery({ queryFn: () => listMyAppointments(supabase), queryKey: ["my-appointments", "upcoming"] });
   const history = useQuery({ queryFn: () => listMyAppointments(supabase, true), queryKey: ["my-appointments", "history"] });
+  const refresh = useRefresh([upcoming.refetch, history.refetch]);
   const toCardProps = useAppointmentCards([...(upcoming.data ?? []), ...(history.data ?? [])]);
 
   const grouped = useMemo(() => groupByLocalDate(upcoming.data ?? []), [upcoming.data]);
@@ -114,7 +117,7 @@ export default function AgendaScreen() {
 
   return (
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
-      <ScrollView className="flex-1">
+      <ScrollView className="flex-1" refreshControl={<RefreshControl onRefresh={refresh.onRefresh} refreshing={refresh.refreshing} />}>
         <View className="items-center gap-4 p-5">
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">{t("appointments.title")}</Text>
           <View className="w-full max-w-[420px] flex-row gap-2">
@@ -151,7 +154,13 @@ export default function AgendaScreen() {
           ) : null}
           <View className="w-full max-w-[420px] gap-3">
             {loading ? <SkeletonBlock height={120} width={320} /> : null}
-            {failed ? <Text className="text-sm font-sans text-danger-500">{t("appointments.loadError")}</Text> : null}
+            {failed ? (
+              <ErrorRetry
+                message={t("appointments.loadError")}
+                onRetry={() => void (segment === "upcoming" ? upcoming : history).refetch()}
+                testID="agenda-retry"
+              />
+            ) : null}
             {!loading && !failed && segment === "upcoming" && shown.length === 0 ? (
               <EmptyState title={t(pickedDate ? "appointments.emptyDay" : "appointments.emptyUpcoming")} />
             ) : null}
