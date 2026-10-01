@@ -22,6 +22,7 @@ import { useShopInfo } from "../../../src/features/shops/use-shop-info";
 import { errorMessage } from "../../../src/i18n/errors";
 import { useLanguage } from "../../../src/i18n/use-language";
 import { buildCalendarStripDays } from "../../../src/lib/dates/calendar-strip-days";
+import { useNow } from "../../../src/lib/use-now";
 import { useRefresh } from "../../../src/lib/use-refresh";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 import { Screen } from "../../../src/components/ui/Screen";
@@ -33,6 +34,7 @@ export default function AgendaScreen() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
   const language = useLanguage();
+  const now = useNow();
   const { supabase } = useSupabaseSession();
   const [segment, setSegment] = useState<"upcoming" | "history">("upcoming");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -85,7 +87,7 @@ export default function AgendaScreen() {
   };
 
   const renderAppointment = (appointment: Appointment, withActions: boolean) => {
-    const open = isLifecycleWindowOpen(appointment.startsAt, new Date());
+    const open = isLifecycleWindowOpen(appointment.startsAt, now);
 
     return (
       <View className="gap-2" key={appointment.id}>
