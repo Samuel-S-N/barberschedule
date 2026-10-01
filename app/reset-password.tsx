@@ -70,9 +70,11 @@ export default function ResetPasswordScreen() {
     }
   };
 
+  const canSave = !saving && Boolean(next) && validateNewPassword(next, confirm) === null;
+
   return (
-    <Screen className="flex-1 bg-canvas">
-      <ScrollView className="flex-1">
+    <Screen className="flex-1 bg-canvas" keyboardAvoiding>
+      <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             {status === "checking" ? (
@@ -93,11 +95,11 @@ export default function ResetPasswordScreen() {
               <>
                 <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("auth.reset.setTitle")}</Text>
                 <Text className="text-base font-sans text-neutral-600">{t("auth.reset.setSubtitle")}</Text>
-                <Input label={t("auth.reset.newPassword")} onChangeText={setNext} secureTextEntry testID="reset-new" value={next} />
-                <Input error={problemText} label={t("auth.reset.confirm")} onChangeText={setConfirm} secureTextEntry testID="reset-confirm" value={confirm} />
+                <Input autoComplete="new-password" label={t("auth.reset.newPassword")} onChangeText={setNext} secureTextEntry testID="reset-new" textContentType="newPassword" value={next} />
+                <Input autoComplete="new-password" error={problemText} label={t("auth.reset.confirm")} onChangeText={setConfirm} secureTextEntry onSubmitEditing={() => canSave && void save()} returnKeyType="go" testID="reset-confirm" textContentType="newPassword" value={confirm} />
                 <Toast message={error ?? ""} onDismiss={() => setError(null)} variant="error" visible={error !== null} />
                 <Button
-                  disabled={saving || !next || validateNewPassword(next, confirm) !== null}
+                  disabled={!canSave}
                   label={t("auth.reset.saveSubmit")}
                   onPress={() => void save()}
                   size="lg"

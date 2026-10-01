@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { Text, TextInput, View } from "react-native";
+import type { TextInputProps } from "react-native";
 
-export type InputProps = {
+type PassThroughProps = Pick<
+  TextInputProps,
+  "autoCapitalize" | "autoComplete" | "autoCorrect" | "keyboardType" | "onSubmitEditing" | "returnKeyType" | "textContentType"
+>;
+
+export type InputProps = PassThroughProps & {
   label: string;
   value: string;
   onChangeText: (text: string) => void;
@@ -21,6 +27,7 @@ export function Input({
   secureTextEntry,
   multiline = false,
   testID,
+  ...passThrough
 }: InputProps) {
   const [focused, setFocused] = useState(false);
   const hasError = Boolean(error);
@@ -37,6 +44,7 @@ export function Input({
       <TextInput
         accessibilityLabel={label}
         className={`${heightClassName} rounded-xl px-4 font-sans text-base text-ink bg-surface ${borderClassName}`}
+        {...passThrough}
         multiline={multiline}
         onBlur={() => setFocused(false)}
         onChangeText={onChangeText}

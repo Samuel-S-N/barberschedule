@@ -51,7 +51,7 @@ export default function SignupScreen() {
 
   if (confirmationSent) {
     return (
-      <Screen className="flex-1 bg-canvas">
+      <Screen className="flex-1 bg-canvas" keyboardAvoiding>
         <View className="flex-1 items-center justify-center gap-4 p-5">
           <EmptyState title={t("auth.signup.checkEmailTitle")} />
           <Text className="max-w-[420px] text-center text-base font-sans text-neutral-600">
@@ -64,17 +64,17 @@ export default function SignupScreen() {
   }
 
   return (
-    <Screen className="flex-1 bg-canvas">
-      <ScrollView className="flex-1">
+    <Screen className="flex-1 bg-canvas" keyboardAvoiding>
+      <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("auth.signup.title")}</Text>
-            <Input error={fieldError("fullName")} label={t("common.fullName")} onChangeText={set("fullName")} testID="signup-name" value={form.fullName} />
-            <Input error={fieldError("nickname")} label={t("common.nicknameOptional")} onChangeText={set("nickname")} testID="signup-nickname" value={form.nickname} />
-            <Input error={fieldError("email")} label={t("common.email")} onChangeText={set("email")} testID="signup-email" value={form.email} />
-            <Input error={fieldError("phone")} label={t("common.phoneOptional")} onChangeText={(value) => set("phone")(formatPhone(value))} testID="signup-phone" value={form.phone} />
-            <Input error={fieldError("password")} label={t("common.password")} onChangeText={set("password")} secureTextEntry testID="signup-password" value={form.password} />
-            <Input error={fieldError("confirmPassword")} label={t("auth.signup.confirmPassword")} onChangeText={set("confirmPassword")} secureTextEntry testID="signup-confirm-password" value={form.confirmPassword} />
+            <Input autoCapitalize="words" autoComplete="name" error={fieldError("fullName")} label={t("common.fullName")} onChangeText={set("fullName")} testID="signup-name" value={form.fullName} />
+            <Input autoCapitalize="words" error={fieldError("nickname")} label={t("common.nicknameOptional")} onChangeText={set("nickname")} testID="signup-nickname" value={form.nickname} />
+            <Input autoCapitalize="none" autoComplete="email" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" error={fieldError("email")} label={t("common.email")} onChangeText={set("email")} testID="signup-email" value={form.email} />
+            <Input autoComplete="tel" keyboardType="phone-pad" error={fieldError("phone")} label={t("common.phoneOptional")} onChangeText={(value) => set("phone")(formatPhone(value))} testID="signup-phone" value={form.phone} />
+            <Input autoComplete="new-password" error={fieldError("password")} label={t("common.password")} onChangeText={set("password")} secureTextEntry testID="signup-password" textContentType="newPassword" value={form.password} />
+            <Input autoComplete="new-password" error={fieldError("confirmPassword")} label={t("auth.signup.confirmPassword")} onChangeText={set("confirmPassword")} secureTextEntry onSubmitEditing={() => !isSubmitting && void submit()} returnKeyType="go" testID="signup-confirm-password" textContentType="newPassword" value={form.confirmPassword} />
             <Pressable
               accessibilityLabel={t("auth.signup.acceptTerms")}
               accessibilityRole="checkbox"

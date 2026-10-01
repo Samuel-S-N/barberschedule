@@ -124,8 +124,8 @@ export default function BookReviewScreen() {
   };
 
   return (
-    <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
-      <ScrollView className="flex-1" testID="booking-review-scroll">
+    <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas" keyboardAvoiding>
+      <ScrollView className="flex-1" keyboardShouldPersistTaps="handled" testID="booking-review-scroll">
         <View className="items-center gap-4 p-5">
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
             {t("book.reviewTitle")}

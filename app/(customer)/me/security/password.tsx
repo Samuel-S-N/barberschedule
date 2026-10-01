@@ -41,17 +41,19 @@ export default function PasswordScreen() {
     },
   });
 
+  const canChange = !change.isPending && Boolean(current) && Boolean(next) && validateNewPassword(next, confirm) === null;
+
   return (
-    <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
-      <ScrollView className="flex-1">
+    <Screen className="flex-1 bg-canvas" keyboardAvoiding edges={["top", "left", "right"]}>
+      <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("profile.security.passwordTitle")} />
-            <Input label={t("profile.security.current")} onChangeText={setCurrent} secureTextEntry testID="security-current" value={current} />
-            <Input label={t("profile.security.next")} onChangeText={setNext} secureTextEntry testID="security-next" value={next} />
-            <Input error={problemText} label={t("profile.security.confirm")} onChangeText={setConfirm} secureTextEntry testID="security-confirm" value={confirm} />
+            <Input autoComplete="current-password" label={t("profile.security.current")} onChangeText={setCurrent} secureTextEntry testID="security-current" textContentType="password" value={current} />
+            <Input autoComplete="new-password" label={t("profile.security.next")} onChangeText={setNext} secureTextEntry testID="security-next" textContentType="newPassword" value={next} />
+            <Input autoComplete="new-password" error={problemText} label={t("profile.security.confirm")} onChangeText={setConfirm} secureTextEntry onSubmitEditing={() => canChange && change.mutate()} returnKeyType="go" testID="security-confirm" textContentType="newPassword" value={confirm} />
             <Button
-              disabled={change.isPending || !current || !next || validateNewPassword(next, confirm) !== null}
+              disabled={!canChange}
               label={t("profile.security.submit")}
               onPress={() => change.mutate()}
               testID="security-submit"

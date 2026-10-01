@@ -68,4 +68,22 @@ describe("Input", () => {
 
     expect(view.getByTestId("date-input").props.multiline).toBeFalsy();
   });
+  it("forwards the keyboard and autofill props to the underlying TextInput", async () => {
+    const onSubmitEditing = jest.fn();
+    const view = await render(
+      React.createElement(Input, {
+        autoCapitalize: "none", autoComplete: "email", autoCorrect: false, keyboardType: "email-address",
+        label: "Email", onChangeText: jest.fn(), onSubmitEditing, returnKeyType: "go",
+        testID: "email-input", textContentType: "emailAddress", value: "",
+      }),
+    );
+    const input = view.getByTestId("email-input");
+
+    expect(input.props).toEqual(expect.objectContaining({
+      autoCapitalize: "none", autoComplete: "email", autoCorrect: false, keyboardType: "email-address",
+      returnKeyType: "go", textContentType: "emailAddress",
+    }));
+    await fireEvent(input, "submitEditing");
+    expect(onSubmitEditing).toHaveBeenCalled();
+  });
 });

@@ -34,19 +34,24 @@ export default function LoginScreen() {
     }
   };
 
+  const canSubmit = Boolean(email.trim() && password && !isLoading && !isSubmitting);
+  const submitFromKeyboard = () => {
+    if (canSubmit) void handleSignIn();
+  };
+
   return (
-    <Screen className="flex-1 bg-canvas">
-      <ScrollView className="flex-1">
+    <Screen className="flex-1 bg-canvas" keyboardAvoiding>
+      <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("auth.login.title")}</Text>
             <Text className="text-base font-sans text-neutral-600">{t("auth.login.subtitle")}</Text>
-            <Input label={t("common.email")} onChangeText={setEmail} testID="login-email" value={email} />
-            <Input label={t("common.password")} onChangeText={setPassword} secureTextEntry testID="login-password" value={password} />
+            <Input autoCapitalize="none" autoComplete="email" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" label={t("common.email")} onChangeText={setEmail} testID="login-email" value={email} />
+            <Input autoComplete="current-password" label={t("common.password")} onChangeText={setPassword} onSubmitEditing={submitFromKeyboard} returnKeyType="go" textContentType="password" secureTextEntry testID="login-password" value={password} />
             <Toast message={t("auth.login.passwordReset")} onDismiss={() => setNoticeDismissed(true)} variant="success" visible={notice === "password-reset" && !noticeDismissed} />
             <Toast message={error ?? ""} onDismiss={() => setError(null)} variant="error" visible={error !== null} />
             <Button
-              disabled={!email.trim() || !password || isLoading || isSubmitting}
+              disabled={!canSubmit}
               label={t("auth.login.submit")}
               onPress={handleSignIn}
               size="lg"

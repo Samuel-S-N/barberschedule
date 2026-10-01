@@ -34,14 +34,19 @@ export default function ForgotPasswordScreen() {
     }
   };
 
+  const canSubmit = Boolean(email.trim() && !isLoading && !isSubmitting);
+  const submitFromKeyboard = () => {
+    if (canSubmit) void submit();
+  };
+
   return (
-    <Screen className="flex-1 bg-canvas">
-      <ScrollView className="flex-1">
+    <Screen className="flex-1 bg-canvas" keyboardAvoiding>
+      <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("auth.reset.title")}</Text>
             <Text className="text-base font-sans text-neutral-600">{t("auth.reset.subtitle")}</Text>
-            <Input label={t("common.email")} onChangeText={setEmail} testID="reset-email" value={email} />
+            <Input autoCapitalize="none" autoComplete="email" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" label={t("common.email")} onChangeText={setEmail} onSubmitEditing={submitFromKeyboard} returnKeyType="send" testID="reset-email" value={email} />
             <Toast
               message={feedback?.message ?? ""}
               onDismiss={() => setFeedback(null)}
@@ -49,7 +54,7 @@ export default function ForgotPasswordScreen() {
               visible={feedback !== null}
             />
             <Button
-              disabled={!email.trim() || isLoading || isSubmitting}
+              disabled={!canSubmit}
               label={t("auth.reset.submit")}
               onPress={submit}
               size="lg"
