@@ -25,7 +25,8 @@ export type DomainErrorCode =
   | "BARBER_INVITE_CONFLICT"
   | "COMPENSATION_INVALID"
   | "EARNINGS_INVALID_RANGE"
-  | "BARBER_REQUEST_FAILED";
+  | "BARBER_REQUEST_FAILED"
+  | "SHOP_HOURS_INVALID";
 
 export class DomainError extends Error {
   constructor(
@@ -100,6 +101,8 @@ export function toDomainError(error: { code?: string; message?: string }): Domai
       return new DomainError("COMPENSATION_INVALID", "Enter a valid commission or chair rental.");
     case "P0022":
       return new DomainError("EARNINGS_INVALID_RANGE", "Choose a period of up to 92 days.");
+    case "P0023":
+      return new DomainError("SHOP_HOURS_INVALID", "Check the opening hours and breaks.");
     default:
       return new DomainError("BOOKING_REQUEST_FAILED", "Unable to create the appointment.");
   }

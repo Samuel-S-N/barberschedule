@@ -508,6 +508,7 @@ export const en = {
       RECURRENCE_INVALID: "Choose a valid recurrence rule and 90-day window.",
       RECURRENCE_REQUEST_FAILED: "Unable to update recurring bookings.",
       SCHEDULE_UNAVAILABLE: "That time is outside the schedule.",
+      SHOP_HOURS_INVALID: "Check the opening hours and breaks.",
       SERVICE_UNAVAILABLE: "That service is no longer available.",
       SLOT_UNAVAILABLE: "That time is no longer available.",
     } satisfies Record<DomainErrorCode, string>,

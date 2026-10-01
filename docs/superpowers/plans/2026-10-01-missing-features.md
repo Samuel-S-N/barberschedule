@@ -375,8 +375,8 @@ Locales `reschedule.current`: "Current appointment" / "Agendamento atual" / "Cit
 - Modify: `src/lib/errors/domain-errors.ts`, locales (`errors.codes.SHOP_HOURS_INVALID`), `tests/unit/error-message.test.ts` only if it enumerates codes
 
 **Interfaces:**
-- Produces (DB): `shops.address|phone|whatsapp` (text, nullable, ≤200/30/30 chars); table `shop_hours(id, shop_id, weekday, start_time, end_time)` publicly selectable; `public.set_shop_hours(p_periods jsonb)` where each element is `{"weekday":1..7,"start":"HH:mm","end":"HH:mm"}`; errors: `42501` FORBIDDEN (non-owner), `P0020` SHOP_HOURS_INVALID.
-- Produces (TS): `DomainErrorCode` gains `"SHOP_HOURS_INVALID"`, mapped from `P0020`.
+- Produces (DB): `shops.address|phone|whatsapp` (text, nullable, ≤200/30/30 chars); table `shop_hours(id, shop_id, weekday, start_time, end_time)` publicly selectable; `public.set_shop_hours(p_periods jsonb)` where each element is `{"weekday":1..7,"start":"HH:mm","end":"HH:mm"}`; errors: `42501` FORBIDDEN (non-owner), `P0023` SHOP_HOURS_INVALID.
+- Produces (TS): `DomainErrorCode` gains `"SHOP_HOURS_INVALID"`, mapped from `P0023`.
 
 - [ ] **Step 1: Failing pgTAP test** `supabase/tests/016_shop_info.sql` (copy the setup style of `015_profile_nickname.sql`: `begin; create extension…; select plan(N);` insert one owner user + shop + one customer user, then):
 
@@ -387,10 +387,10 @@ select set_config('request.jwt.claim.sub', '<owner uuid>', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 select lives_ok($$ select public.set_shop_hours('[{"weekday":1,"start":"09:00","end":"12:00"},{"weekday":1,"start":"13:00","end":"18:00"}]'::jsonb) $$, 'owner can set hours with a break');
 select is((select count(*)::int from public.shop_hours), 2, 'both periods stored');
-select throws_ok($$ select public.set_shop_hours('[{"weekday":2,"start":"09:00","end":"12:00"},{"weekday":2,"start":"11:00","end":"13:00"}]'::jsonb) $$, 'P0020', null, 'overlapping periods rejected');
+select throws_ok($$ select public.set_shop_hours('[{"weekday":2,"start":"09:00","end":"12:00"},{"weekday":2,"start":"11:00","end":"13:00"}]'::jsonb) $$, 'P0023', null, 'overlapping periods rejected');
 select is((select count(*)::int from public.shop_hours), 2, 'a rejected call leaves the previous hours untouched');
-select throws_ok($$ select public.set_shop_hours('[{"weekday":9,"start":"09:00","end":"12:00"}]'::jsonb) $$, 'P0020', null, 'weekday outside 1..7 rejected');
-select throws_ok($$ select public.set_shop_hours('[{"weekday":1,"start":"18:00","end":"09:00"}]'::jsonb) $$, 'P0020', null, 'end before start rejected');
+select throws_ok($$ select public.set_shop_hours('[{"weekday":9,"start":"09:00","end":"12:00"}]'::jsonb) $$, 'P0023', null, 'weekday outside 1..7 rejected');
+select throws_ok($$ select public.set_shop_hours('[{"weekday":1,"start":"18:00","end":"09:00"}]'::jsonb) $$, 'P0023', null, 'end before start rejected');
 select lives_ok($$ update public.shops set address = 'Rua A, 10', phone = '(11) 3000-0000', whatsapp = '(11) 99999-0000' where id = '<shop uuid>' $$, 'owner updates contact info');
 
 -- customer: reads, cannot write
@@ -458,7 +458,7 @@ begin
     raise exception using errcode = '42501', message = 'FORBIDDEN';
   end if;
   if jsonb_typeof(coalesce(p_periods, 'null'::jsonb)) <> 'array' then
-    raise exception using errcode = 'P0020', message = 'SHOP_HOURS_INVALID';
+    raise exception using errcode = 'P0023', message = 'SHOP_HOURS_INVALID';
   end if;
 
   delete from public.shop_hours where shop_id = target_shop;
@@ -468,7 +468,7 @@ begin
       values (target_shop, (item ->> 'weekday')::smallint, (item ->> 'start')::time, (item ->> 'end')::time);
     exception when check_violation or exclusion_violation or not_null_violation
       or invalid_text_representation or invalid_datetime_format or datetime_field_overflow then
-      raise exception using errcode = 'P0020', message = 'SHOP_HOURS_INVALID';
+      raise exception using errcode = 'P0023', message = 'SHOP_HOURS_INVALID';
     end;
   end loop;
 end;
@@ -477,7 +477,7 @@ $$;
 revoke all on function public.set_shop_hours(jsonb) from public, anon;
 grant execute on function public.set_shop_hours(jsonb) to authenticated;
 ```
-TS: in `domain-errors.ts` add `| "SHOP_HOURS_INVALID"` and `case "P0020": return new DomainError("SHOP_HOURS_INVALID", "Check the opening hours and breaks.");`. Locales `errors.codes.SHOP_HOURS_INVALID`: "Check the opening hours and breaks." / "Confira os horários e as pausas." / "Revisa los horarios y las pausas."
+TS: in `domain-errors.ts` add `| "SHOP_HOURS_INVALID"` and `case "P0023": return new DomainError("SHOP_HOURS_INVALID", "Check the opening hours and breaks.");`. Locales `errors.codes.SHOP_HOURS_INVALID`: "Check the opening hours and breaks." / "Confira os horários e as pausas." / "Revisa los horarios y las pausas."
 - [ ] **Step 4: Run** `npm run test:db` and `npm test -- error-message locale-parity` → PASS.
 - [ ] **Step 5: Commit** `feat(shop): add contact columns and shop_hours with owner-only set_shop_hours`
 

@@ -507,6 +507,7 @@ export const es: DeepStringRecord<typeof en> = {
       RECURRENCE_INVALID: "Elige una regla de recurrencia válida dentro de 90 días.",
       RECURRENCE_REQUEST_FAILED: "No se pudieron actualizar las citas recurrentes.",
       SCHEDULE_UNAVAILABLE: "Ese horario está fuera de la agenda de atención.",
+      SHOP_HOURS_INVALID: "Revisa los horarios y las pausas.",
       SERVICE_UNAVAILABLE: "Ese servicio ya no está disponible.",
       SLOT_UNAVAILABLE: "Ese horario ya no está disponible.",
     },
