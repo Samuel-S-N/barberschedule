@@ -159,6 +159,7 @@ export const en = {
     },
     settings: {
       language: "Language",
+      languageConfirm: "Confirm",
       languageDevice: "Follow device",
       languageNames: { en: "English", es: "Español", pt: "Português" },
       title: "Settings",

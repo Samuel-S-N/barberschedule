@@ -51,6 +51,7 @@ export default function CustomerLayout() {
       <Stack.Screen name="me/account" />
       <Stack.Screen name="me/security" />
       <Stack.Screen name="me/settings" />
+      <Stack.Screen name="me/language" />
       <Stack.Screen name="me/privacy" />
       <Stack.Screen name="me/about" />
     </Stack>

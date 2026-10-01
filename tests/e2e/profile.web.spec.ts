@@ -121,23 +121,52 @@ test("changing the e-mail asks for confirmation through a link", async ({ page }
   expect(payload).toMatchObject({ email: "new@example.com" });
 });
 
-test("the language can be chosen in Settings, survives a reload and can go back to the device language", async ({ page }) => {
+test("the language is chosen in Settings > Language and only applied after confirming", async ({ page }) => {
   await signInAsCustomer(page);
   await mockCustomerRest(page);
 
   await page.goto("/me/settings");
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByTestId("language-options")).toHaveCount(0);
+
+  await page.getByTestId("menu-language").click();
+  await expect(page).toHaveURL(/\/me\/language$/);
+  await expect(page.getByRole("heading", { name: "Language" })).toBeVisible();
   await expect(page.getByTestId("option-device")).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByTestId("language-confirm")).toBeDisabled();
 
   await page.getByTestId("option-es").click();
-  await expect(page.getByRole("heading", { name: "Configuración" })).toBeVisible();
   await expect(page.getByTestId("option-es")).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("heading", { name: "Language" })).toBeVisible();
+  await expect(page.getByTestId("language-confirm")).toBeEnabled();
+
+  await page.getByTestId("language-confirm").click();
+  await expect(page).toHaveURL(/\/me\/settings$/);
+  await expect(page.getByRole("heading", { name: "Configuración" })).toBeVisible();
 
   await page.reload();
   await expect(page.getByRole("heading", { name: "Configuración" })).toBeVisible();
+  await page.getByTestId("menu-language").click();
   await expect(page.getByTestId("option-es")).toHaveAttribute("aria-checked", "true");
 
   await page.getByTestId("option-device").click();
+  await page.getByTestId("language-confirm").click();
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+});
+
+test("leaving the language screen without confirming keeps the language", async ({ page }) => {
+  await signInAsCustomer(page);
+  await mockCustomerRest(page);
+
+  await page.goto("/me/settings");
+  await page.getByTestId("menu-language").click();
+  await page.getByTestId("option-pt").click();
+  // The Settings screen stays mounted under this one in the Stack, so take the back button of the top screen.
+  await page.getByTestId("back").last().click();
+
+  await expect(page).toHaveURL(/\/me\/settings$/);
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+
+  await page.getByTestId("menu-language").click();
   await expect(page.getByTestId("option-device")).toHaveAttribute("aria-checked", "true");
 });

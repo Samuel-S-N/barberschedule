@@ -158,6 +158,7 @@ export const pt: DeepStringRecord<typeof en> = {
     },
     settings: {
       language: "Idioma",
+      languageConfirm: "Confirmar",
       languageDevice: "Seguir o dispositivo",
       languageNames: { en: "English", es: "Español", pt: "Português" },
       title: "Configurações",
