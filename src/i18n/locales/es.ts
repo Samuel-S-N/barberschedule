@@ -562,6 +562,7 @@ export const es: DeepStringRecord<typeof en> = {
       BARBER_REQUEST_FAILED: "No se pudo completar la solicitud del barbero.",
       CUSTOMER_EMAIL_INVALID: "Ingresa un email válido o déjalo en blanco.",
       CUSTOMER_NAME_REQUIRED: "Ingresa el nombre del cliente.",
+      CUSTOMER_NOTE_INVALID: "La nota debe tener hasta 500 caracteres.",
       SERVICE_STANDARD_LOCKED: "Este servicio es estándar y no se puede desactivar.",
       COMPENSATION_INVALID: "Ingresa una comisión o alquiler de silla válidos.",
       EARNINGS_INVALID_RANGE: "Elige un período de hasta 92 días.",

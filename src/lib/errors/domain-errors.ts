@@ -29,7 +29,8 @@ export type DomainErrorCode =
   | "SHOP_HOURS_INVALID"
   | "CUSTOMER_NAME_REQUIRED"
   | "CUSTOMER_EMAIL_INVALID"
-  | "SERVICE_STANDARD_LOCKED";
+  | "SERVICE_STANDARD_LOCKED"
+  | "CUSTOMER_NOTE_INVALID";
 
 export class DomainError extends Error {
   constructor(
@@ -112,6 +113,8 @@ export function toDomainError(error: { code?: string; message?: string }): Domai
       return new DomainError("CUSTOMER_EMAIL_INVALID", "Enter a valid email or leave it blank.");
     case "P0026":
       return new DomainError("SERVICE_STANDARD_LOCKED", "This service is standard and cannot be turned off.");
+    case "P0028":
+      return new DomainError("CUSTOMER_NOTE_INVALID", "The note must have up to 500 characters.");
     default:
       return new DomainError("BOOKING_REQUEST_FAILED", "Unable to create the appointment.");
   }
