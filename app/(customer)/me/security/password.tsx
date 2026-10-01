@@ -1,7 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, View } from "react-native";
+import { View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { ScreenHeader } from "../../../../src/components/domain/ScreenHeader";
 import { Toast } from "../../../../src/components/domain/Toast";
@@ -44,8 +45,8 @@ export default function PasswordScreen() {
   const canChange = !change.isPending && Boolean(current) && Boolean(next) && validateNewPassword(next, confirm) === null;
 
   return (
-    <Screen className="flex-1 bg-canvas" keyboardAvoiding edges={["top", "left", "right"]}>
-      <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
+    <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
+      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("profile.security.passwordTitle")} />
@@ -61,7 +62,7 @@ export default function PasswordScreen() {
             <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
           </View>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 }

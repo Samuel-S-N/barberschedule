@@ -1,7 +1,8 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
@@ -40,8 +41,8 @@ export default function LoginScreen() {
   };
 
   return (
-    <Screen className="flex-1 bg-canvas" keyboardAvoiding>
-      <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
+    <Screen className="flex-1 bg-canvas">
+      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("auth.login.title")}</Text>
@@ -60,7 +61,7 @@ export default function LoginScreen() {
             <Button label={t("auth.login.createAccount")} onPress={() => router.push("/signup")} variant="outline" />
           </View>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 }

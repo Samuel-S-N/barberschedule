@@ -3,7 +3,8 @@ import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { Avatar } from "../../../src/components/domain/Avatar";
 import { ScreenHeader } from "../../../src/components/domain/ScreenHeader";
@@ -97,8 +98,8 @@ export default function AccountScreen() {
   });
 
   return (
-    <Screen className="flex-1 bg-canvas" keyboardAvoiding edges={["top", "left", "right"]}>
-      <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
+    <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
+      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("profile.account.title")} />
@@ -150,7 +151,7 @@ export default function AccountScreen() {
             <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
           </View>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 }

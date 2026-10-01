@@ -50,13 +50,4 @@ describe("Screen", () => {
     expect(style).toEqual(expect.objectContaining({ backgroundColor: "#fff", flex: 1 }));
     expect(view.getByText("content")).toBeTruthy();
   });
-
-  it("renders a KeyboardAvoidingView (which tracks layout) only when asked", async () => {
-    const plain = await renderScreen();
-    const avoiding = await renderScreen({ keyboardAvoiding: true });
-
-    expect(plain.view.getByTestId("screen").props.onLayout).toBeUndefined();
-    expect(avoiding.view.getByTestId("screen").props.onLayout).toEqual(expect.any(Function));
-    expect(avoiding.style).toEqual(expect.objectContaining({ paddingTop: 44 }));
-  });
 });

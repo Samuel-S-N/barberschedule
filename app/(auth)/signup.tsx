@@ -2,7 +2,8 @@ import { useRouter } from "expo-router";
 import { Check } from "lucide-react-native";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { EmptyState } from "../../src/components/domain/EmptyState";
 import { Toast } from "../../src/components/domain/Toast";
@@ -51,7 +52,7 @@ export default function SignupScreen() {
 
   if (confirmationSent) {
     return (
-      <Screen className="flex-1 bg-canvas" keyboardAvoiding>
+      <Screen className="flex-1 bg-canvas">
         <View className="flex-1 items-center justify-center gap-4 p-5">
           <EmptyState title={t("auth.signup.checkEmailTitle")} />
           <Text className="max-w-[420px] text-center text-base font-sans text-neutral-600">
@@ -64,8 +65,8 @@ export default function SignupScreen() {
   }
 
   return (
-    <Screen className="flex-1 bg-canvas" keyboardAvoiding>
-      <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
+    <Screen className="flex-1 bg-canvas">
+      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("auth.signup.title")}</Text>
@@ -95,7 +96,7 @@ export default function SignupScreen() {
             <Button label={t("auth.signup.haveAccount")} onPress={() => router.replace("/login")} variant="ghost" />
           </View>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 }

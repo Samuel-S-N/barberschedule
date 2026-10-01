@@ -12,6 +12,7 @@ import React, {
 
 import { AppState } from "react-native";
 import { I18nextProvider } from "react-i18next";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 
 import { getCurrentProfile } from "../features/auth/api";
 import { markRecovery } from "../features/auth/recovery";
@@ -145,7 +146,7 @@ export function AppProviders({ children }: PropsWithChildren) {
         <SessionContext.Provider
           value={{ isLoading: isLoading || !languageReady, profile, session, supabase }}
         >
-          {children}
+          <KeyboardProvider>{children}</KeyboardProvider>
         </SessionContext.Provider>
       </QueryClientProvider>
     </I18nextProvider>

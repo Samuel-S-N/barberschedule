@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import type { StyleProp, ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -11,7 +11,6 @@ export type ScreenProps = PropsWithChildren<{
   edges?: ScreenEdge[];
   className?: string;
   style?: StyleProp<ViewStyle>;
-  keyboardAvoiding?: boolean;
   testID?: string;
 }>;
 
@@ -25,7 +24,7 @@ function basePadding(style: ViewStyle, side: "Top" | "Bottom" | "Left" | "Right"
 // React Native's own SafeAreaView is deprecated and does nothing on Android (edge-to-edge),
 // so screens pad by the real device insets themselves. The inset is added to any padding the
 // caller already set, and a plain View keeps NativeWind className support.
-export function Screen({ edges = ALL_EDGES, className, style, children, keyboardAvoiding = false, testID }: ScreenProps) {
+export function Screen({ edges = ALL_EDGES, className, style, children, testID }: ScreenProps) {
   const insets = useSafeAreaInsets();
   const flat = StyleSheet.flatten(style) ?? {};
   const inset: ViewStyle = {};
@@ -34,14 +33,6 @@ export function Screen({ edges = ALL_EDGES, className, style, children, keyboard
   if (edges.includes("bottom")) inset.paddingBottom = basePadding(flat, "Bottom") + insets.bottom;
   if (edges.includes("left")) inset.paddingLeft = basePadding(flat, "Left") + insets.left;
   if (edges.includes("right")) inset.paddingRight = basePadding(flat, "Right") + insets.right;
-
-  if (keyboardAvoiding) {
-    return (
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className={className} style={[style, inset]} testID={testID}>
-        {children}
-      </KeyboardAvoidingView>
-    );
-  }
 
   return (
     <View className={className} style={[style, inset]} testID={testID}>
