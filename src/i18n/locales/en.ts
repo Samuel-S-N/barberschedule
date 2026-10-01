@@ -342,6 +342,9 @@ export const en = {
       updateError: "Unable to update customer.",
     },
     services: {
+      makeStandard: "Make standard for all barbers",
+      removeStandard: "Remove standard",
+      standardBadge: "Standard",
       add: "Add service",
       descriptionLabel: "Description (optional)",
       durationLabel: "Duration in minutes",

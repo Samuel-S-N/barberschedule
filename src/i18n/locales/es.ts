@@ -341,6 +341,9 @@ export const es: DeepStringRecord<typeof en> = {
       updateError: "No se pudo actualizar el cliente.",
     },
     services: {
+      makeStandard: "Hacer estándar para todos los barberos",
+      removeStandard: "Quitar estándar",
+      standardBadge: "Estándar",
       add: "Añadir servicio",
       descriptionLabel: "Descripción (opcional)",
       durationLabel: "Duración en minutos",
