@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -15,7 +15,7 @@ import { Button } from "../../../src/components/ui/Button";
 import { groupByLocalDate, markAppointmentDays, stripLength, visibleAppointments } from "../../../src/features/appointments/agenda-view";
 import { buildAppointmentIcs } from "../../../src/features/appointments/ics";
 import { saveCalendarFile } from "../../../src/features/appointments/save-calendar-file";
-import { cancelAppointment, isLifecycleWindowOpen, listMyAppointments } from "../../../src/features/appointments/lifecycle";
+import { cancelAppointment, HISTORY_PAGE_SIZE, isLifecycleWindowOpen, listMyAppointments } from "../../../src/features/appointments/lifecycle";
 import type { Appointment } from "../../../src/features/appointments/types";
 import { useAppointmentCards } from "../../../src/features/appointments/use-appointment-cards";
 import { useShopInfo } from "../../../src/features/shops/use-shop-info";
@@ -41,10 +41,16 @@ export default function AgendaScreen() {
   const [pickedDate, setPickedDate] = useState<string | null>(null);
 
   const upcoming = useQuery({ queryFn: () => listMyAppointments(supabase), queryKey: ["my-appointments", "upcoming"] });
-  const history = useQuery({ queryFn: () => listMyAppointments(supabase, true), queryKey: ["my-appointments", "history"] });
+  const history = useInfiniteQuery({
+    getNextPageParam: (last: Appointment[], all: Appointment[][]) => (last.length === HISTORY_PAGE_SIZE ? all.length * HISTORY_PAGE_SIZE : undefined),
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) => listMyAppointments(supabase, true, new Date(), { from: pageParam, to: pageParam + HISTORY_PAGE_SIZE - 1 }),
+    queryKey: ["my-appointments", "history"],
+  });
+  const historyItems = useMemo(() => history.data?.pages.flat() ?? [], [history.data]);
   const { shop } = useShopInfo();
   const refresh = useRefresh([upcoming.refetch, history.refetch]);
-  const toCardProps = useAppointmentCards([...(upcoming.data ?? []), ...(history.data ?? [])]);
+  const toCardProps = useAppointmentCards([...(upcoming.data ?? []), ...historyItems]);
 
   const grouped = useMemo(() => groupByLocalDate(upcoming.data ?? []), [upcoming.data]);
   const days = useMemo(
@@ -214,12 +220,21 @@ export default function AgendaScreen() {
             {!loading && !failed && segment === "upcoming" && shown.length === 0 ? (
               <EmptyState title={t(pickedDate ? "appointments.emptyDay" : "appointments.emptyUpcoming")} />
             ) : null}
-            {!loading && !failed && segment === "history" && (history.data?.length ?? 0) === 0 ? (
+            {!loading && !failed && segment === "history" && historyItems.length === 0 ? (
               <EmptyState title={t("appointments.emptyHistory")} />
             ) : null}
             {segment === "upcoming"
               ? shown.map((appointment) => renderAppointment(appointment, true))
-              : (history.data ?? []).map((appointment) => renderAppointment(appointment, false))}
+              : historyItems.map((appointment) => renderAppointment(appointment, false))}
+            {segment === "history" && history.hasNextPage ? (
+              <Button
+                disabled={history.isFetchingNextPage}
+                label={t("appointments.loadMore")}
+                onPress={() => void history.fetchNextPage()}
+                testID="agenda-load-more"
+                variant="outline"
+              />
+            ) : null}
           </View>
           <Toast
             message={feedback?.message ?? ""}
