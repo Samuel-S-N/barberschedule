@@ -1,7 +1,8 @@
 import { Link } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { errorMessage } from "../../src/i18n/errors";
 import { getAvailableSlots } from "../../src/features/availability/api";
@@ -123,7 +124,7 @@ export default function OwnerAppointmentFormScreen() {
 
   return (
     <Screen style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>{t("owner.appointmentForm.title")}</Text>
         <Link href="/agenda" style={styles.link}>{t("owner.appointmentForm.backToAgenda")}</Link>
         <Text style={styles.sectionTitle}>{t("common.customer")}</Text>
@@ -137,7 +138,7 @@ export default function OwnerAppointmentFormScreen() {
         {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}
         {isLoading || isSaving ? <ActivityIndicator /> : null}
         <Button disabled={!selectedBarberServiceId || !selectedCustomerId || !selectedStartsAt || isSaving} onPress={() => void createAppointment()} title={t("owner.appointmentForm.create")} />
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 }

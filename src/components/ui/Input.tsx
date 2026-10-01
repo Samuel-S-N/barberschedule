@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { createRef, useRef, useState } from "react";
+import type { Ref, RefObject } from "react";
 import { Text, TextInput, View } from "react-native";
 import type { TextInputProps } from "react-native";
 
@@ -8,6 +9,8 @@ type PassThroughProps = Pick<
 >;
 
 export type InputProps = PassThroughProps & {
+  inputRef?: Ref<TextInput>;
+  next?: RefObject<TextInput | null>;
   label: string;
   value: string;
   onChangeText: (text: string) => void;
@@ -27,6 +30,10 @@ export function Input({
   secureTextEntry,
   multiline = false,
   testID,
+  inputRef,
+  next,
+  onSubmitEditing,
+  returnKeyType,
   ...passThrough
 }: InputProps) {
   const [focused, setFocused] = useState(false);
@@ -46,6 +53,10 @@ export function Input({
         className={`${heightClassName} rounded-xl px-4 font-sans text-base text-ink bg-surface ${borderClassName}`}
         {...passThrough}
         multiline={multiline}
+        onSubmitEditing={next ? () => next.current?.focus() : onSubmitEditing}
+        ref={inputRef}
+        returnKeyType={next ? "next" : returnKeyType}
+        submitBehavior={next ? "submit" : undefined}
         onBlur={() => setFocused(false)}
         onChangeText={onChangeText}
         onFocus={() => setFocused(true)}
@@ -58,4 +69,13 @@ export function Input({
       {error ? <Text className="text-sm font-sans text-danger-500">{error}</Text> : null}
     </View>
   );
+}
+
+// Chains single-line fields so the keyboard's next key walks down the form: spread field(i) on the i-th Input.
+export function useFieldChain(count: number) {
+  const refs = useRef<RefObject<TextInput | null>[]>([]);
+
+  while (refs.current.length < count) refs.current.push(createRef<TextInput>());
+
+  return (index: number) => ({ inputRef: refs.current[index], next: refs.current[index + 1] });
 }

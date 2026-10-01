@@ -8,7 +8,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { EmptyState } from "../../src/components/domain/EmptyState";
 import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
-import { Input } from "../../src/components/ui/Input";
+import { Input, useFieldChain } from "../../src/components/ui/Input";
 import { Screen } from "../../src/components/ui/Screen";
 import { signUpCustomer } from "../../src/features/auth/api";
 import { parseSignupInput } from "../../src/features/auth/validation";
@@ -20,6 +20,7 @@ import { useSupabaseSession } from "../../src/providers/AppProviders";
 export default function SignupScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const field = useFieldChain(6);
   const { supabase } = useSupabaseSession();
   const [form, setForm] = useState({ confirmPassword: "", email: "", fullName: "", nickname: "", password: "", phone: "" });
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -70,12 +71,12 @@ export default function SignupScreen() {
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("auth.signup.title")}</Text>
-            <Input autoCapitalize="words" autoComplete="name" error={fieldError("fullName")} label={t("common.fullName")} onChangeText={set("fullName")} testID="signup-name" value={form.fullName} />
-            <Input autoCapitalize="words" error={fieldError("nickname")} label={t("common.nicknameOptional")} onChangeText={set("nickname")} testID="signup-nickname" value={form.nickname} />
-            <Input autoCapitalize="none" autoComplete="email" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" error={fieldError("email")} label={t("common.email")} onChangeText={set("email")} testID="signup-email" value={form.email} />
-            <Input autoComplete="tel" keyboardType="phone-pad" error={fieldError("phone")} label={t("common.phoneOptional")} onChangeText={(value) => set("phone")(formatPhone(value))} testID="signup-phone" value={form.phone} />
-            <Input autoComplete="new-password" error={fieldError("password")} label={t("common.password")} onChangeText={set("password")} secureTextEntry testID="signup-password" textContentType="newPassword" value={form.password} />
-            <Input autoComplete="new-password" error={fieldError("confirmPassword")} label={t("auth.signup.confirmPassword")} onChangeText={set("confirmPassword")} secureTextEntry onSubmitEditing={() => !isSubmitting && void submit()} returnKeyType="go" testID="signup-confirm-password" textContentType="newPassword" value={form.confirmPassword} />
+            <Input {...field(0)} autoCapitalize="words" autoComplete="name" error={fieldError("fullName")} label={t("common.fullName")} onChangeText={set("fullName")} testID="signup-name" value={form.fullName} />
+            <Input {...field(1)} autoCapitalize="words" error={fieldError("nickname")} label={t("common.nicknameOptional")} onChangeText={set("nickname")} testID="signup-nickname" value={form.nickname} />
+            <Input {...field(2)} autoCapitalize="none" autoComplete="email" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" error={fieldError("email")} label={t("common.email")} onChangeText={set("email")} testID="signup-email" value={form.email} />
+            <Input {...field(3)} autoComplete="tel" keyboardType="phone-pad" error={fieldError("phone")} label={t("common.phoneOptional")} onChangeText={(value) => set("phone")(formatPhone(value))} testID="signup-phone" value={form.phone} />
+            <Input {...field(4)} autoComplete="new-password" error={fieldError("password")} label={t("common.password")} onChangeText={set("password")} secureTextEntry testID="signup-password" textContentType="newPassword" value={form.password} />
+            <Input {...field(5)} autoComplete="new-password" error={fieldError("confirmPassword")} label={t("auth.signup.confirmPassword")} onChangeText={set("confirmPassword")} secureTextEntry onSubmitEditing={() => !isSubmitting && void submit()} returnKeyType="go" testID="signup-confirm-password" textContentType="newPassword" value={form.confirmPassword} />
             <Pressable
               accessibilityLabel={t("auth.signup.acceptTerms")}
               accessibilityRole="checkbox"

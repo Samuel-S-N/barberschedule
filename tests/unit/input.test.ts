@@ -1,7 +1,7 @@
 import React from "react";
 import { fireEvent, render } from "@testing-library/react-native";
 
-import { Input } from "../../src/components/ui/Input";
+import { Input, useFieldChain } from "../../src/components/ui/Input";
 
 describe("Input", () => {
   it("renders the label and current value", async () => {
@@ -86,4 +86,26 @@ describe("Input", () => {
     await fireEvent(input, "submitEditing");
     expect(onSubmitEditing).toHaveBeenCalled();
   });
+  it("moves focus to the next field when the keyboard's next key is pressed", async () => {
+    let second: ReturnType<ReturnType<typeof useFieldChain>> | undefined;
+    function Form() {
+      const field = useFieldChain(2);
+
+      second = field(1);
+
+      return React.createElement(
+        React.Fragment, null,
+        React.createElement(Input, { ...field(0), label: "A", onChangeText: jest.fn(), testID: "a", value: "" }),
+        React.createElement(Input, { ...field(1), label: "B", onChangeText: jest.fn(), testID: "b", value: "" }),
+      );
+    }
+    const view = await render(React.createElement(Form));
+    const focus = jest.spyOn(second!.inputRef.current!, "focus");
+
+    expect(view.getByTestId("a").props.returnKeyType).toBe("next");
+    expect(view.getByTestId("b").props.returnKeyType).toBeUndefined();
+    await fireEvent(view.getByTestId("a"), "submitEditing");
+    expect(focus).toHaveBeenCalled();
+  });
+
 });

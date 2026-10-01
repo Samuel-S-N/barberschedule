@@ -8,7 +8,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SkeletonBlock } from "../src/components/domain/SkeletonLoader";
 import { Toast } from "../src/components/domain/Toast";
 import { Button } from "../src/components/ui/Button";
-import { Input } from "../src/components/ui/Input";
+import { Input, useFieldChain } from "../src/components/ui/Input";
 import { Screen } from "../src/components/ui/Screen";
 import { validateNewPassword } from "../src/features/account/security";
 import { completePasswordReset, startRecoverySession } from "../src/features/auth/api";
@@ -19,6 +19,7 @@ import { useSupabaseSession } from "../src/providers/AppProviders";
 export default function ResetPasswordScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const field = useFieldChain(2);
   const { isLoading, session, supabase } = useSupabaseSession();
   const [linkFailed, setLinkFailed] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
@@ -96,8 +97,8 @@ export default function ResetPasswordScreen() {
               <>
                 <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("auth.reset.setTitle")}</Text>
                 <Text className="text-base font-sans text-neutral-600">{t("auth.reset.setSubtitle")}</Text>
-                <Input autoComplete="new-password" label={t("auth.reset.newPassword")} onChangeText={setNext} secureTextEntry testID="reset-new" textContentType="newPassword" value={next} />
-                <Input autoComplete="new-password" error={problemText} label={t("auth.reset.confirm")} onChangeText={setConfirm} secureTextEntry onSubmitEditing={() => canSave && void save()} returnKeyType="go" testID="reset-confirm" textContentType="newPassword" value={confirm} />
+                <Input {...field(0)} autoComplete="new-password" label={t("auth.reset.newPassword")} onChangeText={setNext} secureTextEntry testID="reset-new" textContentType="newPassword" value={next} />
+                <Input {...field(1)} autoComplete="new-password" error={problemText} label={t("auth.reset.confirm")} onChangeText={setConfirm} secureTextEntry onSubmitEditing={() => canSave && void save()} returnKeyType="go" testID="reset-confirm" textContentType="newPassword" value={confirm} />
                 <Toast message={error ?? ""} onDismiss={() => setError(null)} variant="error" visible={error !== null} />
                 <Button
                   disabled={!canSave}

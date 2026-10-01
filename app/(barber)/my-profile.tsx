@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { formatPriceBRL } from "../../src/components/domain/ServiceCard";
 import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
@@ -51,7 +52,7 @@ export default function BarberProfileScreen() {
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
-      <ScrollView className="flex-1">
+      <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled" className="flex-1">
         <View className="items-center gap-4 p-5">
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
             {barber.data?.name ?? t("barber.profile.title")}
@@ -108,7 +109,7 @@ export default function BarberProfileScreen() {
           </View>
           <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 }

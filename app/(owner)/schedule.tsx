@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { errorMessage } from "../../src/i18n/errors";
 import {
@@ -194,7 +195,7 @@ export default function OwnerScheduleScreen() {
 
   return (
     <Screen style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>
           {t("owner.schedule.title")}
         </Text>
@@ -326,7 +327,7 @@ export default function OwnerScheduleScreen() {
             ))}
           </>
         ) : null}
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 }

@@ -10,7 +10,7 @@ import { Avatar } from "../../../src/components/domain/Avatar";
 import { ScreenHeader } from "../../../src/components/domain/ScreenHeader";
 import { Toast } from "../../../src/components/domain/Toast";
 import { Button } from "../../../src/components/ui/Button";
-import { Input } from "../../../src/components/ui/Input";
+import { Input, useFieldChain } from "../../../src/components/ui/Input";
 import { Screen } from "../../../src/components/ui/Screen";
 import { changeEmail, updateMyProfile, uploadMyAvatar } from "../../../src/features/account/api";
 import { base64ToArrayBuffer, validateAvatar } from "../../../src/features/account/avatar";
@@ -26,6 +26,7 @@ type Feedback = { message: string; variant: "error" | "success" };
 
 export default function AccountScreen() {
   const { t } = useTranslation();
+  const field = useFieldChain(3);
   const back = useBack();
   const queryClient = useQueryClient();
   const { session, supabase } = useSupabaseSession();
@@ -115,9 +116,9 @@ export default function AccountScreen() {
               <Button label={t("profile.account.changePhoto")} onPress={() => photo.mutate()} size="sm" variant="ghost" />
             </View>
 
-            <Input autoCapitalize="words" autoComplete="name" label={t("common.fullName")} onChangeText={setFullName} testID="profile-name" value={fullName} />
-            <Input autoCapitalize="words" label={t("common.nicknameOptional")} onChangeText={setNickname} testID="profile-nickname" value={nickname} />
-            <Input autoComplete="tel" keyboardType="phone-pad" label={t("common.phoneOptional")} onChangeText={(value) => setPhone(formatPhone(value))} onSubmitEditing={() => !save.isPending && customer && save.mutate()} returnKeyType="done" testID="profile-phone" value={phone} />
+            <Input {...field(0)} autoCapitalize="words" autoComplete="name" label={t("common.fullName")} onChangeText={setFullName} testID="profile-name" value={fullName} />
+            <Input {...field(1)} autoCapitalize="words" label={t("common.nicknameOptional")} onChangeText={setNickname} testID="profile-nickname" value={nickname} />
+            <Input {...field(2)} autoComplete="tel" keyboardType="phone-pad" label={t("common.phoneOptional")} onChangeText={(value) => setPhone(formatPhone(value))} onSubmitEditing={() => !save.isPending && customer && save.mutate()} returnKeyType="done" testID="profile-phone" value={phone} />
             <Button disabled={save.isPending || !customer} label={t("profile.save")} onPress={() => save.mutate()} testID="profile-save" />
 
             <Text className="pt-2 text-sm font-sans-medium text-neutral-600">{t("profile.account.emailLabel")}</Text>

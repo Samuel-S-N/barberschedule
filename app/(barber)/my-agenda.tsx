@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { CalendarStrip } from "../../src/components/domain/CalendarStrip";
 import { EmptyState } from "../../src/components/domain/EmptyState";
@@ -11,7 +12,7 @@ import { StatusBadge } from "../../src/components/domain/StatusBadge";
 import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
-import { Input } from "../../src/components/ui/Input";
+import { Input, useFieldChain } from "../../src/components/ui/Input";
 import { Screen } from "../../src/components/ui/Screen";
 import { listMyBarberAgenda, setMyAppointmentStatus, type BarberAgendaAppointment, type BarberAppointmentStatus } from "../../src/features/appointments/barber-agenda";
 import { groupByLocalDate, markAppointmentDays, pendingClosure } from "../../src/features/appointments/agenda-view";
@@ -28,6 +29,7 @@ const PENDING_DAYS_BACK = 30;
 
 export default function BarberAgendaScreen() {
   const { t } = useTranslation();
+  const field = useFieldChain(2);
   const language = useLanguage();
   const queryClient = useQueryClient();
   const { profile, supabase } = useSupabaseSession();
@@ -163,7 +165,7 @@ export default function BarberAgendaScreen() {
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
-      <ScrollView className="flex-1">
+      <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled" className="flex-1">
         <View className="items-center gap-4 p-5">
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
             {t("barber.agenda.title")}
@@ -211,8 +213,8 @@ export default function BarberAgendaScreen() {
                 </View>
               </Card>
             ))}
-            <Input label={t("common.startTime")} onChangeText={setBlockStart} placeholder={"12:00"} testID="barber-block-start" value={blockStart} />
-            <Input label={t("common.endTime")} onChangeText={setBlockEnd} placeholder={"13:00"} testID="barber-block-end" value={blockEnd} />
+            <Input {...field(0)} label={t("common.startTime")} onChangeText={setBlockStart} placeholder={"12:00"} testID="barber-block-start" value={blockStart} />
+            <Input {...field(1)} label={t("common.endTime")} onChangeText={setBlockEnd} placeholder={"13:00"} testID="barber-block-end" value={blockEnd} />
             <Button
               disabled={busy || !barber.data}
               label={blockStart.trim() || blockEnd.trim() ? t("barber.agenda.addBlock") : t("barber.agenda.blockWholeDay")}
@@ -223,7 +225,7 @@ export default function BarberAgendaScreen() {
           </View>
           <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 }
