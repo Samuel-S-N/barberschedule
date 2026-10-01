@@ -1,23 +1,24 @@
 import Constants from "expo-constants";
-import * as Notifications from "expo-notifications";
 import { useEffect } from "react";
 import { Platform } from "react-native";
 
 import { useSupabaseSession } from "../../providers/AppProviders";
 import { saveExpoPushToken } from "./register-token";
 
-// Show pushes that arrive while the app is open, without sound or badge.
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
-
 export async function registerPushToken(supabase: Parameters<typeof saveExpoPushToken>[0]) {
   if (Platform.OS === "web") return null;
+  // Loaded lazily: on web the module only logs a "not supported" warning at import time.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const Notifications = require("expo-notifications") as typeof import("expo-notifications");
+  // Show pushes that arrive while the app is open, without sound or badge.
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("default", {
       importance: Notifications.AndroidImportance.DEFAULT,
