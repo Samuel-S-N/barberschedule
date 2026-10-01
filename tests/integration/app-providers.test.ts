@@ -12,6 +12,7 @@ jest.mock("../../src/lib/supabase/client", () => ({
 }));
 
 import { getCurrentProfile } from "../../src/features/auth/api";
+import { clearRecovery, hasRecovery } from "../../src/features/auth/recovery";
 import { useSupabaseSession, AppProviders } from "../../src/providers/AppProviders";
 import { getSupabaseBrowserClient } from "../../src/lib/supabase/client";
 
@@ -93,6 +94,22 @@ describe("AppProviders session sync", () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  it("records a PASSWORD_RECOVERY event as proof of a recovery session", async () => {
+    clearRecovery();
+    const supabase = createSupabaseStub(null);
+
+    mockedGetSupabaseBrowserClient.mockReturnValue(supabase.client as never);
+    mockedGetCurrentProfile.mockResolvedValue(null as never);
+
+    await render(React.createElement(AppProviders, null, React.createElement(SessionProbe)));
+
+    await act(async () => {
+      supabase.emit(createSession("user-1"), "PASSWORD_RECOVERY");
+    });
+
+    expect(hasRecovery()).toBe(true);
   });
 
   it("clears stale profile state and ignores an older async profile read", async () => {

@@ -14,6 +14,7 @@ import { AppState } from "react-native";
 import { I18nextProvider } from "react-i18next";
 
 import { getCurrentProfile } from "../features/auth/api";
+import { markRecovery } from "../features/auth/recovery";
 import i18n, { loadLanguagePreference, syncLanguage } from "../i18n";
 import type { Profile } from "../features/auth/types";
 import { getSupabaseBrowserClient } from "../lib/supabase/client";
@@ -83,6 +84,8 @@ export function AppProviders({ children }: PropsWithChildren) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event === "PASSWORD_RECOVERY") markRecovery();
+
       // The same user, refreshed or edited (password/e-mail change): keep the session current without the
       // loading gate, which would unmount the navigator and send the user back to the first screen.
       if ((event === "USER_UPDATED" || event === "TOKEN_REFRESHED") && nextSession) {

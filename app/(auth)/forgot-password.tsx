@@ -1,3 +1,4 @@
+import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -24,7 +25,7 @@ export default function ForgotPasswordScreen() {
     setIsSubmitting(true);
     setFeedback(null);
     try {
-      await requestPasswordReset(supabase, email.trim());
+      await requestPasswordReset(supabase, email.trim(), Linking.createURL("/reset-password"));
       setFeedback({ message: t("auth.reset.sent"), variant: "success" });
     } catch (caught) {
       setFeedback({ message: errorMessage(caught, t as never, t("auth.reset.error")), variant: "error" });
