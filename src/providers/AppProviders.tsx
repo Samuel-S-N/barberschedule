@@ -14,7 +14,7 @@ import { AppState } from "react-native";
 import { I18nextProvider } from "react-i18next";
 
 import { getCurrentProfile } from "../features/auth/api";
-import i18n, { syncLanguage } from "../i18n";
+import i18n, { loadLanguagePreference, syncLanguage } from "../i18n";
 import type { Profile } from "../features/auth/types";
 import { getSupabaseBrowserClient } from "../lib/supabase/client";
 
@@ -31,6 +31,7 @@ export function AppProviders({ children }: PropsWithChildren) {
   const queryClient = useMemo(() => new QueryClient(), []);
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [isLoading, setIsLoading] = useState(true);
+  const [languageReady, setLanguageReady] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const syncSequence = useRef(0);
@@ -98,6 +99,21 @@ export function AppProviders({ children }: PropsWithChildren) {
     };
   }, [supabase]);
 
+  // The saved language is applied before the first screen, so the app never flashes the device language.
+  useEffect(() => {
+    let active = true;
+
+    loadLanguagePreference()
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setLanguageReady(true);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") {
@@ -112,7 +128,7 @@ export function AppProviders({ children }: PropsWithChildren) {
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={queryClient}>
         <SessionContext.Provider
-          value={{ isLoading, profile, session, supabase }}
+          value={{ isLoading: isLoading || !languageReady, profile, session, supabase }}
         >
           {children}
         </SessionContext.Provider>
