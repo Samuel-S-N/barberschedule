@@ -54,6 +54,33 @@ test("the agenda marks the appointment day and lets a customer cancel with confi
   expect(cancelPayload).toEqual({ appointment_id: "appointment-upcoming" });
 });
 
+test("agenda lists all upcoming appointments and the date strip filters them", async ({ page }) => {
+  await signInAsCustomer(page);
+  await mockCustomerRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/appointments")) {
+      await json(route, isHistoryQuery(url) ? [] : [appointmentRow()]);
+      return true;
+    }
+  });
+
+  await page.goto("/appointments");
+  const card = page.getByTestId("appointment-card-appointment-upcoming");
+  await expect(card).toBeVisible();
+  await expect(page.getByTestId("agenda-show-all")).toHaveCount(0);
+
+  const dot = page.locator(`[data-testid^="calendar-strip-day-"][data-testid$="-dot"]`).first();
+  const dayTestId = ((await dot.getAttribute("data-testid")) ?? "").replace(/-dot$/, "");
+  await page.getByTestId(dayTestId).click();
+  await expect(card).toBeVisible();
+  await expect(page.getByTestId("agenda-show-all")).toBeVisible();
+
+  await page.locator(`[data-testid^="calendar-strip-day-"]:not([data-testid="${dayTestId}"]):not([data-testid$="-dot"])`).last().click();
+  await expect(card).toHaveCount(0);
+
+  await page.getByTestId("agenda-show-all").click();
+  await expect(card).toBeVisible();
+});
+
 test("changes are disabled with an explanation inside the 90-minute cutoff", async ({ page }) => {
   const soon = new Date(Date.now() + 30 * 60 * 1000);
   const soonRow = appointmentRow({ ends_at: soon.toISOString(), occupied_until: soon.toISOString(), starts_at: soon.toISOString() });

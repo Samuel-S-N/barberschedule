@@ -10,7 +10,7 @@ import { EmptyState } from "../../../src/components/domain/EmptyState";
 import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
 import { Toast } from "../../../src/components/domain/Toast";
 import { Button } from "../../../src/components/ui/Button";
-import { groupByLocalDate, markAppointmentDays, pickInitialDate } from "../../../src/features/appointments/agenda-view";
+import { groupByLocalDate, markAppointmentDays, visibleAppointments } from "../../../src/features/appointments/agenda-view";
 import { cancelAppointment, isLifecycleWindowOpen, listMyAppointments } from "../../../src/features/appointments/lifecycle";
 import type { Appointment } from "../../../src/features/appointments/types";
 import { useAppointmentCards } from "../../../src/features/appointments/use-appointment-cards";
@@ -43,8 +43,8 @@ export default function AgendaScreen() {
     () => markAppointmentDays(buildCalendarStripDays(new Date(), DAYS_AHEAD, language), grouped),
     [grouped, language],
   );
-  const selectedDate = pickedDate ?? pickInitialDate(days, grouped);
-  const dayAppointments = grouped.get(selectedDate) ?? [];
+  const shown = visibleAppointments(grouped, pickedDate);
+  const selectDate = (date: string) => setPickedDate((current) => (current === date ? null : date));
 
   const cancel = useMutation({
     mutationFn: (appointmentId: string) => cancelAppointment(supabase, appointmentId),
@@ -135,20 +135,31 @@ export default function AgendaScreen() {
           </View>
           {segment === "upcoming" ? (
             <View className="w-full">
-              <CalendarStrip days={days} onSelectDate={setPickedDate} selectedDate={selectedDate} />
+              <CalendarStrip days={days} onSelectDate={selectDate} selectedDate={pickedDate ?? ""} />
+              {pickedDate ? (
+                <View className="mt-2 w-full max-w-[420px] flex-row self-center">
+                  <Button
+                    label={t("appointments.showAll")}
+                    onPress={() => setPickedDate(null)}
+                    size="sm"
+                    testID="agenda-show-all"
+                    variant="outline"
+                  />
+                </View>
+              ) : null}
             </View>
           ) : null}
           <View className="w-full max-w-[420px] gap-3">
             {loading ? <SkeletonBlock height={120} width={320} /> : null}
             {failed ? <Text className="text-sm font-sans text-danger-500">{t("appointments.loadError")}</Text> : null}
-            {!loading && !failed && segment === "upcoming" && dayAppointments.length === 0 ? (
-              <EmptyState title={t("appointments.emptyDay")} />
+            {!loading && !failed && segment === "upcoming" && shown.length === 0 ? (
+              <EmptyState title={t(pickedDate ? "appointments.emptyDay" : "appointments.emptyUpcoming")} />
             ) : null}
             {!loading && !failed && segment === "history" && (history.data?.length ?? 0) === 0 ? (
               <EmptyState title={t("appointments.emptyHistory")} />
             ) : null}
             {segment === "upcoming"
-              ? dayAppointments.map((appointment) => renderAppointment(appointment, true))
+              ? shown.map((appointment) => renderAppointment(appointment, true))
               : (history.data ?? []).map((appointment) => renderAppointment(appointment, false))}
           </View>
           <Toast
