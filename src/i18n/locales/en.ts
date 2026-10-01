@@ -203,6 +203,7 @@ export const en = {
     title: "Profile",
     yourData: "Your data",
   },
+  shop: { call: "Call", contactToChange: "To change this appointment, contact the shop.", whatsapp: "WhatsApp" },
   layout: { bootstrapError: "Unable to set up your account." },
   legal: {
     sections: {

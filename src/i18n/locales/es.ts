@@ -202,6 +202,7 @@ export const es: DeepStringRecord<typeof en> = {
     title: "Perfil",
     yourData: "Tus datos",
   },
+  shop: { call: "Llamar", contactToChange: "Para cambiar esta cita, contacta a la barbería.", whatsapp: "WhatsApp" },
   layout: { bootstrapError: "No se pudo configurar tu cuenta." },
   legal: {
     sections: {

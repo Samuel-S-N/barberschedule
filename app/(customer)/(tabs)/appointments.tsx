@@ -9,12 +9,14 @@ import { CalendarStrip } from "../../../src/components/domain/CalendarStrip";
 import { EmptyState } from "../../../src/components/domain/EmptyState";
 import { ErrorRetry } from "../../../src/components/domain/ErrorRetry";
 import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
+import { ShopContactButtons } from "../../../src/components/domain/ShopInfoCard";
 import { Toast } from "../../../src/components/domain/Toast";
 import { Button } from "../../../src/components/ui/Button";
 import { groupByLocalDate, markAppointmentDays, visibleAppointments } from "../../../src/features/appointments/agenda-view";
 import { cancelAppointment, isLifecycleWindowOpen, listMyAppointments } from "../../../src/features/appointments/lifecycle";
 import type { Appointment } from "../../../src/features/appointments/types";
 import { useAppointmentCards } from "../../../src/features/appointments/use-appointment-cards";
+import { useShopInfo } from "../../../src/features/shops/use-shop-info";
 import { errorMessage } from "../../../src/i18n/errors";
 import { useLanguage } from "../../../src/i18n/use-language";
 import { buildCalendarStripDays } from "../../../src/lib/dates/calendar-strip-days";
@@ -38,6 +40,7 @@ export default function AgendaScreen() {
 
   const upcoming = useQuery({ queryFn: () => listMyAppointments(supabase), queryKey: ["my-appointments", "upcoming"] });
   const history = useQuery({ queryFn: () => listMyAppointments(supabase, true), queryKey: ["my-appointments", "history"] });
+  const { shop } = useShopInfo();
   const refresh = useRefresh([upcoming.refetch, history.refetch]);
   const toCardProps = useAppointmentCards([...(upcoming.data ?? []), ...(history.data ?? [])]);
 
@@ -73,7 +76,13 @@ export default function AgendaScreen() {
         {withActions && selectedId === appointment.id ? (
           <View className="gap-2 px-1">
             {!open ? (
-              <Text className="text-sm font-sans text-neutral-600">{t("appointments.locked")}</Text>
+              <View className="gap-2">
+                <Text className="text-sm font-sans text-neutral-600">{t("appointments.locked")}</Text>
+                {shop?.phone || shop?.whatsapp ? (
+                  <Text className="text-sm font-sans text-neutral-600">{t("shop.contactToChange")}</Text>
+                ) : null}
+                {shop ? <ShopContactButtons phone={shop.phone} whatsapp={shop.whatsapp} /> : null}
+              </View>
             ) : null}
             {confirmingId === appointment.id ? (
               <>

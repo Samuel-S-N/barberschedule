@@ -8,11 +8,13 @@ import { AppointmentCard } from "../../../src/components/domain/AppointmentCard"
 import { EmptyState } from "../../../src/components/domain/EmptyState";
 import { ErrorRetry } from "../../../src/components/domain/ErrorRetry";
 import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
+import { ShopInfoCard } from "../../../src/components/domain/ShopInfoCard";
 import { Toast } from "../../../src/components/domain/Toast";
 import { Button } from "../../../src/components/ui/Button";
 import { listMyAppointments } from "../../../src/features/appointments/lifecycle";
 import { useAppointmentCards } from "../../../src/features/appointments/use-appointment-cards";
 import { useMyProfile } from "../../../src/features/account/use-my-profile";
+import { useShopInfo } from "../../../src/features/shops/use-shop-info";
 import { listMyCustomers } from "../../../src/features/customers/api";
 import { useRefresh } from "../../../src/lib/use-refresh";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
@@ -34,6 +36,7 @@ export default function CustomerHomeScreen() {
   const toCardProps = useAppointmentCards(upcoming.data ?? []);
   const next = upcoming.data?.[0];
   const profile = useMyProfile();
+  const { hours, shop } = useShopInfo();
   const refresh = useRefresh([upcoming.refetch, customers.refetch]);
   const firstName = profile.data?.nickname || customers.data?.[0]?.fullName.split(" ")[0];
 
@@ -51,6 +54,7 @@ export default function CustomerHomeScreen() {
             {!upcoming.isLoading && !upcoming.error && !next ? <EmptyState title={t("home.empty")} /> : null}
             {next ? <AppointmentCard {...toCardProps(next)} onPress={() => router.push("/appointments")} testID="home-next-appointment" /> : null}
             <Button label={t("home.bookCta")} onPress={() => router.push("/book")} size="lg" />
+            {shop ? <ShopInfoCard hours={hours} shop={shop} /> : null}
           </View>
           <Toast message={t("home.bookingConfirmed")} onDismiss={() => setConfirmed(false)} variant="success" visible={confirmed} />
         </View>
