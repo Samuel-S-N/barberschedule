@@ -37,7 +37,7 @@ Routes under `app/(barber)/my-profile/` (the tab keeps the name `my-profile` and
 
 The old `app/(barber)/my-profile.tsx` form is removed; the bio moves to `account.tsx`.
 
-- `src/features/barbers/api.ts`: `listMyServiceOptions`, `setMyServiceEnabled`, `syncMyBarberAvatar`.
+- `src/features/barbers/api.ts`: `listMyServiceOptions`, `setMyServiceEnabled` (the photo sync reuses `updateMyBarberProfile`).
 - Owner side: `Service.isStandard`, `setServiceStandard`, and one toggle button per service in `app/(owner)/services.tsx`.
 - New error code `SERVICE_STANDARD_LOCKED` (`P0026`), strings in en/es/pt (the locale-parity test applies).
 
