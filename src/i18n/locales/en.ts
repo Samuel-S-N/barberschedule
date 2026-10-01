@@ -226,6 +226,22 @@ export const en = {
     version: "Version {{version}}",
   },
   owner: {
+    shop: {
+      address: "Address",
+      addBreak: "Add break",
+      breakEnd: "Break end (HH:mm)",
+      breakStart: "Break start (HH:mm)",
+      closed: "Closed",
+      errors: { break: "Breaks must fit inside opening hours without overlapping.", range: "Opening must be before closing.", time: "Use the HH:mm format." },
+      open: "Open",
+      phone: "Phone",
+      removeBreak: "Remove",
+      save: "Save",
+      saved: "Shop details saved.",
+      saveError: "Could not save the shop details.",
+      title: "Shop details",
+      whatsapp: "WhatsApp",
+    },
     roles: { account: "account", owner: "owner" },
     hub: {
       manageAgenda: "Manage agenda",
@@ -246,6 +262,7 @@ export const en = {
       title: "Owner workspace",
     },
     settings: {
+      shopLink: "Shop details and hours",
       note: "Business settings remain database-owned; release configuration is documented in docs/release.md.",
       ownerFallback: "Owner",
       signedInAs: "Signed in as {{name}}.",

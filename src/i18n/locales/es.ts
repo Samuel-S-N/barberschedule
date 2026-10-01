@@ -225,6 +225,22 @@ export const es: DeepStringRecord<typeof en> = {
     version: "Versión {{version}}",
   },
   owner: {
+    shop: {
+      address: "Dirección",
+      addBreak: "Agregar pausa",
+      breakEnd: "Fin de la pausa (HH:mm)",
+      breakStart: "Inicio de la pausa (HH:mm)",
+      closed: "Cerrado",
+      errors: { break: "Las pausas deben quedar dentro del horario y sin superponerse.", range: "La apertura debe ser antes del cierre.", time: "Usa el formato HH:mm." },
+      open: "Abierto",
+      phone: "Teléfono",
+      removeBreak: "Quitar",
+      save: "Guardar",
+      saved: "Datos de la barbería guardados.",
+      saveError: "No se pudieron guardar los datos de la barbería.",
+      title: "Datos de la barbería",
+      whatsapp: "WhatsApp",
+    },
     roles: { account: "cuenta", owner: "propietario" },
     hub: {
       manageAgenda: "Gestionar agenda",
@@ -245,6 +261,7 @@ export const es: DeepStringRecord<typeof en> = {
       title: "Área del propietario",
     },
     settings: {
+      shopLink: "Datos y horarios de la barbería",
       note: "Los ajustes del negocio están en la base de datos; la configuración de publicación está documentada en docs/release.md.",
       ownerFallback: "Propietario",
       signedInAs: "Sesión iniciada como {{name}}.",
