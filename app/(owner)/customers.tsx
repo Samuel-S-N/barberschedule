@@ -1,92 +1,47 @@
-import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
-import { errorMessage } from "../../src/i18n/errors";
-import type { Customer } from "../../src/features/customers/types";
-import {
-  createCustomer,
-  listOwnerCustomers,
-  setCustomerActive,
-  updateCustomer,
-} from "../../src/features/customers/api";
-import { canSubmitCustomerForm } from "../../src/features/customers/validation";
-import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { Avatar } from "../../src/components/domain/Avatar";
+import { EmptyState } from "../../src/components/domain/EmptyState";
+import { ScreenHeader } from "../../src/components/domain/ScreenHeader";
+import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
+import { Toast } from "../../src/components/domain/Toast";
+import { Button } from "../../src/components/ui/Button";
+import { Card } from "../../src/components/ui/Card";
+import { Input } from "../../src/components/ui/Input";
 import { Screen } from "../../src/components/ui/Screen";
-
-type ShopRow = { id: string };
-
-async function loadShopId(supabase: ReturnType<typeof useSupabaseSession>["supabase"]) {
-  const { data, error } = await supabase
-    .from("shops")
-    .select("id")
-    .order("name", { ascending: true });
-
-  if (error) {
-    throw error;
-  }
-
-  return (data as ShopRow[] | null)?.[0]?.id ?? null;
-}
+import { createCustomer, listOwnerCustomers, setCustomerActive, updateCustomer } from "../../src/features/customers/api";
+import type { Customer } from "../../src/features/customers/types";
+import { canSubmitCustomerForm } from "../../src/features/customers/validation";
+import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
+import { errorMessage } from "../../src/i18n/errors";
+import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 export default function OwnerCustomersScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const shop = useOwnerShopId();
+  const shopId = shop.data ?? null;
+  const [feedback, setFeedback] = useState<{ message: string; variant: "error" | "success" } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [email, setEmail] = useState("");
-  const [feedback, setFeedback] = useState<string | null>(null);
   const [fullName, setFullName] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [shopId, setShopId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
-  const refresh = async () => {
-    if (!shopId) {
-      return;
-    }
-
-    setCustomers(await listOwnerCustomers(supabase, shopId));
-  };
-
-  useEffect(() => {
-    let active = true;
-
-    const load = async () => {
-      try {
-        const nextShopId = await loadShopId(supabase);
-
-        if (!active) {
-          return;
-        }
-
-        setShopId(nextShopId);
-
-        if (!nextShopId) {
-          setFeedback(t("common.noShop"));
-          return;
-        }
-
-        setCustomers(await listOwnerCustomers(supabase, nextShopId));
-      } catch (error) {
-        if (active) {
-          setFeedback(errorMessage(error, t, t("owner.customers.loadError")));
-        }
-      } finally {
-        if (active) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    void load();
-
-    return () => {
-      active = false;
-    };
-  }, [supabase]);
+  const customers = useQuery({
+    enabled: shopId !== null,
+    queryFn: () => listOwnerCustomers(supabase, shopId ?? ""),
+    queryKey: ["owner-customers", shopId],
+  });
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ["owner-customers"] });
+  const fail = (error: unknown, fallback: string) => setFeedback({ message: errorMessage(error, t, fallback), variant: "error" });
 
   const resetForm = () => {
     setEditingId(null);
@@ -95,165 +50,95 @@ export default function OwnerCustomersScreen() {
     setPhone("");
   };
 
-  const handleSave = async () => {
-    if (!shopId) {
-      return;
-    }
+  const save = useMutation({
+    mutationFn: () => {
+      const payload = { email: email.trim() || null, fullName, phone: phone.trim() || null };
 
-    setFeedback(null);
-    setIsSaving(true);
-
-    try {
-      const payload = {
-        email: email.trim() || null,
-        fullName,
-        phone: phone.trim() || null,
-      };
-
-      if (editingId) {
-        await updateCustomer(supabase, editingId, payload);
-      } else {
-        await createCustomer(supabase, { ...payload, shopId });
-      }
-
+      return editingId ? updateCustomer(supabase, editingId, payload) : createCustomer(supabase, { ...payload, shopId: shopId ?? "" });
+    },
+    onError: (error) => fail(error, t("owner.customers.saveError")),
+    onSuccess: () => {
       resetForm();
-      await refresh();
-    } catch (error) {
-      setFeedback(errorMessage(error, t, t("owner.customers.saveError")));
-    } finally {
-      setIsSaving(false);
-    }
-  };
+      void refresh();
+    },
+  });
 
-  const handleToggle = async (customer: Customer) => {
-    setFeedback(null);
-    setIsSaving(true);
+  const toggle = useMutation({
+    mutationFn: (customer: Customer) => setCustomerActive(supabase, customer.id, !customer.active),
+    onError: (error) => fail(error, t("owner.customers.updateError")),
+    onSuccess: () => void refresh(),
+  });
 
-    try {
-      await setCustomerActive(supabase, customer.id, !customer.active);
-      await refresh();
-    } catch (error) {
-      setFeedback(errorMessage(error, t, t("owner.customers.updateError")));
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const loading = shop.isLoading || customers.isLoading;
+  const loadError = shop.error ?? customers.error;
+  const busy = save.isPending || toggle.isPending;
+  const term = search.trim().toLowerCase();
+  const shown = (customers.data ?? []).filter(
+    (customer: Customer) => !term || customer.fullName.toLowerCase().includes(term) || (customer.email ?? "").toLowerCase().includes(term) || (customer.phone ?? "").includes(term),
+  );
+  const back = () => (router.canGoBack() ? router.back() : router.replace("/manage"));
 
   return (
-    <Screen style={styles.screen}>
-      <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-        <Text accessibilityRole="header" style={styles.title}>
-          {t("owner.customers.title")}
-        </Text>
-        <TextInput
-          onChangeText={setFullName}
-          placeholder={t("owner.customers.nameLabel")}
-          style={styles.input}
-          value={fullName}
-        />
-        <TextInput
-          autoCapitalize="none"
-          autoComplete="email"
-          keyboardType="email-address"
-          onChangeText={setEmail}
-          placeholder={t("owner.customers.emailLabel")}
-          style={styles.input}
-          value={email}
-        />
-        <TextInput
-          onChangeText={setPhone}
-          placeholder={t("common.phoneOptional")}
-          style={styles.input}
-          value={phone}
-        />
-        {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}
-        {isLoading || isSaving ? <ActivityIndicator /> : null}
-        <Button
-          disabled={!canSubmitCustomerForm({
-            editingId,
-            email,
-            fullName,
-            isLoading,
-            isSaving,
-            phone,
-            shopId,
-          })}
-          onPress={handleSave}
-          title={editingId ? t("owner.customers.save") : t("owner.customers.add")}
-        />
-        {editingId ? <Button onPress={resetForm} title={t("common.cancelEdit")} /> : null}
-        <View style={styles.list}>
-          {customers.map((customer) => (
-            <View key={customer.id} style={styles.card}>
-              <Text style={styles.name}>
-                {customer.fullName} {customer.active ? "" : t("common.archived")}
-              </Text>
-              <Text style={styles.meta}>
-                {customer.email ?? t("owner.customers.noEmail")} · {customer.phone ?? t("owner.customers.noPhone")}
-              </Text>
-              <Button
-                onPress={() => {
-                  setEditingId(customer.id);
-                  setEmail(customer.email ?? "");
-                  setFullName(customer.fullName);
-                  setPhone(customer.phone ?? "");
-                }}
-                title={t("common.edit")}
-              />
-              <Button
-                onPress={() => {
-                  void handleToggle(customer);
-                }}
-                title={customer.active ? t("common.deactivate") : t("common.activate")}
-              />
-            </View>
-          ))}
+    <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
+      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
+        <View className="items-center p-5">
+          <View className="w-full max-w-[420px] gap-4">
+            <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("owner.customers.title")} />
+
+            <Card>
+              <View className="gap-3">
+                <Input label={t("owner.customers.nameLabel")} onChangeText={setFullName} testID="customer-name" value={fullName} />
+                <Input autoCapitalize="none" autoComplete="email" keyboardType="email-address" label={t("owner.customers.emailLabel")} onChangeText={setEmail} testID="customer-email" value={email} />
+                <Input keyboardType="phone-pad" label={t("common.phoneOptional")} onChangeText={setPhone} testID="customer-phone" value={phone} />
+                <View className="flex-row gap-2">
+                  <Button
+                    disabled={!canSubmitCustomerForm({ editingId, email, fullName, isLoading: loading, isSaving: busy, phone, shopId })}
+                    label={editingId ? t("owner.customers.save") : t("owner.customers.add")}
+                    onPress={() => save.mutate()}
+                    testID="customer-save"
+                  />
+                  {editingId ? <Button label={t("common.cancelEdit")} onPress={resetForm} variant="outline" /> : null}
+                </View>
+              </View>
+            </Card>
+
+            <Input label={t("owner.appointmentForm.searchCustomer")} onChangeText={setSearch} testID="customer-search" value={search} />
+            {loading ? <SkeletonBlock height={96} width={320} /> : null}
+            {loadError ? <Text className="text-sm font-sans text-danger-500">{errorMessage(loadError, t, t("owner.customers.loadError"))}</Text> : null}
+            {shop.data === null ? <EmptyState title={t("common.noShop")} /> : null}
+
+            {shown.map((customer: Customer) => (
+              <Card key={customer.id} testID={`owner-customer-${customer.id}`} variant="outlined">
+                <View className="gap-3">
+                  <View className="flex-row items-center gap-3">
+                    <Avatar name={customer.fullName} size={44} />
+                    <View className="flex-1 gap-0.5">
+                      <Text className="text-base font-sans-semibold text-ink">{customer.fullName}{customer.active ? "" : ` ${t("common.archived")}`}</Text>
+                      <Text className="text-sm font-sans text-neutral-600">{customer.email ?? t("owner.customers.noEmail")} · {customer.phone ?? t("owner.customers.noPhone")}</Text>
+                    </View>
+                  </View>
+                  <View className="flex-row flex-wrap gap-2">
+                    <Button
+                      label={t("common.edit")}
+                      onPress={() => {
+                        setEditingId(customer.id);
+                        setEmail(customer.email ?? "");
+                        setFullName(customer.fullName);
+                        setPhone(customer.phone ?? "");
+                      }}
+                      size="sm"
+                      testID={`customer-edit-${customer.id}`}
+                      variant="outline"
+                    />
+                    <Button disabled={busy} label={customer.active ? t("common.deactivate") : t("common.activate")} onPress={() => toggle.mutate(customer)} size="sm" testID={`customer-toggle-${customer.id}`} variant="outline" />
+                  </View>
+                </View>
+              </Card>
+            ))}
+            <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
+          </View>
         </View>
       </KeyboardAwareScrollView>
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    borderColor: "#d1d5db",
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 8,
-    padding: 12,
-  },
-  content: {
-    gap: 12,
-    padding: 24,
-  },
-  feedback: {
-    color: "#1f2937",
-  },
-  input: {
-    borderColor: "#d1d5db",
-    borderRadius: 10,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  list: {
-    gap: 12,
-  },
-  meta: {
-    color: "#4b5563",
-  },
-  name: {
-    color: "#111827",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  screen: {
-    backgroundColor: "#ffffff",
-    flex: 1,
-  },
-  title: {
-    color: "#111827",
-    fontSize: 28,
-    fontWeight: "700",
-  },
-});
