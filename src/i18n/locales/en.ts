@@ -463,6 +463,22 @@ export const en = {
       },
     },
   },
+  csv: {
+    barber: "Barber",
+    barberShare: "Barber share",
+    cancelled: "Cancelled",
+    completed: "Completed",
+    date: "Date",
+    earnings: "Earnings",
+    noShow: "No-show",
+    rentEstimate: "Rent (estimate)",
+    rentPaid: "Rent paid",
+    revenue: "Revenue",
+    service: "Service",
+    upcoming: "Upcoming",
+    export: "Export CSV",
+    exportError: "Unable to export the report.",
+  },
   barber: {
     summary: {
       appointments: "Appointments",

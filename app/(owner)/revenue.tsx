@@ -20,6 +20,9 @@ import { Card } from "../../src/components/ui/Card";
 import { Screen } from "../../src/components/ui/Screen";
 import { barberRows, sumShopReport, topByValue } from "../../src/features/owner-reports/build";
 import { getShopReport } from "../../src/features/owner-reports/api";
+import { ownerReportCsv } from "../../src/features/reports/csv";
+import { useCsvLabels } from "../../src/features/reports/use-csv-labels";
+import { saveExportFile } from "../../src/features/account/export-file";
 import { deleteRentPayment, listRentPayments, parseReaisToCents, recordRentPayment } from "../../src/features/owner-reports/rent";
 import { dailySeries, daysBetween, percentChange, previousRange, WEEKLY_THRESHOLD_DAYS } from "../../src/features/reports/build-report";
 import { errorMessage } from "../../src/i18n/errors";
@@ -96,7 +99,16 @@ export default function OwnerRevenueScreen() {
     savePayment.mutate({ amountCents: cents, barberId });
   };
 
+  const csvLabels = useCsvLabels();
   const report = current.data;
+  const exportCsv = async () => {
+    if (!report) return;
+    try {
+      await saveExportFile({ content: ownerReportCsv(report, csvLabels), filename: `revenue-${range.start}_${range.end}.csv`, mimeType: "text/csv;charset=utf-8" });
+    } catch {
+      setFeedback({ message: t("csv.exportError"), variant: "error" });
+    }
+  };
   const totals = report ? sumShopReport(report) : null;
   const previousTotals = before.data ? sumShopReport(before.data) : null;
   const money = (cents: number) => formatPriceBRL(cents);
@@ -139,6 +151,7 @@ export default function OwnerRevenueScreen() {
           </View>
 
           <View className="w-full max-w-[420px] gap-3">
+            {report ? <Button label={t("csv.export")} onPress={() => void exportCsv()} size="sm" testID="report-export" variant="outline" /> : null}
             {current.isLoading ? <SkeletonBlock height={96} width={320} /> : null}
             {current.error ? <Text className="text-sm font-sans text-danger-500">{errorMessage(current.error, t, t("owner.revenue.loadError"))}</Text> : null}
             {report && totals ? (

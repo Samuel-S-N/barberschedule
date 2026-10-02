@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
@@ -101,4 +102,25 @@ test("a chair-rental barber also sees the rent tile", async ({ page }) => {
 
   await page.goto("/earnings");
   await expect(page.getByTestId("stat-rent")).toContainText("R$ 300,00");
+});
+
+test("the barber exports their report as a CSV file", async ({ page }) => {
+  await signIn(page, barberUserId);
+  await mockBarberRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/rpc/get_my_barber_report")) {
+      return json(route, { days: [day("2026-10-01", { completed: 3, earnings_cents: 6000 })], services: [{ completed: 2, name: "Browser Cut", service_id: "s1" }] }).then(() => true);
+    }
+  });
+
+  await page.goto("/earnings");
+  await expect(page.getByTestId("stat-earned")).toBeVisible();
+  const download = page.waitForEvent("download");
+  await page.getByTestId("report-export").click();
+  const file = await download;
+  const content = (await readFile((await file.path())!, "utf8")).replace("﻿", "");
+
+  expect(file.suggestedFilename()).toMatch(/^report-\d{4}-\d{2}-\d{2}_\d{4}-\d{2}-\d{2}\.csv$/);
+  expect(content).toContain("Date;Completed;Cancelled;No-show;Upcoming;Earnings");
+  expect(content).toContain("2026-10-01;3;0;0;0;60,00");
+  expect(content).toContain("Browser Cut;2");
 });
