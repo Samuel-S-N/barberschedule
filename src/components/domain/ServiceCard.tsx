@@ -13,10 +13,12 @@ export type ServiceCardProps = {
 };
 
 export function formatPriceBRL(cents: number): string {
-  const reais = Math.floor(cents / 100);
-  const remainingCents = cents % 100;
+  const abs = Math.abs(cents);
+  // Manual grouping: Intl support on Hermes varies across devices.
+  const reais = Math.floor(abs / 100).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const remainingCents = (abs % 100).toString().padStart(2, "0");
 
-  return `R$ ${reais},${remainingCents.toString().padStart(2, "0")}`;
+  return `${cents < 0 ? "-" : ""}R$ ${reais},${remainingCents}`;
 }
 
 export function ServiceCard({
