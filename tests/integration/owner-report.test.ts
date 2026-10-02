@@ -5,7 +5,7 @@ describe("owner shop report client", () => {
   it("maps the jsonb payload and sends the period", async () => {
     const rpc = jest.fn().mockResolvedValue({
       data: {
-        barbers: [{ barber_id: "b1", barber_share_cents: 4400, compensation_type: "commission", completed: 3, gross_cents: 11000, name: "Ana", rent_estimate_cents: 0 }],
+        barbers: [{ barber_id: "b1", barber_share_cents: 4400, compensation_type: "commission", completed: 3, gross_cents: 11000, name: "Ana", rent_estimate_cents: 0, rent_paid_cents: 1200 }],
         days: [{ cancelled: 1, completed: 3, date: "2026-10-01", gross_cents: 11000, no_show: 0, upcoming: 2 }],
         services: [{ completed: 3, gross_cents: 11000, name: "Cut", service_id: "s1" }],
       },
@@ -13,7 +13,7 @@ describe("owner shop report client", () => {
     });
 
     await expect(getShopReport({ rpc } as never, "2026-10-01", "2026-10-07")).resolves.toEqual({
-      barbers: [{ barberId: "b1", barberShareCents: 4400, compensationType: "commission", completed: 3, grossCents: 11000, name: "Ana", rentEstimateCents: 0 }],
+      barbers: [{ barberId: "b1", barberShareCents: 4400, compensationType: "commission", completed: 3, grossCents: 11000, name: "Ana", rentEstimateCents: 0, rentPaidCents: 1200 }],
       days: [{ cancelled: 1, completed: 3, date: "2026-10-01", grossCents: 11000, noShow: 0, upcoming: 2 }],
       services: [{ completed: 3, grossCents: 11000, name: "Cut", serviceId: "s1" }],
     });

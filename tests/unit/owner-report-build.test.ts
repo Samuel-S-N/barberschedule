@@ -2,9 +2,9 @@ import { barberRows, sumShopReport, topByValue, type ShopReport } from "../../sr
 
 const report: ShopReport = {
   barbers: [
-    { barberId: "a", barberShareCents: 4400, compensationType: "commission", completed: 3, grossCents: 11000, name: "Ana", rentEstimateCents: 0 },
-    { barberId: "b", barberShareCents: 5000, compensationType: "chair_rental", completed: 1, grossCents: 5000, name: "Bruno", rentEstimateCents: 7000 },
-    { barberId: "d", barberShareCents: 0, compensationType: "chair_rental", completed: 0, grossCents: 0, name: "Davi", rentEstimateCents: 7000 },
+    { barberId: "a", barberShareCents: 4400, compensationType: "commission", completed: 3, grossCents: 11000, name: "Ana", rentEstimateCents: 0, rentPaidCents: 0 },
+    { barberId: "b", barberShareCents: 5000, compensationType: "chair_rental", completed: 1, grossCents: 5000, name: "Bruno", rentEstimateCents: 7000, rentPaidCents: 5000 },
+    { barberId: "d", barberShareCents: 0, compensationType: "chair_rental", completed: 0, grossCents: 0, name: "Davi", rentEstimateCents: 7000, rentPaidCents: 0 },
   ],
   days: [
     { cancelled: 0, completed: 3, date: "2026-09-29", grossCents: 12000, noShow: 0, upcoming: 0 },
@@ -17,7 +17,7 @@ describe("sumShopReport", () => {
   it("adds up revenue, shares, rent and shop income", () => {
     expect(sumShopReport(report)).toEqual({
       barberShareCents: 9400, cancelled: 1, cancellationRate: 0.333_333_333_333_333_3, completed: 4,
-      grossCents: 16000, noShow: 1, rentEstimateCents: 14000, shopIncomeCents: 20600,
+      grossCents: 16000, noShow: 1, rentEstimateCents: 14000, rentPaidCents: 5000, shopIncomeCents: 20600,
     });
   });
 
