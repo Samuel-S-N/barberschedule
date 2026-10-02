@@ -590,6 +590,7 @@ export const pt: DeepStringRecord<typeof en> = {
       inactive: "(inativo)",
       loadError: "Não foi possível carregar seu perfil.",
       noServices: "Nenhum serviço atribuído ainda. Fale com o dono da barbearia.",
+      privacyNote: "Sua conta de barbeiro é gerenciada pelo dono da barbearia. Para excluí-la ou corrigir seus dados, fale com o dono. Os dados de clientes que você vê aqui servem apenas para atender os agendamentos.",
       save: "Salvar perfil",
       saved: "Perfil salvo.",
       saveError: "Não foi possível salvar seu perfil.",

@@ -591,6 +591,7 @@ export const en = {
       inactive: "(inactive)",
       loadError: "Unable to load your profile.",
       noServices: "No services assigned yet. Ask the shop owner.",
+      privacyNote: "Your barber account is managed by the shop owner. To delete it or correct your data, ask the owner. Customer data you see here is for serving appointments only.",
       save: "Save profile",
       saved: "Profile saved.",
       saveError: "Unable to save your profile.",
