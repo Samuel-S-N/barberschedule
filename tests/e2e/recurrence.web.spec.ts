@@ -36,6 +36,8 @@ test("an owner can create a recurring booking and inspect its conflict", async (
     if (path.endsWith("/shops")) return json([{ id: shopId }]);
     if (path.endsWith("/customers")) return json([{ active: true, archived_at: null, email: "customer@example.com", full_name: "Monthly Customer", id: customerId, phone: "+55 11 99999-9999", shop_id: shopId, user_id: null }]);
     if (path.endsWith("/barber_services")) return json([{ active: true, archived_at: null, barber_id: "barber-1", duration_override_minutes: null, id: barberServiceId, price_override_cents: null, service_id: "service-1", shop_id: shopId }]);
+    if (path.endsWith("/rpc/list_owner_barbers")) return json([{ active: true, archived_at: null, id: "barber-1", name: "Browser Barber", shop_id: shopId, user_id: null }]);
+    if (path.endsWith("/services")) return json([{ active: true, archived_at: null, description: null, duration_minutes: 30, id: "service-1", is_standard: true, name: "Cut", price_cents: 4000, shop_id: shopId }]);
     if (path.endsWith("/rpc/list_owner_recurrence_series")) return json([series]);
     if (path.endsWith("/rpc/create_recurrence_series")) return json([series]);
     if (path.endsWith("/rpc/ensure_recurrence_window")) return json([{ appointments_created: 1, conflicts_created: 0 }]);
@@ -49,12 +51,12 @@ test("an owner can create a recurring booking and inspect its conflict", async (
 
   await page.goto("/monthly-customers");
   await expect(page.getByRole("heading", { name: "Recurring customers" })).toBeVisible();
-  await page.getByRole("button", { name: "Monthly Customer" }).click();
-  await page.getByRole("button", { name: `Service ${barberServiceId}` }).click();
+  await page.getByTestId(`option-${customerId}`).click();
+  await page.getByTestId(`option-${barberServiceId}`).click();
   await page.getByTestId("recurrence-start-date").fill("2026-08-17");
   await page.getByRole("button", { name: "Create recurrence" }).click();
   await expect(page.getByText("Recurring booking saved.")).toBeVisible();
-  await page.getByRole("link", { name: "Recurrence conflicts" }).click();
+  await page.getByTestId("recurrence-conflicts-link").click();
   await expect(page.getByRole("heading", { name: "Recurrence conflicts" })).toBeVisible();
   await expect(page.getByText("Monthly Customer · Cut")).toBeVisible();
   await expect(page.getByRole("button", { name: "Open WhatsApp" })).toBeVisible();
@@ -94,6 +96,8 @@ test("an owner can edit, cancel an occurrence, and end a recurring booking", asy
     if (path.endsWith("/shops")) return json([{ id: shopId }]);
     if (path.endsWith("/customers")) return json([{ active: true, archived_at: null, email: "customer@example.com", full_name: "Monthly Customer", id: customerId, phone: "+55 11 99999-9999", shop_id: shopId, user_id: null }]);
     if (path.endsWith("/barber_services")) return json([{ active: true, archived_at: null, barber_id: "barber-1", duration_override_minutes: null, id: barberServiceId, price_override_cents: null, service_id: "service-1", shop_id: shopId }]);
+    if (path.endsWith("/rpc/list_owner_barbers")) return json([{ active: true, archived_at: null, id: "barber-1", name: "Browser Barber", shop_id: shopId, user_id: null }]);
+    if (path.endsWith("/services")) return json([{ active: true, archived_at: null, description: null, duration_minutes: 30, id: "service-1", is_standard: true, name: "Cut", price_cents: 4000, shop_id: shopId }]);
     if (path.endsWith("/rpc/list_owner_recurrence_series")) return json([currentSeries]);
     if (path.endsWith("/rpc/edit_recurrence_series")) {
       editPayload = request.postDataJSON();
@@ -116,9 +120,9 @@ test("an owner can edit, cancel an occurrence, and end a recurring booking", asy
   await page.goto("/monthly-customers");
   await expect(page.getByRole("heading", { name: "Recurring customers" })).toBeVisible();
   await page.getByRole("button", { name: "Edit" }).click();
-  await page.getByPlaceholder("Every N weeks").fill("5");
-  await page.getByPlaceholder("Local time (HH:mm)").fill("10:00");
-  await page.getByPlaceholder("Special price cents (optional)").fill("4000");
+  await page.getByTestId("recurrence-interval").fill("5");
+  await page.getByTestId("recurrence-time").fill("10:00");
+  await page.getByTestId("recurrence-price").fill("40,00");
   await page.getByRole("button", { name: "Save recurrence" }).click();
   await expect(page.getByText("Recurring booking updated.")).toBeVisible();
   expect(editPayload).toMatchObject({
@@ -129,7 +133,7 @@ test("an owner can edit, cancel an occurrence, and end a recurring booking", asy
     target_special_price_cents: 4000,
   });
 
-  await page.getByPlaceholder("Occurrence date (YYYY-MM-DD)").fill("2026-08-24");
+  await page.getByTestId("recurrence-occurrence-date").fill("2026-08-24");
   await page.getByRole("button", { name: "Cancel occurrence" }).click();
   await expect(page.getByText("Unable to update recurring booking.")).not.toBeVisible();
   expect(cancelOccurrencePayload).toEqual({ target_occurrence_date: "2026-08-24", target_series_id: currentSeries.id });
