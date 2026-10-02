@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
+import { BarberBookingSheet } from "../../src/components/domain/BarberBookingSheet";
 import { CalendarStrip } from "../../src/components/domain/CalendarStrip";
 import { EmptyState } from "../../src/components/domain/EmptyState";
 import { formatPriceBRL } from "../../src/components/domain/ServiceCard";
@@ -16,7 +17,11 @@ import { Input, useFieldChain } from "../../src/components/ui/Input";
 import { Screen } from "../../src/components/ui/Screen";
 import { listMyBarberAgenda, setMyAppointmentStatus, type BarberAgendaAppointment, type BarberAppointmentStatus } from "../../src/features/appointments/barber-agenda";
 import { groupByLocalDate, markAppointmentDays, pendingClosure } from "../../src/features/appointments/agenda-view";
-import { getMyBarberProfile } from "../../src/features/barbers/api";
+import { bookAsBarber, searchMyCustomers, type BarberCustomerInput } from "../../src/features/appointments/barber-booking";
+import { buildDayTimeline, slotFitsService } from "../../src/features/appointments/day-slots";
+import { getAvailableSlots } from "../../src/features/availability/api";
+import type { AvailableSlot } from "../../src/features/availability/types";
+import { getMyBarberProfile, listMyBarberServices } from "../../src/features/barbers/api";
 import { createScheduleOverride, deleteScheduleOverride, listMyScheduleOverrides } from "../../src/features/schedule/api";
 import { errorMessage } from "../../src/i18n/errors";
 import { useLanguage } from "../../src/i18n/use-language";
@@ -37,6 +42,8 @@ export default function BarberAgendaScreen() {
   const [pickedDate, setPickedDate] = useState<string | null>(null);
   const [blockStart, setBlockStart] = useState("");
   const [blockEnd, setBlockEnd] = useState("");
+  const [bookingSlot, setBookingSlot] = useState<AvailableSlot | null>(null);
+  const [customerTerm, setCustomerTerm] = useState("");
   const [feedback, setFeedback] = useState<{ message: string; variant: "error" | "success" } | null>(null);
   const selectedDate = pickedDate ?? today;
 
@@ -57,10 +64,32 @@ export default function BarberAgendaScreen() {
     queryKey: ["barber-blocks", barber.data?.id, today],
   });
 
+  const services = useQuery({ queryFn: () => listMyBarberServices(supabase), queryKey: ["my-barber-services"] });
+  const activeServices = useMemo(() => (services.data ?? []).filter((service) => service.active), [services.data]);
+  // Free times come from the shortest service; the sheet then disables services that do not fit the chosen time.
+  const shortest = useMemo(() => [...activeServices].sort((a, b) => a.durationMinutes - b.durationMinutes)[0] ?? null, [activeServices]);
+  const slots = useQuery({
+    enabled: Boolean(barber.data && shortest),
+    queryFn: () => getAvailableSlots(supabase, { barberId: barber.data?.id ?? "", barberServiceId: shortest?.barberServiceId ?? "", localDate: selectedDate }),
+    queryKey: ["barber-slots", barber.data?.id, shortest?.barberServiceId, selectedDate],
+  });
+  const customers = useQuery({
+    enabled: bookingSlot !== null,
+    queryFn: () => searchMyCustomers(supabase, customerTerm),
+    queryKey: ["barber-customers", customerTerm],
+  });
+
   const pending = useMemo(() => pendingClosure(pendingAgenda.data ?? []), [pendingAgenda.data]);
   const grouped = useMemo(() => groupByLocalDate(agenda.data ?? []), [agenda.data]);
   const days = useMemo(() => markAppointmentDays(buildCalendarStripDays(new Date(), DAYS_AHEAD, language), grouped), [grouped, language]);
   const dayAppointments = grouped.get(selectedDate) ?? [];
+  const timeline = useMemo(() => buildDayTimeline(dayAppointments, slots.data ?? []), [dayAppointments, slots.data]);
+  const nextBusyStart = useMemo(() => {
+    if (!bookingSlot) return null;
+    const startsAt = bookingSlot.startsAt;
+
+    return dayAppointments.filter((a) => a.status !== "cancelled" && a.startsAt > startsAt).map((a) => a.startsAt).sort()[0] ?? null;
+  }, [bookingSlot, dayAppointments]);
   const dayBlocks = (blocks.data ?? []).filter((block) => block.localDate === selectedDate && block.kind === "block");
 
   const fail = (error: unknown, fallback: string) => setFeedback({ message: errorMessage(error, t, fallback), variant: "error" });
@@ -107,7 +136,26 @@ export default function BarberAgendaScreen() {
     },
   });
 
-  const busy = setStatus.isPending || addBlock.isPending || removeBlock.isPending;
+  const book = useMutation({
+    mutationFn: (input: { barberServiceId: string; customer: BarberCustomerInput | { id: string } }) => {
+      if (!bookingSlot) throw new Error("No slot selected.");
+
+      return bookAsBarber(supabase, { barberServiceId: input.barberServiceId, customer: input.customer, startsAt: bookingSlot.startsAt });
+    },
+    onError: (error) => {
+      fail(error, t("barber.agenda.bookError"));
+      void queryClient.invalidateQueries({ queryKey: ["barber-slots"] });
+    },
+    onSuccess: () => {
+      setBookingSlot(null);
+      setFeedback({ message: t("barber.agenda.bookSuccess"), variant: "success" });
+      void queryClient.invalidateQueries({ queryKey: ["barber-agenda"] });
+      void queryClient.invalidateQueries({ queryKey: ["barber-slots"] });
+      void queryClient.invalidateQueries({ queryKey: ["barber-customers"] });
+    },
+  });
+
+  const busy = setStatus.isPending || addBlock.isPending || removeBlock.isPending || book.isPending;
 
   const renderAppointment = (appointment: BarberAgendaAppointment, withDate = false) => {
     const startsAt = formatInstantInShopTime(new Date(appointment.startsAt));
@@ -183,12 +231,32 @@ export default function BarberAgendaScreen() {
             <CalendarStrip days={days} onSelectDate={setPickedDate} selectedDate={selectedDate} />
           </View>
           <View className="w-full max-w-[420px] gap-3">
-            {agenda.isLoading ? <SkeletonBlock height={96} width={320} /> : null}
+            <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">
+              {t("barber.agenda.slotsTitle")}
+            </Text>
+            {agenda.isLoading || slots.isLoading ? <SkeletonBlock height={96} width={320} /> : null}
             {agenda.error ? (
               <Text className="text-sm font-sans text-danger-500">{errorMessage(agenda.error, t, t("barber.agenda.loadError"))}</Text>
             ) : null}
-            {!agenda.isLoading && !agenda.error && dayAppointments.length === 0 ? <EmptyState title={t("barber.agenda.emptyDay")} /> : null}
-            {dayAppointments.map((appointment) => renderAppointment(appointment))}
+            {!agenda.isLoading && !agenda.error && !slots.isLoading && timeline.length === 0 ? <EmptyState title={t("barber.agenda.noFreeSlots")} /> : null}
+            {timeline.map((entry) =>
+              entry.kind === "appointment" ? (
+                renderAppointment(entry.appointment)
+              ) : (
+                <Pressable
+                  accessibilityRole="button"
+                  className="flex-row items-center justify-between rounded-xl border border-dashed border-neutral-300 p-3"
+                  key={`free-${entry.slot.startsAt}`}
+                  onPress={() => setBookingSlot(entry.slot)}
+                  testID="barber-free-slot"
+                >
+                  <Text className="text-lg font-display-semibold text-ink" style={{ fontVariant: ["tabular-nums"] }}>
+                    {entry.time}
+                  </Text>
+                  <Text className="text-sm font-sans text-neutral-600">{t("barber.agenda.freeSlot")}</Text>
+                </Pressable>
+              ),
+            )}
           </View>
 
           <View className="w-full max-w-[420px] gap-3">
@@ -223,6 +291,17 @@ export default function BarberAgendaScreen() {
               variant="outline"
             />
           </View>
+          <BarberBookingSheet
+            busy={book.isPending}
+            fitsService={(service) => (bookingSlot ? slotFitsService(bookingSlot, nextBusyStart, service.durationMinutes) : true)}
+            onClose={() => setBookingSlot(null)}
+            onSearch={setCustomerTerm}
+            onSubmit={(input) => book.mutate(input)}
+            recent={customers.data ?? []}
+            services={activeServices}
+            slotLabel={bookingSlot?.localTime ?? ""}
+            visible={bookingSlot !== null}
+          />
           <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
         </View>
       </KeyboardAwareScrollView>

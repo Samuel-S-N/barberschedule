@@ -32,3 +32,5 @@ export { ScreenHeader } from "./ScreenHeader";
 export type { ScreenHeaderProps } from "./ScreenHeader";
 export { RadioBlock } from "./RadioBlock";
 export type { RadioBlockProps, RadioOption } from "./RadioBlock";
+export { BarberBookingSheet } from "./BarberBookingSheet";
+export type { BarberBookingSheetProps } from "./BarberBookingSheet";

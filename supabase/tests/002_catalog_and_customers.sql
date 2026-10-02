@@ -564,7 +564,7 @@ select lives_ok(
       '21000000-0000-0000-0000-000000000001',
       null,
       'Walk In',
-      'task3-customer@example.com',
+      'task3-walk-in@example.com',
       '+5511999990001'
     )
   $$,
@@ -578,7 +578,7 @@ select is(
     where id = '22000000-0000-0000-0000-000000000034'
   ),
   null,
-  'matching email and phone do not auto-link a customer account'
+  'a matching phone does not auto-link a customer account'
 );
 
 select lives_ok(

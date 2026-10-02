@@ -1,4 +1,4 @@
-export type AppointmentSource = "customer" | "owner" | "recurrence";
+export type AppointmentSource = "customer" | "owner" | "recurrence" | "barber";
 
 export type BookingInput = {
   barberServiceId: string;
