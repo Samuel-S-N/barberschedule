@@ -192,13 +192,15 @@ test("a barber moves an appointment: opens the calendar, picks the day, then the
   await expect(page.getByTestId("move-current")).toContainText("Ana Customer");
   await expect(page.getByTestId("month-calendar")).toBeVisible();
   await expect(page.getByTestId("move-confirm")).toBeDisabled();
-  const day = page.locator('[data-testid^="month-calendar-day-"]:not([aria-disabled="true"])').last();
+  // The month on screen is the first page of the strip; the next month sits off screen.
+  const day = page.getByTestId("month-pages").locator("> div").first().locator('[data-testid^="month-calendar-day-"]:not([aria-disabled="true"])').last();
   const chosenDate = ((await day.getAttribute("data-testid")) ?? "").replace("month-calendar-day-", "");
   await day.click();
   await page.getByTestId("time-slot-10:30").click();
   await page.getByTestId("move-confirm").click();
 
   await expect(page).toHaveURL(/\/my-agenda/);
+  await expect(page.getByText("Appointment moved.")).toBeVisible();
   expect(moved.slotDates).toContain(chosenDate);
   expect(moved.payload?.appointment_id).toBe("appt-1");
   expect(new Date(moved.payload?.new_starts_at ?? "").getTime()).toBe(slotStart.getTime());
