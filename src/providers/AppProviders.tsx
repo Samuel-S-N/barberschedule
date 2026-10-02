@@ -19,6 +19,7 @@ import { markRecovery } from "../features/auth/recovery";
 import i18n, { loadLanguagePreference, syncLanguage } from "../i18n";
 import type { Profile } from "../features/auth/types";
 import { getSupabaseBrowserClient } from "../lib/supabase/client";
+import { bindQueryFocusToAppState } from "../lib/query-focus";
 
 type SessionContextValue = {
   isLoading: boolean;
@@ -31,6 +32,7 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 
 export function AppProviders({ children }: PropsWithChildren) {
   const queryClient = useMemo(() => new QueryClient(), []);
+  useEffect(() => bindQueryFocusToAppState(AppState), []);
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [isLoading, setIsLoading] = useState(true);
   const [languageReady, setLanguageReady] = useState(false);

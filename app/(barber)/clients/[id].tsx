@@ -25,6 +25,7 @@ import { formatInstantInShopTime } from "../../../src/lib/dates/shop-time";
 import { formatDateLabel } from "../../../src/lib/i18n/format";
 import { useBack } from "../../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
+import { pullToRefresh, useRefreshAll } from "../../../src/lib/use-refresh";
 
 function ContactLink({ children, icon: Icon, testID, url }: { children: string; icon: typeof Phone; testID: string; url: string | null }) {
   const body = (
@@ -59,6 +60,7 @@ function Line({ children, label }: { children: ReactNode; label: string }) {
 
 export default function ClientDetailScreen() {
   const { t } = useTranslation();
+  const pull = useRefreshAll();
   const back = useBack();
   const router = useRouter();
   const language = useLanguage();
@@ -85,7 +87,7 @@ export default function ClientDetailScreen() {
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
-      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
+      <KeyboardAwareScrollView refreshControl={pullToRefresh(pull)} bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <ScreenHeader backLabel={t("common.back")} onBack={back} title={data?.customer.fullName ?? t("barber.clients.title")} />

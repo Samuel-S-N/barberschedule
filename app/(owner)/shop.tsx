@@ -18,6 +18,7 @@ import { errorMessage } from "../../src/i18n/errors";
 import { useLanguage } from "../../src/i18n/use-language";
 import { colors } from "../../src/lib/design/colors";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
 // A format hint, not a sentence: the same in every language.
@@ -25,6 +26,7 @@ const TIME_HINT = "HH:mm";
 
 export default function OwnerShopScreen() {
   const { t } = useTranslation();
+  const pull = useRefreshAll();
   const language = useLanguage();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -85,7 +87,7 @@ export default function OwnerShopScreen() {
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
-      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
+      <KeyboardAwareScrollView refreshControl={pullToRefresh(pull)} bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("owner.shop.title")} />

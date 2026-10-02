@@ -16,9 +16,11 @@ import type { RecurrenceConflict } from "../../src/features/recurrence/types";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
 import { errorMessage } from "../../src/i18n/errors";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
 export default function RecurrenceConflictsScreen() {
   const { t } = useTranslation();
+  const pull = useRefreshAll();
   const router = useRouter();
   const { supabase } = useSupabaseSession();
   const shop = useOwnerShopId();
@@ -45,7 +47,7 @@ export default function RecurrenceConflictsScreen() {
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
-      <ScrollView className="flex-1">
+      <ScrollView refreshControl={pullToRefresh(pull)} className="flex-1">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <ScreenHeader backLabel={t("owner.conflicts.back")} onBack={back} title={t("owner.conflicts.title")} />

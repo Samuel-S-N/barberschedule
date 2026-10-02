@@ -35,12 +35,14 @@ import { useLanguage } from "../../src/i18n/use-language";
 import { buildCalendarStripDays } from "../../src/lib/dates/calendar-strip-days";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
 const DAYS_AHEAD = 30;
 const PENDING_DAYS_BACK = 30;
 
 export default function BarberAgendaScreen() {
   const { t } = useTranslation();
+  const pull = useRefreshAll();
   const field = useFieldChain(2);
   const language = useLanguage();
   const queryClient = useQueryClient();
@@ -309,7 +311,7 @@ export default function BarberAgendaScreen() {
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
-      <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled" className="flex-1">
+      <KeyboardAwareScrollView refreshControl={pullToRefresh(pull)} bottomOffset={24} keyboardShouldPersistTaps="handled" className="flex-1">
         <View className="items-center gap-4 p-5">
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
             {t("barber.agenda.title")}

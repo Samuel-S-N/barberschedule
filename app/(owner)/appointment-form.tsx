@@ -23,9 +23,11 @@ import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
 import { errorMessage } from "../../src/i18n/errors";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
 export default function OwnerAppointmentFormScreen() {
   const { t } = useTranslation();
+  const pull = useRefreshAll();
   const router = useRouter();
   const { supabase } = useSupabaseSession();
   const shop = useOwnerShopId();
@@ -115,7 +117,7 @@ export default function OwnerAppointmentFormScreen() {
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
-      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
+      <KeyboardAwareScrollView refreshControl={pullToRefresh(pull)} bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <ScreenHeader backLabel={t("owner.appointmentForm.backToAgenda")} onBack={back} title={t("owner.appointmentForm.title")} />

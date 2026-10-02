@@ -17,11 +17,13 @@ import { useLanguage } from "../../../src/i18n/use-language";
 import { formatInstantInShopTime } from "../../../src/lib/dates/shop-time";
 import { formatDateLabel } from "../../../src/lib/i18n/format";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
+import { pullToRefresh, useRefreshAll } from "../../../src/lib/use-refresh";
 
 const CLIENTS_PAGE_SIZE = 50;
 
 export default function ClientsScreen() {
   const { t } = useTranslation();
+  const pull = useRefreshAll();
   const router = useRouter();
   const language = useLanguage();
   const { supabase } = useSupabaseSession();
@@ -47,7 +49,7 @@ export default function ClientsScreen() {
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
-      <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
+      <ScrollView refreshControl={pullToRefresh(pull)} className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center gap-4 p-5">
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">{t("barber.clients.title")}</Text>
           <View className="w-full max-w-[420px] gap-3">
