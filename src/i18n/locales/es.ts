@@ -30,7 +30,7 @@ export const es: DeepStringRecord<typeof en> = {
     phoneOptional: "Teléfono (opcional)",
     tryAgain: "Reintentar",
   },
-  tabs: { agenda: "Agenda", clients: "Clientes", earnings: "Informes", book: "Reservar", home: "Inicio", profile: "Perfil" },
+  tabs: { agenda: "Agenda", manage: "Gestionar", revenue: "Ingresos", account: "Cuenta", clients: "Clientes", earnings: "Informes", book: "Reservar", home: "Inicio", profile: "Perfil" },
   status: { cancelled: "Cancelada", completed: "Completada", confirmed: "Confirmada", no_show: "No asistió", scheduled: "Programada" },
   auth: {
     login: {
@@ -291,20 +291,10 @@ export const es: DeepStringRecord<typeof en> = {
       shopIncomeHint: "Tras los pagos a los barberos, más el alquiler de silla estimado",
       title: "Facturación",
     },
-    workspace: {
-      agenda: "Agenda",
-      customers: "Clientes",
-      recurring: "Clientes recurrentes",
-      schedule: "Horarios",
-      settings: "Ajustes",
-      title: "Área del propietario",
-    },
+    manage: { recurring: "Clientes recurrentes", conflicts: "Conflictos de recurrencia", title: "Gestionar" },
     settings: {
       shopLink: "Datos y horarios de la barbería",
-      note: "Los ajustes del negocio están en la base de datos; la configuración de publicación está documentada en docs/release.md.",
       ownerFallback: "Propietario",
-      signedInAs: "Sesión iniciada como {{name}}.",
-      timezone: "Zona horaria de la barbería: {{timezone}}",
       title: "Ajustes del propietario",
     },
     agenda: {

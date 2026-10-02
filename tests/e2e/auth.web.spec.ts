@@ -36,7 +36,7 @@ test("a customer can sign in and land on the home tab", async ({ page }) => {
   expect(signInPayload).toMatchObject({ email: "customer@example.test", password: "correct-password" });
 });
 
-test("an owner can sign in and see owner links", async ({ page }) => {
+test("an owner can sign in and lands on the agenda with the owner tabs", async ({ page }) => {
   let signInPayload: Record<string, unknown> | null = null;
 
   await page.route("**/auth/v1/token?grant_type=password", async (route) => {
@@ -59,9 +59,9 @@ test("an owner can sign in and see owner links", async ({ page }) => {
   await page.getByLabel("Password", { exact: true }).fill("correct-password");
   await page.getByRole("button", { name: "Sign in" }).click();
 
-  await expect(page.getByText("Signed in as owner.")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Manage agenda" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Manage schedule" })).toBeVisible();
+  await expect(page).toHaveURL(/\/agenda/);
+  await expect(page.getByTestId("tab-manage")).toBeVisible();
+  await expect(page.getByTestId("tab-revenue")).toBeVisible();
   await expect(page.getByRole("link", { name: "Book an appointment" })).not.toBeVisible();
   expect(signInPayload).toMatchObject({ email: "owner@example.test", password: "correct-password" });
 });

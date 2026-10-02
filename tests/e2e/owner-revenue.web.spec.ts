@@ -40,12 +40,12 @@ async function mockOwnerRest(page: Page, requests: Array<Record<string, unknown>
   });
 }
 
-test("the owner reaches Revenue from the hub and sees totals, charts and the barber table", async ({ page }) => {
+test("the owner reaches Revenue from the tab bar and sees totals, charts and the barber table", async ({ page }) => {
   await signInAsOwner(page);
   await mockOwnerRest(page);
 
   await page.goto("/");
-  await page.getByRole("link", { name: "Revenue" }).click();
+  await page.getByTestId("tab-revenue").click();
   await expect(page).toHaveURL(/\/revenue/);
 
   await expect(page.getByTestId("stat-revenue")).toContainText("R$ 160,00");

@@ -30,7 +30,7 @@ export const pt: DeepStringRecord<typeof en> = {
     phoneOptional: "Telefone (opcional)",
     tryAgain: "Tentar de novo",
   },
-  tabs: { agenda: "Agenda", clients: "Clientes", earnings: "Relatórios", book: "Agendar", home: "Início", profile: "Perfil" },
+  tabs: { agenda: "Agenda", manage: "Gerenciar", revenue: "Receita", account: "Conta", clients: "Clientes", earnings: "Relatórios", book: "Agendar", home: "Início", profile: "Perfil" },
   status: { cancelled: "Cancelado", completed: "Concluído", confirmed: "Confirmado", no_show: "Não compareceu", scheduled: "Agendado" },
   auth: {
     login: {
@@ -291,20 +291,10 @@ export const pt: DeepStringRecord<typeof en> = {
       shopIncomeHint: "Após o repasse aos barbeiros, mais o aluguel de cadeira estimado",
       title: "Faturamento",
     },
-    workspace: {
-      agenda: "Agenda",
-      customers: "Clientes",
-      recurring: "Clientes recorrentes",
-      schedule: "Horários",
-      settings: "Configurações",
-      title: "Área do dono",
-    },
+    manage: { recurring: "Clientes recorrentes", conflicts: "Conflitos de recorrência", title: "Gerenciar" },
     settings: {
       shopLink: "Dados e horários da barbearia",
-      note: "As configurações do negócio ficam no banco de dados; a configuração de publicação está documentada em docs/release.md.",
       ownerFallback: "Dono",
-      signedInAs: "Conectado como {{name}}.",
-      timezone: "Fuso horário da barbearia: {{timezone}}",
       title: "Configurações do dono",
     },
     agenda: {
