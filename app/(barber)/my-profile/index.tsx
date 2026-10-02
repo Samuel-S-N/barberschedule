@@ -15,10 +15,12 @@ import { getMyBarberProfile } from "../../../src/features/barbers/api";
 import { errorMessage } from "../../../src/i18n/errors";
 import { colors } from "../../../src/lib/design/colors";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
+import { pullToRefresh, useRefreshAll } from "../../../src/lib/use-refresh";
 
 export default function BarberProfileHub() {
   const router = useRouter();
   const { t } = useTranslation();
+  const pull = useRefreshAll();
   const { profile: sessionProfile, session, supabase } = useSupabaseSession();
   const profile = useMyProfile();
   const barber = useQuery({ queryFn: () => getMyBarberProfile(supabase), queryKey: ["my-barber-profile", sessionProfile?.userId] });
@@ -27,7 +29,7 @@ export default function BarberProfileHub() {
 
   return (
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
-      <ScrollView className="flex-1">
+      <ScrollView refreshControl={pullToRefresh(pull)} className="flex-1">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-6">
             <View className="items-center gap-1 pt-4">

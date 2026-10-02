@@ -32,6 +32,7 @@ import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { colors } from "../../src/lib/design/colors";
 import { formatWeekdayShort } from "../../src/lib/i18n/format";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
 type Period = "month" | "quarter" | "week";
 
@@ -44,6 +45,7 @@ function rangeFor(period: Period, today: string) {
 
 export default function OwnerRevenueScreen() {
   const { t } = useTranslation();
+  const pull = useRefreshAll();
   const language = useLanguage();
   const { supabase } = useSupabaseSession();
   const [period, setPeriod] = useState<Period>("month");
@@ -145,7 +147,7 @@ export default function OwnerRevenueScreen() {
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
-      <ScrollView className="flex-1">
+      <ScrollView refreshControl={pullToRefresh(pull)} className="flex-1">
         <View className="items-center gap-4 p-5">
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">{t("owner.revenue.title")}</Text>
           <View className="w-full max-w-[420px] flex-row flex-wrap gap-2">

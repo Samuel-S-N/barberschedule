@@ -20,6 +20,7 @@ import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
 import { errorMessage } from "../../src/i18n/errors";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
 type AgendaView = "day" | "week" | "month";
 
@@ -42,6 +43,7 @@ const RANGE_LABEL = { day: "owner.agenda.rangeDay", month: "owner.agenda.rangeMo
 
 export default function OwnerAgendaScreen() {
   const { t } = useTranslation();
+  const pull = useRefreshAll();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
@@ -90,7 +92,7 @@ export default function OwnerAgendaScreen() {
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
-      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
+      <KeyboardAwareScrollView refreshControl={pullToRefresh(pull)} bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("owner.agenda.title")}</Text>

@@ -27,6 +27,7 @@ import { addLocalDays } from "../../src/lib/dates/calendar-strip-days";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { formatWeekdayShort } from "../../src/lib/i18n/format";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
 type Period = "month" | "quarter" | "week";
 
@@ -41,6 +42,7 @@ const WEEKDAY_REFERENCE = ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04
 
 export default function BarberReportsScreen() {
   const { t } = useTranslation();
+  const pull = useRefreshAll();
   const language = useLanguage();
   const { profile, supabase } = useSupabaseSession();
   const [period, setPeriod] = useState<Period>("month");
@@ -88,7 +90,7 @@ export default function BarberReportsScreen() {
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
-      <ScrollView className="flex-1">
+      <ScrollView refreshControl={pullToRefresh(pull)} className="flex-1">
         <View className="items-center gap-4 p-5">
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">{t("barber.reports.title")}</Text>
           <View className="w-full max-w-[420px] flex-row flex-wrap gap-2">
