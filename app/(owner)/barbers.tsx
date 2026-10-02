@@ -1,10 +1,20 @@
-import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
-import { errorMessage } from "../../src/i18n/errors";
-import type { BarberCompensation, OwnerBarber } from "../../src/features/barbers/types";
+import { Avatar } from "../../src/components/domain/Avatar";
+import { EmptyState } from "../../src/components/domain/EmptyState";
+import { formatPriceBRL } from "../../src/components/domain/ServiceCard";
+import { ScreenHeader } from "../../src/components/domain/ScreenHeader";
+import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
+import { Toast } from "../../src/components/domain/Toast";
+import { Button } from "../../src/components/ui/Button";
+import { Card } from "../../src/components/ui/Card";
+import { Input } from "../../src/components/ui/Input";
+import { Screen } from "../../src/components/ui/Screen";
 import {
   createBarber,
   getBarberAccountStatus,
@@ -14,368 +24,193 @@ import {
   setBarberCompensation,
   updateBarber,
 } from "../../src/features/barbers/api";
+import type { BarberCompensation, OwnerBarber } from "../../src/features/barbers/types";
+import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
+import { errorMessage } from "../../src/i18n/errors";
+import { centsToReaisInput, parseReaisToCents } from "../../src/lib/money";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
-import { Screen } from "../../src/components/ui/Screen";
-
-type ShopRow = { id: string };
-
-async function loadShopId(supabase: ReturnType<typeof useSupabaseSession>["supabase"]) {
-  const { data, error } = await supabase
-    .from("shops")
-    .select("id")
-    .order("name", { ascending: true });
-
-  if (error) {
-    throw error;
-  }
-
-  return (data as ShopRow[] | null)?.[0]?.id ?? null;
-}
 
 export default function OwnerBarbersScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
-  const [barbers, setBarbers] = useState<OwnerBarber[]>([]);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const shop = useOwnerShopId();
+  const shopId = shop.data ?? null;
+  const [feedback, setFeedback] = useState<{ message: string; variant: "error" | "success" } | null>(null);
   const [name, setName] = useState("");
-  const [shopId, setShopId] = useState<string | null>(null);
-  const [signedIn, setSignedIn] = useState<Record<string, boolean>>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [invitingId, setInvitingId] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [compensationId, setCompensationId] = useState<string | null>(null);
   const [compType, setCompType] = useState<BarberCompensation["type"]>("commission");
   const [percent, setPercent] = useState("");
-  const [rentCents, setRentCents] = useState("");
+  const [rent, setRent] = useState("");
   const [rentFrequency, setRentFrequency] = useState<"weekly" | "monthly">("monthly");
 
-  const loadSignedIn = async (list: OwnerBarber[]) => {
-    const linked = list.filter((barber) => barber.userId);
-    const entries = await Promise.all(
-      linked.map(async (barber) => [barber.id, await getBarberAccountStatus(supabase, barber.id).catch(() => false)] as const),
-    );
-    setSignedIn(Object.fromEntries(entries));
-  };
+  const barbers = useQuery({
+    enabled: shopId !== null,
+    queryFn: async () => {
+      const list = await listOwnerBarbers(supabase, shopId ?? "");
+      const linked = list.filter((barber: OwnerBarber) => barber.userId);
+      const entries = await Promise.all(linked.map(async (barber: OwnerBarber) => [barber.id, await getBarberAccountStatus(supabase, barber.id).catch(() => false)] as const));
 
-  const refresh = async () => {
-    if (!shopId) {
-      return;
-    }
-
-    const nextBarbers = await listOwnerBarbers(supabase, shopId);
-    setBarbers(nextBarbers);
-    await loadSignedIn(nextBarbers);
-  };
-
-  useEffect(() => {
-    let active = true;
-
-    const load = async () => {
-      try {
-        const nextShopId = await loadShopId(supabase);
-
-        if (!active) {
-          return;
-        }
-
-        setShopId(nextShopId);
-
-        if (!nextShopId) {
-          setFeedback(t("common.noShop"));
-          return;
-        }
-
-        const initial = await listOwnerBarbers(supabase, nextShopId);
-        setBarbers(initial);
-        await loadSignedIn(initial);
-      } catch (error) {
-        if (active) {
-          setFeedback(errorMessage(error, t, t("owner.barbers.loadError")));
-        }
-      } finally {
-        if (active) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    void load();
-
-    return () => {
-      active = false;
-    };
-  }, [supabase]);
+      return { list, signedIn: Object.fromEntries(entries) as Record<string, boolean> };
+    },
+    queryKey: ["owner-barbers", shopId],
+  });
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ["owner-barbers"] });
+  const fail = (error: unknown, fallback: string) => setFeedback({ message: errorMessage(error, t, fallback), variant: "error" });
+  const ok = (message: string) => setFeedback({ message, variant: "success" });
 
   const resetForm = () => {
     setEditingId(null);
     setName("");
   };
 
-  const handleSave = async () => {
-    if (!shopId) {
-      return;
-    }
-
-    setFeedback(null);
-    setIsSaving(true);
-
-    try {
-      if (editingId) {
-        await updateBarber(supabase, editingId, { name });
-      } else {
-        await createBarber(supabase, { name, shopId });
-      }
-
+  const save = useMutation({
+    mutationFn: () => (editingId ? updateBarber(supabase, editingId, { name }) : createBarber(supabase, { name, shopId: shopId ?? "" })),
+    onError: (error) => fail(error, t("owner.barbers.saveError")),
+    onSuccess: () => {
       resetForm();
-      await refresh();
-    } catch (error) {
-      setFeedback(errorMessage(error, t, t("owner.barbers.saveError")));
-    } finally {
-      setIsSaving(false);
-    }
-  };
+      void refresh();
+    },
+  });
 
-  const handleToggle = async (barber: OwnerBarber) => {
-    setFeedback(null);
-    setIsSaving(true);
+  const toggle = useMutation({
+    mutationFn: (barber: OwnerBarber) => setBarberActive(supabase, barber.id, !barber.active),
+    onError: (error) => fail(error, t("owner.barbers.updateError")),
+    onSuccess: () => void refresh(),
+  });
 
-    try {
-      await setBarberActive(supabase, barber.id, !barber.active);
-      await refresh();
-    } catch (error) {
-      setFeedback(errorMessage(error, t, t("owner.barbers.updateError")));
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const invite = useMutation({
+    mutationFn: () => inviteBarber(supabase, { barberId: invitingId ?? "", email: inviteEmail.trim() }),
+    onError: (error) => fail(error, t("owner.barbers.inviteError")),
+    onSuccess: () => {
+      setInvitingId(null);
+      setInviteEmail("");
+      ok(t("owner.barbers.inviteSent"));
+      void refresh();
+    },
+  });
+
+  const saveCompensation = useMutation({
+    mutationFn: () => {
+      if (compType === "commission") return setBarberCompensation(supabase, compensationId ?? "", { commissionPercent: Number(percent), type: "commission" });
+      const amountCents = parseReaisToCents(rent);
+      if (amountCents === null) throw Object.assign(new Error("invalid"), { code: "P0021" });
+
+      return setBarberCompensation(supabase, compensationId ?? "", { amountCents, frequency: rentFrequency, type: "chair_rental" });
+    },
+    onError: (error) => fail(error, t("owner.barbers.compensationError")),
+    onSuccess: () => {
+      setCompensationId(null);
+      ok(t("owner.barbers.compensationSaved"));
+      void refresh();
+    },
+  });
 
   const startCompensation = (barber: OwnerBarber) => {
     setCompensationId(barber.id);
     setCompType(barber.compensation.type);
     setPercent(barber.compensation.type === "commission" ? String(barber.compensation.commissionPercent) : "");
-    setRentCents(barber.compensation.type === "chair_rental" ? String(barber.compensation.amountCents) : "");
+    setRent(barber.compensation.type === "chair_rental" ? centsToReaisInput(barber.compensation.amountCents) : "");
     setRentFrequency(barber.compensation.type === "chair_rental" ? barber.compensation.frequency : "monthly");
   };
 
-  const handleSaveCompensation = async () => {
-    if (!compensationId) return;
-    setFeedback(null);
-    setIsSaving(true);
-
-    try {
-      await setBarberCompensation(
-        supabase,
-        compensationId,
-        compType === "commission"
-          ? { commissionPercent: Number(percent), type: "commission" }
-          : { amountCents: Number(rentCents), frequency: rentFrequency, type: "chair_rental" },
-      );
-      setCompensationId(null);
-      await refresh();
-      setFeedback(t("owner.barbers.compensationSaved"));
-    } catch (error) {
-      setFeedback(errorMessage(error, t, t("owner.barbers.compensationError")));
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleInvite = async () => {
-    if (!invitingId) return;
-    setFeedback(null);
-    setIsSaving(true);
-
-    try {
-      await inviteBarber(supabase, { barberId: invitingId, email: inviteEmail.trim() });
-      setInvitingId(null);
-      setInviteEmail("");
-      await refresh();
-      setFeedback(t("owner.barbers.inviteSent"));
-    } catch (error) {
-      setFeedback(errorMessage(error, t, t("owner.barbers.inviteError")));
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const accountStatus = (barber: OwnerBarber) =>
+  const accountStatus = (barber: OwnerBarber, signedIn: Record<string, boolean>) =>
     !barber.userId ? "owner.barbers.statusNone" : signedIn[barber.id] ? "owner.barbers.statusActive" : "owner.barbers.statusInvited";
 
   const compensationSummary = (barber: OwnerBarber) =>
     barber.compensation.type === "commission"
       ? t("owner.barbers.summaryCommission", { percent: barber.compensation.commissionPercent })
-      : t("owner.barbers.summaryChairRental", {
-          amount: barber.compensation.amountCents,
-          frequency: t(`barber.frequency.${barber.compensation.frequency}`),
-        });
+      : t("owner.barbers.summaryChairRental", { amount: formatPriceBRL(barber.compensation.amountCents), frequency: t(`barber.frequency.${barber.compensation.frequency}`) });
+
+  const busy = save.isPending || toggle.isPending || invite.isPending || saveCompensation.isPending;
+  const loading = shop.isLoading || barbers.isLoading;
+  const loadError = shop.error ?? barbers.error;
+  const back = () => (router.canGoBack() ? router.back() : router.replace("/manage"));
 
   return (
-    <Screen style={styles.screen}>
-      <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-        <Text accessibilityRole="header" style={styles.title}>
-          {t("owner.barbers.title")}
-        </Text>
-        <TextInput
-          onChangeText={setName}
-          placeholder={t("owner.barbers.nameLabel")}
-          style={styles.input}
-          value={name}
-        />
-        {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}
-        {isLoading || isSaving ? <ActivityIndicator /> : null}
-        <Button
-          disabled={name.trim().length === 0 || isLoading || isSaving || !shopId}
-          onPress={handleSave}
-          title={editingId ? t("owner.barbers.save") : t("owner.barbers.add")}
-        />
-        {editingId ? <Button onPress={resetForm} title={t("common.cancelEdit")} /> : null}
-        <View style={styles.list}>
-          {barbers.map((barber) => (
-            <View key={barber.id} style={styles.card}>
-              <Text style={styles.name}>
-                {barber.name} {barber.active ? "" : t("common.archived")}
-              </Text>
-              <Button
-                onPress={() => {
-                  setEditingId(barber.id);
-                  setName(barber.name);
-                }}
-                title={t("common.edit")}
-              />
-              <Button
-                onPress={() => {
-                  void handleToggle(barber);
-                }}
-                title={barber.active ? t("common.deactivate") : t("common.activate")}
-              />
-              <Text>{t(accountStatus(barber))}</Text>
-              <Text>{compensationSummary(barber)}</Text>
-              {!barber.userId ? (
-                <Button
-                  onPress={() => {
-                    setInvitingId(barber.id);
-                    setInviteEmail("");
-                  }}
-                  title={t("owner.barbers.invite")}
-                />
-              ) : null}
-              {invitingId === barber.id ? (
-                <View style={styles.list}>
-                  <TextInput
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    onChangeText={setInviteEmail}
-                    placeholder={t("owner.barbers.inviteEmailLabel")}
-                    style={styles.input}
-                    value={inviteEmail}
-                  />
-                  <Button
-                    disabled={isSaving || !inviteEmail.includes("@")}
-                    onPress={() => void handleInvite()}
-                    title={t("owner.barbers.sendInvite")}
-                  />
-                  <Button onPress={() => setInvitingId(null)} title={t("common.cancel")} />
+    <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
+      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
+        <View className="items-center p-5">
+          <View className="w-full max-w-[420px] gap-4">
+            <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("owner.barbers.title")} />
+
+            <Card>
+              <View className="gap-3">
+                <Input label={t("owner.barbers.nameLabel")} onChangeText={setName} testID="barber-name-input" value={name} />
+                <View className="flex-row gap-2">
+                  <Button disabled={name.trim().length === 0 || loading || busy || !shopId} label={editingId ? t("owner.barbers.save") : t("owner.barbers.add")} onPress={() => save.mutate()} testID="barber-save" />
+                  {editingId ? <Button label={t("common.cancelEdit")} onPress={resetForm} variant="outline" /> : null}
                 </View>
-              ) : null}
-              <Button onPress={() => startCompensation(barber)} title={t("owner.barbers.compensation")} />
-              {compensationId === barber.id ? (
-                <View style={styles.list}>
-                  <View style={styles.row}>
-                    <Button
-                      color={compType === "commission" ? "#2563eb" : undefined}
-                      onPress={() => setCompType("commission")}
-                      title={t("owner.barbers.commissionTab")}
-                    />
-                    <Button
-                      color={compType === "chair_rental" ? "#2563eb" : undefined}
-                      onPress={() => setCompType("chair_rental")}
-                      title={t("owner.barbers.chairRentalTab")}
-                    />
+              </View>
+            </Card>
+
+            {loading ? <SkeletonBlock height={96} width={320} /> : null}
+            {loadError ? <Text className="text-sm font-sans text-danger-500">{errorMessage(loadError, t, t("owner.barbers.loadError"))}</Text> : null}
+            {shop.data === null ? <EmptyState title={t("common.noShop")} /> : null}
+
+            {(barbers.data?.list ?? []).map((barber: OwnerBarber) => (
+              <Card key={barber.id} testID={`owner-barber-${barber.id}`} variant="outlined">
+                <View className="gap-3">
+                  <View className="flex-row items-center gap-3">
+                    <Avatar name={barber.name} size={44} uri={barber.avatarUrl} />
+                    <View className="flex-1 gap-0.5">
+                      <Text className="text-base font-sans-semibold text-ink">{barber.name}{barber.active ? "" : ` ${t("common.archived")}`}</Text>
+                      <Text className="text-sm font-sans text-neutral-600">{t(accountStatus(barber, barbers.data?.signedIn ?? {}))}</Text>
+                      <Text className="text-sm font-sans text-neutral-600">{compensationSummary(barber)}</Text>
+                    </View>
                   </View>
-                  {compType === "commission" ? (
-                    <TextInput
-                      keyboardType="numeric"
-                      onChangeText={setPercent}
-                      placeholder={t("owner.barbers.commissionPercentLabel")}
-                      style={styles.input}
-                      value={percent}
-                    />
-                  ) : (
-                    <>
-                      <TextInput
-                        keyboardType="numeric"
-                        onChangeText={setRentCents}
-                        placeholder={t("owner.barbers.rentalAmountLabel")}
-                        style={styles.input}
-                        value={rentCents}
-                      />
-                      <View style={styles.row}>
-                        {(["weekly", "monthly"] as const).map((frequency) => (
-                          <Button
-                            color={rentFrequency === frequency ? "#2563eb" : undefined}
-                            key={frequency}
-                            onPress={() => setRentFrequency(frequency)}
-                            title={t(`barber.frequency.${frequency}`)}
-                          />
-                        ))}
+                  <View className="flex-row flex-wrap gap-2">
+                    <Button label={t("common.edit")} onPress={() => { setEditingId(barber.id); setName(barber.name); }} size="sm" testID={`barber-edit-${barber.id}`} variant="outline" />
+                    <Button disabled={busy} label={barber.active ? t("common.deactivate") : t("common.activate")} onPress={() => toggle.mutate(barber)} size="sm" testID={`barber-toggle-${barber.id}`} variant="outline" />
+                    {!barber.userId ? <Button label={t("owner.barbers.invite")} onPress={() => { setInvitingId(barber.id); setInviteEmail(""); }} size="sm" testID={`barber-invite-${barber.id}`} variant="outline" /> : null}
+                    <Button label={t("owner.barbers.compensation")} onPress={() => startCompensation(barber)} size="sm" testID={`barber-comp-${barber.id}`} variant="outline" />
+                  </View>
+
+                  {invitingId === barber.id ? (
+                    <View className="gap-2">
+                      <Input autoCapitalize="none" keyboardType="email-address" label={t("owner.barbers.inviteEmailLabel")} onChangeText={setInviteEmail} testID="barber-invite-email" value={inviteEmail} />
+                      <View className="flex-row gap-2">
+                        <Button disabled={busy || !inviteEmail.includes("@")} label={t("owner.barbers.sendInvite")} onPress={() => invite.mutate()} size="sm" testID="barber-invite-send" />
+                        <Button label={t("common.cancel")} onPress={() => setInvitingId(null)} size="sm" variant="outline" />
                       </View>
-                    </>
-                  )}
-                  <Button disabled={isSaving} onPress={() => void handleSaveCompensation()} title={t("owner.barbers.saveCompensation")} />
-                  <Button onPress={() => setCompensationId(null)} title={t("common.cancel")} />
+                    </View>
+                  ) : null}
+
+                  {compensationId === barber.id ? (
+                    <View className="gap-2">
+                      <View className="flex-row gap-2">
+                        <Button label={t("owner.barbers.commissionTab")} onPress={() => setCompType("commission")} size="sm" testID="comp-type-commission" variant={compType === "commission" ? "dark" : "outline"} />
+                        <Button label={t("owner.barbers.chairRentalTab")} onPress={() => setCompType("chair_rental")} size="sm" testID="comp-type-chair_rental" variant={compType === "chair_rental" ? "dark" : "outline"} />
+                      </View>
+                      {compType === "commission" ? (
+                        <Input keyboardType="numeric" label={t("owner.barbers.commissionPercentLabel")} onChangeText={setPercent} testID="comp-percent" value={percent} />
+                      ) : (
+                        <>
+                          <Input keyboardType="numeric" label={t("owner.barbers.rentalAmountLabel")} onChangeText={setRent} testID="comp-rent" value={rent} />
+                          <View className="flex-row gap-2">
+                            {(["weekly", "monthly"] as const).map((frequency) => (
+                              <Button key={frequency} label={t(`barber.frequency.${frequency}`)} onPress={() => setRentFrequency(frequency)} size="sm" testID={`comp-freq-${frequency}`} variant={rentFrequency === frequency ? "dark" : "outline"} />
+                            ))}
+                          </View>
+                        </>
+                      )}
+                      <View className="flex-row gap-2">
+                        <Button disabled={busy} label={t("owner.barbers.saveCompensation")} onPress={() => saveCompensation.mutate()} size="sm" testID="comp-save" />
+                        <Button label={t("common.cancel")} onPress={() => setCompensationId(null)} size="sm" variant="outline" />
+                      </View>
+                    </View>
+                  ) : null}
                 </View>
-              ) : null}
-            </View>
-          ))}
+              </Card>
+            ))}
+            <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
+          </View>
         </View>
       </KeyboardAwareScrollView>
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    borderColor: "#d1d5db",
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 8,
-    padding: 12,
-  },
-  content: {
-    gap: 12,
-    padding: 24,
-  },
-  feedback: {
-    color: "#1f2937",
-  },
-  input: {
-    borderColor: "#d1d5db",
-    borderRadius: 10,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  list: {
-    gap: 12,
-  },
-  name: {
-    color: "#111827",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  row: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  screen: {
-    backgroundColor: "#ffffff",
-    flex: 1,
-  },
-  title: {
-    color: "#111827",
-    fontSize: 28,
-    fontWeight: "700",
-  },
-});
