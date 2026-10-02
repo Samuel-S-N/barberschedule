@@ -137,18 +137,18 @@ async function signInAsOwner(page: import("@playwright/test").Page, handler?: Pa
 test.describe("Portuguese owner", () => {
   test.use({ locale: "pt-BR" });
 
-  test("the owner hub and settings are in Portuguese", async ({ page }) => {
+  test("the owner tabs, manage menu and account are in Portuguese", async ({ page }) => {
     await signInAsOwner(page);
 
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: "Barberschedule MVP" })).toBeVisible();
-    await expect(page.getByText("Conectado como dono.")).toBeVisible();
-    await expect(page.getByRole("link", { name: "Gerenciar agenda" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Gerenciar horários" })).toBeVisible();
+    await expect(page.getByTestId("tab-revenue")).toHaveAttribute("aria-label", "Receita");
+    await page.getByTestId("tab-manage").click();
+    await expect(page.getByRole("heading", { name: "Gerenciar" })).toBeVisible();
+    await expect(page.getByTestId("menu-schedule")).toContainText("Gerenciar horários");
 
     await page.goto("/settings");
-    await expect(page.getByRole("heading", { name: "Configurações do dono" })).toBeVisible();
-    await expect(page.getByText("Fuso horário da barbearia: America/Sao_Paulo")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Browser Owner" })).toBeVisible();
+    await expect(page.getByTestId("menu-language")).toContainText("Idioma");
   });
 
   test("the owner schedule screen is in Portuguese", async ({ page }) => {

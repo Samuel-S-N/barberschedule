@@ -1,46 +1,56 @@
-import { Link } from "expo-router";
+import { useRouter } from "expo-router";
+import { Globe, LogOut } from "lucide-react-native";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
+import { Avatar } from "../../src/components/domain/Avatar";
+import { MenuBlock } from "../../src/components/domain/MenuBlock";
+import { Toast } from "../../src/components/domain/Toast";
 import { Screen } from "../../src/components/ui/Screen";
 import { signOut } from "../../src/features/auth/api";
 import { errorMessage } from "../../src/i18n/errors";
+import { colors } from "../../src/lib/design/colors";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 export default function OwnerSettingsScreen() {
   const { t } = useTranslation();
-  const { profile, supabase } = useSupabaseSession();
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const router = useRouter();
+  const { profile, session, supabase } = useSupabaseSession();
+  const [error, setError] = useState<string | null>(null);
+  const name = profile?.fullName ?? t("owner.settings.ownerFallback");
 
   return (
-    <Screen style={styles.screen}>
-      <View style={styles.content}>
-        <Text accessibilityRole="header" style={styles.title}>{t("owner.settings.title")}</Text>
-        <Text>{t("owner.settings.signedInAs", { name: profile?.fullName ?? t("owner.settings.ownerFallback") })}</Text>
-        <Text>{t("owner.settings.timezone", { timezone: "America/Sao_Paulo" })}</Text>
-        <Text style={styles.note}>{t("owner.settings.note")}</Text>
-        <Link href="/shop" style={styles.link}>{t("owner.settings.shopLink")}</Link>
-        {feedback ? <Text>{feedback}</Text> : null}
-        <Button
-          onPress={async () => {
-            try {
-              await signOut(supabase);
-            } catch (error) {
-              setFeedback(errorMessage(error, t, t("profile.signOutError")));
-            }
-          }}
-          title={t("common.signOut")}
-        />
-      </View>
+    <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
+      <ScrollView className="flex-1">
+        <View className="items-center p-5">
+          <View className="w-full max-w-[420px] gap-6">
+            <View className="items-center gap-1 pt-4">
+              <Avatar name={name} />
+              <Text accessibilityRole="header" className="pt-3 text-2xl font-display-bold text-ink">{name}</Text>
+              <Text className="text-sm font-sans text-neutral-600">{session?.user.email}</Text>
+              <Text className="text-xs font-sans-medium uppercase text-primary-600">{t("owner.roles.owner")}</Text>
+            </View>
+            <MenuBlock items={[{ icon: Globe, key: "language", label: t("profile.settings.language"), onPress: () => router.push("/language") }]} />
+            <Pressable
+              accessibilityRole="button"
+              className="min-h-[56px] flex-row items-center justify-center gap-2 rounded-[20px] border border-neutral-200 bg-surface"
+              onPress={async () => {
+                try {
+                  await signOut(supabase);
+                } catch (caught) {
+                  setError(errorMessage(caught, t, t("profile.signOutError")));
+                }
+              }}
+              testID="profile-signout"
+            >
+              <LogOut color={colors.danger[500]} size={20} />
+              <Text className="text-base font-sans-semibold text-danger-500">{t("common.signOut")}</Text>
+            </Pressable>
+            <Toast message={error ?? ""} onDismiss={() => setError(null)} variant="error" visible={error !== null} />
+          </View>
+        </View>
+      </ScrollView>
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  content: { gap: 16, maxWidth: 520, width: "100%" },
-  link: { color: "#2563eb", fontSize: 16 },
-  note: { color: "#4b5563" },
-  screen: { alignItems: "center", backgroundColor: "#fff", flex: 1, padding: 24 },
-  title: { color: "#111827", fontSize: 28, fontWeight: "700" },
-});

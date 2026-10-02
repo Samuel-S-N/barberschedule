@@ -12,7 +12,7 @@ describe("owner shop screen", () => {
     }
   });
 
-  it("is reachable from settings", () => {
-    expect(read("app/(owner)/settings.tsx")).toContain('"/shop"');
+  it("is reachable from the Manage menu", () => {
+    expect(read("app/(owner)/manage.tsx")).toContain('"/shop"');
   });
 });

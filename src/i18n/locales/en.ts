@@ -31,7 +31,7 @@ export const en = {
     phoneOptional: "Phone (optional)",
     tryAgain: "Try again",
   },
-  tabs: { agenda: "Agenda", clients: "Clients", earnings: "Reports", book: "Book", home: "Home", profile: "Profile" },
+  tabs: { agenda: "Agenda", manage: "Manage", revenue: "Revenue", account: "Account", clients: "Clients", earnings: "Reports", book: "Book", home: "Home", profile: "Profile" },
   status: { cancelled: "Cancelled", completed: "Completed", confirmed: "Confirmed", no_show: "No-show", scheduled: "Scheduled" },
   auth: {
     login: {
@@ -277,20 +277,10 @@ export const en = {
       shopIncomeHint: "After barber payouts, plus estimated chair rent",
       title: "Revenue",
     },
-    workspace: {
-      agenda: "Agenda",
-      customers: "Customers",
-      recurring: "Recurring customers",
-      schedule: "Schedule",
-      settings: "Settings",
-      title: "Owner workspace",
-    },
+    manage: { recurring: "Recurring customers", conflicts: "Recurrence conflicts", title: "Manage" },
     settings: {
       shopLink: "Shop details and hours",
-      note: "Business settings remain database-owned; release configuration is documented in docs/release.md.",
       ownerFallback: "Owner",
-      signedInAs: "Signed in as {{name}}.",
-      timezone: "Shop timezone: {{timezone}}",
       title: "Owner settings",
     },
     agenda: {
