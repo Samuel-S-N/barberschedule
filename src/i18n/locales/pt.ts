@@ -582,8 +582,6 @@ export const pt: DeepStringRecord<typeof en> = {
       cancelAppointment: "Cancelar horário",
       cancelConfirm: "Toque de novo para cancelar",
       moveAppointment: "Remarcar",
-      moving: "Remarcando {{name}}. Toque em um horário livre.",
-      moveCancel: "Manter horário",
       appointmentCancelled: "Agendamento cancelado.",
       appointmentMoved: "Agendamento remarcado.",
       bookConfirm: "Agendar",

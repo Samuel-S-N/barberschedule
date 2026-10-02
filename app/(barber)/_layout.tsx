@@ -63,6 +63,7 @@ export default function BarberLayout() {
       <Tabs.Screen name="clients" />
       <Tabs.Screen name="earnings" />
       <Tabs.Screen name="my-profile" />
+      <Tabs.Screen name="move-appointment" options={{ href: null }} />
     </Tabs>
   );
 }

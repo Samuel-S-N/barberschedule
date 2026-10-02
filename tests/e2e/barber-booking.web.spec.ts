@@ -164,19 +164,20 @@ test("a barber cancels an appointment after a second tap", async ({ page }) => {
   expect(cancelPayload).toEqual({ appointment_id: "appt-1" });
 });
 
-test("a barber moves an appointment by picking a free time", async ({ page }) => {
-  const moved: { payload?: Record<string, string> } = {};
+test("a barber moves an appointment: opens the calendar, picks the day, then the time", async ({ page }) => {
+  const moved: { payload?: Record<string, string>; slotDates: string[] } = { slotDates: [] };
   const slotStart = new Date(Date.now() + 3 * 60 * 60 * 1000);
-  const slotRow = {
-    ends_at: new Date(slotStart.getTime() + 30 * 60 * 1000).toISOString(), local_date: "2026-10-01", local_time: "09:30:00", starts_at: slotStart.toISOString(),
-  };
 
   await signIn(page, barberUserId);
   await mockBarberRest(page, async (route, url) => {
     const name = url.pathname.split("/rpc/")[1];
     if (name === "list_my_barber_agenda") return json(route, [openAppointmentRow()]).then(() => true);
-    if (name === "get_available_slots") return json(route, [slotRow]).then(() => true);
-    if (name === "barber_search_customers") return json(route, []).then(() => true);
+    if (name === "get_available_slots") {
+      const body = route.request().postDataJSON() as { barber_service_id: string; local_date: string };
+      moved.slotDates.push(body.local_date);
+
+      return json(route, [{ ends_at: new Date(slotStart.getTime() + 30 * 60 * 1000).toISOString(), local_date: body.local_date, local_time: "10:30:00", starts_at: slotStart.toISOString() }]).then(() => true);
+    }
     if (name === "reschedule_appointment") {
       moved.payload = route.request().postDataJSON() as Record<string, string>;
       return json(route, [openAppointmentRow()]).then(() => true);
@@ -185,16 +186,25 @@ test("a barber moves an appointment by picking a free time", async ({ page }) =>
 
   await page.goto("/my-agenda");
   await page.getByTestId("barber-move-appt-1").click();
-  await expect(page.getByTestId("barber-moving")).toContainText("Ana Customer");
-  await page.getByTestId("barber-free-slot").first().click();
 
-  await expect(page.getByText("Appointment moved.")).toBeVisible();
-  await expect(page.getByTestId("barber-book-name")).toHaveCount(0);
+  // Like the customer's reschedule: the month calendar first, then the times of the chosen day.
+  await expect(page).toHaveURL(/\/move-appointment/);
+  await expect(page.getByTestId("move-current")).toContainText("Ana Customer");
+  await expect(page.getByTestId("month-calendar")).toBeVisible();
+  await expect(page.getByTestId("move-confirm")).toBeDisabled();
+  const day = page.locator('[data-testid^="month-calendar-day-"]:not([aria-disabled="true"])').last();
+  const chosenDate = ((await day.getAttribute("data-testid")) ?? "").replace("month-calendar-day-", "");
+  await day.click();
+  await page.getByTestId("time-slot-10:30").click();
+  await page.getByTestId("move-confirm").click();
+
+  await expect(page).toHaveURL(/\/my-agenda/);
+  expect(moved.slotDates).toContain(chosenDate);
   expect(moved.payload?.appointment_id).toBe("appt-1");
   expect(new Date(moved.payload?.new_starts_at ?? "").getTime()).toBe(slotStart.getTime());
 });
 
-test("a failed move shows the error and keeps moving", async ({ page }) => {
+test("a failed move shows the error and stays on the calendar", async ({ page }) => {
   const slotStart = new Date(Date.now() + 3 * 60 * 60 * 1000);
 
   await signIn(page, barberUserId);
@@ -202,17 +212,37 @@ test("a failed move shows the error and keeps moving", async ({ page }) => {
     const name = url.pathname.split("/rpc/")[1];
     if (name === "list_my_barber_agenda") return json(route, [openAppointmentRow()]).then(() => true);
     if (name === "get_available_slots") {
-      return json(route, [{ ends_at: slotStart.toISOString(), local_date: "2026-10-01", local_time: "09:30:00", starts_at: slotStart.toISOString() }]).then(() => true);
+      return json(route, [{ ends_at: slotStart.toISOString(), local_date: "2026-10-01", local_time: "10:30:00", starts_at: slotStart.toISOString() }]).then(() => true);
     }
     if (name === "reschedule_appointment") return json(route, { code: "P0001", message: "SLOT_UNAVAILABLE" }, 400).then(() => true);
   });
 
   await page.goto("/my-agenda");
   await page.getByTestId("barber-move-appt-1").click();
-  await page.getByTestId("barber-free-slot").first().click();
+  await page.getByTestId("time-slot-10:30").click();
+  await page.getByTestId("move-confirm").click();
 
   await expect(page.getByText("That time is no longer available.")).toBeVisible();
-  await expect(page.getByTestId("barber-moving")).toBeVisible();
+  await expect(page).toHaveURL(/\/move-appointment/);
+});
+
+test("keeping the current time goes back to the agenda without calling the database", async ({ page }) => {
+  let rescheduled = false;
+
+  await signIn(page, barberUserId);
+  await mockBarberRest(page, async (route, url) => {
+    const name = url.pathname.split("/rpc/")[1];
+    if (name === "list_my_barber_agenda") return json(route, [openAppointmentRow()]).then(() => true);
+    if (name === "get_available_slots") return json(route, []).then(() => true);
+    if (name === "reschedule_appointment") rescheduled = true;
+  });
+
+  await page.goto("/my-agenda");
+  await page.getByTestId("barber-move-appt-1").click();
+  await page.getByTestId("move-keep").click();
+
+  await expect(page).toHaveURL(/\/my-agenda/);
+  expect(rescheduled).toBe(false);
 });
 
 function upcomingRow(phone: string | null) {
