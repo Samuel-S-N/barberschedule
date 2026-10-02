@@ -298,6 +298,7 @@ export const pt: DeepStringRecord<typeof en> = {
       title: "Configurações do dono",
     },
     agenda: {
+      empty: "Nenhum agendamento neste período.",
       complete: "Concluir",
       loadError: "Não foi possível carregar a agenda.",
       newAppointment: "Novo agendamento",
@@ -316,6 +317,7 @@ export const pt: DeepStringRecord<typeof en> = {
       viewWeek: "Semana",
     },
     appointmentForm: {
+      searchCustomer: "Buscar clientes",
       backToAgenda: "Voltar para a agenda",
       create: "Criar agendamento",
       createError: "Não foi possível criar o agendamento.",
