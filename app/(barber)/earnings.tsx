@@ -17,6 +17,9 @@ import { Screen } from "../../src/components/ui/Screen";
 import { getMyBarberProfile } from "../../src/features/barbers/api";
 import { dailySeries, percentChange, previousRange, sumDays, topServices, weekdayCounts, WEEKLY_THRESHOLD_DAYS, daysBetween } from "../../src/features/reports/build-report";
 import { getMyBarberReport } from "../../src/features/reports/api";
+import { barberReportCsv } from "../../src/features/reports/csv";
+import { useCsvLabels } from "../../src/features/reports/use-csv-labels";
+import { saveExportFile } from "../../src/features/account/export-file";
 import { errorMessage } from "../../src/i18n/errors";
 import { useLanguage } from "../../src/i18n/use-language";
 import { colors } from "../../src/lib/design/colors";
@@ -49,7 +52,18 @@ export default function BarberReportsScreen() {
   const current = useQuery({ queryFn: () => getMyBarberReport(supabase, range.start, range.end), queryKey: ["barber-report", range.start, range.end] });
   const before = useQuery({ queryFn: () => getMyBarberReport(supabase, previous.start, previous.end), queryKey: ["barber-report", previous.start, previous.end] });
 
+  const csvLabels = useCsvLabels();
+  const [exportFailed, setExportFailed] = useState(false);
   const report = current.data;
+  const exportCsv = async () => {
+    if (!report) return;
+    setExportFailed(false);
+    try {
+      await saveExportFile({ content: barberReportCsv(report, csvLabels), filename: `report-${range.start}_${range.end}.csv`, mimeType: "text/csv;charset=utf-8" });
+    } catch {
+      setExportFailed(true);
+    }
+  };
   const totals = report ? sumDays(report.days) : null;
   const previousTotals = before.data ? sumDays(before.data.days) : null;
   const delta = (now: number, was: number | undefined) => {
@@ -91,6 +105,8 @@ export default function BarberReportsScreen() {
           </View>
 
           <View className="w-full max-w-[420px] gap-3">
+            {report ? <Button label={t("csv.export")} onPress={() => void exportCsv()} size="sm" testID="report-export" variant="outline" /> : null}
+            {exportFailed ? <Text className="text-sm font-sans text-danger-500">{t("csv.exportError")}</Text> : null}
             {current.isLoading ? <SkeletonBlock height={96} width={320} /> : null}
             {current.error ? <Text className="text-sm font-sans text-danger-500">{errorMessage(current.error, t, t("barber.reports.loadError"))}</Text> : null}
             {report && totals ? (

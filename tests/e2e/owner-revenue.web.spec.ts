@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
@@ -143,4 +145,21 @@ test("an invalid amount is rejected before calling the database", async ({ page 
 
   await expect(page.getByText("Enter a valid amount.")).toBeVisible();
   expect(calls).toEqual([]);
+});
+
+test("the owner exports the revenue report as a CSV file", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page);
+
+  await page.goto("/revenue");
+  await expect(page.getByTestId("stat-revenue")).toBeVisible();
+  const download = page.waitForEvent("download");
+  await page.getByTestId("report-export").click();
+  const file = await download;
+  const content = (await readFile((await file.path())!, "utf8")).replace("\uFEFF", "");
+
+  expect(file.suggestedFilename()).toMatch(/^revenue-\d{4}-\d{2}-\d{2}_\d{4}-\d{2}-\d{2}\.csv$/);
+  expect(content).toContain("Barber;Completed;Revenue;Barber share;Rent (estimate);Rent paid");
+  expect(content).toContain("Bruno Chair;1;50,00;50,00;70,00;0,00");
+  expect(content).toContain("Browser Cut;3;110,00");
 });
