@@ -30,6 +30,21 @@ describe("BarberBookingSheet", () => {
     expect(props.onSubmit).toHaveBeenCalledWith({ barberServiceId: "bs-cut", customer: { email: "", name: "Walk In", phone: "" } });
   });
 
+  it("ignores a second tap on confirm until the booking settles", async () => {
+    const { props, view } = setup();
+    const v = await view;
+
+    await fireEvent.changeText(v.getByTestId("barber-book-name"), "Walk In");
+    await fireEvent.press(v.getByTestId("barber-book-confirm"));
+    await fireEvent.press(v.getByTestId("barber-book-confirm"));
+    expect(props.onSubmit).toHaveBeenCalledTimes(1);
+
+    await v.rerender(React.createElement(BarberBookingSheet, { ...props, busy: true } as never));
+    await v.rerender(React.createElement(BarberBookingSheet, { ...props, busy: false } as never));
+    await fireEvent.press(v.getByTestId("barber-book-confirm"));
+    expect(props.onSubmit).toHaveBeenCalledTimes(2);
+  });
+
   it("pre-selects the first service that fits and disables the ones that do not", async () => {
     const v = await setup().view;
 
