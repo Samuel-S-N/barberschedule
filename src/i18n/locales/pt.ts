@@ -597,6 +597,7 @@ export const pt: DeepStringRecord<typeof en> = {
       commission: "Comissão: {{percent}}% de cada serviço concluído.",
       compensationTitle: "Como você é pago",
       loadError: "Não foi possível carregar seu perfil.",
+      privacyNote: "Sua conta de barbeiro é gerenciada pelo dono da barbearia. Para excluí-la ou corrigir seus dados, fale com o dono. Os dados de clientes que você vê aqui servem apenas para atender os agendamentos.",
       save: "Salvar perfil",
       saved: "Perfil salvo.",
       saveError: "Não foi possível salvar seu perfil.",
