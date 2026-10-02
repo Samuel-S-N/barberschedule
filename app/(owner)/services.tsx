@@ -1,293 +1,238 @@
-import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
-import { errorMessage } from "../../src/i18n/errors";
-import type { Service } from "../../src/features/services/types";
+import { EmptyState } from "../../src/components/domain/EmptyState";
+import { ScreenHeader } from "../../src/components/domain/ScreenHeader";
+import { formatPriceBRL } from "../../src/components/domain/ServiceCard";
+import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
+import { Toast } from "../../src/components/domain/Toast";
+import { Button } from "../../src/components/ui/Button";
+import { Card } from "../../src/components/ui/Card";
+import { Input } from "../../src/components/ui/Input";
+import { Screen } from "../../src/components/ui/Screen";
+import { listOwnerBarbers } from "../../src/features/barbers/api";
+import type { OwnerBarber } from "../../src/features/barbers/types";
 import {
+  createBarberService,
   createService,
+  listOwnerBarberServices,
   listOwnerServices,
+  setBarberServiceActive,
   setServiceActive,
   setServiceStandard,
+  updateBarberService,
   updateService,
 } from "../../src/features/services/api";
-import {
-  isIntegerInput,
-  parseIntegerInput,
-} from "../../src/features/services/validation";
+import type { BarberService, Service } from "../../src/features/services/types";
+import { isIntegerInput, parseIntegerInput } from "../../src/features/services/validation";
+import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
+import { errorMessage } from "../../src/i18n/errors";
+import { centsToReaisInput, parseReaisToCents } from "../../src/lib/money";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
-import { Screen } from "../../src/components/ui/Screen";
-
-type ShopRow = { id: string };
-
-async function loadShopId(supabase: ReturnType<typeof useSupabaseSession>["supabase"]) {
-  const { data, error } = await supabase
-    .from("shops")
-    .select("id")
-    .order("name", { ascending: true });
-
-  if (error) {
-    throw error;
-  }
-
-  return (data as ShopRow[] | null)?.[0]?.id ?? null;
-}
 
 export default function OwnerServicesScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
+  const shop = useOwnerShopId();
+  const shopId = shop.data ?? null;
+  const [feedback, setFeedback] = useState<{ message: string; variant: "error" | "success" } | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [durationMinutes, setDurationMinutes] = useState("30");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [name, setName] = useState("");
-  const [priceCents, setPriceCents] = useState("2500");
-  const [services, setServices] = useState<Service[]>([]);
-  const [shopId, setShopId] = useState<string | null>(null);
+  const [price, setPrice] = useState("25,00");
+  // Which service has its barbers section open, and which assignment's override is being edited.
+  const [openServiceId, setOpenServiceId] = useState<string | null>(null);
+  const [overrideId, setOverrideId] = useState<string | null>(null);
+  const [overridePrice, setOverridePrice] = useState("");
+  const [overrideDuration, setOverrideDuration] = useState("");
 
-  const refresh = async () => {
-    if (!shopId) {
-      return;
-    }
+  const catalog = useQuery({
+    enabled: shopId !== null,
+    queryFn: async () => {
+      const id = shopId ?? "";
+      const [services, barbers, barberServices] = await Promise.all([listOwnerServices(supabase, id), listOwnerBarbers(supabase, id), listOwnerBarberServices(supabase, id)]);
 
-    setServices(await listOwnerServices(supabase, shopId));
-  };
-
-  useEffect(() => {
-    let active = true;
-
-    const load = async () => {
-      try {
-        const nextShopId = await loadShopId(supabase);
-
-        if (!active) {
-          return;
-        }
-
-        setShopId(nextShopId);
-
-        if (!nextShopId) {
-          setFeedback(t("common.noShop"));
-          return;
-        }
-
-        setServices(await listOwnerServices(supabase, nextShopId));
-      } catch (error) {
-        if (active) {
-          setFeedback(errorMessage(error, t, t("owner.services.loadError")));
-        }
-      } finally {
-        if (active) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    void load();
-
-    return () => {
-      active = false;
-    };
-  }, [supabase]);
+      return { barberServices, barbers: barbers.filter((barber: OwnerBarber) => barber.active), services };
+    },
+    queryKey: ["owner-services", shopId],
+  });
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ["owner-services"] });
+  const fail = (error: unknown, fallback: string) => setFeedback({ message: errorMessage(error, t, fallback), variant: "error" });
 
   const resetForm = () => {
     setDescription("");
     setDurationMinutes("30");
     setEditingId(null);
     setName("");
-    setPriceCents("2500");
+    setPrice("25,00");
   };
 
-  const handleSave = async () => {
-    if (!shopId) {
-      return;
-    }
+  const priceCents = parseReaisToCents(price);
+  const validForm = name.trim().length > 0 && isIntegerInput(durationMinutes) && priceCents !== null;
 
-    setFeedback(null);
-    setIsSaving(true);
+  const save = useMutation({
+    mutationFn: () => {
+      const payload = { description: description.trim() || null, durationMinutes: parseIntegerInput(durationMinutes, "Duration"), name, priceCents: priceCents ?? 0 };
 
-    try {
-      const payload = {
-        description: description.trim() || null,
-        durationMinutes: parseIntegerInput(durationMinutes, "Duration"),
-        name,
-        priceCents: parseIntegerInput(priceCents, "Price"),
-      };
-
-      if (editingId) {
-        await updateService(supabase, editingId, payload);
-      } else {
-        await createService(supabase, { ...payload, shopId });
-      }
-
+      return editingId ? updateService(supabase, editingId, payload) : createService(supabase, { ...payload, shopId: shopId ?? "" });
+    },
+    onError: (error) => fail(error, t("owner.services.saveError")),
+    onSuccess: () => {
       resetForm();
-      await refresh();
-    } catch (error) {
-      setFeedback(errorMessage(error, t, t("owner.services.saveError")));
-    } finally {
-      setIsSaving(false);
-    }
+      void refresh();
+    },
+  });
+
+  const change = useMutation({
+    mutationFn: (job: () => Promise<unknown>) => job(),
+    onError: (error) => fail(error, t("owner.services.updateError")),
+    onSuccess: () => void refresh(),
+  });
+
+  const saveOverride = useMutation({
+    mutationFn: () => {
+      const priceOverride = overridePrice.trim() === "" ? null : parseReaisToCents(overridePrice);
+      if (overridePrice.trim() !== "" && priceOverride === null) throw new Error("invalid price");
+      if (overrideDuration.trim() !== "" && !isIntegerInput(overrideDuration)) throw new Error("invalid duration");
+
+      return updateBarberService(supabase, overrideId ?? "", {
+        durationOverrideMinutes: overrideDuration.trim() === "" ? null : parseIntegerInput(overrideDuration, "Duration"),
+        priceOverrideCents: priceOverride,
+      });
+    },
+    onError: (error) => fail(error, t("owner.services.updateError")),
+    onSuccess: () => {
+      setOverrideId(null);
+      setFeedback({ message: t("owner.services.overrideSaved"), variant: "success" });
+      void refresh();
+    },
+  });
+
+  const startOverride = (assignment: BarberService) => {
+    setOverrideId(assignment.id);
+    setOverridePrice(assignment.priceOverrideCents === null ? "" : centsToReaisInput(assignment.priceOverrideCents));
+    setOverrideDuration(assignment.durationOverrideMinutes === null ? "" : String(assignment.durationOverrideMinutes));
   };
 
-  const handleToggle = async (service: Service) => {
-    setFeedback(null);
-    setIsSaving(true);
+  const busy = save.isPending || change.isPending || saveOverride.isPending;
+  const loading = shop.isLoading || catalog.isLoading;
+  const loadError = shop.error ?? catalog.error;
+  const back = () => (router.canGoBack() ? router.back() : router.replace("/manage"));
 
-    try {
-      await setServiceActive(supabase, service.id, !service.active);
-      await refresh();
-    } catch (error) {
-      setFeedback(errorMessage(error, t, t("owner.services.updateError")));
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const renderAssignments = (service: Service) => (
+    <View className="gap-2" testID={`barbers-${service.id}`}>
+      {(catalog.data?.barbers ?? []).map((barber: OwnerBarber) => {
+        const assignment = catalog.data?.barberServices.find((item) => item.barberId === barber.id && item.serviceId === service.id) ?? null;
+        const offered = assignment?.active ?? false;
+        const effectivePrice = formatPriceBRL(assignment?.priceOverrideCents ?? service.priceCents);
+        const effectiveMinutes = assignment?.durationOverrideMinutes ?? service.durationMinutes;
 
-  const handleStandard = async (service: Service) => {
-    setFeedback(null);
-    setIsSaving(true);
-
-    try {
-      await setServiceStandard(supabase, service.id, !service.isStandard);
-      await refresh();
-    } catch (error) {
-      setFeedback(errorMessage(error, t, t("owner.services.updateError")));
-    } finally {
-      setIsSaving(false);
-    }
-  };
+        return (
+          <View className="gap-2 rounded-2xl border border-neutral-200 p-3" key={barber.id} testID={`assignment-${service.id}-${barber.id}`}>
+            <Text className="text-base font-sans-semibold text-ink">{barber.name}</Text>
+            <Text className="text-sm font-sans text-neutral-600">
+              {offered ? t("owner.services.assignmentSummary", { minutes: effectiveMinutes, price: effectivePrice }) : t("owner.services.notOffered")}
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
+              {offered && assignment ? (
+                <>
+                  <Button disabled={busy} label={t("owner.services.overrideEdit")} onPress={() => startOverride(assignment)} size="sm" testID={`override-edit-${service.id}-${barber.id}`} variant="outline" />
+                  <Button disabled={busy} label={t("owner.services.unassign")} onPress={() => change.mutate(() => setBarberServiceActive(supabase, assignment.id, false))} size="sm" testID={`unassign-${service.id}-${barber.id}`} variant="outline" />
+                </>
+              ) : (
+                <Button
+                  disabled={busy}
+                  label={t("owner.services.assign")}
+                  onPress={() => change.mutate(() => (assignment ? setBarberServiceActive(supabase, assignment.id, true) : createBarberService(supabase, { barberId: barber.id, serviceId: service.id, shopId: shopId ?? "" })))}
+                  size="sm"
+                  testID={`assign-${service.id}-${barber.id}`}
+                />
+              )}
+            </View>
+            {overrideId !== null && overrideId === assignment?.id ? (
+              <View className="gap-2">
+                <Input keyboardType="numeric" label={t("owner.services.overridePrice")} onChangeText={setOverridePrice} testID="override-price" value={overridePrice} />
+                <Input keyboardType="numeric" label={t("owner.services.overrideDuration")} onChangeText={setOverrideDuration} testID="override-duration" value={overrideDuration} />
+                <Text className="text-xs font-sans text-neutral-500">{t("owner.services.overrideHint")}</Text>
+                <View className="flex-row gap-2">
+                  <Button disabled={busy} label={t("owner.services.overrideSave")} onPress={() => saveOverride.mutate()} size="sm" testID="override-save" />
+                  <Button label={t("common.cancel")} onPress={() => setOverrideId(null)} size="sm" variant="outline" />
+                </View>
+              </View>
+            ) : null}
+          </View>
+        );
+      })}
+    </View>
+  );
 
   return (
-    <Screen style={styles.screen}>
-      <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-        <Text accessibilityRole="header" style={styles.title}>
-          {t("owner.services.title")}
-        </Text>
-        <TextInput
-          onChangeText={setName}
-          placeholder={t("owner.services.nameLabel")}
-          style={styles.input}
-          value={name}
-        />
-        <TextInput
-          keyboardType="numeric"
-          onChangeText={setDurationMinutes}
-          placeholder={t("owner.services.durationLabel")}
-          style={styles.input}
-          value={durationMinutes}
-        />
-        <TextInput
-          keyboardType="numeric"
-          onChangeText={setPriceCents}
-          placeholder={t("owner.services.priceLabel")}
-          style={styles.input}
-          value={priceCents}
-        />
-        <TextInput
-          onChangeText={setDescription}
-          placeholder={t("owner.services.descriptionLabel")}
-          style={styles.input}
-          value={description}
-        />
-        {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}
-        {isLoading || isSaving ? <ActivityIndicator /> : null}
-        <Button
-          disabled={
-            name.trim().length === 0
-            || isLoading
-            || isSaving
-            || !shopId
-            || !isIntegerInput(durationMinutes)
-            || !isIntegerInput(priceCents)
-          }
-          onPress={handleSave}
-          title={editingId ? t("owner.services.save") : t("owner.services.add")}
-        />
-        {editingId ? <Button onPress={resetForm} title={t("common.cancelEdit")} /> : null}
-        <View style={styles.list}>
-          {services.map((service) => (
-            <View key={service.id} style={styles.card}>
-              <Text style={styles.name}>
-                {t("owner.services.summary", { minutes: service.durationMinutes, name: service.name, price: service.priceCents })}{" "}
-                {service.active ? "" : t("common.archived")}
-                {service.isStandard ? ` · ${t("owner.services.standardBadge")}` : ""}
-              </Text>
-              {service.description ? (
-                <Text style={styles.description}>{service.description}</Text>
-              ) : null}
-              <Button
-                onPress={() => {
-                  setDescription(service.description ?? "");
-                  setDurationMinutes(String(service.durationMinutes));
-                  setEditingId(service.id);
-                  setName(service.name);
-                  setPriceCents(String(service.priceCents));
-                }}
-                title={t("common.edit")}
-              />
-              <Button
-                onPress={() => {
-                  void handleToggle(service);
-                }}
-                title={service.active ? t("common.deactivate") : t("common.activate")}
-              />
-              <Button
-                onPress={() => {
-                  void handleStandard(service);
-                }}
-                title={service.isStandard ? t("owner.services.removeStandard") : t("owner.services.makeStandard")}
-              />
-            </View>
-          ))}
+    <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
+      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
+        <View className="items-center p-5">
+          <View className="w-full max-w-[420px] gap-4">
+            <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("owner.services.title")} />
+
+            <Card>
+              <View className="gap-3">
+                <Input label={t("owner.services.nameLabel")} onChangeText={setName} testID="service-name" value={name} />
+                <Input keyboardType="numeric" label={t("owner.services.durationLabel")} onChangeText={setDurationMinutes} testID="service-duration" value={durationMinutes} />
+                <Input keyboardType="numeric" label={t("owner.services.priceLabel")} onChangeText={setPrice} testID="service-price" value={price} />
+                <Input label={t("owner.services.descriptionLabel")} onChangeText={setDescription} testID="service-description" value={description} />
+                <View className="flex-row gap-2">
+                  <Button disabled={!validForm || loading || busy || !shopId} label={editingId ? t("owner.services.save") : t("owner.services.add")} onPress={() => save.mutate()} testID="service-save" />
+                  {editingId ? <Button label={t("common.cancelEdit")} onPress={resetForm} variant="outline" /> : null}
+                </View>
+              </View>
+            </Card>
+
+            {loading ? <SkeletonBlock height={96} width={320} /> : null}
+            {loadError ? <Text className="text-sm font-sans text-danger-500">{errorMessage(loadError, t, t("owner.services.loadError"))}</Text> : null}
+            {shop.data === null ? <EmptyState title={t("common.noShop")} /> : null}
+
+            {(catalog.data?.services ?? []).map((service: Service) => (
+              <Card key={service.id} testID={`owner-service-${service.id}`} variant="outlined">
+                <View className="gap-3">
+                  <View className="gap-1">
+                    <Text className="text-base font-sans-semibold text-ink">
+                      {service.name}{service.active ? "" : ` ${t("common.archived")}`}{service.isStandard ? ` · ${t("owner.services.standardBadge")}` : ""}
+                    </Text>
+                    <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>{service.durationMinutes} min · {formatPriceBRL(service.priceCents)}</Text>
+                    {service.description ? <Text className="text-sm font-sans text-neutral-500">{service.description}</Text> : null}
+                  </View>
+                  <View className="flex-row flex-wrap gap-2">
+                    <Button
+                      label={t("common.edit")}
+                      onPress={() => {
+                        setDescription(service.description ?? "");
+                        setDurationMinutes(String(service.durationMinutes));
+                        setEditingId(service.id);
+                        setName(service.name);
+                        setPrice(centsToReaisInput(service.priceCents));
+                      }}
+                      size="sm"
+                      testID={`service-edit-${service.id}`}
+                      variant="outline"
+                    />
+                    <Button disabled={busy} label={service.active ? t("common.deactivate") : t("common.activate")} onPress={() => change.mutate(() => setServiceActive(supabase, service.id, !service.active))} size="sm" testID={`service-toggle-${service.id}`} variant="outline" />
+                    <Button disabled={busy} label={service.isStandard ? t("owner.services.removeStandard") : t("owner.services.makeStandard")} onPress={() => change.mutate(() => setServiceStandard(supabase, service.id, !service.isStandard))} size="sm" testID={`service-standard-${service.id}`} variant="outline" />
+                    <Button label={t("owner.services.barbers")} onPress={() => setOpenServiceId(openServiceId === service.id ? null : service.id)} size="sm" testID={`service-barbers-${service.id}`} variant={openServiceId === service.id ? "dark" : "outline"} />
+                  </View>
+                  {openServiceId === service.id ? renderAssignments(service) : null}
+                </View>
+              </Card>
+            ))}
+            <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
+          </View>
         </View>
       </KeyboardAwareScrollView>
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    borderColor: "#d1d5db",
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 8,
-    padding: 12,
-  },
-  content: {
-    gap: 12,
-    padding: 24,
-  },
-  description: {
-    color: "#4b5563",
-  },
-  feedback: {
-    color: "#1f2937",
-  },
-  input: {
-    borderColor: "#d1d5db",
-    borderRadius: 10,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  list: {
-    gap: 12,
-  },
-  name: {
-    color: "#111827",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  screen: {
-    backgroundColor: "#ffffff",
-    flex: 1,
-  },
-  title: {
-    color: "#111827",
-    fontSize: 28,
-    fontWeight: "700",
-  },
-});
