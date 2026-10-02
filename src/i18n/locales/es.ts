@@ -543,6 +543,8 @@ export const es: DeepStringRecord<typeof en> = {
     agenda: {
       bookingFor: "Reservando para {{name}}. Toca un horario libre.",
       bookCancel: "Cancelar",
+      remind: "Recordar",
+      remindMessage: "Hola {{name}}, te recordamos tu cita de {{service}} el {{date}} a las {{time}}. ¡Te esperamos!",
       cancelAppointment: "Cancelar cita",
       cancelConfirm: "Toca de nuevo para cancelar",
       moveAppointment: "Reprogramar",

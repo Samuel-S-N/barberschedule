@@ -214,3 +214,41 @@ test("a failed move shows the error and keeps moving", async ({ page }) => {
   await expect(page.getByText("That time is no longer available.")).toBeVisible();
   await expect(page.getByTestId("barber-moving")).toBeVisible();
 });
+
+function upcomingRow(phone: string | null) {
+  const start = new Date(Date.now() + 15 * 60 * 1000);
+  const end = new Date(start.getTime() + 30 * 60 * 1000);
+
+  return {
+    ...appointmentRow({ ends_at: end.toISOString(), id: "appt-1", occupied_until: end.toISOString(), starts_at: start.toISOString() }),
+    barber_name: "Browser Barber", customer_name: "Ana Customer", customer_phone: phone,
+  };
+}
+
+test("an upcoming appointment of an account-less customer offers a WhatsApp reminder", async ({ page }) => {
+  await signIn(page, barberUserId);
+  await mockBarberRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/rpc/list_my_barber_agenda")) return json(route, [upcomingRow("11999990001")]).then(() => true);
+  });
+
+  // Keep the external WhatsApp host out of the test: the popup URL is what we assert on.
+  await page.context().route("https://wa.me/**", (route) => route.fulfill({ body: "ok", contentType: "text/html" }));
+  await page.goto("/my-agenda");
+  const popup = page.waitForEvent("popup");
+  await page.getByTestId("barber-remind-appt-1").click();
+  const url = new URL((await popup).url());
+
+  expect(url.origin + url.pathname).toBe("https://wa.me/5511999990001");
+  expect(url.searchParams.get("text")).toContain("Ana Customer");
+});
+
+test("no reminder button without a phone number", async ({ page }) => {
+  await signIn(page, barberUserId);
+  await mockBarberRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/rpc/list_my_barber_agenda")) return json(route, [upcomingRow(null)]).then(() => true);
+  });
+
+  await page.goto("/my-agenda");
+  await expect(page.getByTestId("barber-confirm-appt-1")).toBeVisible();
+  await expect(page.getByTestId("barber-remind-appt-1")).toHaveCount(0);
+});

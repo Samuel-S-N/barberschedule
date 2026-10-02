@@ -51,6 +51,14 @@ describe("barber-scoped agenda", () => {
     });
   });
 
+  it("maps the customer phone for account-less customers and null otherwise", async () => {
+    const rpc = jest.fn().mockResolvedValue({ data: [{ ...appointmentRow, customer_phone: "11999990001" }, { ...appointmentRow, customer_phone: null, id: "appointment-2" }], error: null });
+
+    await expect(
+      listMyBarberAgenda({ rpc } as never, { limit: 50, offset: 0, rangeEnd: "2026-10-01", rangeStart: "2026-09-30" }),
+    ).resolves.toEqual([expect.objectContaining({ customerPhone: "11999990001" }), expect.objectContaining({ customerPhone: null })]);
+  });
+
   it("maps an unlinked barber to BARBER_NOT_LINKED", async () => {
     const rpc = jest.fn().mockResolvedValue({ data: null, error: { code: "P0019" } });
 

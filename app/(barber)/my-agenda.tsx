@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Pressable, Text, View } from "react-native";
+import { Linking, Pressable, Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { BarberBookingSheet } from "../../src/components/domain/BarberBookingSheet";
@@ -26,6 +26,7 @@ import { buildDaySummary } from "../../src/features/appointments/day-summary";
 import { getAvailableSlots } from "../../src/features/availability/api";
 import type { AvailableSlot } from "../../src/features/availability/types";
 import { cancelAppointment, rescheduleAppointment } from "../../src/features/appointments/lifecycle";
+import { whatsappUrl } from "../../src/features/clients/format";
 import { getMyBarberProfile, listMyBarberServices } from "../../src/features/barbers/api";
 import { getMyBarberReport } from "../../src/features/reports/api";
 import { createScheduleOverride, deleteScheduleOverride, listMyScheduleOverrides } from "../../src/features/schedule/api";
@@ -224,6 +225,10 @@ export default function BarberAgendaScreen() {
     const startsAt = formatInstantInShopTime(new Date(appointment.startsAt));
     const open = appointment.status === "scheduled" || appointment.status === "confirmed";
     const canConfirm = appointment.status === "scheduled" && new Date(appointment.endsAt) >= new Date();
+    // Account-less customers get no push: the barber reminds them over WhatsApp.
+    const remindUrl = new Date(appointment.startsAt) > new Date()
+      ? whatsappUrl(appointment.customerPhone, t("barber.agenda.remindMessage", { date: startsAt.localDate, name: appointment.customerName, service: appointment.serviceNameSnapshot, time: startsAt.localTime }))
+      : null;
 
     return (
       <Card key={appointment.id} testID={`barber-appointment-${appointment.id}`}>
@@ -267,6 +272,15 @@ export default function BarberAgendaScreen() {
                 testID={`barber-noshow-${appointment.id}`}
                 variant="outline"
               />
+              {remindUrl ? (
+                <Button
+                  label={t("barber.agenda.remind")}
+                  onPress={() => void Linking.openURL(remindUrl)}
+                  size="sm"
+                  testID={`barber-remind-${appointment.id}`}
+                  variant="outline"
+                />
+              ) : null}
               <Button
                 disabled={busy}
                 label={t("barber.agenda.moveAppointment")}
