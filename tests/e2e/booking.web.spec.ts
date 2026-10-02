@@ -209,7 +209,8 @@ test("an owner is redirected away from the customer booking flow", async ({ page
   });
 
   await page.goto("/book");
-  await expect(page.getByRole("heading", { name: "Barberschedule MVP" })).toBeVisible();
+  await expect(page).toHaveURL(/\/agenda/);
+  await expect(page.getByTestId("tab-manage")).toBeVisible();
   await page.goto("/home");
-  await expect(page.getByRole("heading", { name: "Barberschedule MVP" })).toBeVisible();
+  await expect(page).toHaveURL(/\/agenda/);
 });
