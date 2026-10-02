@@ -5,6 +5,7 @@ const tseslint = require("typescript-eslint");
 module.exports = tseslint.config(
   {
     ignores: [
+      ".claude/**",
       ".expo/**",
       "coverage/**",
       "dist/**",
