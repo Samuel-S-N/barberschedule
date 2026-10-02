@@ -31,3 +31,7 @@ A newly signed-up account could not book: booking requires a `customers` row bou
 - The `delete-account` Edge Function has no automated test (no Deno runner in the repo). Its response contract is covered by the client tests and the RPC by pgTAP. It was verified **manually** on 2026-09-23 with `supabase functions serve` against the local stack: preflight returns 204 with CORS headers, an unauthenticated POST returns 401 with CORS headers, and a real signed-up user was bootstrapped, deleted (200), rejected afterwards (403), with the customer row anonymized and both consent rows retained unlinked. Repeat this check after changing the function.
 - Whether Supabase email confirmation is enabled differs per environment; signup handles both.
 - Deletion cannot be undone; there is no grace period.
+
+## Email claim flag (migration 0039)
+
+`ensure_my_customer` links a barber-created customer to a signup by email only when `app_settings.email_claim_enabled` is true (default false). With confirmations off, `email_confirmed_at` is stamped at signup and proves nothing. Before enabling the flag on a hosted project, run `node scripts/assert-hosted-auth.mjs` (needs `SUPABASE_URL`, `SUPABASE_ANON_KEY`); it fails while `mailer_autoconfirm` is true. Enable with `update public.app_settings set email_claim_enabled = true;` as service role.

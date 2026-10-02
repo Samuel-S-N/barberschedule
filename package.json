@@ -63,7 +63,7 @@
     "lint": "eslint .",
     "test": "jest",
     "test:db": "npx supabase test db",
-    "test:e2e:runner": "node --test scripts/run-e2e-web.test.mjs",
+    "test:e2e:runner": "node --test scripts/run-e2e-web.test.mjs scripts/assert-hosted-auth.test.mjs",
     "test:e2e:web": "node scripts/run-e2e-web.mjs",
     "export:web": "expo export --platform web",
     "verify": "npm run typecheck && npm run lint && npm test -- --runInBand && npm run test:e2e:runner && npm run test:db"

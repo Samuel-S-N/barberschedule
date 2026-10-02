@@ -14,10 +14,10 @@ function internationalDigits(phone: string | null) {
   return null;
 }
 
-export function whatsappUrl(phone: string | null) {
+export function whatsappUrl(phone: string | null, text?: string) {
   const digits = internationalDigits(phone);
 
-  return digits ? `https://wa.me/${digits}` : null;
+  return digits ? `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ""}` : null;
 }
 
 export function telUrl(phone: string | null) {

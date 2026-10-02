@@ -16,6 +16,8 @@ export type BarberAgendaInput = {
 export type BarberAgendaAppointment = Appointment & {
   barberName: string;
   customerName: string;
+  // Set only for customers without an account (they get no push); null otherwise.
+  customerPhone: string | null;
 };
 
 export type BarberAppointmentStatus = "confirmed" | "completed" | "no_show";
@@ -44,12 +46,13 @@ export async function listMyBarberAgenda(
   }
 
   return (data ?? []).map((row: unknown) => {
-    const agendaRow = row as AppointmentRow & { barber_name: string; customer_name: string };
+    const agendaRow = row as AppointmentRow & { barber_name: string; customer_name: string; customer_phone?: string | null };
 
     return {
       ...toAppointment(agendaRow),
       barberName: agendaRow.barber_name,
       customerName: agendaRow.customer_name,
+      customerPhone: agendaRow.customer_phone ?? null,
     };
   });
 }
