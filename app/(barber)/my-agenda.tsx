@@ -25,6 +25,7 @@ import { buildDayTimeline, slotFitsService } from "../../src/features/appointmen
 import { buildDaySummary } from "../../src/features/appointments/day-summary";
 import { getAvailableSlots } from "../../src/features/availability/api";
 import type { AvailableSlot } from "../../src/features/availability/types";
+import { cancelAppointment, rescheduleAppointment } from "../../src/features/appointments/lifecycle";
 import { getMyBarberProfile, listMyBarberServices } from "../../src/features/barbers/api";
 import { getMyBarberReport } from "../../src/features/reports/api";
 import { createScheduleOverride, deleteScheduleOverride, listMyScheduleOverrides } from "../../src/features/schedule/api";
@@ -49,6 +50,9 @@ export default function BarberAgendaScreen() {
   const [blockEnd, setBlockEnd] = useState("");
   const [bookingSlot, setBookingSlot] = useState<AvailableSlot | null>(null);
   const [customerTerm, setCustomerTerm] = useState("");
+  // Cancel needs a second tap on the same card; moving carries the appointment until a free time is picked.
+  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
+  const [moving, setMoving] = useState<BarberAgendaAppointment | null>(null);
   const [feedback, setFeedback] = useState<{ message: string; variant: "error" | "success" } | null>(null);
   const selectedDate = pickedDate ?? today;
 
@@ -133,6 +137,35 @@ export default function BarberAgendaScreen() {
     },
   });
 
+  const refreshAgenda = () => {
+    void queryClient.invalidateQueries({ queryKey: ["barber-agenda"] });
+    void queryClient.invalidateQueries({ queryKey: ["barber-slots"] });
+    void queryClient.invalidateQueries({ queryKey: ["barber-report"] });
+  };
+
+  const cancel = useMutation({
+    mutationFn: (id: string) => cancelAppointment(supabase, id),
+    onError: (error) => fail(error, t("barber.agenda.updateError")),
+    onSettled: () => setConfirmCancelId(null),
+    onSuccess: () => {
+      setFeedback({ message: t("barber.agenda.appointmentCancelled"), variant: "success" });
+      refreshAgenda();
+    },
+  });
+
+  const move = useMutation({
+    mutationFn: (input: { id: string; startsAt: string }) => rescheduleAppointment(supabase, input.id, input.startsAt),
+    onError: (error) => {
+      fail(error, t("barber.agenda.updateError"));
+      void queryClient.invalidateQueries({ queryKey: ["barber-slots"] });
+    },
+    onSuccess: () => {
+      setMoving(null);
+      setFeedback({ message: t("barber.agenda.appointmentMoved"), variant: "success" });
+      refreshAgenda();
+    },
+  });
+
   const addBlock = useMutation({
     mutationFn: () => {
       if (!barber.data) throw new Error("Barber profile not loaded.");
@@ -185,7 +218,7 @@ export default function BarberAgendaScreen() {
     },
   });
 
-  const busy = setStatus.isPending || addBlock.isPending || removeBlock.isPending || book.isPending;
+  const busy = setStatus.isPending || addBlock.isPending || removeBlock.isPending || book.isPending || cancel.isPending || move.isPending;
 
   const renderAppointment = (appointment: BarberAgendaAppointment, withDate = false) => {
     const startsAt = formatInstantInShopTime(new Date(appointment.startsAt));
@@ -234,6 +267,25 @@ export default function BarberAgendaScreen() {
                 testID={`barber-noshow-${appointment.id}`}
                 variant="outline"
               />
+              <Button
+                disabled={busy}
+                label={t("barber.agenda.moveAppointment")}
+                onPress={() => {
+                  setConfirmCancelId(null);
+                  setMoving(appointment);
+                }}
+                size="sm"
+                testID={`barber-move-${appointment.id}`}
+                variant="outline"
+              />
+              <Button
+                disabled={busy}
+                label={confirmCancelId === appointment.id ? t("barber.agenda.cancelConfirm") : t("barber.agenda.cancelAppointment")}
+                onPress={() => (confirmCancelId === appointment.id ? cancel.mutate(appointment.id) : setConfirmCancelId(appointment.id))}
+                size="sm"
+                testID={`barber-cancel-${appointment.id}`}
+                variant="danger"
+              />
             </View>
           ) : null}
         </View>
@@ -260,6 +312,16 @@ export default function BarberAgendaScreen() {
           <View className="w-full">
             <CalendarStrip days={days} onSelectDate={setPickedDate} selectedDate={selectedDate} />
           </View>
+          {moving ? (
+            <View className="w-full max-w-[420px]">
+              <Card testID="barber-moving">
+                <View className="gap-2">
+                  <Text className="text-sm font-sans-medium text-ink">{t("barber.agenda.moving", { name: moving.customerName })}</Text>
+                  <Button label={t("barber.agenda.moveCancel")} onPress={() => setMoving(null)} size="sm" testID="barber-moving-cancel" variant="outline" />
+                </View>
+              </Card>
+            </View>
+          ) : null}
           {bookFor && initialCustomer ? (
             <View className="w-full max-w-[420px]">
               <Card testID="barber-booking-for">
@@ -290,7 +352,7 @@ export default function BarberAgendaScreen() {
                   accessibilityRole="button"
                   className="flex-row items-center justify-between rounded-xl border border-dashed border-neutral-300 p-3"
                   key={`free-${entry.slot.startsAt}`}
-                  onPress={() => setBookingSlot(entry.slot)}
+                  onPress={() => (moving ? move.mutate({ id: moving.id, startsAt: entry.slot.startsAt }) : setBookingSlot(entry.slot))}
                   testID="barber-free-slot"
                 >
                   <Text className="text-lg font-display-semibold text-ink" style={{ fontVariant: ["tabular-nums"] }}>
