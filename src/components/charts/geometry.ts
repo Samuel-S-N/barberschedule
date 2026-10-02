@@ -48,3 +48,20 @@ export function donutArcs(values: number[], { cx, cy, gapPx, inner, outer }: Don
     }];
   });
 }
+
+// Keeps a value label inside the plot: centred when it fits, otherwise anchored to the nearer edge.
+export function labelPlacement(center: number, width: number, left: number, right: number, labelWidth: number) {
+  const half = labelWidth / 2;
+
+  if (center + half > width - right) return { anchor: "end" as const, x: width - right };
+  if (center - half < left) return { anchor: "start" as const, x: left };
+
+  return { anchor: "middle" as const, x: center };
+}
+
+// Largest font (14-36) whose estimated text width stays within 90% of the donut hole.
+export function centerFontSize(text: string, holeDiameter: number) {
+  const fit = Math.floor((holeDiameter * 0.9) / (Math.max(text.length, 1) * 0.55));
+
+  return Math.max(14, Math.min(36, fit));
+}

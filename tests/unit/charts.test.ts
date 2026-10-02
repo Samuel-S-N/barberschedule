@@ -29,6 +29,14 @@ describe("DonutChart", () => {
     expect(view.getAllByText("0").length).toBeGreaterThan(0);
     expect(view.queryByText(/%/)).toBeNull();
   });
+
+  it("formats legend values with a custom formatter", async () => {
+    const view = await render(
+      React.createElement(DonutChart, { centerLabel: "total", centerValue: "R$ 100", formatValue: (n: number) => `R$ ${n}`, slices, testID: "donut" }),
+    );
+
+    expect(view.getByText("R$ 6 · 75%")).toBeTruthy();
+  });
 });
 
 describe("ColumnChart", () => {

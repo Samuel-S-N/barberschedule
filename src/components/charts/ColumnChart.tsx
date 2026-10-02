@@ -3,7 +3,7 @@ import { Pressable, Text, View } from "react-native";
 import Svg, { G, Line, Path, Text as SvgText } from "react-native-svg";
 
 import { colors } from "../../lib/design/colors";
-import { barPath, niceMax, yTicks } from "./geometry";
+import { barPath, labelPlacement, niceMax, yTicks } from "./geometry";
 
 export type ColumnDatum = { key: string; label: string; value: number };
 
@@ -66,11 +66,18 @@ export function ColumnChart({ accessibilityLabel, color = colors.primary[400], d
               </G>
             );
           })}
-          {data[peak] && data[peak].value > 0 ? (
-            <SvgText fill={colors.neutral[700]} fontSize={10} fontWeight="600" textAnchor="middle" x={LEFT + peak * slot + slot / 2} y={y(data[peak].value) - 4}>
-              {formatValue(data[peak].value)}
-            </SvgText>
-          ) : null}
+          {data[peak] && data[peak].value > 0
+            ? (() => {
+                const text = formatValue(data[peak].value);
+                const place = labelPlacement(LEFT + peak * slot + slot / 2, width, LEFT, RIGHT, text.length * 6);
+
+                return (
+                  <SvgText fill={colors.neutral[700]} fontSize={10} fontWeight="600" textAnchor={place.anchor} x={place.x} y={y(data[peak].value) - 4}>
+                    {text}
+                  </SvgText>
+                );
+              })()
+            : null}
         </Svg>
         {/* Hit targets are RN views over the SVG (wider than the mark, so thin bars stay tappable); SVG-level onPress is ignored by the DOM on web. */}
         {data.map((d, i) => (
