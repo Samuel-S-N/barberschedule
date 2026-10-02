@@ -25,7 +25,7 @@ import { buildDayTimeline, slotFitsService } from "../../src/features/appointmen
 import { buildDaySummary } from "../../src/features/appointments/day-summary";
 import { getAvailableSlots } from "../../src/features/availability/api";
 import type { AvailableSlot } from "../../src/features/availability/types";
-import { cancelAppointment, rescheduleAppointment } from "../../src/features/appointments/lifecycle";
+import { cancelAppointment } from "../../src/features/appointments/lifecycle";
 import { whatsappUrl } from "../../src/features/clients/format";
 import { getMyBarberProfile, listMyBarberServices } from "../../src/features/barbers/api";
 import { getMyBarberReport } from "../../src/features/reports/api";
@@ -53,9 +53,8 @@ export default function BarberAgendaScreen() {
   const [blockEnd, setBlockEnd] = useState("");
   const [bookingSlot, setBookingSlot] = useState<AvailableSlot | null>(null);
   const [customerTerm, setCustomerTerm] = useState("");
-  // Cancel needs a second tap on the same card; moving carries the appointment until a free time is picked.
+  // Cancel needs a second tap on the same card.
   const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
-  const [moving, setMoving] = useState<BarberAgendaAppointment | null>(null);
   const [feedback, setFeedback] = useState<{ message: string; variant: "error" | "success" } | null>(null);
   const selectedDate = pickedDate ?? today;
 
@@ -99,12 +98,18 @@ export default function BarberAgendaScreen() {
   const showEarned = selectedDate <= today;
   // Booking again for a known client (from the client screen): the agenda carries `bookFor` until the booking is done or cancelled.
   const router = useRouter();
-  const { bookFor } = useLocalSearchParams<{ bookFor?: string }>();
+  const { bookFor, moved } = useLocalSearchParams<{ bookFor?: string; moved?: string }>();
   const bookClient = useQuery({ enabled: Boolean(bookFor), queryFn: () => getMyClient(supabase, bookFor ?? ""), queryKey: ["my-client", bookFor] });
   const initialCustomer = useMemo(
     () => (bookClient.data ? { email: bookClient.data.customer.email, fullName: bookClient.data.customer.fullName, hasAccount: bookClient.data.customer.hasAccount, id: bookClient.data.customer.id, phone: bookClient.data.customer.phone } : null),
     [bookClient.data],
   );
+  // Coming back from the move screen after a successful move: confirm it here, once.
+  useEffect(() => {
+    if (!moved) return;
+    setFeedback({ message: t("barber.agenda.appointmentMoved"), variant: "success" });
+    router.setParams({ moved: undefined });
+  }, [moved]);
   const clearBookFor = () => router.setParams({ bookFor: undefined });
   const earned = useQuery({
     enabled: showEarned,
@@ -152,19 +157,6 @@ export default function BarberAgendaScreen() {
     onSettled: () => setConfirmCancelId(null),
     onSuccess: () => {
       setFeedback({ message: t("barber.agenda.appointmentCancelled"), variant: "success" });
-      refreshAgenda();
-    },
-  });
-
-  const move = useMutation({
-    mutationFn: (input: { id: string; startsAt: string }) => rescheduleAppointment(supabase, input.id, input.startsAt),
-    onError: (error) => {
-      fail(error, t("barber.agenda.updateError"));
-      void queryClient.invalidateQueries({ queryKey: ["barber-slots"] });
-    },
-    onSuccess: () => {
-      setMoving(null);
-      setFeedback({ message: t("barber.agenda.appointmentMoved"), variant: "success" });
       refreshAgenda();
     },
   });
@@ -221,7 +213,7 @@ export default function BarberAgendaScreen() {
     },
   });
 
-  const busy = setStatus.isPending || addBlock.isPending || removeBlock.isPending || book.isPending || cancel.isPending || move.isPending;
+  const busy = setStatus.isPending || addBlock.isPending || removeBlock.isPending || book.isPending || cancel.isPending;
 
   const renderAppointment = (appointment: BarberAgendaAppointment, withDate = false) => {
     const startsAt = formatInstantInShopTime(new Date(appointment.startsAt));
@@ -288,7 +280,10 @@ export default function BarberAgendaScreen() {
                 label={t("barber.agenda.moveAppointment")}
                 onPress={() => {
                   setConfirmCancelId(null);
-                  setMoving(appointment);
+                  router.push({
+                    params: { appointmentId: appointment.id, barberId: appointment.barberId, barberServiceId: appointment.barberServiceId, customerName: appointment.customerName, serviceName: appointment.serviceNameSnapshot, startsAt: appointment.startsAt },
+                    pathname: "/move-appointment",
+                  });
                 }}
                 size="sm"
                 testID={`barber-move-${appointment.id}`}
@@ -328,16 +323,6 @@ export default function BarberAgendaScreen() {
           <View className="w-full">
             <CalendarStrip days={days} onSelectDate={setPickedDate} selectedDate={selectedDate} />
           </View>
-          {moving ? (
-            <View className="w-full max-w-[420px]">
-              <Card testID="barber-moving">
-                <View className="gap-2">
-                  <Text className="text-sm font-sans-medium text-ink">{t("barber.agenda.moving", { name: moving.customerName })}</Text>
-                  <Button label={t("barber.agenda.moveCancel")} onPress={() => setMoving(null)} size="sm" testID="barber-moving-cancel" variant="outline" />
-                </View>
-              </Card>
-            </View>
-          ) : null}
           {bookFor && initialCustomer ? (
             <View className="w-full max-w-[420px]">
               <Card testID="barber-booking-for">
@@ -368,7 +353,7 @@ export default function BarberAgendaScreen() {
                   accessibilityRole="button"
                   className="flex-row items-center justify-between rounded-xl border border-dashed border-neutral-300 p-3"
                   key={`free-${entry.slot.startsAt}`}
-                  onPress={() => (moving ? move.mutate({ id: moving.id, startsAt: entry.slot.startsAt }) : setBookingSlot(entry.slot))}
+                  onPress={() => setBookingSlot(entry.slot)}
                   testID="barber-free-slot"
                 >
                   <Text className="text-lg font-display-semibold text-ink" style={{ fontVariant: ["tabular-nums"] }}>

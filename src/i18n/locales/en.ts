@@ -583,8 +583,6 @@ export const en = {
       cancelAppointment: "Cancel appointment",
       cancelConfirm: "Tap again to cancel",
       moveAppointment: "Move",
-      moving: "Moving {{name}}. Tap a free time.",
-      moveCancel: "Keep time",
       appointmentCancelled: "Appointment cancelled.",
       appointmentMoved: "Appointment moved.",
       bookConfirm: "Book",
