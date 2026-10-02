@@ -177,14 +177,14 @@ test("an owner invites a barber and sets a chair-rental compensation", async ({ 
   await page.goto("/barbers");
   await expect(page.getByText("Account: not invited")).toBeVisible();
   await page.getByRole("button", { name: "Invite to sign in" }).click();
-  await page.getByPlaceholder("Barber email").fill("new.barber@example.com");
+  await page.getByTestId("barber-invite-email").fill("new.barber@example.com");
   await page.getByRole("button", { name: "Send invite" }).click();
   await expect(page.getByText("Invite sent.")).toBeVisible();
   expect(invitePayload).toEqual({ barberId, email: "new.barber@example.com" });
 
   await page.getByRole("button", { name: "Compensation" }).click();
   await page.getByRole("button", { name: "Chair rental", exact: true }).click();
-  await page.getByPlaceholder("Chair rent in cents").fill("30000");
+  await page.getByTestId("comp-rent").fill("300,00");
   await page.getByRole("button", { name: "per week" }).click();
   await page.getByRole("button", { name: "Save compensation" }).click();
   await expect(page.getByText("Compensation saved.")).toBeVisible();
