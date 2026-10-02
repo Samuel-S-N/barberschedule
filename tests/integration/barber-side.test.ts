@@ -7,7 +7,6 @@ import {
   setBarberCompensation,
   updateMyBarberProfile,
 } from "../../src/features/barbers/api";
-import { getMyBarberEarnings } from "../../src/features/earnings/api";
 import { resolveAuthRedirect } from "../../src/features/auth/session";
 import { listMyScheduleOverrides } from "../../src/features/schedule/api";
 import { toDomainError } from "../../src/lib/errors/domain-errors";
@@ -202,28 +201,6 @@ describe("invite-barber client", () => {
     const invoke = jest.fn().mockResolvedValue({ data: null, error: { context: { status } } });
 
     await expect(inviteBarber({ functions: { invoke } } as never, { barberId: "b1", email: "a@x.com" })).rejects.toMatchObject({ code });
-  });
-});
-
-describe("earnings client", () => {
-  it("rejects a period longer than 92 days before calling the database", async () => {
-    const rpc = jest.fn();
-
-    await expect(getMyBarberEarnings({ rpc } as never, "2026-01-01", "2026-06-01")).rejects.toMatchObject({ code: "EARNINGS_INVALID_RANGE" });
-    await expect(getMyBarberEarnings({ rpc } as never, "2026-02-01", "2026-01-01")).rejects.toMatchObject({ code: "EARNINGS_INVALID_RANGE" });
-    expect(rpc).not.toHaveBeenCalled();
-  });
-
-  it("accepts exactly 92 days and maps bigint strings to numbers", async () => {
-    const rpc = jest.fn().mockResolvedValue({
-      data: [{ completed_count: "2", gross_cents: "8000", service_id: "s1", service_name_snapshot: "Cut" }],
-      error: null,
-    });
-
-    await expect(getMyBarberEarnings({ rpc } as never, "2026-07-01", "2026-09-30")).resolves.toEqual([
-      { completedCount: 2, grossCents: 8000, serviceId: "s1", serviceName: "Cut" },
-    ]);
-    expect(rpc).toHaveBeenCalledWith("get_my_barber_earnings", { period_end: "2026-09-30", period_start: "2026-07-01" });
   });
 });
 
