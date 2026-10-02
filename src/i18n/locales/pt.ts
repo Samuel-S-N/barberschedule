@@ -536,8 +536,9 @@ export const pt: DeepStringRecord<typeof en> = {
       title: "Meus serviços",
       toggleError: "Não foi possível atualizar este serviço.",
     },
+    hours: { closed: "Folga", loadError: "Não foi possível carregar seu horário de trabalho.", note: "Seu horário semanal é definido pelo dono da barbearia. Peça a ele para alterar. Para uma folga ou pausa, use bloqueio de horário na sua agenda." },
     hub: {
-      menu: { account: "Meus dados", compensation: "Remuneração", services: "Meus serviços" },
+      menu: { account: "Meus dados", hours: "Horário de trabalho", compensation: "Remuneração", services: "Meus serviços" },
       role: "Barbeiro",
     },
     agenda: {

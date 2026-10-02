@@ -537,8 +537,9 @@ export const en = {
       title: "My services",
       toggleError: "Unable to update this service.",
     },
+    hours: { closed: "Day off", loadError: "Unable to load your working hours.", note: "Your weekly hours are set by the shop owner. Ask them to change them. For a day off or a break, use time off on your agenda." },
     hub: {
-      menu: { account: "My details", compensation: "Compensation", services: "My services" },
+      menu: { account: "My details", hours: "Working hours", compensation: "Compensation", services: "My services" },
       role: "Barber",
     },
     agenda: {
