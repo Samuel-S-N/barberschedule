@@ -21,6 +21,8 @@ declare
   meta jsonb;
   consent_version text;
   result public.customers;
+  mine public.customers;
+  stale public.customers;
 begin
   if actor is null
     or coalesce((select role::text from public.profiles where user_id = actor), '') <> 'customer'
@@ -48,6 +50,23 @@ begin
       and c.active
       and lower(c.email) = lower(account_email)
       and not exists (select 1 from public.customers x where x.shop_id = shop and x.user_id = actor);
+
+    -- Signed up before the claim was enabled (or before the barber booked them): the account already has its own row,
+    -- so merge the barber-created one into it instead of leaving the history stranded.
+    select * into mine from public.customers where shop_id = shop and user_id = actor;
+    if found then
+      select * into stale from public.customers
+      where shop_id = shop and user_id is null and active and lower(email) = lower(account_email) and id <> mine.id;
+      if found then
+        update public.appointments set customer_id = mine.id where customer_id = stale.id;
+        update public.recurrence_series set customer_id = mine.id where customer_id = stale.id;
+        insert into public.barber_customer_notes (barber_id, customer_id, note, updated_at)
+        select barber_id, mine.id, note, updated_at from public.barber_customer_notes where customer_id = stale.id
+        on conflict do nothing;
+        delete from public.customers where id = stale.id;
+        update public.customers set email = coalesce(email, stale.email), phone = coalesce(phone, stale.phone) where id = mine.id;
+      end if;
+    end if;
   end if;
 
   -- ON CONFLICT keeps concurrent bootstraps (double mount, two tabs, retries) from failing on the unique index.
