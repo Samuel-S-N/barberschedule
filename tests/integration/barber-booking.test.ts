@@ -56,17 +56,26 @@ describe("barber booking RPCs", () => {
     expect(rpc).toHaveBeenCalledWith("barber_find_or_create_customer", { target_email: "walk@in.com", target_name: "Walk In", target_phone: "119" });
   });
 
-  it("books for a new customer: find-or-create, then book with source barber", async () => {
-    const rpc = jest.fn().mockImplementation((name: string) =>
-      Promise.resolve(name === "book_appointment" ? { data: [appointmentRow], error: null } : { data: createdRows, error: null }),
-    );
+  it("books for a new customer through one atomic RPC, never creating the customer separately", async () => {
+    const rpc = jest.fn().mockResolvedValue({ data: [appointmentRow], error: null });
+
+    await expect(
+      bookAsBarber({ rpc } as never, {
+        barberServiceId: "bs-1", customer: { email: " Walk@In.com ", name: " Walk In ", phone: "(11) 9" }, notes: "n", startsAt: "2026-10-02T12:00:00Z",
+      }),
+    ).resolves.toMatchObject({ id: "appt-1", source: "barber" });
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith("barber_book_new_customer", {
+      target_barber_service_id: "bs-1", target_email: "walk@in.com", target_name: "Walk In", target_notes: "n", target_phone: "119", target_starts_at: "2026-10-02T12:00:00Z",
+    });
+  });
+
+  it("surfaces a slot conflict for a new customer as SLOT_UNAVAILABLE", async () => {
+    const rpc = jest.fn().mockResolvedValue({ data: null, error: { code: "P0001" } });
 
     await expect(
       bookAsBarber({ rpc } as never, { barberServiceId: "bs-1", customer: { name: "Walk In" }, startsAt: "2026-10-02T12:00:00Z" }),
-    ).resolves.toMatchObject({ id: "appt-1", source: "barber" });
-    expect(rpc).toHaveBeenLastCalledWith("book_appointment", {
-      barber_service_id: "bs-1", customer_id: "customer-2", notes: null, source: "barber", starts_at: "2026-10-02T12:00:00Z",
-    });
+    ).rejects.toMatchObject({ code: "SLOT_UNAVAILABLE" });
   });
 
   it("books for an existing customer without creating one", async () => {
