@@ -21,3 +21,7 @@ Status: accepted
 - A deactivated barber signing in sees the "not linked to an active barber" message on the barber layout; there is no dedicated offboarding screen.
 - Owner screens are still unstyled raw React Native; the new invite/compensation controls follow that screen's existing style, and the rent amount is entered in cents like service prices.
 - Avatar is a URL field; no image upload exists in the app.
+
+## Update: earnings RPC removed (migration 0045)
+
+`get_my_barber_earnings` and the client-side `calculateBarberEarnings` were replaced by `get_my_barber_report` (reports tab). The old RPC had no remaining caller and was dropped.
