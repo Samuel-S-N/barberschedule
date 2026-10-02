@@ -284,6 +284,7 @@ export const en = {
       title: "Owner settings",
     },
     agenda: {
+      empty: "No appointments in this range.",
       complete: "Complete",
       loadError: "Unable to load agenda.",
       newAppointment: "New appointment",
@@ -302,6 +303,7 @@ export const en = {
       viewWeek: "Week",
     },
     appointmentForm: {
+      searchCustomer: "Search customers",
       backToAgenda: "Back to agenda",
       create: "Create appointment",
       createError: "Unable to create appointment.",

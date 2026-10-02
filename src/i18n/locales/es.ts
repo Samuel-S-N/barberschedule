@@ -283,6 +283,7 @@ export const es: DeepStringRecord<typeof en> = {
       title: "Ajustes del propietario",
     },
     agenda: {
+      empty: "No hay citas en este rango.",
       complete: "Completar",
       loadError: "No se pudo cargar la agenda.",
       newAppointment: "Nueva cita",
@@ -301,6 +302,7 @@ export const es: DeepStringRecord<typeof en> = {
       viewWeek: "Semana",
     },
     appointmentForm: {
+      searchCustomer: "Buscar clientes",
       backToAgenda: "Volver a la agenda",
       create: "Crear cita",
       createError: "No se pudo crear la cita.",
