@@ -163,3 +163,36 @@ test("the owner exports the revenue report as a CSV file", async ({ page }) => {
   expect(content).toContain("Bruno Chair;1;50,00;50,00;70,00;0,00");
   expect(content).toContain("Browser Cut;3;110,00");
 });
+
+test("each barber and service shows the change versus the previous period", async ({ page }) => {
+  // Same clock the app uses for "today" (shop time), so the mock can tell the current period from the previous one.
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
+
+  await signInAsOwner(page);
+  await page.route("**/rest/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    const json = (body: unknown) => route.fulfill({ body: JSON.stringify(body), contentType: "application/json", status: 200 });
+
+    if (path.endsWith("/rpc/get_current_profile")) return json([{ full_name: "Owner", role: "owner", user_id: ownerId }]);
+    if (path.endsWith("/rpc/get_shop_report")) {
+      const { period_end: end } = route.request().postDataJSON() as { period_end: string };
+      if (end === today) return json(report);
+      // Previous period: Ana earned half as much; the service was not sold at all; Bruno did not exist yet.
+      return json({
+        barbers: [{ ...report.barbers[0], gross_cents: 5500 }],
+        days: report.days,
+        services: [{ completed: 1, gross_cents: 5500, name: "Browser Cut", service_id: "s1" }],
+      });
+    }
+    if (path.endsWith("/rpc/list_rent_payments")) return json([]);
+    await route.abort();
+  });
+
+  await page.goto("/revenue");
+  // 11000 vs 5500 = +100%; Bruno has no previous row, so there is nothing to compare.
+  await expect(page.getByTestId("barber-delta-b1")).toContainText("+100%");
+  await expect(page.getByTestId("barber-delta-b2")).toContainText("No previous data");
+
+  await page.getByTestId("section-services-toggle").click();
+  await expect(page.getByTestId("section-services")).toContainText("+100%");
+});

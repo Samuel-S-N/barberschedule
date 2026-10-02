@@ -117,6 +117,17 @@ export default function OwnerRevenueScreen() {
 
     return change === null ? t("barber.reports.noPrevious") : `${change > 0 ? "+" : ""}${change}% ${t("barber.reports.vsPrevious")}`;
   };
+  // Per-barber and per-service change against the previous period (null when there is nothing to compare).
+  const barberDelta = (barberId: string, now: number) => {
+    const was = before.data?.barbers.find((b) => b.barberId === barberId)?.grossCents;
+
+    return delta(now, was);
+  };
+  const shortDelta = (now: number, was: number | undefined) => {
+    const change = was === undefined ? null : percentChange(now, was);
+
+    return change === null ? "" : ` · ${change > 0 ? "+" : ""}${change}%`;
+  };
   const hasActivity = totals ? totals.completed + totals.cancelled + totals.noShow > 0 || (report?.days.some((d) => d.upcoming > 0) ?? false) : false;
 
   const grouped = daysBetween(range.start, range.end) > WEEKLY_THRESHOLD_DAYS;
@@ -176,7 +187,7 @@ export default function OwnerRevenueScreen() {
                     </ChartSection>
 
                     {barberItems.length > 0 ? (
-                      <ChartSection rows={barberItems.map((i) => ({ label: label(i), value: money(i.value) }))} testID="section-barbers" title={t("owner.revenue.byBarber")}>
+                      <ChartSection rows={barberItems.map((i) => ({ label: label(i), value: `${money(i.value)}${i.key === "other" ? "" : shortDelta(i.value, before.data?.barbers.find((x) => x.barberId === i.key)?.grossCents)}` }))} testID="section-barbers" title={t("owner.revenue.byBarber")}>
                         <DonutChart
                           centerLabel={t("owner.revenue.revenue")}
                           centerValue={money(totals.grossCents)}
@@ -188,7 +199,7 @@ export default function OwnerRevenueScreen() {
                     ) : null}
 
                     {serviceItems.length > 0 ? (
-                      <ChartSection rows={serviceItems.map((i) => ({ label: label(i), value: money(i.value) }))} testID="section-services" title={t("owner.revenue.byService")}>
+                      <ChartSection rows={serviceItems.map((i) => ({ label: label(i), value: `${money(i.value)}${i.key === "other" ? "" : shortDelta(i.value, before.data?.services.find((x) => x.serviceId === i.key)?.grossCents)}` }))} testID="section-services" title={t("owner.revenue.byService")}>
                         <DonutChart
                           centerLabel={t("owner.revenue.revenue")}
                           centerValue={money(totals.grossCents)}
@@ -234,6 +245,7 @@ export default function OwnerRevenueScreen() {
                         <Text className="text-sm font-sans text-neutral-600">{t("owner.revenue.colRevenue")}</Text>
                         <Text className="text-sm font-sans-medium text-ink">{money(row.grossCents)}</Text>
                       </View>
+                      <Text className="text-right text-xs font-sans text-neutral-500" testID={`barber-delta-${row.barberId}`}>{barberDelta(row.barberId, row.grossCents)}</Text>
                       <View className="flex-row justify-between">
                         <Text className="text-sm font-sans text-neutral-600">{t("owner.revenue.colBarberShare")}</Text>
                         <Text className="text-sm font-sans-medium text-ink">{money(row.barberShareCents)}</Text>
