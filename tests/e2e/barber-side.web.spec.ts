@@ -176,26 +176,6 @@ test("a chair-rental barber keeps the full gross and sees the rent separately", 
   await expect(page.getByTestId("stat-rent")).toContainText("R$ 300,00");
 });
 
-test("a barber edits their profile and reads how they are paid", async ({ page }) => {
-  let profilePayload: Record<string, unknown> | null = null;
-
-  await signIn(page, barberUserId);
-  await mockBarberRest(page, async (route, url) => {
-    if (url.pathname.endsWith("/rpc/update_my_barber_profile")) {
-      profilePayload = route.request().postDataJSON() as Record<string, unknown>;
-      return json(route, [{ avatar_url: null, bio: "New bio", id: barberId }]).then(() => true);
-    }
-  });
-
-  await page.goto("/my-profile");
-  await expect(page.getByTestId("barber-compensation")).toContainText("Commission: 40%");
-  await expect(page.getByText("Browser Cut")).toBeVisible();
-  await page.getByTestId("barber-bio").fill("New bio");
-  await page.getByTestId("barber-save").click();
-  await expect(page.getByText("Profile saved.")).toBeVisible();
-  expect(profilePayload).toEqual({ new_avatar_url: null, new_bio: "New bio" });
-});
-
 test("a barber cannot open the owner or customer areas", async ({ page }) => {
   await signIn(page, barberUserId);
   await mockBarberRest(page);

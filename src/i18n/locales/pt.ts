@@ -341,6 +341,9 @@ export const pt: DeepStringRecord<typeof en> = {
       updateError: "Não foi possível atualizar o cliente.",
     },
     services: {
+      makeStandard: "Tornar padrão para todos os barbeiros",
+      removeStandard: "Remover padrão",
+      standardBadge: "Padrão",
       add: "Adicionar serviço",
       descriptionLabel: "Descrição (opcional)",
       durationLabel: "Duração em minutos",
@@ -426,6 +429,26 @@ export const pt: DeepStringRecord<typeof en> = {
     },
   },
   barber: {
+    compensation: {
+      ownerHint: "Definida pelo dono da barbearia.",
+    },
+    account: {
+      bioHint: "Mostrada aos clientes no seu cartão.",
+      nameHint: "Seu nome público é definido pelo dono da barbearia.",
+    },
+    myServices: {
+      empty: "A barbearia ainda não tem serviços.",
+      loadError: "Não foi possível carregar os serviços.",
+      optionalHint: "Ative se você realiza este serviço.",
+      standard: "Padrão",
+      standardHint: "Todos os barbeiros fazem este serviço.",
+      title: "Meus serviços",
+      toggleError: "Não foi possível atualizar este serviço.",
+    },
+    hub: {
+      menu: { account: "Meus dados", compensation: "Remuneração", services: "Meus serviços" },
+      role: "Barbeiro",
+    },
     agenda: {
       bookCancel: "Cancelar",
       bookConfirm: "Agendar",
@@ -525,6 +548,7 @@ export const pt: DeepStringRecord<typeof en> = {
       BARBER_REQUEST_FAILED: "Não foi possível concluir a solicitação do barbeiro.",
       CUSTOMER_EMAIL_INVALID: "Informe um email válido ou deixe em branco.",
       CUSTOMER_NAME_REQUIRED: "Informe o nome do cliente.",
+      SERVICE_STANDARD_LOCKED: "Este serviço é padrão e não pode ser desligado.",
       COMPENSATION_INVALID: "Informe uma comissão ou aluguel de cadeira válidos.",
       EARNINGS_INVALID_RANGE: "Escolha um período de até 92 dias.",
       ACCOUNT_DELETION_BLOCKED:

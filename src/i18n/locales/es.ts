@@ -341,6 +341,9 @@ export const es: DeepStringRecord<typeof en> = {
       updateError: "No se pudo actualizar el cliente.",
     },
     services: {
+      makeStandard: "Hacer estándar para todos los barberos",
+      removeStandard: "Quitar estándar",
+      standardBadge: "Estándar",
       add: "Añadir servicio",
       descriptionLabel: "Descripción (opcional)",
       durationLabel: "Duración en minutos",
@@ -426,6 +429,26 @@ export const es: DeepStringRecord<typeof en> = {
     },
   },
   barber: {
+    compensation: {
+      ownerHint: "La define el dueño de la barbería.",
+    },
+    account: {
+      bioHint: "Se muestra a los clientes en tu tarjeta.",
+      nameHint: "Tu nombre público lo define el dueño de la barbería.",
+    },
+    myServices: {
+      empty: "La barbería aún no tiene servicios.",
+      loadError: "No se pudieron cargar los servicios.",
+      optionalHint: "Actívalo si realizas este servicio.",
+      standard: "Estándar",
+      standardHint: "Todos los barberos hacen este servicio.",
+      title: "Mis servicios",
+      toggleError: "No se pudo actualizar este servicio.",
+    },
+    hub: {
+      menu: { account: "Mis datos", compensation: "Remuneración", services: "Mis servicios" },
+      role: "Barbero",
+    },
     agenda: {
       bookCancel: "Cancelar",
       bookConfirm: "Reservar",
@@ -525,6 +548,7 @@ export const es: DeepStringRecord<typeof en> = {
       BARBER_REQUEST_FAILED: "No se pudo completar la solicitud del barbero.",
       CUSTOMER_EMAIL_INVALID: "Ingresa un email válido o déjalo en blanco.",
       CUSTOMER_NAME_REQUIRED: "Ingresa el nombre del cliente.",
+      SERVICE_STANDARD_LOCKED: "Este servicio es estándar y no se puede desactivar.",
       COMPENSATION_INVALID: "Ingresa una comisión o alquiler de silla válidos.",
       EARNINGS_INVALID_RANGE: "Elige un período de hasta 92 días.",
       ACCOUNT_DELETION_BLOCKED:

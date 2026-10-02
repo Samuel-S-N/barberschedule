@@ -7,6 +7,7 @@ import type {
   CompensationRow,
   MyBarberProfile,
   MyBarberService,
+  MyServiceOption,
   OwnerBarber,
   OwnerBarberRow,
   PublicBarber,
@@ -221,6 +222,33 @@ export async function listMyBarberServices(
       serviceName: r.service_name,
     };
   });
+}
+
+export async function listMyServiceOptions(supabase: Pick<SupabaseClient, "rpc">): Promise<MyServiceOption[]> {
+  const { data, error } = await supabase.rpc("list_my_service_options");
+  if (error) throwBarberError(error);
+
+  return (data ?? []).map((row: unknown) => {
+    const r = row as {
+      description: string | null; duration_minutes: number; enabled: boolean; is_standard: boolean;
+      price_cents: number; service_id: string; service_name: string;
+    };
+
+    return {
+      description: r.description,
+      durationMinutes: r.duration_minutes,
+      enabled: r.enabled,
+      isStandard: r.is_standard,
+      priceCents: r.price_cents,
+      serviceId: r.service_id,
+      serviceName: r.service_name,
+    };
+  });
+}
+
+export async function setMyServiceEnabled(supabase: Pick<SupabaseClient, "rpc">, serviceId: string, enabled: boolean) {
+  const { error } = await supabase.rpc("set_my_service_enabled", { new_enabled: enabled, target_service_id: serviceId });
+  if (error) throwBarberError(error);
 }
 
 export async function updateMyBarberProfile(

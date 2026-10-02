@@ -27,6 +27,7 @@ function toService(row: ServiceRow): Service {
     description: row.description ?? null,
     durationMinutes: row.duration_minutes,
     id: row.id,
+    isStandard: row.is_standard ?? false,
     name: row.name,
     priceCents: row.price_cents,
     shopId: row.shop_id,
@@ -61,7 +62,7 @@ function toResolvedService(row: ResolvedServiceRow): ResolvedService {
 }
 
 const serviceColumns =
-  "id, shop_id, name, description, duration_minutes, price_cents, active, archived_at";
+  "id, shop_id, name, description, duration_minutes, price_cents, active, archived_at, is_standard";
 const barberServiceColumns =
   "id, shop_id, barber_id, service_id, duration_override_minutes, price_override_cents, active, archived_at";
 
@@ -158,6 +159,26 @@ export async function setServiceActive(
 
   if (!data) {
     throw new Error("Service status update returned no row.");
+  }
+
+  return toService(data as ServiceRow);
+}
+
+export async function setServiceStandard(
+  supabase: ServiceSupabaseClient,
+  serviceId: string,
+  isStandard: boolean,
+) {
+  const { data, error } = await supabase
+    .from("services")
+    .update({ is_standard: isStandard })
+    .eq("id", serviceId)
+    .select(serviceColumns)
+    .maybeSingle();
+  throwIfError(error);
+
+  if (!data) {
+    throw new Error("Service standard update returned no row.");
   }
 
   return toService(data as ServiceRow);

@@ -4,6 +4,7 @@ export type Service = {
   description: string | null;
   durationMinutes: number;
   id: string;
+  isStandard: boolean;
   name: string;
   priceCents: number;
   shopId: string;
@@ -54,6 +55,7 @@ export type ServiceRow = {
   description: string | null;
   duration_minutes: number;
   id: string;
+  is_standard: boolean;
   name: string;
   price_cents: number;
   shop_id: string;

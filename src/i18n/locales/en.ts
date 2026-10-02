@@ -342,6 +342,9 @@ export const en = {
       updateError: "Unable to update customer.",
     },
     services: {
+      makeStandard: "Make standard for all barbers",
+      removeStandard: "Remove standard",
+      standardBadge: "Standard",
       add: "Add service",
       descriptionLabel: "Description (optional)",
       durationLabel: "Duration in minutes",
@@ -427,6 +430,26 @@ export const en = {
     },
   },
   barber: {
+    compensation: {
+      ownerHint: "Set by the shop owner.",
+    },
+    account: {
+      bioHint: "Shown to customers on your card.",
+      nameHint: "Your public name is set by the shop owner.",
+    },
+    myServices: {
+      empty: "The shop has no services yet.",
+      loadError: "Unable to load the services.",
+      optionalHint: "Turn on if you perform this service.",
+      standard: "Standard",
+      standardHint: "Every barber offers this service.",
+      title: "My services",
+      toggleError: "Unable to update this service.",
+    },
+    hub: {
+      menu: { account: "My details", compensation: "Compensation", services: "My services" },
+      role: "Barber",
+    },
     agenda: {
       bookCancel: "Cancel",
       bookConfirm: "Book",
@@ -526,6 +549,7 @@ export const en = {
       BARBER_REQUEST_FAILED: "Unable to complete the barber request.",
       CUSTOMER_EMAIL_INVALID: "Enter a valid email or leave it blank.",
       CUSTOMER_NAME_REQUIRED: "Enter the customer's name.",
+      SERVICE_STANDARD_LOCKED: "This service is standard and cannot be turned off.",
       COMPENSATION_INVALID: "Enter a valid commission or chair rental.",
       EARNINGS_INVALID_RANGE: "Choose a period of up to 92 days.",
       ACCOUNT_DELETION_BLOCKED:

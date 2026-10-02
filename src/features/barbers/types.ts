@@ -38,6 +38,16 @@ export type MyBarberService = {
   serviceName: string;
 };
 
+export type MyServiceOption = {
+  description: string | null;
+  durationMinutes: number;
+  enabled: boolean;
+  isStandard: boolean;
+  priceCents: number;
+  serviceId: string;
+  serviceName: string;
+};
+
 export type CompensationRow = {
   chair_rental_amount_cents?: number | null;
   chair_rental_frequency?: ChairRentalFrequency | null;

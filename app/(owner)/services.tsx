@@ -9,6 +9,7 @@ import {
   createService,
   listOwnerServices,
   setServiceActive,
+  setServiceStandard,
   updateService,
 } from "../../src/features/services/api";
 import {
@@ -145,6 +146,20 @@ export default function OwnerServicesScreen() {
     }
   };
 
+  const handleStandard = async (service: Service) => {
+    setFeedback(null);
+    setIsSaving(true);
+
+    try {
+      await setServiceStandard(supabase, service.id, !service.isStandard);
+      await refresh();
+    } catch (error) {
+      setFeedback(errorMessage(error, t, t("owner.services.updateError")));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <Screen style={styles.screen}>
       <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
@@ -198,6 +213,7 @@ export default function OwnerServicesScreen() {
               <Text style={styles.name}>
                 {t("owner.services.summary", { minutes: service.durationMinutes, name: service.name, price: service.priceCents })}{" "}
                 {service.active ? "" : t("common.archived")}
+                {service.isStandard ? ` · ${t("owner.services.standardBadge")}` : ""}
               </Text>
               {service.description ? (
                 <Text style={styles.description}>{service.description}</Text>
@@ -217,6 +233,12 @@ export default function OwnerServicesScreen() {
                   void handleToggle(service);
                 }}
                 title={service.active ? t("common.deactivate") : t("common.activate")}
+              />
+              <Button
+                onPress={() => {
+                  void handleStandard(service);
+                }}
+                title={service.isStandard ? t("owner.services.removeStandard") : t("owner.services.makeStandard")}
               />
             </View>
           ))}
