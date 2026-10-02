@@ -6,6 +6,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { BarberBookingSheet } from "../../src/components/domain/BarberBookingSheet";
 import { CalendarStrip } from "../../src/components/domain/CalendarStrip";
+import { DaySummaryCard } from "../../src/components/domain/DaySummaryCard";
 import { EmptyState } from "../../src/components/domain/EmptyState";
 import { formatPriceBRL } from "../../src/components/domain/ServiceCard";
 import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
@@ -19,9 +20,11 @@ import { listMyBarberAgenda, setMyAppointmentStatus, type BarberAgendaAppointmen
 import { groupByLocalDate, markAppointmentDays, pendingClosure } from "../../src/features/appointments/agenda-view";
 import { bookAsBarber, searchMyCustomers, type BarberCustomerInput } from "../../src/features/appointments/barber-booking";
 import { buildDayTimeline, slotFitsService } from "../../src/features/appointments/day-slots";
+import { buildDaySummary } from "../../src/features/appointments/day-summary";
 import { getAvailableSlots } from "../../src/features/availability/api";
 import type { AvailableSlot } from "../../src/features/availability/types";
 import { getMyBarberProfile, listMyBarberServices } from "../../src/features/barbers/api";
+import { getMyBarberReport } from "../../src/features/reports/api";
 import { createScheduleOverride, deleteScheduleOverride, listMyScheduleOverrides } from "../../src/features/schedule/api";
 import { errorMessage } from "../../src/i18n/errors";
 import { useLanguage } from "../../src/i18n/use-language";
@@ -84,6 +87,13 @@ export default function BarberAgendaScreen() {
   const days = useMemo(() => markAppointmentDays(buildCalendarStripDays(new Date(), DAYS_AHEAD, language), grouped), [grouped, language]);
   const dayAppointments = grouped.get(selectedDate) ?? [];
   const timeline = useMemo(() => buildDayTimeline(dayAppointments, slots.data ?? []), [dayAppointments, slots.data]);
+  const showEarned = selectedDate <= today;
+  const earned = useQuery({
+    enabled: showEarned,
+    queryFn: () => getMyBarberReport(supabase, selectedDate, selectedDate),
+    queryKey: ["barber-report", selectedDate, selectedDate],
+  });
+  const summary = useMemo(() => buildDaySummary(dayAppointments, slots.data ?? [], new Date()), [dayAppointments, slots.data]);
   const nextBusyStart = useMemo(() => {
     if (!bookingSlot) return null;
     const startsAt = bookingSlot.startsAt;
@@ -101,6 +111,7 @@ export default function BarberAgendaScreen() {
       setFeedback({ message: t("barber.agenda.updated"), variant: "success" });
       void queryClient.invalidateQueries({ queryKey: ["barber-agenda"] });
       void queryClient.invalidateQueries({ queryKey: ["barber-earnings"] });
+      void queryClient.invalidateQueries({ queryKey: ["barber-report"] });
     },
   });
 
@@ -229,6 +240,9 @@ export default function BarberAgendaScreen() {
           ) : null}
           <View className="w-full">
             <CalendarStrip days={days} onSelectDate={setPickedDate} selectedDate={selectedDate} />
+          </View>
+          <View className="w-full max-w-[420px]">
+            <DaySummaryCard earnedCents={showEarned ? (earned.data?.days[0]?.earningsCents ?? 0) : null} summary={summary} testID="barber-day-summary" />
           </View>
           <View className="w-full max-w-[420px] gap-3">
             <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">

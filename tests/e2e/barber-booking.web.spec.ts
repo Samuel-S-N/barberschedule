@@ -117,3 +117,26 @@ test("a slot conflict shows the error and keeps the agenda usable", async ({ pag
 
   await expect(page.getByText("That time is no longer available.")).toBeVisible();
 });
+
+test("the agenda shows the day summary with free times and today's earnings", async ({ page }) => {
+  const slotStart = new Date(Date.now() + 3 * 60 * 60 * 1000);
+
+  await signIn(page, barberUserId);
+  await mockBarberRest(page, async (route, url) => {
+    const name = url.pathname.split("/rpc/")[1];
+    if (name === "get_available_slots") {
+      return json(route, [{ ends_at: slotStart.toISOString(), local_date: "2026-10-01", local_time: "09:30:00", starts_at: slotStart.toISOString() }]).then(() => true);
+    }
+    if (name === "get_my_barber_report") {
+      return json(route, { days: [{ cancelled: 0, completed: 2, date: new Date().toISOString().slice(0, 10), earnings_cents: 4800, no_show: 0, upcoming: 0 }], services: [] }).then(() => true);
+    }
+  });
+
+  await page.goto("/my-agenda");
+  const summary = page.getByTestId("barber-day-summary");
+  await expect(summary).toBeVisible();
+  await expect(summary).toContainText("Day summary");
+  await expect(summary).toContainText("Free times");
+  await expect(summary).toContainText("Nothing left");
+  await expect(summary).toContainText("R$ 48,00");
+});

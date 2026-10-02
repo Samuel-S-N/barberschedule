@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Tabs } from "expo-router";
-import { CalendarDays, Coins, User } from "lucide-react-native";
+import { CalendarDays, Coins, User, Users } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 
@@ -17,6 +17,7 @@ export default function BarberLayout() {
   const { profile, supabase } = useSupabaseSession();
   const items = [
     { icon: CalendarDays, key: "my-agenda", label: t("tabs.agenda") },
+    { icon: Users, key: "clients", label: t("tabs.clients") },
     { icon: Coins, key: "earnings", label: t("tabs.earnings") },
     { icon: User, key: "my-profile", label: t("tabs.profile") },
   ];
@@ -59,6 +60,7 @@ export default function BarberLayout() {
       )}
     >
       <Tabs.Screen name="my-agenda" />
+      <Tabs.Screen name="clients" />
       <Tabs.Screen name="earnings" />
       <Tabs.Screen name="my-profile" />
     </Tabs>
