@@ -3,13 +3,13 @@ import type { DonutItem } from "../reports/build-report";
 export type ShopDay = { cancelled: number; completed: number; date: string; grossCents: number; noShow: number; upcoming: number };
 export type ShopBarber = {
   barberId: string; barberShareCents: number; compensationType: "chair_rental" | "commission"; completed: number;
-  grossCents: number; name: string; rentEstimateCents: number;
+  grossCents: number; name: string; rentEstimateCents: number; rentPaidCents: number;
 };
 export type ShopService = { completed: number; grossCents: number; name: string; serviceId: string };
 export type ShopReport = { barbers: ShopBarber[]; days: ShopDay[]; services: ShopService[] };
 export type ShopTotals = {
   barberShareCents: number; cancelled: number; cancellationRate: number | null; completed: number; grossCents: number;
-  noShow: number; rentEstimateCents: number; shopIncomeCents: number;
+  noShow: number; rentEstimateCents: number; rentPaidCents: number; shopIncomeCents: number;
 };
 
 export function sumShopReport(report: ShopReport): ShopTotals {
@@ -19,6 +19,7 @@ export function sumShopReport(report: ShopReport): ShopTotals {
   );
   const barberShareCents = report.barbers.reduce((sum, b) => sum + b.barberShareCents, 0);
   const rentEstimateCents = report.barbers.reduce((sum, b) => sum + b.rentEstimateCents, 0);
+  const rentPaidCents = report.barbers.reduce((sum, b) => sum + b.rentPaidCents, 0);
   const closed = days.completed + days.cancelled + days.noShow;
 
   return {
@@ -26,6 +27,7 @@ export function sumShopReport(report: ShopReport): ShopTotals {
     barberShareCents,
     cancellationRate: closed === 0 ? null : (days.cancelled + days.noShow) / closed,
     rentEstimateCents,
+    rentPaidCents,
     shopIncomeCents: days.grossCents - barberShareCents + rentEstimateCents,
   };
 }

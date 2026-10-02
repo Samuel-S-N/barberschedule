@@ -1,8 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, UserX, XCircle } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
+
+import { Toast } from "../../src/components/domain/Toast";
+import { Input } from "../../src/components/ui/Input";
 
 import { ChartSection } from "../../src/components/charts/ChartSection";
 import { ColumnChart } from "../../src/components/charts/ColumnChart";
@@ -17,6 +20,7 @@ import { Card } from "../../src/components/ui/Card";
 import { Screen } from "../../src/components/ui/Screen";
 import { barberRows, sumShopReport, topByValue } from "../../src/features/owner-reports/build";
 import { getShopReport } from "../../src/features/owner-reports/api";
+import { deleteRentPayment, listRentPayments, parseReaisToCents, recordRentPayment } from "../../src/features/owner-reports/rent";
 import { dailySeries, daysBetween, percentChange, previousRange, WEEKLY_THRESHOLD_DAYS } from "../../src/features/reports/build-report";
 import { errorMessage } from "../../src/i18n/errors";
 import { useLanguage } from "../../src/i18n/use-language";
@@ -46,6 +50,51 @@ export default function OwnerRevenueScreen() {
 
   const current = useQuery({ queryFn: () => getShopReport(supabase, range.start, range.end), queryKey: ["owner-report", range.start, range.end] });
   const before = useQuery({ queryFn: () => getShopReport(supabase, previous.start, previous.end), queryKey: ["owner-report", previous.start, previous.end] });
+
+  const queryClient = useQueryClient();
+  const payments = useQuery({ queryFn: () => listRentPayments(supabase, range.start, range.end), queryKey: ["rent-payments", range.start, range.end] });
+  // Rent payment form: one barber at a time; remove needs a second tap on the same payment.
+  const [payingFor, setPayingFor] = useState<string | null>(null);
+  const [amount, setAmount] = useState("");
+  const [paidOn, setPaidOn] = useState(today);
+  const [note, setNote] = useState("");
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ message: string; variant: "error" | "success" } | null>(null);
+  const refreshRent = () => {
+    void queryClient.invalidateQueries({ queryKey: ["owner-report"] });
+    void queryClient.invalidateQueries({ queryKey: ["rent-payments"] });
+  };
+  const savePayment = useMutation({
+    mutationFn: (input: { amountCents: number; barberId: string }) => recordRentPayment(supabase, { ...input, note, paidOn }),
+    onError: (error) => setFeedback({ message: errorMessage(error, t, t("owner.revenue.loadError")), variant: "error" }),
+    onSuccess: () => {
+      setPayingFor(null);
+      setFeedback({ message: t("owner.revenue.paymentSaved"), variant: "success" });
+      refreshRent();
+    },
+  });
+  const removePayment = useMutation({
+    mutationFn: (id: string) => deleteRentPayment(supabase, id),
+    onError: (error) => setFeedback({ message: errorMessage(error, t, t("owner.revenue.loadError")), variant: "error" }),
+    onSettled: () => setConfirmRemoveId(null),
+    onSuccess: () => {
+      setFeedback({ message: t("owner.revenue.paymentRemoved"), variant: "success" });
+      refreshRent();
+    },
+  });
+  const openPayment = (barberId: string, owedCents: number) => {
+    setPayingFor(barberId);
+    setAmount((Math.max(owedCents, 0) / 100).toFixed(2).replace(".", ","));
+    setPaidOn(today);
+    setNote("");
+  };
+  const submitPayment = (barberId: string) => {
+    const cents = parseReaisToCents(amount);
+
+    if (cents === null) return setFeedback({ message: t("owner.revenue.invalidAmount"), variant: "error" });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(paidOn)) return setFeedback({ message: t("owner.revenue.invalidDate"), variant: "error" });
+    savePayment.mutate({ amountCents: cents, barberId });
+  };
 
   const report = current.data;
   const totals = report ? sumShopReport(report) : null;
@@ -182,18 +231,66 @@ export default function OwnerRevenueScreen() {
                           <Text className="text-sm font-sans-medium text-ink">{money(row.rentEstimateCents)}</Text>
                         </View>
                       ) : null}
+                      {row.compensationType === "chair_rental" ? (
+                        <View className="flex-row justify-between">
+                          <Text className="text-sm font-sans text-neutral-600">{t("owner.revenue.rentPaid")}</Text>
+                          <Text className="text-sm font-sans-medium text-ink">{money(row.rentPaidCents)}</Text>
+                        </View>
+                      ) : null}
                       <View className="flex-row justify-between">
                         <Text className="text-sm font-sans-semibold text-ink">{t("owner.revenue.colShopShare")}</Text>
                         <Text className="text-sm font-sans-semibold text-ink">{money(row.shopShareCents)}</Text>
                       </View>
+                      {row.compensationType === "chair_rental" && payingFor !== row.barberId ? (
+                        <Button label={t("owner.revenue.recordPayment")} onPress={() => openPayment(row.barberId, row.rentEstimateCents - row.rentPaidCents)} size="sm" testID={`rent-pay-${row.barberId}`} variant="outline" />
+                      ) : null}
+                      {payingFor === row.barberId ? (
+                        <View className="gap-2">
+                          <Input label={t("owner.revenue.paymentAmount")} onChangeText={setAmount} testID="rent-amount" value={amount} />
+                          <Input label={t("owner.revenue.paymentDate")} onChangeText={setPaidOn} testID="rent-date" value={paidOn} />
+                          <Input label={t("owner.revenue.paymentNote")} onChangeText={setNote} testID="rent-note" value={note} />
+                          <View className="flex-row gap-2">
+                            <Button disabled={savePayment.isPending} label={t("owner.revenue.savePayment")} onPress={() => submitPayment(row.barberId)} size="sm" testID="rent-pay-save" />
+                            <Button label={t("owner.revenue.cancelPayment")} onPress={() => setPayingFor(null)} size="sm" variant="outline" />
+                          </View>
+                        </View>
+                      ) : null}
                     </View>
                   </Card>
                 ))}
                 {totals.rentEstimateCents > 0 ? <Text className="text-xs font-sans text-neutral-500">{t("owner.revenue.rentNote")}</Text> : null}
+                {totals.rentEstimateCents > 0 || (payments.data?.length ?? 0) > 0 ? (
+                  <View className="gap-2" testID="rent-payments">
+                    <Text accessibilityRole="header" className="pt-2 text-lg font-display-semibold text-ink">{t("owner.revenue.paymentsTitle")}</Text>
+                    {payments.data?.length === 0 ? <Text className="text-sm font-sans text-neutral-600">{t("owner.revenue.noPayments")}</Text> : null}
+                    {(payments.data ?? []).map((payment) => (
+                      <Card key={payment.id} testID={`rent-payment-${payment.id}`} variant="outlined">
+                        <View className="flex-row items-center justify-between gap-2">
+                          <View className="flex-1 gap-0.5">
+                            <Text className="text-base font-sans-semibold text-ink">{payment.barberName}</Text>
+                            <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>
+                              {payment.paidOn} · {money(payment.amountCents)}
+                            </Text>
+                            {payment.note ? <Text className="text-xs font-sans text-neutral-500">{payment.note}</Text> : null}
+                          </View>
+                          <Button
+                            disabled={removePayment.isPending}
+                            label={confirmRemoveId === payment.id ? t("owner.revenue.removeConfirm") : t("owner.revenue.removePayment")}
+                            onPress={() => (confirmRemoveId === payment.id ? removePayment.mutate(payment.id) : setConfirmRemoveId(payment.id))}
+                            size="sm"
+                            testID={`rent-remove-${payment.id}`}
+                            variant="danger"
+                          />
+                        </View>
+                      </Card>
+                    ))}
+                  </View>
+                ) : null}
               </>
             ) : null}
           </View>
         </View>
+        <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
       </ScrollView>
     </Screen>
   );
