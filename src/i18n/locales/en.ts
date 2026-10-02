@@ -462,6 +462,7 @@ export const en = {
       call: "Call",
       book: "Book",
       detailError: "Unable to load this client.",
+      loadMore: "Load more",
       empty: "No clients yet. People you book or serve show up here.",
       emptyLapsed: "No lapsed clients.",
       emptySearch: "No client matches your search.",
