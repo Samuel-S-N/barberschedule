@@ -58,4 +58,10 @@ describe("recurrence contracts", () => {
       serviceName: "Corte",
     })).toBe("https://wa.me/5511999999999?text=Ol%C3%A1%20Ana%20Silva%2C%20seu%20Corte%20recorrente%20em%202026-08-17%20precisa%20ser%20reagendado.%20Qual%20hor%C3%A1rio%20voc%C3%AA%20prefere%3F");
   });
+
+  it("adds the Brazilian country code when the stored phone has none", () => {
+    expect(buildWhatsAppRecurrenceConflictUrl({ customerName: "Ana", localDate: "2026-08-17", phone: "(11) 99999-9999", serviceName: "Corte" }))
+      .toMatch(/^https:\/\/wa\.me\/5511999999999\?text=/);
+    expect(buildWhatsAppRecurrenceConflictUrl({ customerName: "Ana", localDate: "2026-08-17", phone: "123", serviceName: "Corte" })).toBeNull();
+  });
 });
