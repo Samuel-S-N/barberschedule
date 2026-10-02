@@ -460,6 +460,7 @@ export const en = {
     },
     clients: {
       call: "Call",
+      book: "Book",
       detailError: "Unable to load this client.",
       empty: "No clients yet. People you book or serve show up here.",
       emptyLapsed: "No lapsed clients.",
@@ -541,6 +542,7 @@ export const en = {
       role: "Barber",
     },
     agenda: {
+      bookingFor: "Booking for {{name}}. Tap a free time.",
       bookCancel: "Cancel",
       bookConfirm: "Book",
       bookCustomerName: "Customer name",

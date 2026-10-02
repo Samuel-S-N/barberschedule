@@ -459,6 +459,7 @@ export const pt: DeepStringRecord<typeof en> = {
     },
     clients: {
       call: "Ligar",
+      book: "Agendar",
       detailError: "Não foi possível carregar este cliente.",
       empty: "Ainda sem clientes. Quem você agenda ou atende aparece aqui.",
       emptyLapsed: "Nenhum cliente sumido.",
@@ -540,6 +541,7 @@ export const pt: DeepStringRecord<typeof en> = {
       role: "Barbeiro",
     },
     agenda: {
+      bookingFor: "Agendando para {{name}}. Toque num horário livre.",
       bookCancel: "Cancelar",
       bookConfirm: "Agendar",
       bookCustomerName: "Nome do cliente",

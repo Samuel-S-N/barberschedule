@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
@@ -19,6 +20,7 @@ import { Screen } from "../../src/components/ui/Screen";
 import { listMyBarberAgenda, setMyAppointmentStatus, type BarberAgendaAppointment, type BarberAppointmentStatus } from "../../src/features/appointments/barber-agenda";
 import { groupByLocalDate, markAppointmentDays, pendingClosure } from "../../src/features/appointments/agenda-view";
 import { bookAsBarber, searchMyCustomers, type BarberCustomerInput } from "../../src/features/appointments/barber-booking";
+import { getMyClient } from "../../src/features/clients/api";
 import { buildDayTimeline, slotFitsService } from "../../src/features/appointments/day-slots";
 import { buildDaySummary } from "../../src/features/appointments/day-summary";
 import { getAvailableSlots } from "../../src/features/availability/api";
@@ -88,6 +90,15 @@ export default function BarberAgendaScreen() {
   const dayAppointments = grouped.get(selectedDate) ?? [];
   const timeline = useMemo(() => buildDayTimeline(dayAppointments, slots.data ?? []), [dayAppointments, slots.data]);
   const showEarned = selectedDate <= today;
+  // Booking again for a known client (from the client screen): the agenda carries `bookFor` until the booking is done or cancelled.
+  const router = useRouter();
+  const { bookFor } = useLocalSearchParams<{ bookFor?: string }>();
+  const bookClient = useQuery({ enabled: Boolean(bookFor), queryFn: () => getMyClient(supabase, bookFor ?? ""), queryKey: ["my-client", bookFor] });
+  const initialCustomer = useMemo(
+    () => (bookClient.data ? { email: bookClient.data.customer.email, fullName: bookClient.data.customer.fullName, hasAccount: bookClient.data.customer.hasAccount, id: bookClient.data.customer.id, phone: bookClient.data.customer.phone } : null),
+    [bookClient.data],
+  );
+  const clearBookFor = () => router.setParams({ bookFor: undefined });
   const earned = useQuery({
     enabled: showEarned,
     queryFn: () => getMyBarberReport(supabase, selectedDate, selectedDate),
@@ -103,6 +114,13 @@ export default function BarberAgendaScreen() {
   const dayBlocks = (blocks.data ?? []).filter((block) => block.localDate === selectedDate && block.kind === "block");
 
   const fail = (error: unknown, fallback: string) => setFeedback({ message: errorMessage(error, t, fallback), variant: "error" });
+
+  useEffect(() => {
+    if (bookClient.error) {
+      fail(bookClient.error, t("barber.clients.detailError"));
+      router.setParams({ bookFor: undefined });
+    }
+  }, [bookClient.error]);
 
   const setStatus = useMutation({
     mutationFn: (input: { id: string; status: BarberAppointmentStatus }) => setMyAppointmentStatus(supabase, input.id, input.status),
@@ -159,6 +177,7 @@ export default function BarberAgendaScreen() {
     },
     onSuccess: () => {
       setBookingSlot(null);
+      if (bookFor) clearBookFor();
       setFeedback({ message: t("barber.agenda.bookSuccess"), variant: "success" });
       void queryClient.invalidateQueries({ queryKey: ["barber-agenda"] });
       void queryClient.invalidateQueries({ queryKey: ["barber-slots"] });
@@ -241,6 +260,16 @@ export default function BarberAgendaScreen() {
           <View className="w-full">
             <CalendarStrip days={days} onSelectDate={setPickedDate} selectedDate={selectedDate} />
           </View>
+          {bookFor && initialCustomer ? (
+            <View className="w-full max-w-[420px]">
+              <Card testID="barber-booking-for">
+                <View className="gap-2">
+                  <Text className="text-sm font-sans-medium text-ink">{t("barber.agenda.bookingFor", { name: initialCustomer.fullName })}</Text>
+                  <Button label={t("barber.agenda.bookCancel")} onPress={clearBookFor} size="sm" testID="barber-booking-for-cancel" variant="outline" />
+                </View>
+              </Card>
+            </View>
+          ) : null}
           <View className="w-full max-w-[420px]">
             <DaySummaryCard earnedCents={showEarned ? (earned.data?.days[0]?.earningsCents ?? 0) : null} summary={summary} testID="barber-day-summary" />
           </View>
@@ -307,6 +336,8 @@ export default function BarberAgendaScreen() {
           </View>
           <BarberBookingSheet
             busy={book.isPending}
+            initialCustomer={initialCustomer}
+            preferredServiceName={bookClient.data?.stats.favoriteService ?? null}
             fitsService={(service) => (bookingSlot ? slotFitsService(bookingSlot, nextBusyStart, service.durationMinutes) : true)}
             onClose={() => setBookingSlot(null)}
             onSearch={setCustomerTerm}

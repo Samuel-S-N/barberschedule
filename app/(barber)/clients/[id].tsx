@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { MessageCircle, Phone } from "lucide-react-native";
 import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -60,6 +60,7 @@ function Line({ children, label }: { children: ReactNode; label: string }) {
 export default function ClientDetailScreen() {
   const { t } = useTranslation();
   const back = useBack();
+  const router = useRouter();
   const language = useLanguage();
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
@@ -102,6 +103,7 @@ export default function ClientDetailScreen() {
                   <ContactLink icon={Phone} testID="client-call" url={telUrl(data.customer.phone)}>{t("barber.clients.call")}</ContactLink>
                 </View>
                 {data.customer.phone ? null : <Text className="text-xs font-sans text-neutral-500">{t("barber.clients.noPhone")}</Text>}
+                <Button label={t("barber.clients.book")} onPress={() => router.push({ params: { bookFor: id }, pathname: "/my-agenda" })} testID="client-book" />
 
                 <View className="flex-row flex-wrap gap-3">
                   <StatTile label={t("barber.clients.statVisits")} testID="client-stat-visits" value={String(data.stats.visits)} />
