@@ -106,21 +106,21 @@ test("an authenticated owner can add and remove schedule records", async ({ page
   await expect(page.getByText("Selected barber: Browser Barber")).toBeVisible();
   await expect(page.getByRole("button", { name: "Browser Barber (selected)" })).toBeVisible();
 
-  await page.getByPlaceholder("Weekday 1-7 (Monday-Sunday)").fill("1");
-  await page.getByPlaceholder("Start time (HH:mm)").first().fill("09:00");
-  await page.getByPlaceholder("End time (HH:mm)").first().fill("18:00");
+  await page.getByTestId("weekday-1").click();
+  await page.getByTestId("period-start").fill("09:00");
+  await page.getByTestId("period-end").fill("18:00");
   await page.getByRole("button", { name: "Add working period" }).click();
   await expect(page.getByText("Monday · 09:00–18:00")).toBeVisible();
-  await page.getByRole("button", { name: "Remove" }).first().click();
+  await page.getByTestId("period-remove-period-1").click();
   await expect(page.getByText("Monday · 09:00–18:00")).not.toBeVisible();
 
   await page.getByRole("button", { name: "Extra opening" }).click();
   await expect(page.getByRole("button", { name: "Extra opening (selected)" })).toBeVisible();
-  await page.getByPlaceholder("Local date (YYYY-MM-DD)").fill("2026-08-24");
-  await page.getByPlaceholder("Start time (HH:mm)").last().fill("16:00");
-  await page.getByPlaceholder("End time (HH:mm)").last().fill("18:00");
+  await page.getByTestId("override-date").fill("2026-08-24");
+  await page.getByTestId("override-start").fill("16:00");
+  await page.getByTestId("override-end").fill("18:00");
   await page.getByRole("button", { name: "Add override" }).click();
   await expect(page.getByText("2026-08-24 · opening · 16:00–18:00")).toBeVisible();
-  await page.getByRole("button", { name: "Remove" }).last().click();
+  await page.getByTestId("override-remove-override-1").click();
   await expect(page.getByText("2026-08-24 · opening · 16:00–18:00")).not.toBeVisible();
 });

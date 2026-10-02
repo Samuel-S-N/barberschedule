@@ -1,15 +1,22 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, StyleSheet, Switch, Text, TextInput, View } from "react-native";
+import { Switch, Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
+import { ScreenHeader } from "../../src/components/domain/ScreenHeader";
+import { Toast } from "../../src/components/domain/Toast";
+import { Button } from "../../src/components/ui/Button";
+import { Card } from "../../src/components/ui/Card";
+import { Input } from "../../src/components/ui/Input";
 import { Screen } from "../../src/components/ui/Screen";
 import { listPublicShops, listShopHours, saveShopHours, updateShopContact } from "../../src/features/shops/api";
 import { draftToPeriods, periodsToDraft, weekdayLabel } from "../../src/features/shops/hours";
 import type { DayDraft, ShopPeriod } from "../../src/features/shops/hours";
 import { errorMessage } from "../../src/i18n/errors";
 import { useLanguage } from "../../src/i18n/use-language";
+import { colors } from "../../src/lib/design/colors";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
@@ -19,6 +26,7 @@ const TIME_HINT = "HH:mm";
 export default function OwnerShopScreen() {
   const { t } = useTranslation();
   const language = useLanguage();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
   const shops = useQuery({ queryFn: () => listPublicShops(supabase), queryKey: ["public-shops"] });
@@ -30,7 +38,8 @@ export default function OwnerShopScreen() {
   });
   const [contact, setContact] = useState({ address: "", phone: "", whatsapp: "" });
   const [days, setDays] = useState<Record<number, DayDraft>>({});
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ message: string; variant: "error" | "success" } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (shop) setContact({ address: shop.address ?? "", phone: shop.phone ?? "", whatsapp: shop.whatsapp ?? "" });
@@ -50,92 +59,106 @@ export default function OwnerShopScreen() {
     for (const weekday of WEEKDAYS) {
       const result = draftToPeriods(days[weekday]);
       if (!result.ok) {
-        setFeedback(`${weekdayLabel(weekday, language)}: ${t(`owner.shop.errors.${result.error}`)}`);
+        setFeedback({ message: `${weekdayLabel(weekday, language)}: ${t(`owner.shop.errors.${result.error}`)}`, variant: "error" });
         return;
       }
       periods.push(...result.periods.map((period) => ({ ...period, weekday })));
     }
+    setIsSaving(true);
     try {
       await saveShopHours(supabase, periods);
       if (shop) await updateShopContact(supabase, shop.id, contact);
       await queryClient.invalidateQueries({ queryKey: ["public-shops"] });
       await queryClient.invalidateQueries({ queryKey: ["shop-hours"] });
-      setFeedback(t("owner.shop.saved"));
+      setFeedback({ message: t("owner.shop.saved"), variant: "success" });
     } catch (error) {
-      setFeedback(errorMessage(error, t, t("owner.shop.saveError")));
+      setFeedback({ message: errorMessage(error, t, t("owner.shop.saveError")), variant: "error" });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const field = (key: keyof typeof contact, label: string) => (
-    <View style={styles.field}>
-      <Text>{label}</Text>
-      <TextInput
-        accessibilityLabel={label}
-        onChangeText={(value) => setContact((current) => ({ ...current, [key]: value }))}
-        style={styles.input}
-        value={contact[key]}
-      />
-    </View>
+    <Input label={label} onChangeText={(value) => setContact((current) => ({ ...current, [key]: value }))} testID={`shop-${key}`} value={contact[key]} />
   );
-  const time = (label: string, value: string, onChange: (value: string) => void) => (
-    <TextInput accessibilityLabel={label} onChangeText={onChange} placeholder={TIME_HINT} style={[styles.input, styles.time]} value={value} />
-  );
+  const back = () => (router.canGoBack() ? router.back() : router.replace("/manage"));
 
   return (
-    <Screen style={styles.screen}>
-      <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-        <Text accessibilityRole="header" style={styles.title}>{t("owner.shop.title")}</Text>
-        {field("address", t("owner.shop.address"))}
-        {field("phone", t("owner.shop.phone"))}
-        {field("whatsapp", t("owner.shop.whatsapp"))}
-        {WEEKDAYS.map((weekday) => {
-          const day = days[weekday];
-          if (!day) return null;
-          const name = weekdayLabel(weekday, language);
-
-          return (
-            <View key={weekday} style={styles.day} testID={`shop-day-${weekday}`}>
-              <View style={styles.row}>
-                <Text style={styles.dayName}>{name}</Text>
-                <Switch accessibilityLabel={`${name} ${t("owner.shop.open")}`} onValueChange={(enabled) => patchDay(weekday, { enabled })} value={day.enabled} />
-                {!day.enabled ? <Text>{t("owner.shop.closed")}</Text> : null}
+    <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
+      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
+        <View className="items-center p-5">
+          <View className="w-full max-w-[420px] gap-4">
+            <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("owner.shop.title")} />
+            <Card>
+              <View className="gap-3">
+                {field("address", t("owner.shop.address"))}
+                {field("phone", t("owner.shop.phone"))}
+                {field("whatsapp", t("owner.shop.whatsapp"))}
               </View>
-              {day.enabled ? (
-                <>
-                  <View style={styles.row}>
-                    {time(t("common.startTime"), day.start, (start) => patchDay(weekday, { start }))}
-                    {time(t("common.endTime"), day.end, (end) => patchDay(weekday, { end }))}
-                  </View>
-                  {day.breaks.map((pause, index) => (
-                    <View key={index} style={styles.row}>
-                      {time(t("owner.shop.breakStart"), pause.start, (start) =>
-                        patchDay(weekday, { breaks: day.breaks.map((item, i) => (i === index ? { ...item, start } : item)) }))}
-                      {time(t("owner.shop.breakEnd"), pause.end, (end) =>
-                        patchDay(weekday, { breaks: day.breaks.map((item, i) => (i === index ? { ...item, end } : item)) }))}
-                      <Button onPress={() => patchDay(weekday, { breaks: day.breaks.filter((_, i) => i !== index) })} title={t("owner.shop.removeBreak")} />
+            </Card>
+            {WEEKDAYS.map((weekday) => {
+              const day = days[weekday];
+              if (!day) return null;
+              const name = weekdayLabel(weekday, language);
+
+              return (
+                <Card key={weekday} testID={`shop-day-${weekday}`} variant="outlined">
+                  <View className="gap-3">
+                    <View className="flex-row items-center gap-3">
+                      <Text className="min-w-[56px] text-base font-sans-semibold text-ink">{name}</Text>
+                      <Switch
+                        accessibilityLabel={`${name} ${t("owner.shop.open")}`}
+                        onValueChange={(enabled) => patchDay(weekday, { enabled })}
+                        testID={`shop-open-${weekday}`}
+                        thumbColor="#ffffff"
+                        trackColor={{ false: colors.neutral[200], true: colors.primary[400] }}
+                        value={day.enabled}
+                      />
+                      <Text className="text-sm font-sans text-neutral-600">{day.enabled ? t("owner.shop.open") : t("owner.shop.closed")}</Text>
                     </View>
-                  ))}
-                  <Button onPress={() => patchDay(weekday, { breaks: [...day.breaks, { end: "13:00", start: "12:00" }] })} title={t("owner.shop.addBreak")} />
-                </>
-              ) : null}
-            </View>
-          );
-        })}
-        {feedback ? <Text>{feedback}</Text> : null}
-        <Button onPress={() => void save()} title={t("owner.shop.save")} />
+                    {day.enabled ? (
+                      <>
+                        <View className="flex-row gap-2">
+                          <View className="flex-1"><Input label={t("common.startTime")} onChangeText={(start) => patchDay(weekday, { start })} placeholder={TIME_HINT} testID={`shop-start-${weekday}`} value={day.start} /></View>
+                          <View className="flex-1"><Input label={t("common.endTime")} onChangeText={(end) => patchDay(weekday, { end })} placeholder={TIME_HINT} testID={`shop-end-${weekday}`} value={day.end} /></View>
+                        </View>
+                        {day.breaks.map((pause, index) => (
+                          <View className="gap-2" key={index}>
+                            <View className="flex-row gap-2">
+                              <View className="flex-1">
+                                <Input
+                                  label={t("owner.shop.breakStart")}
+                                  onChangeText={(start) => patchDay(weekday, { breaks: day.breaks.map((item, i) => (i === index ? { ...item, start } : item)) })}
+                                  placeholder={TIME_HINT}
+                                  testID={`shop-break-start-${weekday}-${index}`}
+                                  value={pause.start}
+                                />
+                              </View>
+                              <View className="flex-1">
+                                <Input
+                                  label={t("owner.shop.breakEnd")}
+                                  onChangeText={(end) => patchDay(weekday, { breaks: day.breaks.map((item, i) => (i === index ? { ...item, end } : item)) })}
+                                  placeholder={TIME_HINT}
+                                  testID={`shop-break-end-${weekday}-${index}`}
+                                  value={pause.end}
+                                />
+                              </View>
+                            </View>
+                            <Button label={t("owner.shop.removeBreak")} onPress={() => patchDay(weekday, { breaks: day.breaks.filter((_, i) => i !== index) })} size="sm" variant="outline" />
+                          </View>
+                        ))}
+                        <Button label={t("owner.shop.addBreak")} onPress={() => patchDay(weekday, { breaks: [...day.breaks, { end: "13:00", start: "12:00" }] })} size="sm" testID={`shop-add-break-${weekday}`} variant="outline" />
+                      </>
+                    ) : null}
+                  </View>
+                </Card>
+              );
+            })}
+            <Button disabled={isSaving} label={t("owner.shop.save")} onPress={() => void save()} testID="shop-save" />
+            <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
+          </View>
+        </View>
       </KeyboardAwareScrollView>
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  content: { gap: 12, maxWidth: 520, width: "100%" },
-  day: { borderColor: "#e5e7eb", borderRadius: 8, borderWidth: 1, gap: 8, padding: 12 },
-  dayName: { fontWeight: "600", minWidth: 48 },
-  field: { gap: 4 },
-  input: { borderColor: "#d1d5db", borderRadius: 6, borderWidth: 1, padding: 8 },
-  row: { alignItems: "center", flexDirection: "row", gap: 8 },
-  screen: { alignItems: "center", backgroundColor: "#fff", flex: 1, padding: 24 },
-  time: { width: 90 },
-  title: { color: "#111827", fontSize: 28, fontWeight: "700" },
-});

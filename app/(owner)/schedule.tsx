@@ -1,380 +1,206 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
-import { errorMessage } from "../../src/i18n/errors";
+import { EmptyState } from "../../src/components/domain/EmptyState";
+import { ScreenHeader } from "../../src/components/domain/ScreenHeader";
+import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
+import { Toast } from "../../src/components/domain/Toast";
+import { Button } from "../../src/components/ui/Button";
+import { Card } from "../../src/components/ui/Card";
+import { Input } from "../../src/components/ui/Input";
+import { Screen } from "../../src/components/ui/Screen";
+import { listOwnerBarbers } from "../../src/features/barbers/api";
+import type { OwnerBarber } from "../../src/features/barbers/types";
 import {
-  deleteScheduleOverride,
-  deleteWorkingPeriod,
   createScheduleOverride,
   createWorkingPeriod,
+  deleteScheduleOverride,
+  deleteWorkingPeriod,
   listOwnerScheduleOverrides,
   listOwnerWorkingPeriods,
 } from "../../src/features/schedule/api";
-import type {
-  ScheduleOverrideKind,
-  WorkingPeriod,
-} from "../../src/features/schedule/types";
-import {
-  assertNoOverlappingWorkingPeriod,
-  parseWorkingPeriodInput,
-} from "../../src/features/schedule/validation";
-import { listOwnerBarbers } from "../../src/features/barbers/api";
-import type { OwnerBarber } from "../../src/features/barbers/types";
+import type { ScheduleOverrideKind } from "../../src/features/schedule/types";
+import { assertNoOverlappingWorkingPeriod, parseWorkingPeriodInput } from "../../src/features/schedule/validation";
+import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
+import { errorMessage } from "../../src/i18n/errors";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
-import { Screen } from "../../src/components/ui/Screen";
-
-type ShopRow = { id: string };
-
-async function loadShopId(supabase: ReturnType<typeof useSupabaseSession>["supabase"]) {
-  const { data, error } = await supabase
-    .from("shops")
-    .select("id")
-    .order("name", { ascending: true });
-
-  if (error) {
-    throw error;
-  }
-
-  return (data as ShopRow[] | null)?.[0]?.id ?? null;
-}
 
 const WEEKDAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
 
 export default function OwnerScheduleScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
-  const [barbers, setBarbers] = useState<OwnerBarber[]>([]);
-  const [endTime, setEndTime] = useState("18:00");
+  const shop = useOwnerShopId();
+  const shopId = shop.data ?? null;
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [isAllDayBlock, setIsAllDayBlock] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [localDate, setLocalDate] = useState(
-    formatInstantInShopTime(new Date()).localDate,
-  );
-  const [overrideEndTime, setOverrideEndTime] = useState("18:00");
-  const [overrideKind, setOverrideKind] = useState<ScheduleOverrideKind>("block");
-  const [overrideStartTime, setOverrideStartTime] = useState("16:00");
-  const [overrides, setOverrides] = useState<Awaited<ReturnType<typeof listOwnerScheduleOverrides>>>([]);
-  const [periods, setPeriods] = useState<WorkingPeriod[]>([]);
   const [selectedBarberId, setSelectedBarberId] = useState<string | null>(null);
-  const [shopId, setShopId] = useState<string | null>(null);
+  const [weekday, setWeekday] = useState(1);
   const [startTime, setStartTime] = useState("09:00");
-  const [weekday, setWeekday] = useState("1");
+  const [endTime, setEndTime] = useState("18:00");
+  const [localDate, setLocalDate] = useState(formatInstantInShopTime(new Date()).localDate);
+  const [overrideKind, setOverrideKind] = useState<ScheduleOverrideKind>("block");
+  const [isAllDayBlock, setIsAllDayBlock] = useState(true);
+  const [overrideStartTime, setOverrideStartTime] = useState("16:00");
+  const [overrideEndTime, setOverrideEndTime] = useState("18:00");
 
-  const refresh = async (targetShopId = shopId) => {
-    if (!targetShopId) {
-      return;
-    }
+  const data = useQuery({
+    enabled: shopId !== null,
+    queryFn: async () => {
+      const id = shopId ?? "";
+      const [barbers, periods, overrides] = await Promise.all([listOwnerBarbers(supabase, id), listOwnerWorkingPeriods(supabase, id), listOwnerScheduleOverrides(supabase, id)]);
 
-    const [nextPeriods, nextOverrides] = await Promise.all([
-      listOwnerWorkingPeriods(supabase, targetShopId),
-      listOwnerScheduleOverrides(supabase, targetShopId),
-    ]);
-    setPeriods(nextPeriods);
-    setOverrides(nextOverrides);
-  };
+      return { barbers, overrides, periods };
+    },
+    queryKey: ["owner-schedule", shopId],
+  });
+  const barbers = data.data?.barbers ?? [];
 
   useEffect(() => {
-    let active = true;
+    if (selectedBarberId === null && barbers.length > 0) setSelectedBarberId(barbers[0].id);
+  }, [barbers, selectedBarberId]);
 
-    const load = async () => {
-      try {
-        const nextShopId = await loadShopId(supabase);
-
-        if (!active) {
-          return;
-        }
-
-        setShopId(nextShopId);
-
-        if (!nextShopId) {
-          setFeedback(t("common.noShop"));
-          return;
-        }
-
-        const nextBarbers = await listOwnerBarbers(supabase, nextShopId);
-
-        if (!active) {
-          return;
-        }
-
-        setBarbers(nextBarbers);
-        setSelectedBarberId(nextBarbers[0]?.id ?? null);
-        await refresh(nextShopId);
-      } catch (error) {
-        if (active) {
-          setFeedback(errorMessage(error, t, t("owner.schedule.loadError")));
-        }
-      } finally {
-        if (active) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    void load();
-
-    return () => {
-      active = false;
-    };
-  }, [supabase]);
-
-  const selectedPeriods = periods.filter((period) => period.barberId === selectedBarberId);
-  const selectedOverrides = overrides.filter((override) => override.barberId === selectedBarberId);
-  const selectedBarber = barbers.find((barber) => barber.id === selectedBarberId);
+  const selectedBarber = barbers.find((barber: OwnerBarber) => barber.id === selectedBarberId);
+  const selectedPeriods = (data.data?.periods ?? []).filter((period) => period.barberId === selectedBarberId);
+  const selectedOverrides = (data.data?.overrides ?? []).filter((override) => override.barberId === selectedBarberId);
   const showOverrideTimes = overrideKind === "opening" || !isAllDayBlock;
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ["owner-schedule"] });
+  const fail = (error: unknown, fallback: string) => setFeedback(errorMessage(error, t, fallback));
 
-  const handleAddPeriod = async () => {
-    if (!shopId || !selectedBarberId) {
-      return;
-    }
-
-    setFeedback(null);
-    setIsSaving(true);
-
-    try {
-      const input = parseWorkingPeriodInput({
-        barberId: selectedBarberId,
-        endTime,
-        shopId,
-        startTime,
-        weekday: Number(weekday),
-      });
+  const addPeriod = useMutation({
+    mutationFn: () => {
+      const input = parseWorkingPeriodInput({ barberId: selectedBarberId ?? "", endTime, shopId: shopId ?? "", startTime, weekday });
       assertNoOverlappingWorkingPeriod(input, selectedPeriods);
-      await createWorkingPeriod(supabase, input);
-      await refresh();
-    } catch (error) {
-      setFeedback(errorMessage(error, t, t("owner.schedule.addPeriodError")));
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
-  const handleAddOverride = async () => {
-    if (!shopId || !selectedBarberId) {
-      return;
-    }
+      return createWorkingPeriod(supabase, input);
+    },
+    onError: (error) => fail(error, t("owner.schedule.addPeriodError")),
+    onSuccess: () => void refresh(),
+  });
 
-    setFeedback(null);
-    setIsSaving(true);
-
-    try {
-      await createScheduleOverride(supabase, {
-        barberId: selectedBarberId,
+  const addOverride = useMutation({
+    mutationFn: () =>
+      createScheduleOverride(supabase, {
+        barberId: selectedBarberId ?? "",
         endTime: showOverrideTimes ? overrideEndTime : null,
         kind: overrideKind,
         localDate,
-        shopId,
+        shopId: shopId ?? "",
         startTime: showOverrideTimes ? overrideStartTime : null,
-      });
-      await refresh();
-    } catch (error) {
-      setFeedback(errorMessage(error, t, t("owner.schedule.addOverrideError")));
-    } finally {
-      setIsSaving(false);
-    }
-  };
+      }),
+    onError: (error) => fail(error, t("owner.schedule.addOverrideError")),
+    onSuccess: () => void refresh(),
+  });
 
-  const handleDelete = async (remove: () => Promise<void>) => {
-    setFeedback(null);
-    setIsSaving(true);
+  const remove = useMutation({
+    mutationFn: (job: () => Promise<void>) => job(),
+    onError: (error) => fail(error, t("owner.schedule.removeError")),
+    onSuccess: () => void refresh(),
+  });
 
-    try {
-      await remove();
-      await refresh();
-    } catch (error) {
-      setFeedback(errorMessage(error, t, t("owner.schedule.removeError")));
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const busy = addPeriod.isPending || addOverride.isPending || remove.isPending;
+  const loading = shop.isLoading || data.isLoading;
+  const loadError = shop.error ?? data.error;
+  const selectable = (label: string, selected: boolean) => (selected ? t("common.selectedOption", { option: label }) : label);
+  const back = () => (router.canGoBack() ? router.back() : router.replace("/manage"));
 
   return (
-    <Screen style={styles.screen}>
-      <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-        <Text accessibilityRole="header" style={styles.title}>
-          {t("owner.schedule.title")}
-        </Text>
-        <Text style={styles.note}>{t("owner.schedule.note")}</Text>
-        <View style={styles.barberList}>
-          {barbers.map((barber) => (
-            <Button
-              accessibilityState={{ selected: barber.id === selectedBarberId }}
-              color={barber.id === selectedBarberId ? "#2563eb" : undefined}
-              key={barber.id}
-              onPress={() => setSelectedBarberId(barber.id)}
-              title={barber.id === selectedBarberId ? t("common.selectedOption", { option: barber.name }) : barber.name}
-            />
-          ))}
-        </View>
-        {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}
-        {isLoading || isSaving ? <ActivityIndicator /> : null}
-        {!selectedBarber ? <Text style={styles.note}>{t("owner.schedule.noBarber")}</Text> : null}
-        {selectedBarber ? (
-          <>
-            <Text style={styles.note}>{t("owner.schedule.selectedBarber", { name: selectedBarber.name })}</Text>
-            <Text style={styles.sectionTitle}>{t("owner.schedule.periodsTitle", { name: selectedBarber.name })}</Text>
-            <TextInput
-              keyboardType="numeric"
-              onChangeText={setWeekday}
-              placeholder={t("owner.schedule.weekdayLabel")}
-              style={styles.input}
-              value={weekday}
-            />
-            <TextInput
-              onChangeText={setStartTime}
-              placeholder={t("common.startTime")}
-              style={styles.input}
-              value={startTime}
-            />
-            <TextInput
-              onChangeText={setEndTime}
-              placeholder={t("common.endTime")}
-              style={styles.input}
-              value={endTime}
-            />
-            <Button disabled={isSaving} onPress={handleAddPeriod} title={t("owner.schedule.addPeriod")} />
-            {selectedPeriods.map((period) => (
-              <View key={period.id} style={styles.card}>
-                <Text>
-                  {t("owner.schedule.periodLine", {
-                    end: period.endTime,
-                    start: period.startTime,
-                    weekday: t(`owner.schedule.weekdays.${WEEKDAY_KEYS[period.weekday - 1]}`),
-                  })}
-                </Text>
-                <Button
-                  disabled={isSaving}
-                  onPress={() => void handleDelete(() => deleteWorkingPeriod(supabase, period.id))}
-                  title={t("common.remove")}
-                />
-              </View>
-            ))}
+    <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
+      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
+        <View className="items-center p-5">
+          <View className="w-full max-w-[420px] gap-4">
+            <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("owner.schedule.title")} />
+            <Text className="text-sm font-sans text-neutral-600">{t("owner.schedule.note")}</Text>
 
-            <Text style={styles.sectionTitle}>{t("owner.schedule.overridesTitle")}</Text>
-            <TextInput
-              onChangeText={setLocalDate}
-              placeholder={t("common.localDate")}
-              style={styles.input}
-              value={localDate}
-            />
-            <View style={styles.barberList}>
-              <Button
-                accessibilityState={{ selected: overrideKind === "block" }}
-                color={overrideKind === "block" ? "#2563eb" : undefined}
-                onPress={() => setOverrideKind("block")}
-                title={overrideKind === "block" ? t("common.selectedOption", { option: t("owner.schedule.blockTime") }) : t("owner.schedule.blockTime")}
-              />
-              <Button
-                accessibilityState={{ selected: overrideKind === "opening" }}
-                color={overrideKind === "opening" ? "#2563eb" : undefined}
-                onPress={() => setOverrideKind("opening")}
-                title={overrideKind === "opening" ? t("common.selectedOption", { option: t("owner.schedule.extraOpening") }) : t("owner.schedule.extraOpening")}
-              />
+            {loading ? <SkeletonBlock height={96} width={320} /> : null}
+            {loadError ? <Text className="text-sm font-sans text-danger-500">{errorMessage(loadError, t, t("owner.schedule.loadError"))}</Text> : null}
+            {shop.data === null ? <EmptyState title={t("common.noShop")} /> : null}
+
+            <View className="flex-row flex-wrap gap-2">
+              {barbers.map((barber: OwnerBarber) => (
+                <Button key={barber.id} label={selectable(barber.name, barber.id === selectedBarberId)} onPress={() => setSelectedBarberId(barber.id)} size="sm" testID={`schedule-barber-${barber.id}`} variant={barber.id === selectedBarberId ? "dark" : "outline"} />
+              ))}
             </View>
-            {overrideKind === "block" ? (
-              <View style={styles.barberList}>
-                <Button
-                  accessibilityState={{ selected: isAllDayBlock }}
-                  color={isAllDayBlock ? "#2563eb" : undefined}
-                  onPress={() => setIsAllDayBlock(true)}
-                  title={isAllDayBlock ? t("common.selectedOption", { option: t("owner.schedule.allDayOption") }) : t("owner.schedule.allDayOption")}
-                />
-                <Button
-                  accessibilityState={{ selected: !isAllDayBlock }}
-                  color={!isAllDayBlock ? "#2563eb" : undefined}
-                  onPress={() => setIsAllDayBlock(false)}
-                  title={!isAllDayBlock ? t("common.selectedOption", { option: t("owner.schedule.timedBlock") }) : t("owner.schedule.timedBlock")}
-                />
-              </View>
-            ) : null}
-            {showOverrideTimes ? (
+            {data.data && !selectedBarber ? <Text className="text-sm font-sans text-neutral-600">{t("owner.schedule.noBarber")}</Text> : null}
+
+            {selectedBarber ? (
               <>
-                <TextInput
-                  onChangeText={setOverrideStartTime}
-                  placeholder={t("common.startTime")}
-                  style={styles.input}
-                  value={overrideStartTime}
-                />
-                <TextInput
-                  onChangeText={setOverrideEndTime}
-                  placeholder={t("common.endTime")}
-                  style={styles.input}
-                  value={overrideEndTime}
-                />
+                <Text className="text-sm font-sans text-neutral-600">{t("owner.schedule.selectedBarber", { name: selectedBarber.name })}</Text>
+
+                <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{t("owner.schedule.periodsTitle", { name: selectedBarber.name })}</Text>
+                <Card>
+                  <View className="gap-3">
+                    <Text className="text-sm font-sans-medium text-ink">{t("owner.schedule.weekdayLabel")}</Text>
+                    <View className="flex-row flex-wrap gap-2">
+                      {WEEKDAY_KEYS.map((key, index) => (
+                        <Button key={key} label={t(`owner.schedule.weekdays.${key}`)} onPress={() => setWeekday(index + 1)} size="sm" testID={`weekday-${index + 1}`} variant={weekday === index + 1 ? "dark" : "outline"} />
+                      ))}
+                    </View>
+                    <Input label={t("common.startTime")} onChangeText={setStartTime} testID="period-start" value={startTime} />
+                    <Input label={t("common.endTime")} onChangeText={setEndTime} testID="period-end" value={endTime} />
+                    <Button disabled={busy} label={t("owner.schedule.addPeriod")} onPress={() => addPeriod.mutate()} testID="period-add" />
+                  </View>
+                </Card>
+                {selectedPeriods.map((period) => (
+                  <Card key={period.id} testID={`period-${period.id}`} variant="outlined">
+                    <View className="flex-row items-center justify-between gap-2">
+                      <Text className="flex-1 text-base font-sans-medium text-ink" style={{ fontVariant: ["tabular-nums"] }}>
+                        {t("owner.schedule.periodLine", { end: period.endTime, start: period.startTime, weekday: t(`owner.schedule.weekdays.${WEEKDAY_KEYS[period.weekday - 1]}`) })}
+                      </Text>
+                      <Button disabled={busy} label={t("common.remove")} onPress={() => remove.mutate(() => deleteWorkingPeriod(supabase, period.id))} size="sm" testID={`period-remove-${period.id}`} variant="danger" />
+                    </View>
+                  </Card>
+                ))}
+
+                <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{t("owner.schedule.overridesTitle")}</Text>
+                <Card>
+                  <View className="gap-3">
+                    <Input label={t("common.localDate")} onChangeText={setLocalDate} testID="override-date" value={localDate} />
+                    <View className="flex-row flex-wrap gap-2">
+                      <Button label={selectable(t("owner.schedule.blockTime"), overrideKind === "block")} onPress={() => setOverrideKind("block")} size="sm" testID="override-kind-block" variant={overrideKind === "block" ? "dark" : "outline"} />
+                      <Button label={selectable(t("owner.schedule.extraOpening"), overrideKind === "opening")} onPress={() => setOverrideKind("opening")} size="sm" testID="override-kind-opening" variant={overrideKind === "opening" ? "dark" : "outline"} />
+                    </View>
+                    {overrideKind === "block" ? (
+                      <View className="flex-row flex-wrap gap-2">
+                        <Button label={selectable(t("owner.schedule.allDayOption"), isAllDayBlock)} onPress={() => setIsAllDayBlock(true)} size="sm" testID="override-allday" variant={isAllDayBlock ? "dark" : "outline"} />
+                        <Button label={selectable(t("owner.schedule.timedBlock"), !isAllDayBlock)} onPress={() => setIsAllDayBlock(false)} size="sm" testID="override-timed" variant={!isAllDayBlock ? "dark" : "outline"} />
+                      </View>
+                    ) : null}
+                    {showOverrideTimes ? (
+                      <>
+                        <Input label={t("common.startTime")} onChangeText={setOverrideStartTime} testID="override-start" value={overrideStartTime} />
+                        <Input label={t("common.endTime")} onChangeText={setOverrideEndTime} testID="override-end" value={overrideEndTime} />
+                      </>
+                    ) : null}
+                    <Button disabled={busy} label={t("owner.schedule.addOverride")} onPress={() => addOverride.mutate()} testID="override-add" />
+                  </View>
+                </Card>
+                {selectedOverrides.map((override) => (
+                  <Card key={override.id} testID={`override-${override.id}`} variant="outlined">
+                    <View className="flex-row items-center justify-between gap-2">
+                      <Text className="flex-1 text-base font-sans-medium text-ink" style={{ fontVariant: ["tabular-nums"] }}>
+                        {t("owner.schedule.overrideLine", {
+                          date: override.localDate,
+                          kind: override.kind === "opening" ? t("owner.schedule.kindOpening") : t("owner.schedule.kindBlock"),
+                          time: override.startTime ? `${override.startTime}–${override.endTime}` : t("common.allDay"),
+                        })}
+                      </Text>
+                      <Button disabled={busy} label={t("common.remove")} onPress={() => remove.mutate(() => deleteScheduleOverride(supabase, override.id))} size="sm" testID={`override-remove-${override.id}`} variant="danger" />
+                    </View>
+                  </Card>
+                ))}
               </>
             ) : null}
-            <Button disabled={isSaving} onPress={handleAddOverride} title={t("owner.schedule.addOverride")} />
-            {selectedOverrides.map((override) => (
-              <View key={override.id} style={styles.card}>
-                <Text>
-                  {t("owner.schedule.overrideLine", {
-                    date: override.localDate,
-                    kind: override.kind === "opening" ? t("owner.schedule.kindOpening") : t("owner.schedule.kindBlock"),
-                    time: override.startTime ? `${override.startTime}–${override.endTime}` : t("common.allDay"),
-                  })}
-                </Text>
-                <Button
-                  disabled={isSaving}
-                  onPress={() => void handleDelete(() => deleteScheduleOverride(supabase, override.id))}
-                  title={t("common.remove")}
-                />
-              </View>
-            ))}
-          </>
-        ) : null}
+            <Toast message={feedback ?? ""} onDismiss={() => setFeedback(null)} variant="error" visible={feedback !== null} />
+          </View>
+        </View>
       </KeyboardAwareScrollView>
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  barberList: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  card: {
-    borderColor: "#d1d5db",
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 8,
-    padding: 12,
-  },
-  content: {
-    gap: 12,
-    padding: 24,
-  },
-  feedback: {
-    color: "#b91c1c",
-  },
-  input: {
-    borderColor: "#d1d5db",
-    borderRadius: 10,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  note: {
-    color: "#4b5563",
-  },
-  screen: {
-    backgroundColor: "#ffffff",
-    flex: 1,
-  },
-  sectionTitle: {
-    color: "#111827",
-    fontSize: 20,
-    fontWeight: "700",
-    marginTop: 12,
-  },
-  title: {
-    color: "#111827",
-    fontSize: 28,
-    fontWeight: "700",
-  },
-});
