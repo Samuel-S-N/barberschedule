@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(41);
+select plan(39);
 
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at)
 values
@@ -184,20 +184,7 @@ select throws_ok(
 );
 select is((select count(*)::int from public.list_my_barber_services()), 2, 'barber lists only their own services');
 
-select is(
-  (select sum(gross_cents)::int from public.get_my_barber_earnings(current_date - 7, current_date + 7)),
-  8000,
-  'earnings sum only own completed appointments'
-);
-select is(
-  (select count(*)::int from public.get_my_barber_earnings(current_date - 7, current_date + 7)),
-  2,
-  'earnings are grouped per service'
-);
-select throws_ok(
-  $$ select * from public.get_my_barber_earnings(current_date - 100, current_date) $$,
-  'P0022', null, 'earnings range is bounded to 92 days'
-);
+select hasnt_function('public', 'get_my_barber_earnings', array['date', 'date'], 'the old earnings RPC is gone (reports use get_my_barber_report)');
 select throws_ok(
   $$ select * from public.set_barber_compensation('82000000-0000-0000-0000-000000000001', 'commission', 40) $$,
   '42501', null, 'barber cannot edit their own compensation'
