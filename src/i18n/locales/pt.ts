@@ -461,6 +461,7 @@ export const pt: DeepStringRecord<typeof en> = {
       call: "Ligar",
       book: "Agendar",
       detailError: "Não foi possível carregar este cliente.",
+      loadMore: "Carregar mais",
       empty: "Ainda sem clientes. Quem você agenda ou atende aparece aqui.",
       emptyLapsed: "Nenhum cliente sumido.",
       emptySearch: "Nenhum cliente encontrado.",
