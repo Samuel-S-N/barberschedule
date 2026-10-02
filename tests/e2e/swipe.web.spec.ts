@@ -24,6 +24,11 @@ async function expectEmptyArea(page: import("@playwright/test").Page, points: [n
 
 test.use({ viewport: { height: 700, width: 390 } });
 
+// The booking calendar spans today..today+30 days. On the 1st of a 31-day month that is a single month (nothing to
+// swipe to, by design), so the calendar tests pin the app's clock to mid-month. The fake JWT stays valid because
+// the pinned time is earlier than the real one.
+const pinMidMonth = (page: import("@playwright/test").Page) => page.clock.setFixedTime(new Date("2026-09-15T15:00:00-03:00"));
+
 test("dragging sideways moves between the tabs", async ({ page }) => {
   await signInAsCustomer(page);
   await mockCustomerRest(page, async (route, url) => {
@@ -48,6 +53,7 @@ test("dragging sideways moves between the tabs", async ({ page }) => {
 });
 
 test("on the booking date step a drag changes the month, not the tab", async ({ page }) => {
+  await pinMidMonth(page);
   await signInAsCustomer(page);
   await mockCustomerRest(page, async (route, url) => {
     if (url.pathname.endsWith("/barber_services")) {
@@ -78,6 +84,7 @@ const selectedDays = (page: import("@playwright/test").Page) =>
   );
 
 async function openDateStep(page: import("@playwright/test").Page) {
+  await pinMidMonth(page);
   await signInAsCustomer(page);
   await mockCustomerRest(page, async (route, url) => {
     if (url.pathname.endsWith("/barber_services")) {

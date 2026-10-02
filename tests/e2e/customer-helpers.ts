@@ -66,5 +66,6 @@ export async function mockCustomerRest(page: Page, handler?: RestHandler) {
 }
 
 export function isHistoryQuery(url: URL) {
-  return (url.searchParams.get("status") ?? "").includes("completed");
+  // The history query is an `or=` filter (closed statuses, or open ones that already ended); upcoming uses `status=in.(scheduled,confirmed)`.
+  return `${url.searchParams.get("status") ?? ""}${url.searchParams.get("or") ?? ""}`.includes("completed");
 }
