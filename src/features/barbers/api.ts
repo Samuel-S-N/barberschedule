@@ -314,3 +314,17 @@ export async function inviteBarber(
 
   return data as { userId: string };
 }
+
+export type WorkingPeriodView = { endTime: string; startTime: string; weekday: number };
+
+// Read-only: the owner manages working hours; the barber just sees their week.
+export async function listMyWorkingPeriods(supabase: Pick<SupabaseClient, "rpc">): Promise<WorkingPeriodView[]> {
+  const { data, error } = await supabase.rpc("list_my_working_periods");
+  if (error) throwBarberError(error);
+
+  return (data ?? []).map((row: unknown) => {
+    const r = row as { end_time: string; start_time: string; weekday: number };
+
+    return { endTime: r.end_time.slice(0, 5), startTime: r.start_time.slice(0, 5), weekday: r.weekday };
+  });
+}

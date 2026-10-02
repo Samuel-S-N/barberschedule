@@ -110,3 +110,25 @@ test("a barber reads how they are paid, read-only", async ({ page }) => {
   await expect(page.getByTestId("barber-compensation")).toContainText("Commission: 40% of each completed service.");
   await expect(page.getByText("Set by the shop owner.")).toBeVisible();
 });
+
+test("a barber sees their weekly working hours, read-only", async ({ page }) => {
+  await signIn(page, barberUserId);
+  await mockBarberRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/rpc/list_my_working_periods")) {
+      return json(route, [
+        { end_time: "12:00:00", start_time: "09:00:00", weekday: 1 },
+        { end_time: "18:00:00", start_time: "14:00:00", weekday: 1 },
+        { end_time: "17:00:00", start_time: "09:00:00", weekday: 3 },
+      ]).then(() => true);
+    }
+  });
+
+  await page.goto("/my-profile");
+  await page.getByTestId("menu-hours").click();
+
+  await expect(page).toHaveURL(/\/my-profile\/hours/);
+  await expect(page.getByTestId("barber-hours-monday")).toContainText("09:00–12:00, 14:00–18:00");
+  await expect(page.getByTestId("barber-hours-wednesday")).toContainText("09:00–17:00");
+  await expect(page.getByTestId("barber-hours-tuesday")).toContainText("Day off");
+  await expect(page.getByTestId("barber-hours-note")).toBeVisible();
+});
