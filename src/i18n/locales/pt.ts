@@ -462,6 +462,22 @@ export const pt: DeepStringRecord<typeof en> = {
       },
     },
   },
+  csv: {
+    barber: "Barbeiro",
+    barberShare: "Parte do barbeiro",
+    cancelled: "Canceladas",
+    completed: "Concluídas",
+    date: "Data",
+    earnings: "Ganhos",
+    noShow: "Faltas",
+    rentEstimate: "Aluguel (estimativa)",
+    rentPaid: "Aluguel pago",
+    revenue: "Receita",
+    service: "Serviço",
+    upcoming: "Futuras",
+    export: "Exportar CSV",
+    exportError: "Não foi possível exportar o relatório.",
+  },
   barber: {
     summary: {
       appointments: "Atendimentos",
