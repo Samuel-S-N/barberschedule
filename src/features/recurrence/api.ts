@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { DomainError, toDomainError } from "../../lib/errors/domain-errors";
+import { whatsappUrl } from "../clients/format";
 import type {
   RecurrenceConflict,
   RecurrenceSeries,
@@ -169,8 +170,9 @@ export function buildWhatsAppRecurrenceConflictUrl(input: {
   phone: string | null;
   serviceName: string;
 }) {
-  const phone = input.phone?.replace(/\D/g, "");
-  if (!phone) return null;
+  // whatsappUrl adds the 55 country code to Brazilian numbers stored without it, and rejects unusable ones.
+  const base = whatsappUrl(input.phone);
+  if (!base) return null;
   const message = `Olá ${input.customerName}, seu ${input.serviceName} recorrente em ${input.localDate} precisa ser reagendado. Qual horário você prefere?`;
-  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+  return `${base}?text=${encodeURIComponent(message)}`;
 }
