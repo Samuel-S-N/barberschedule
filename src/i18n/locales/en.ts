@@ -544,6 +544,8 @@ export const en = {
     agenda: {
       bookingFor: "Booking for {{name}}. Tap a free time.",
       bookCancel: "Cancel",
+      remind: "Remind",
+      remindMessage: "Hi {{name}}, this is a reminder of your {{service}} appointment on {{date}} at {{time}}. See you then!",
       cancelAppointment: "Cancel appointment",
       cancelConfirm: "Tap again to cancel",
       moveAppointment: "Move",
