@@ -33,6 +33,7 @@ async function mockOwnerRest(page: Page, requests: Array<Record<string, unknown>
       requests.push(route.request().postDataJSON() as Record<string, unknown>);
       return json(report);
     }
+    if (path.endsWith("/rpc/list_rent_payments")) return json([]);
     await route.abort();
   });
 }
@@ -69,4 +70,77 @@ test("switching the period requests a new range", async ({ page }) => {
   const before = requests.length;
   await page.getByTestId("revenue-period-quarter").click();
   await expect.poll(() => requests.length > before).toBe(true);
+});
+
+test("the owner records and removes a chair rent payment", async ({ page }) => {
+  const payments: Array<Record<string, unknown>> = [];
+  const calls: Record<string, unknown> = {};
+
+  await signInAsOwner(page);
+  await page.route("**/rest/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    const json = (body: unknown) => route.fulfill({ body: JSON.stringify(body), contentType: "application/json", status: 200 });
+    const paid = payments.reduce((sum, p) => sum + (p.amount_cents as number), 0);
+
+    if (path.endsWith("/rpc/get_current_profile")) return json([{ full_name: "Owner", role: "owner", user_id: ownerId }]);
+    if (path.endsWith("/rpc/get_shop_report")) {
+      return json({ ...report, barbers: report.barbers.map((b) => (b.barber_id === "b2" ? { ...b, rent_paid_cents: paid } : { ...b, rent_paid_cents: 0 })) });
+    }
+    if (path.endsWith("/rpc/list_rent_payments")) return json(payments);
+    if (path.endsWith("/rpc/record_rent_payment")) {
+      calls.record = route.request().postDataJSON();
+      const body = calls.record as { payment_amount_cents: number; payment_paid_on: string };
+      payments.push({ amount_cents: body.payment_amount_cents, barber_id: "b2", barber_name: "Bruno Chair", id: "pay-1", note: null, paid_on: body.payment_paid_on });
+
+      return json({ amount_cents: body.payment_amount_cents, barber_id: "b2", id: "pay-1", note: null, paid_on: body.payment_paid_on });
+    }
+    if (path.endsWith("/rpc/delete_rent_payment")) {
+      calls.remove = route.request().postDataJSON();
+      payments.length = 0;
+
+      return json(null);
+    }
+    await route.abort();
+  });
+
+  await page.goto("/revenue");
+  await page.getByTestId("rent-pay-b2").click();
+  // Prefilled with what is still owed: the 70,00 estimate minus nothing paid yet.
+  await expect(page.getByTestId("rent-amount")).toHaveValue("70,00");
+  await page.getByTestId("rent-amount").fill("50,00");
+  await page.getByTestId("rent-pay-save").click();
+
+  await expect(page.getByTestId("rent-payment-pay-1")).toContainText("R$ 50,00");
+  await expect(page.getByTestId("barber-row-b2")).toContainText("R$ 50,00");
+  expect(calls.record).toEqual({ payment_amount_cents: 5000, payment_note: null, payment_paid_on: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/), target_barber_id: "b2" });
+
+  await page.getByTestId("rent-remove-pay-1").click();
+  expect(calls.remove).toBeUndefined();
+  await page.getByTestId("rent-remove-pay-1").click();
+  await expect(page.getByTestId("rent-payment-pay-1")).toHaveCount(0);
+  expect(calls.remove).toEqual({ payment_id: "pay-1" });
+});
+
+test("an invalid amount is rejected before calling the database", async ({ page }) => {
+  const calls: string[] = [];
+
+  await signInAsOwner(page);
+  await page.route("**/rest/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    const json = (body: unknown) => route.fulfill({ body: JSON.stringify(body), contentType: "application/json", status: 200 });
+
+    if (path.endsWith("/rpc/get_current_profile")) return json([{ full_name: "Owner", role: "owner", user_id: ownerId }]);
+    if (path.endsWith("/rpc/get_shop_report")) return json(report);
+    if (path.endsWith("/rpc/list_rent_payments")) return json([]);
+    if (path.endsWith("/rpc/record_rent_payment")) calls.push("record");
+    await route.abort();
+  });
+
+  await page.goto("/revenue");
+  await page.getByTestId("rent-pay-b2").click();
+  await page.getByTestId("rent-amount").fill("abc");
+  await page.getByTestId("rent-pay-save").click();
+
+  await expect(page.getByText("Enter a valid amount.")).toBeVisible();
+  expect(calls).toEqual([]);
 });
