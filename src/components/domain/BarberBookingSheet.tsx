@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, Pressable, Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
@@ -32,6 +32,11 @@ export function BarberBookingSheet({ busy = false, fitsService, initialCustomer 
   const [phone, setPhone] = useState("");
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [serviceId, setServiceId] = useState<string | null>(null);
+  // A ref, not state: two taps in the same frame both see the stale `busy`, and each would book.
+  const inFlight = useRef(false);
+  useEffect(() => {
+    if (!busy) inFlight.current = false;
+  }, [busy]);
 
   const defaultService = useMemo(
     () =>
@@ -44,6 +49,7 @@ export function BarberBookingSheet({ busy = false, fitsService, initialCustomer 
 
   useEffect(() => {
     if (visible) {
+      inFlight.current = false;
       setName(initialCustomer?.fullName ?? "");
       setEmail(initialCustomer?.email ?? "");
       setPhone(initialCustomer?.phone ?? "");
@@ -66,7 +72,8 @@ export function BarberBookingSheet({ busy = false, fitsService, initialCustomer 
 
   const canConfirm = name.trim() !== "" && selected !== null && !busy;
   const confirm = () => {
-    if (!canConfirm || !selected) return;
+    if (!canConfirm || !selected || inFlight.current) return;
+    inFlight.current = true;
     onSubmit({ barberServiceId: selected, customer: pickedId ? { id: pickedId } : { email, name, phone } });
   };
 

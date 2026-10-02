@@ -67,11 +67,7 @@ test("a barber books a name-only customer from a free slot on the agenda", async
     const name = url.pathname.split("/rpc/")[1];
     if (name === "get_available_slots") return json(route, [slotRow]).then(() => true);
     if (name === "barber_search_customers") return json(route, []).then(() => true);
-    if (name === "barber_find_or_create_customer") {
-      bodies[name] = route.request().postDataJSON();
-      return json(route, [{ full_name: "Walk In", has_account: false, id: "cust-new" }]).then(() => true);
-    }
-    if (name === "book_appointment") {
+    if (name === "barber_book_new_customer") {
       bodies[name] = route.request().postDataJSON();
       return json(route, [bookedRow()]).then(() => true);
     }
@@ -88,9 +84,8 @@ test("a barber books a name-only customer from a free slot on the agenda", async
 
   await expect(page.getByText("Appointment booked.")).toBeVisible();
   await expect(page.getByTestId("barber-book-name")).toBeHidden();
-  expect(bodies.barber_find_or_create_customer).toEqual({ target_email: null, target_name: "Walk In", target_phone: null });
-  expect(bodies.book_appointment).toMatchObject({
-    barber_service_id: "bs1", customer_id: "cust-new", notes: null, source: "barber", starts_at: slotStart.toISOString(),
+  expect(bodies.barber_book_new_customer).toEqual({
+    target_barber_service_id: "bs1", target_email: null, target_name: "Walk In", target_notes: null, target_phone: null, target_starts_at: slotStart.toISOString(),
   });
 });
 
@@ -104,10 +99,7 @@ test("a slot conflict shows the error and keeps the agenda usable", async ({ pag
       return json(route, [{ ends_at: slotStart.toISOString(), local_date: "2026-10-01", local_time: "09:30:00", starts_at: slotStart.toISOString() }]).then(() => true);
     }
     if (name === "barber_search_customers") return json(route, []).then(() => true);
-    if (name === "barber_find_or_create_customer") {
-      return json(route, [{ full_name: "Walk In", has_account: false, id: "cust-new" }]).then(() => true);
-    }
-    if (name === "book_appointment") return json(route, { code: "P0001", message: "SLOT_UNAVAILABLE" }, 400).then(() => true);
+    if (name === "barber_book_new_customer") return json(route, { code: "P0001", message: "SLOT_UNAVAILABLE" }, 400).then(() => true);
   });
 
   await page.goto("/my-agenda");

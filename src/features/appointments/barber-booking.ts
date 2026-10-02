@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { DomainError, toDomainError } from "../../lib/errors/domain-errors";
-import { bookAppointment } from "./api";
-import type { Appointment } from "./types";
+import { bookAppointment, toAppointment } from "./api";
+import type { Appointment, AppointmentRow } from "./types";
 
 type BarberBookingClient = Pick<SupabaseClient, "rpc">;
 
@@ -43,30 +43,31 @@ export async function searchMyCustomers(supabase: BarberBookingClient, term: str
   });
 }
 
-export async function findOrCreateCustomer(supabase: BarberBookingClient, input: BarberCustomerInput): Promise<BarberCustomer> {
-  const parsed = parseBarberCustomerInput(input);
-  const { data, error } = await supabase.rpc("barber_find_or_create_customer", {
+export async function bookAsBarber(supabase: BarberBookingClient, input: BarberBookingInput): Promise<Appointment> {
+  if ("id" in input.customer) {
+    return bookAppointment(supabase, {
+      barberServiceId: input.barberServiceId,
+      customerId: input.customer.id,
+      notes: input.notes ?? null,
+      source: "barber",
+      startsAt: input.startsAt,
+    });
+  }
+
+  // One RPC creates the customer and books: a failed booking must not leave a customer behind.
+  const parsed = parseBarberCustomerInput(input.customer);
+  const { data, error } = await supabase.rpc("barber_book_new_customer", {
+    target_barber_service_id: input.barberServiceId,
     target_email: parsed.email,
     target_name: parsed.name,
+    target_notes: input.notes ?? null,
     target_phone: parsed.phone,
+    target_starts_at: input.startsAt,
   });
   if (error) throw toDomainError(error);
 
-  // The RPC deliberately returns only id, name and account state; email and phone are what the barber typed.
-  const row = (Array.isArray(data) ? data[0] : data) as { full_name: string; has_account: boolean; id: string } | undefined;
+  const row = Array.isArray(data) ? data[0] : data;
   if (!row) throw toDomainError({ code: "unknown" });
 
-  return { email: parsed.email, fullName: row.full_name, hasAccount: row.has_account, id: row.id, phone: parsed.phone };
-}
-
-export async function bookAsBarber(supabase: BarberBookingClient, input: BarberBookingInput): Promise<Appointment> {
-  const customerId = "id" in input.customer ? input.customer.id : (await findOrCreateCustomer(supabase, input.customer)).id;
-
-  return bookAppointment(supabase, {
-    barberServiceId: input.barberServiceId,
-    customerId,
-    notes: input.notes ?? null,
-    source: "barber",
-    startsAt: input.startsAt,
-  });
+  return toAppointment(row as AppointmentRow);
 }
