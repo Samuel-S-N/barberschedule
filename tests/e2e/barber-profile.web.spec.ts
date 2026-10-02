@@ -48,10 +48,9 @@ test("the barber profile is a hub with barber and account sections", async ({ pa
 
   await page.goto("/my-profile");
   await expect(page.getByRole("heading", { name: "Browser Barber" })).toBeVisible();
-  for (const key of ["account", "security", "services", "compensation", "settings", "about"]) {
+  for (const key of ["account", "security", "services", "compensation", "privacy", "settings", "about"]) {
     await expect(page.getByTestId(`menu-${key}`)).toBeVisible();
   }
-  await expect(page.getByTestId("menu-privacy")).toHaveCount(0);
 
   await page.getByTestId("menu-settings").click();
   await expect(page).toHaveURL(/\/my-profile\/settings/);

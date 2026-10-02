@@ -4,6 +4,13 @@ import { fireEvent, render } from "@testing-library/react-native";
 import { formatPriceBRL, ServiceCard } from "../../src/components/domain/ServiceCard";
 
 describe("formatPriceBRL", () => {
+  it("groups thousands with dots and never loses the sign", () => {
+    expect(formatPriceBRL(396500)).toBe("R$ 3.965,00");
+    expect(formatPriceBRL(123456789)).toBe("R$ 1.234.567,89");
+    expect(formatPriceBRL(99999)).toBe("R$ 999,99");
+    expect(formatPriceBRL(-396505)).toBe("-R$ 3.965,05");
+  });
+
   it("formats whole reais", () => {
     expect(formatPriceBRL(6500)).toBe("R$ 65,00");
   });

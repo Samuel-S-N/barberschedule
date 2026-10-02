@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { Clock, Coins, Info, LogOut, Scissors, Settings, ShieldCheck, User } from "lucide-react-native";
+import { Clock, Coins, Info, Lock, LogOut, Scissors, Settings, ShieldCheck, User } from "lucide-react-native";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -58,6 +58,7 @@ export default function BarberProfileHub() {
             />
             <MenuBlock
               items={[
+                { icon: Lock, key: "privacy", label: t("profile.menu.privacy"), onPress: () => router.push("/my-profile/privacy") },
                 { icon: Settings, key: "settings", label: t("profile.menu.settings"), onPress: () => router.push("/my-profile/settings") },
                 { icon: Info, key: "about", label: t("profile.menu.about"), onPress: () => router.push("/my-profile/about") },
               ]}

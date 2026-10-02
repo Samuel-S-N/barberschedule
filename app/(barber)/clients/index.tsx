@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -11,12 +11,14 @@ import { Button } from "../../../src/components/ui/Button";
 import { Card } from "../../../src/components/ui/Card";
 import { Input } from "../../../src/components/ui/Input";
 import { Screen } from "../../../src/components/ui/Screen";
-import { listMyClients } from "../../../src/features/clients/api";
+import { listMyClients, type MyClient } from "../../../src/features/clients/api";
 import { errorMessage } from "../../../src/i18n/errors";
 import { useLanguage } from "../../../src/i18n/use-language";
 import { formatInstantInShopTime } from "../../../src/lib/dates/shop-time";
 import { formatDateLabel } from "../../../src/lib/i18n/format";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
+
+const CLIENTS_PAGE_SIZE = 50;
 
 export default function ClientsScreen() {
   const { t } = useTranslation();
@@ -33,10 +35,13 @@ export default function ClientsScreen() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const clients = useQuery({
-    queryFn: () => listMyClients(supabase, { onlyLapsed, search: debounced }),
+  const clients = useInfiniteQuery({
+    getNextPageParam: (last: MyClient[], all: MyClient[][]) => (last.length === CLIENTS_PAGE_SIZE ? all.length * CLIENTS_PAGE_SIZE : undefined),
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) => listMyClients(supabase, { limit: CLIENTS_PAGE_SIZE, offset: pageParam, onlyLapsed, search: debounced }),
     queryKey: ["my-clients", onlyLapsed, debounced],
   });
+  const rows = clients.data?.pages.flat() ?? [];
 
   const emptyTitle = debounced ? t("barber.clients.emptySearch") : onlyLapsed ? t("barber.clients.emptyLapsed") : t("barber.clients.empty");
 
@@ -53,8 +58,8 @@ export default function ClientsScreen() {
             </View>
             {clients.isLoading ? <SkeletonBlock height={72} width={320} /> : null}
             {clients.error ? <Text className="text-sm font-sans text-danger-500">{errorMessage(clients.error, t, t("barber.clients.loadError"))}</Text> : null}
-            {clients.data?.length === 0 ? <EmptyState title={emptyTitle} /> : null}
-            {(clients.data ?? []).map((client) => (
+            {!clients.isLoading && !clients.error && rows.length === 0 ? <EmptyState title={emptyTitle} /> : null}
+            {rows.map((client) => (
               <Pressable accessibilityRole="button" key={client.customerId} onPress={() => router.push(`/clients/${client.customerId}`)} testID={`client-row-${client.customerId}`}>
                 <Card variant="outlined">
                   <View className="flex-row items-center gap-3">
@@ -80,6 +85,9 @@ export default function ClientsScreen() {
                 </Card>
               </Pressable>
             ))}
+            {clients.hasNextPage ? (
+              <Button disabled={clients.isFetchingNextPage} label={t("barber.clients.loadMore")} onPress={() => void clients.fetchNextPage()} testID="clients-load-more" variant="outline" />
+            ) : null}
           </View>
         </View>
       </ScrollView>

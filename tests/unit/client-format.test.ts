@@ -16,6 +16,11 @@ describe("client contact links", () => {
     expect(telUrl("")).toBeNull();
   });
 
+  it("adds an encoded prefilled message", () => {
+    expect(whatsappUrl("11 98888-7777", "Oi Ana, até amanhã?")).toBe("https://wa.me/5511988887777?text=Oi%20Ana%2C%20at%C3%A9%20amanh%C3%A3%3F");
+    expect(whatsappUrl("123", "Oi")).toBeNull();
+  });
+
   it("builds a tel link with the country code", () => {
     expect(telUrl("11 98888-7777")).toBe("tel:+5511988887777");
   });
