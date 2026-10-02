@@ -154,3 +154,32 @@ test("a barber books a known client again from the client screen", async ({ page
   expect(bookPayload).toMatchObject({ barber_service_id: "bs1", customer_id: "c1", source: "barber" });
   expect(calls).not.toContain("barber_find_or_create_customer");
 });
+
+test("the clients list loads more pages while a full page comes back", async ({ page }) => {
+  const offsets: number[] = [];
+  const row = (n: number) => ({
+    customer_id: `p${n}`, email: null, full_name: `Client ${String(n).padStart(3, "0")}`, has_account: false, is_lapsed: false,
+    last_visit_at: null, next_visit_at: null, phone: null, visits: 0,
+  });
+
+  await signIn(page, barberUserId);
+  await mockBarberRest(page, async (route, url) => {
+    if (!url.pathname.endsWith("/rpc/list_my_customers")) return;
+    const body = route.request().postDataJSON() as { page_limit: number; page_offset: number };
+    offsets.push(body.page_offset);
+    // 50 on the first page (full), 1 on the second (short, so the button goes away).
+    const count = body.page_offset === 0 ? 50 : 1;
+    await json(route, Array.from({ length: count }, (_, i) => row(body.page_offset + i + 1)));
+
+    return true;
+  });
+
+  await page.goto("/clients");
+  await expect(page.getByTestId("client-row-p50")).toBeVisible();
+  await expect(page.getByTestId("client-row-p51")).toHaveCount(0);
+
+  await page.getByTestId("clients-load-more").click();
+  await expect(page.getByTestId("client-row-p51")).toBeVisible();
+  await expect(page.getByTestId("clients-load-more")).toHaveCount(0);
+  expect(offsets).toEqual([0, 50]);
+});
