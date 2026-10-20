@@ -5,8 +5,9 @@
 import { execSync } from 'node:child_process';
 import { toQR } from 'toqr';
 
-const ip = execSync('ip -4 route get 1.1.1.1').toString().match(/src (\S+)/)[1];
-const url = `exp://${ip}:8081`;
+// Optional arg overrides the URL (tunnels pass exps://<host>); default is the current Wi-Fi IP.
+const here = new URL('.', import.meta.url).pathname;
+const url = process.argv[2] ?? `exp://${execSync(`${here}lan-ip.sh`, { stdio: ['ignore', 'pipe', 'inherit'] }).toString().trim()}:8081`;
 const d = toQR(url), n = Math.sqrt(d.length);
 let p = '';
 for (let i = 0; i < d.length; i++) if (d[i]) p += `M${i % n} ${Math.floor(i / n)}h1v1h-1z`;

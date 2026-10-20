@@ -8,7 +8,7 @@ ok()  { echo "PASS  $1"; }
 bad() { echo "FAIL  $1  -> $2"; fail=$((fail+1)); }
 chk() { local name=$1 fix=$2; shift 2; if "$@" >/dev/null 2>&1; then ok "$name"; else bad "$name" "$fix"; fi; }
 
-LAN_IP=$(ip -4 route get 1.1.1.1 2>/dev/null | grep -oP 'src \K\S+')
+LAN_IP=$("$(dirname "$0")/lan-ip.sh")   # Wi-Fi interface connected now, not the default route (prints network name to stderr)
 ENV_URL=$(grep '^EXPO_PUBLIC_SUPABASE_URL=' .env.local 2>/dev/null | cut -d= -f2-)
 KEY=$(grep '^EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=' .env.local 2>/dev/null | cut -d= -f2-)
 DB=$(docker ps --format '{{.Names}}' 2>/dev/null | grep '^supabase_db')

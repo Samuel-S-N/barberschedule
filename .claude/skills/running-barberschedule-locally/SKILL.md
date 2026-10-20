@@ -13,13 +13,15 @@ Expo (Metro) app + local Supabase in Docker. Phone runs it through Expo Go over 
 
 Run from the repo root. Each step names the failure it prevents.
 
+0. **Check the current network.** `.claude/skills/running-barberschedule-locally/lan-ip.sh` prints the IP of the Wi-Fi connected now (client or hotspot) and the network name on stderr. The phone must be on that same network. Anything from an earlier network (`.env.local`, QR, Metro hostname) is stale: redo steps 4, 6, 7. *(Reusing a hotspot IP after switching to a router, or the cable's IP from the default route, gave unreachable URLs.)* Phone on another network or 4G -> use `running-barberschedule-tunnels`.
+
 1. **Sync code.** `git fetch origin`, then `git rev-list --count HEAD..origin/main` must be `0`. If not: `git stash && git merge --ff-only origin/main && git stash pop`. *(A checkout 43 commits behind served the old UI.)*
 2. **Deps.** `npm install` (package.json changes with merges).
 3. **Supabase.** Docker must be up. Not running → `npx supabase start`. Already running with new migrations → `npx supabase migration up`. **Never `db reset` unless the test user may be lost.**
-4. **`.env.local`.** `EXPO_PUBLIC_SUPABASE_URL` must be `http://<LAN-IP>:55421`, never `127.0.0.1` (the phone would call itself). LAN IP: `ip -4 route get 1.1.1.1`. Key: `npx supabase status -o env` → `PUBLISHABLE_KEY`.
+4. **`.env.local`.** `EXPO_PUBLIC_SUPABASE_URL` must be `http://<LAN-IP>:55421`, never `127.0.0.1` (the phone would call itself). LAN IP: `lan-ip.sh` (not the default route: with a cable plugged in that points at the cable). Key: `npx supabase status -o env` → `PUBLISHABLE_KEY`.
 5. **Test user** (local only). `POST <url>/auth/v1/signup` with `{"email","password"}` and header `apikey: <publishable key>`. Email confirmation is off; a trigger creates a `customer` profile. Owner screens need `role='owner'` in `public.profiles`.
 6. **Metro.** Start detached, **without `CI=1`** (CI mode disables hot reload):
-   `setsid nohup npx expo start --lan --clear > /tmp/expo.log 2>&1 < /dev/null &`
+   `REACT_NATIVE_PACKAGER_HOSTNAME=$(.claude/skills/running-barberschedule-locally/lan-ip.sh) setsid nohup npx expo start --lan --clear > /tmp/expo.log 2>&1 < /dev/null &`
    Restart after any `.env.local` change, with `--clear`.
 7. **QR.** Expo prints none without a TTY. `node .claude/skills/running-barberschedule-locally/qr.mjs` prints an SVG (stdout) and the URL (stderr). Pass the SVG to `show_widget` as the widget code (add `read_me` first if this session has not). **Never paste block-character QR text in chat: Expo Go could not scan it.** Also give the `exp://<LAN-IP>:8081` URL for manual entry. Phone must be on the same Wi-Fi.
 8. **Validate.** `.claude/skills/running-barberschedule-locally/validate.sh` (`--fast` skips typecheck/lint/jest). Exit code = number of failures. Fix using the `->` hint on each FAIL line, rerun until 0.
