@@ -20,7 +20,7 @@ Source request: 2026-10-20 (pt-BR list, ~25 items). Split into 6 plans, each ind
 |---|---|---|---|
 | 1 | `2026-10-20-01-input-masks-and-nav-stack.md` | `feat-input-masks-nav-stack` | Visual masks (date, time, phone; no CPF — no such field exists), locale date format, back-navigation stack (`backBehavior="history"`). |
 | 2 | `2026-10-20-02-notifications-inbox.md` | `feat-notifications-inbox` | Bell (top-left) on Home/barber/owner, `notifications` table + triggers, inbox screen with tap navigation, push for barber/owner (templates + token registration). Migration. |
-| 3 | `2026-10-20-03-customer-booking-flow.md` | `feat-booking-checkout` | Wizard barber › service › date › time › checkout › confirm; barber photo (needs column grant); "Agenda" title clip. Migration. |
+| 3 | `2026-10-20-03-customer-booking-flow.md` | `feat-booking-checkout` | Wizard barber › service › date › time › checkout › confirm with a "Passo N de 6" step indicator; barber photo (needs column grant); "Agenda" title clip. Migration. |
 | 4 | `2026-10-20-04-barber-side.md` | `feat-barber-availability` | "Disponibilidade" (hours + lunch + absences with conflict warning), client search X (`SearchInput`), clickable agenda card + WhatsApp/phone, "Salvar perfil" at end. 2 migrations. |
 | 5 | `2026-10-20-05-owner-crud.md` | `feat-owner-management` | Agenda labels/title, FAB `+`, create/edit screens for barbers (profile) / services / customers, red "Desativar", back-stack audit. No migration. |
 | 6 | `2026-10-20-06-recurrence-shop-owner-profile.md` | `feat-recurrence-requests` | Recurrence request/accept + recurrence prices, shop & schedule improvements, owner profile (+ "Atender como barbeiro"). 2 migrations. |

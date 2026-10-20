@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax.
 
-**Goal:** Booking wizard becomes barber → service → date → time → checkout review → confirm; barber photos show in the picker; the "Agenda" title is no longer clipped.
+**Goal:** Booking wizard becomes barber → service → date → time → checkout review → confirm; barber photos show in the picker; the "Agenda" title is no longer clipped; every wizard screen shows a step indicator ("Passo 3 de 6 · Data").
 
 **Architecture:** Split today's `book/review.tsx` (time picker + notes + confirm) into `book/time.tsx` (slots) and `book/review.tsx` (pure checkout: summary + notes + confirm). The chosen `startsAt` travels as a route param. Photos: `barbers.avatar_url` is not in the customer column grant (`0005_barbers.sql:17`), so add the grant, select the column, and render `Avatar` in `BarberCard`.
 
@@ -149,6 +149,131 @@ Locale strings: `timeTitle` "Choose a time"/"Escolha o horário"/"Elige la hora"
 - [ ] **Step 2:** Show full summary incl. time: extend `BookingSummary` with a `timeLabel` row (`book.summary.time`: "Time"/"Horário"/"Hora") fed by `formatInstantInShopTime(new Date(startsAt)).localTime`; `BookingSummary` is used only here and in screenshots — grep `rg "BookingSummary" app src` to confirm.
 - [ ] **Step 3:** Mutation guard: `if (profile?.role !== "customer" || !customer || !startsAt) throw new Error(NO_SLOT_SELECTED)` stays; button `disabled={!startsAt || !customer || booking.isPending}`; `onError` keeps invalidating `available-slots`; on error also `router.back()` is NOT done (user sees the toast and can go back to pick another time). Header: `ScreenHeader` with `book.reviewTitle` (back button replaces the bare `Text` title).
 - [ ] **Step 4:** `npm run typecheck && npm run lint`; commit `feat: checkout review screen`.
+
+---
+
+### Task 3b: Step indicator
+
+**Files:** Create `src/features/booking/steps.ts`, `src/components/domain/StepIndicator.tsx`; Modify `app/(customer)/(tabs)/book/{barber,service,date,time,review}.tsx`, `src/components/domain/index.ts`, locales; Test `tests/unit/booking-steps.test.ts`, `tests/e2e/booking.web.spec.ts`
+
+**Interfaces — Produces:**
+```ts
+export const BOOKING_STEPS = ["barber", "service", "date", "time", "review", "confirm"] as const;
+export type BookingStep = (typeof BOOKING_STEPS)[number];
+stepNumber(step: BookingStep): number                       // 1-based
+stepHref(step: BookingStep, ids: { shopId: string; barberId?: string; barberServiceId?: string; localDate?: string }): string | null
+<StepIndicator current={BookingStep} ids={...} />          // "review" is the last navigable screen; "confirm" is the button on it
+```
+
+Look: a row of 6 slim segments (`h-1.5 flex-1 rounded-full`, `gap-1.5`): done `bg-primary-400`, current `bg-primary-600`, upcoming `bg-neutral-200`; under it one line `Passo 3 de 6 · Data` (`text-sm font-sans-medium text-neutral-600`, `tabular-nums`). Completed segments are tappable (44px-high hit area via `hitSlop`) and go back to that step with the choices made so far; the current and upcoming ones are not. The checkout screen shows "Passo 5 de 6 · Revisão"; step 6 is the **Confirmar** button on that screen (completing it leaves the wizard, so there is no sixth screen).
+
+- [ ] **Step 1: failing test**
+
+```ts
+import { BOOKING_STEPS, stepHref, stepNumber } from "../../src/features/booking/steps";
+
+it("numbers the six steps", () => {
+  expect(BOOKING_STEPS).toHaveLength(6);
+  expect(stepNumber("barber")).toBe(1);
+  expect(stepNumber("time")).toBe(4);
+  expect(stepNumber("confirm")).toBe(6);
+});
+
+it("builds the route of a completed step from the choices so far", () => {
+  const ids = { barberId: "b 1", barberServiceId: "bs1", localDate: "2026-11-02", shopId: "s1" };
+  expect(stepHref("barber", ids)).toBe("/book/barber?shopId=s1");
+  expect(stepHref("service", ids)).toBe("/book/service?shopId=s1&barberId=b%201");
+  expect(stepHref("date", ids)).toBe("/book/date?shopId=s1&barberId=b%201&barberServiceId=bs1");
+  expect(stepHref("time", ids)).toBe("/book/time?shopId=s1&barberId=b%201&barberServiceId=bs1&localDate=2026-11-02");
+});
+
+it("returns null when a needed choice is missing or the step has no screen", () => {
+  expect(stepHref("service", { shopId: "s1" })).toBeNull();
+  expect(stepHref("date", { barberId: "b1", shopId: "s1" })).toBeNull();
+  expect(stepHref("review", { barberId: "b1", barberServiceId: "bs1", localDate: "2026-11-02", shopId: "s1" })).toBeNull();
+  expect(stepHref("confirm", { shopId: "s1" })).toBeNull();
+});
+```
+- [ ] **Step 2:** `npx jest tests/unit/booking-steps.test.ts` → FAIL.
+- [ ] **Step 3: implement** `steps.ts`
+
+```ts
+export const BOOKING_STEPS = ["barber", "service", "date", "time", "review", "confirm"] as const;
+export type BookingStep = (typeof BOOKING_STEPS)[number];
+
+type Ids = { shopId: string; barberId?: string; barberServiceId?: string; localDate?: string };
+
+export const stepNumber = (step: BookingStep) => BOOKING_STEPS.indexOf(step) + 1;
+
+export function stepHref(step: BookingStep, ids: Ids) {
+  const e = encodeURIComponent;
+  const shop = `shopId=${e(ids.shopId)}`;
+
+  if (step === "barber") return `/book/barber?${shop}`;
+  if (!ids.barberId) return null;
+  const barber = `${shop}&barberId=${e(ids.barberId)}`;
+  if (step === "service") return `/book/service?${barber}`;
+  if (!ids.barberServiceId) return null;
+  const service = `${barber}&barberServiceId=${e(ids.barberServiceId)}`;
+  if (step === "date") return `/book/date?${service}`;
+  if (step === "time" && ids.localDate) return `/book/time?${service}&localDate=${e(ids.localDate)}`;
+
+  return null;
+}
+```
+- [ ] **Step 4:** run → PASS.
+- [ ] **Step 5: component** `StepIndicator.tsx`
+
+```tsx
+import { useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
+import { Pressable, Text, View } from "react-native";
+
+import { BOOKING_STEPS, stepHref, stepNumber } from "../../features/booking/steps";
+import type { BookingStep } from "../../features/booking/steps";
+
+type Ids = Parameters<typeof stepHref>[1];
+
+export function StepIndicator({ current, ids }: { current: BookingStep; ids: Ids }) {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const position = stepNumber(current);
+
+  return (
+    <View className="w-full max-w-[420px] gap-2" testID="step-indicator">
+      <View className="flex-row gap-1.5">
+        {BOOKING_STEPS.map((step, index) => {
+          const number = index + 1;
+          const color = number < position ? "bg-primary-400" : number === position ? "bg-primary-600" : "bg-neutral-200";
+          const href = number < position ? stepHref(step, ids) : null;
+
+          return (
+            <Pressable
+              accessibilityLabel={t(`book.steps.${step}`)}
+              accessibilityRole={href ? "button" : "text"}
+              className="flex-1 justify-center py-2"
+              disabled={!href}
+              key={step}
+              onPress={() => href && router.navigate(href as never)}
+              testID={`step-${step}`}
+            >
+              <View className={`h-1.5 rounded-full ${color}`} />
+            </Pressable>
+          );
+        })}
+      </View>
+      <Text className="text-sm font-sans-medium text-neutral-600" style={{ fontVariant: ["tabular-nums"] }} testID="step-label">
+        {t("book.stepOf", { current: position, name: t(`book.steps.${current}`), total: BOOKING_STEPS.length })}
+      </Text>
+    </View>
+  );
+}
+```
+Export from `src/components/domain/index.ts`.
+- [ ] **Step 6: locales** (`book.steps.*`, `book.stepOf`): pt `Barbeiro / Serviço / Data / Horário / Revisão / Confirmar`, `"Passo {{current}} de {{total}} · {{name}}"`; en `Barber / Service / Date / Time / Review / Confirm`, `"Step {{current}} of {{total}} · {{name}}"`; es `Barbero / Servicio / Fecha / Hora / Revisión / Confirmar`, `"Paso {{current}} de {{total}} · {{name}}"`.
+- [ ] **Step 7: place it** directly under the page title block of each screen, passing the params that screen already reads: `barber.tsx` → `<StepIndicator current="barber" ids={{ shopId }} />`; `service.tsx` → `current="service"`, ids `{ barberId, shopId }`; `date.tsx` → `current="date"`, ids `{ barberId, barberServiceId, shopId }`; `time.tsx` → `current="time"`, ids `{ barberId, barberServiceId, localDate, shopId }`; `review.tsx` → `current="review"`, same ids as time. Also give `service.tsx` and `date.tsx` the same `ScreenHeader` with back button that `time`/`review` use (`useBack("/book")`), so every step after the first can go back; `barber.tsx` is the tab root and keeps its plain title. "Book again" (`/book/date?…` straight from the Agenda) starts at step 3: steps 1-2 render as done but are not tappable there only if their ids are missing — `stepHref` handles it by returning `null` (e.g. no `barberId` in the URL), so nothing breaks.
+- [ ] **Step 8 (e2e, add to `booking.web.spec.ts`):** on the time screen `step-label` has text "Step 4 of 6 · Time" and `step-date` is enabled; clicking `step-date` shows the calendar again (`month-calendar-title`); on checkout `step-label` is "Step 5 of 6 · Review"; on the barber screen `step-barber` is disabled. Check at 320px width that the 6 segments and the label fit without wrapping (screenshot).
+- [ ] **Step 9:** `npm run typecheck && npm run lint && npx jest`; browser check at 375px (computed height of the segments 6px, colours match tokens); commit `feat: booking step indicator`.
 
 ---
 
