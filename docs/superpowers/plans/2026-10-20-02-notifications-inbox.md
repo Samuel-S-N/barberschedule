@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax.
 
-**Goal:** A bell icon (top-left) on customer Home, barber Agenda and owner Agenda opens a persisted notification list with unread badge.
+**Goal:** A bell icon (top-left) on customer Home, barber Agenda and owner Agenda opens a persisted notification list with unread badge; tapping an item opens the relevant screen; barbers and owners also receive the same events as push notifications.
 
-**Architecture:** New `public.notifications` table filled by an AFTER trigger on `appointments` (separate from the existing push `notification_outbox`, which stays untouched). Rows store a `kind` + `params`; text is rendered client-side per viewer language. Client polls unread count (React Query `refetchInterval` + the existing AppState focus refetch) — no Realtime (YAGNI).
+**Architecture:** New `public.notifications` table filled by an AFTER trigger on `appointments` (the existing customer push triggers stay untouched; the new trigger additionally enqueues push rows in the existing `notification_outbox` for the events that were never pushed: customer "confirmed" and all barber/owner events — dispatch is the existing `dispatch-notifications` edge function with new message templates). Rows store a `kind` + `params`; text is rendered client-side per viewer language. Client polls unread count (React Query `refetchInterval` + the existing AppState focus refetch) — no Realtime (YAGNI).
 
 **Tech Stack:** Postgres/Supabase (pgTAP in `supabase/tests`), React Query, expo-router, NativeWind, i18next.
 
@@ -16,6 +16,9 @@
 - Kinds (exact strings): `appointment_awaiting_confirmation`, `appointment_booked`, `appointment_confirmed`, `appointment_cancelled`, `appointment_rescheduled`.
 - Recipients: customer = `customers.user_id`; barber = `barbers.user_id`; owner = `shops.owner_user_id`. De-duplicate when two roles are the same user.
 - Customer receives only `confirmed`, `cancelled`, `rescheduled`. Barber and owner receive `awaiting_confirmation` (insert as `scheduled`), `booked` (insert as `confirmed`), `cancelled`, `rescheduled`.
+- Push (new): `usePushRegistration` is only mounted in the customer layout today; mount it in the barber and owner layouts too. New outbox event types: `appointment.confirmed` (customer), `staff.awaiting_confirmation`, `staff.booked`, `staff.cancelled`, `staff.rescheduled`, `recurrence.requested`, `recurrence.accepted`, `recurrence.rejected` (the last three are enqueued by Plan 6; their templates ship here). Customer cancelled/rescheduled pushes already exist (`enqueue_appointment_notification`) — do not enqueue them twice.
+- Recurrence-generated appointments (`appointments.source = 'recurrence'`) never create inbox rows or pushes (the engine inserts up to 90 days at once; it would flood barber and owner).
+- Tapping an item navigates by role/kind (`inboxRoute`, Task 3b); items are marked read on tap.
 - Text never stored; i18n keys under `notifications.*` in `en.ts`, `es.ts`, `pt.ts`.
 - Jest matches `tests/**/*.test.ts` only. Memory: use `rtk`, verify UI in browser, TDD.
 
@@ -32,7 +35,7 @@
 ```sql
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(8);
+select plan(13);
 -- fixture ... (as in 009) plus barber user linked to barbers.user_id
 
 -- act as the customer booking: insert scheduled appointment as service role (auth.uid() null)
@@ -53,6 +56,17 @@ select set_config('request.jwt.claim.sub', '90000000-0000-0000-0000-000000000002
 select is((select count(*)::int from public.notifications), 2, 'RLS: customer sees only own rows');
 select is(public.count_unread_notifications(), 2, 'unread count');
 select is(public.mark_notifications_read(null), 2, 'mark all read');
+
+-- recurrence-generated appointments stay silent
+reset role;
+insert into public.appointments (...same columns as above, source = 'recurrence', recurrence_series_id/occurrence_date per the identity check...) values (...);
+select is((select count(*)::int from public.notifications where appointment_id = '<recurrence appt id>'), 0, 'recurrence appointments do not notify');
+
+-- push rows for events that were never pushed
+select is((select count(*)::int from public.notification_outbox where event_type = 'staff.awaiting_confirmation'), 2, 'barber and owner get a push for the new appointment');
+select is((select count(*)::int from public.notification_outbox where event_type = 'appointment.confirmed' and recipient_user_id = '90000000-0000-0000-0000-000000000002'), 1, 'customer gets a confirmation push');
+select is((select count(*)::int from public.notification_outbox where event_type = 'staff.cancelled'), 2, 'barber and owner get a cancellation push');
+select is((select count(*)::int from public.notification_outbox where event_type = 'appointment.cancelled' and recipient_user_id = '90000000-0000-0000-0000-000000000002'), 1, 'customer cancellation push comes only from the existing trigger (no duplicate)');
 select * from finish();
 rollback;
 ```
@@ -77,28 +91,49 @@ revoke all on table public.notifications from anon, authenticated;
 grant select on table public.notifications to authenticated;
 create policy notifications_select_own on public.notifications for select to authenticated using (user_id = auth.uid());
 
-create or replace function public.add_inbox_notification(target_user uuid, target_kind text, appt public.appointments, key_suffix text default '')
+alter table public.notification_outbox drop constraint notification_outbox_event_type_check;
+alter table public.notification_outbox add constraint notification_outbox_event_type_check check (event_type in (
+  'appointment.booked','appointment.cancelled','appointment.rescheduled','appointment.reminder','recurrence.conflict',
+  'appointment.confirmed','staff.awaiting_confirmation','staff.booked','staff.cancelled','staff.rescheduled',
+  'recurrence.requested','recurrence.accepted','recurrence.rejected'));
+
+create or replace function public.add_inbox_notification(
+  target_user uuid, target_kind text, appt public.appointments, key_suffix text default '', push_event text default null
+)
 returns void language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
+declare
+  event_params jsonb;
+  event_key text := format('%s:%s:%s%s', appt.id, target_kind, target_user, key_suffix);
 begin
   if target_user is null or target_user is not distinct from auth.uid() then return; end if;
-  insert into public.notifications (user_id, kind, appointment_id, params, event_key)
-  select target_user, target_kind, appt.id,
-    jsonb_build_object('service_name', appt.service_name_snapshot, 'starts_at', appt.starts_at,
-      'customer_name', c.full_name, 'barber_name', b.name),
-    format('%s:%s:%s%s', appt.id, target_kind, target_user, key_suffix)
+  select jsonb_build_object('service_name', appt.service_name_snapshot, 'starts_at', appt.starts_at,
+    'customer_name', c.full_name, 'barber_name', b.name)
+  into event_params
   from public.customers c, public.barbers b
-  where c.id = appt.customer_id and c.shop_id = appt.shop_id and b.id = appt.barber_id and b.shop_id = appt.shop_id
+  where c.id = appt.customer_id and c.shop_id = appt.shop_id and b.id = appt.barber_id and b.shop_id = appt.shop_id;
+  if event_params is null then return; end if;
+
+  insert into public.notifications (user_id, kind, appointment_id, params, event_key)
+  values (target_user, target_kind, appt.id, event_params, event_key)
   on conflict (event_key) do nothing;
+
+  if found and push_event is not null then
+    insert into public.notification_outbox (event_key, event_type, recipient_user_id, appointment_id, payload)
+    values ('push:' || event_key, push_event, target_user, appt.id,
+      event_params || jsonb_build_object('appointment_id', appt.id, 'shop_id', appt.shop_id, 'status', appt.status))
+    on conflict (event_key) do nothing;
+  end if;
 end;
 $$;
-revoke all on function public.add_inbox_notification(uuid, text, public.appointments, text) from public;
+revoke all on function public.add_inbox_notification(uuid, text, public.appointments, text, text) from public;
 
 create or replace function public.appointments_inbox_events()
 returns trigger language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare
   customer_user uuid; barber_user uuid; owner_user uuid;
-  staff_kind text; customer_kind text; suffix text := '';
+  staff_kind text; customer_kind text; push_event text; suffix text := '';
 begin
+  if new.source = 'recurrence' then return new; end if;
   select user_id into customer_user from public.customers where id = new.customer_id and shop_id = new.shop_id;
   select user_id into barber_user from public.barbers where id = new.barber_id and shop_id = new.shop_id;
   select owner_user_id into owner_user from public.shops where id = new.shop_id;
@@ -115,10 +150,15 @@ begin
     suffix := ':' || new.starts_at::text;
   end if;
 
-  if customer_kind is not null then perform public.add_inbox_notification(customer_user, customer_kind, new, suffix); end if;
+  -- Customer cancelled/rescheduled pushes already come from enqueue_appointment_notification, and an INSERT already pushes "booked" to the customer; only the scheduled→confirmed UPDATE is new.
+  if customer_kind is not null then
+    perform public.add_inbox_notification(customer_user, customer_kind, new, suffix,
+      case when tg_op = 'UPDATE' and customer_kind = 'appointment_confirmed' then 'appointment.confirmed' end);
+  end if;
   if staff_kind is not null then
-    perform public.add_inbox_notification(barber_user, staff_kind, new, suffix);
-    if owner_user is distinct from barber_user then perform public.add_inbox_notification(owner_user, staff_kind, new, suffix); end if;
+    push_event := 'staff.' || replace(staff_kind, 'appointment_', '');
+    perform public.add_inbox_notification(barber_user, staff_kind, new, suffix, push_event);
+    if owner_user is distinct from barber_user then perform public.add_inbox_notification(owner_user, staff_kind, new, suffix, push_event); end if;
   end if;
   return new;
 end;
@@ -259,6 +299,169 @@ notifications: {
 
 ---
 
+### Task 3b: Push templates (edge function)
+
+**Files:** Modify `supabase/functions/dispatch-notifications/messages.ts`; Test `tests/unit/notification-messages.test.ts`
+
+**Produces:** `buildMessage(eventType, locale, payload)` also handles `appointment.confirmed`, `staff.awaiting_confirmation`, `staff.booked`, `staff.cancelled`, `staff.rescheduled`, `recurrence.requested`, `recurrence.accepted`, `recurrence.rejected`. Payload fields used: `service_name`, `starts_at`, `customer_name`, `interval_weeks` (1 or 2).
+
+- [ ] **Step 1: failing tests** (append to the existing file):
+
+```ts
+describe("staff and recurrence push messages", () => {
+  const staff = { customer_name: "Ana", interval_weeks: 2, service_name: "Corte", starts_at: "2026-08-17T12:00:00Z" };
+
+  it.each([
+    ["appointment.confirmed", "pt", "Agendamento confirmado"],
+    ["staff.awaiting_confirmation", "pt", "Aguardando confirmação"],
+    ["staff.awaiting_confirmation", "en", "Awaiting confirmation"],
+    ["staff.booked", "es", "Nueva cita"],
+    ["staff.cancelled", "pt", "Agendamento cancelado"],
+    ["staff.rescheduled", "en", "Appointment rescheduled"],
+    ["recurrence.requested", "pt", "Novo pedido de recorrência"],
+    ["recurrence.accepted", "en", "Recurrence accepted"],
+    ["recurrence.rejected", "es", "Recurrencia rechazada"],
+  ])("%s in %s has the title %s", (eventType, locale, title) => {
+    expect(buildMessage(eventType, locale, staff).title).toBe(title);
+  });
+
+  it("names the customer, service and shop-local time for staff events", () => {
+    const body = buildMessage("staff.booked", "pt", staff).body;
+    expect(body).toContain("Ana");
+    expect(body).toContain("Corte");
+    expect(body).toContain("09:00");
+  });
+
+  it("names the frequency for recurrence events", () => {
+    expect(buildMessage("recurrence.requested", "pt", staff).body).toContain("a cada 2 semanas");
+    expect(buildMessage("recurrence.requested", "en", { ...staff, interval_weeks: 1 }).body).toContain("weekly");
+  });
+});
+```
+- [ ] **Step 2:** `npx jest tests/unit/notification-messages.test.ts` → FAIL.
+- [ ] **Step 3: implement** — add above `formatWhen`:
+
+```ts
+type Ctx = { customer: string; frequency: string; service: string; when: string };
+type ExtendedTemplate = { title: string; body: (c: Ctx) => string };
+
+const FREQUENCY: Record<Locale, Record<1 | 2, string>> = {
+  en: { 1: "weekly", 2: "every 2 weeks" },
+  es: { 1: "semanal", 2: "cada 2 semanas" },
+  pt: { 1: "semanal", 2: "a cada 2 semanas" },
+};
+
+const EXTENDED: Record<string, Record<Locale, ExtendedTemplate>> = {
+  "appointment.confirmed": {
+    en: { body: (c) => `${c.service} on ${c.when} is confirmed.`, title: "Appointment confirmed" },
+    es: { body: (c) => `Tu cita de ${c.service} el ${c.when} está confirmada.`, title: "Cita confirmada" },
+    pt: { body: (c) => `${c.service} em ${c.when} foi confirmado.`, title: "Agendamento confirmado" },
+  },
+  "staff.awaiting_confirmation": {
+    en: { body: (c) => `${c.customer} · ${c.service} · ${c.when}`, title: "Awaiting confirmation" },
+    es: { body: (c) => `${c.customer} · ${c.service} · ${c.when}`, title: "Pendiente de confirmación" },
+    pt: { body: (c) => `${c.customer} · ${c.service} · ${c.when}`, title: "Aguardando confirmação" },
+  },
+  "staff.booked": {
+    en: { body: (c) => `${c.customer} · ${c.service} · ${c.when}`, title: "New appointment" },
+    es: { body: (c) => `${c.customer} · ${c.service} · ${c.when}`, title: "Nueva cita" },
+    pt: { body: (c) => `${c.customer} · ${c.service} · ${c.when}`, title: "Novo agendamento" },
+  },
+  "staff.cancelled": {
+    en: { body: (c) => `${c.customer} cancelled ${c.service} on ${c.when}.`, title: "Appointment cancelled" },
+    es: { body: (c) => `${c.customer} canceló ${c.service} el ${c.when}.`, title: "Cita cancelada" },
+    pt: { body: (c) => `${c.customer} cancelou ${c.service} em ${c.when}.`, title: "Agendamento cancelado" },
+  },
+  "staff.rescheduled": {
+    en: { body: (c) => `${c.customer} · ${c.service} moved to ${c.when}.`, title: "Appointment rescheduled" },
+    es: { body: (c) => `${c.customer} · ${c.service} reprogramada para ${c.when}.`, title: "Cita reprogramada" },
+    pt: { body: (c) => `${c.customer} · ${c.service} remarcado para ${c.when}.`, title: "Agendamento remarcado" },
+  },
+  "recurrence.requested": {
+    en: { body: (c) => `${c.customer} · ${c.service} · ${c.frequency}`, title: "New recurrence request" },
+    es: { body: (c) => `${c.customer} · ${c.service} · ${c.frequency}`, title: "Nuevo pedido de recurrencia" },
+    pt: { body: (c) => `${c.customer} · ${c.service} · ${c.frequency}`, title: "Novo pedido de recorrência" },
+  },
+  "recurrence.accepted": {
+    en: { body: (c) => `${c.service} · ${c.frequency}`, title: "Recurrence accepted" },
+    es: { body: (c) => `${c.service} · ${c.frequency}`, title: "Recurrencia aceptada" },
+    pt: { body: (c) => `${c.service} · ${c.frequency}`, title: "Recorrência aceita" },
+  },
+  "recurrence.rejected": {
+    en: { body: (c) => `${c.service} · ${c.frequency}`, title: "Recurrence declined" },
+    es: { body: (c) => `${c.service} · ${c.frequency}`, title: "Recurrencia rechazada" },
+    pt: { body: (c) => `${c.service} · ${c.frequency}`, title: "Recorrência recusada" },
+  },
+};
+```
+In `buildMessage`, before `const catalog = APPOINTMENT_EVENTS[eventType];` add:
+
+```ts
+  const extended = EXTENDED[eventType];
+
+  if (extended) {
+    const text = (value: unknown) => (typeof value === "string" ? value : "");
+    const template = extended[language];
+
+    return {
+      body: template.body({
+        customer: text(payload.customer_name),
+        frequency: FREQUENCY[language][Number(payload.interval_weeks) === 2 ? 2 : 1],
+        service: text(payload.service_name) || GENERIC_SERVICE[language],
+        when: formatWhen(payload.starts_at, language, timeZone),
+      }),
+      title: template.title,
+    };
+  }
+```
+- [ ] **Step 4:** run → PASS (existing cases must still pass; the English title for `recurrence.rejected` is "Recurrence declined" — the test table above uses the `es` row only). Commit `feat: push templates for staff and recurrence events`.
+
+---
+
+### Task 3c: Tap navigation
+
+**Files:** Create `src/features/notifications/inbox-route.ts`; Test `tests/unit/inbox.test.ts` (append)
+
+**Produces:** `inboxRoute(kind: InboxKind, role: "customer" | "barber" | "owner"): string`.
+
+- [ ] **Step 1: failing test**
+
+```ts
+import { inboxRoute } from "../../src/features/notifications/inbox-route";
+
+it("routes appointment events to the role's agenda", () => {
+  expect(inboxRoute("appointment_confirmed", "customer")).toBe("/appointments");
+  expect(inboxRoute("appointment_awaiting_confirmation", "barber")).toBe("/my-agenda");
+  expect(inboxRoute("appointment_cancelled", "owner")).toBe("/agenda");
+});
+```
+- [ ] **Step 2:** FAIL → **Step 3:**
+
+```ts
+import type { InboxKind } from "./inbox-api";
+
+const AGENDA = { barber: "/my-agenda", customer: "/appointments", owner: "/agenda" } as const;
+
+// Plan 6 adds the recurrence kinds here.
+export function inboxRoute(_kind: InboxKind, role: keyof typeof AGENDA) {
+  return AGENDA[role];
+}
+```
+- [ ] **Step 4:** PASS; commit `feat: notification tap routes`.
+
+---
+
+### Task 3d: Register push for barber and owner
+
+**Files:** Modify `app/(barber)/_layout.tsx`, `app/(owner)/_layout.tsx`
+
+- [ ] **Step 1:** in the barber layout, call `usePushRegistration(Boolean(barber.data));` right after the `barber` query and **before** the early returns (hooks must not be conditional). Import from `../../src/features/notifications/use-push-registration`.
+- [ ] **Step 2:** owner layout: add `const { profile } = useSupabaseSession();` and `usePushRegistration(profile?.role === "owner");` at the top of `OwnerLayout`.
+- [ ] **Step 3:** `npm run typecheck && npx jest tests/integration/app-providers.test.ts`; on web `registerPushToken` returns null (Platform web), so there is no web test — **verify on a phone**: sign in as barber/owner in a dev build, check a row appears in `notification_tokens` for that user, book as customer, and confirm the push arrives (Expo Go cannot receive remote push on SDK 53+; use the dev build, see memory *local dev gotchas*).
+- [ ] **Step 4:** commit `feat: register push tokens for barber and owner`.
+
+---
+
 ### Task 4: Bell component, hook, screen, routes
 
 **Files:** Create `src/features/notifications/use-unread.ts`, `src/components/domain/NotificationBell.tsx`, `src/features/notifications/NotificationsScreen.tsx`, `app/(customer)/notifications.tsx`, `app/(barber)/notifications.tsx`, `app/(owner)/notifications.tsx`; Modify `src/components/domain/index.ts`, `app/(customer)/_layout.tsx` (add `<Stack.Screen name="notifications" />`), `app/(barber)/_layout.tsx` (`<Tabs.Screen name="notifications" options={{ href: null }} />`), `app/(owner)/_layout.tsx` (add `"notifications"` to `MANAGE_SCREENS`? — no: add a third const `AGENDA_SCREENS = ["notifications"]` highlighting `agenda`).
@@ -307,7 +510,7 @@ export function NotificationBell({ onPress }: { onPress: () => void }) {
 }
 ```
 Export from `src/components/domain/index.ts`.
-- [ ] **Step 3:** `NotificationsScreen.tsx`: `ScreenHeader` (title `notifications.title`, `onBack`), button "Mark all as read" (calls `markRead(supabase)` then invalidate `["notifications"]` and `["notifications-unread"]`), list of `Card`s from `useQuery({ queryKey: ["notifications", userId], queryFn: () => listNotifications(supabase) })`. Each card: bold title `t(inboxText(kind).titleKey)`, body `t(inboxText(kind).bodyKey, { customerName, serviceName, barberName, date: formatDateNumeric(localDate, language) + " " + localTime })` with `formatInstantInShopTime(new Date(startsAt))`; unread rows have a left 3px `bg-primary-500` bar and call `markRead(supabase, [id])` on press; pressing navigates nowhere (YAGNI). Use `useRefreshAll` pull-to-refresh as other screens.
+- [ ] **Step 3:** `NotificationsScreen.tsx`: `ScreenHeader` (title `notifications.title`, `onBack`), button "Mark all as read" (calls `markRead(supabase)` then invalidate `["notifications"]` and `["notifications-unread"]`), list of `Card`s from `useQuery({ queryKey: ["notifications", userId], queryFn: () => listNotifications(supabase) })`. Each card: bold title `t(inboxText(kind).titleKey)`, body `t(inboxText(kind).bodyKey, { customerName, serviceName, barberName, date: formatDateNumeric(localDate, language) + " " + localTime })` with `formatInstantInShopTime(new Date(startsAt))`; unread rows have a left 3px `bg-primary-500` bar; pressing any row calls `markRead(supabase, [id])` (if unread) and then `router.push(inboxRoute(item.kind, profile.role))` (`profile` from `useSupabaseSession()`; type-cast the string as `never` like `manage.tsx` does). Use `useRefreshAll` pull-to-refresh as other screens.
 - [ ] **Step 4:** the three route files each: `export { default } from "../../src/features/notifications/NotificationsScreen";`
 - [ ] **Step 5:** layouts as listed above; `npm run typecheck && npm run lint`.
 - [ ] **Step 6:** commit `feat: notifications screen and bell component`.

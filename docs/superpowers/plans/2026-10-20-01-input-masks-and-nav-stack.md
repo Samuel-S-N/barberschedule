@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax.
 
-**Goal:** Date/time/phone/CPF fields show visual masks while typing; dates follow the language; back buttons return to the previous screen.
+**Goal:** Date/time/phone fields show visual masks while typing; dates follow the language; back buttons return to the previous screen.
 
 **Architecture:** Pure mask functions in `src/lib/input-masks.ts` (unit-tested), thin `DateInput`/`TimeInput` wrappers over `Input` that keep ISO / `HH:MM` as the stored value. Back navigation: expo-router `Tabs` defaults to `backBehavior: "firstRoute"`, so hidden screens go back to the first tab (agenda); set `"history"`.
 
@@ -23,12 +23,12 @@
 **Files:** Create `src/lib/input-masks.ts`; Test `tests/unit/input-masks.test.ts`
 
 **Interfaces — Produces:**
-`formatDateInput(input: string, language: Language): string`, `parseDateInput(display: string, language: Language): string | null` (ISO or null if incomplete/invalid), `formatTimeInput(input: string): string`, `formatCpf(input: string): string`.
+`formatDateInput(input: string, language: Language): string`, `parseDateInput(display: string, language: Language): string | null` (ISO or null if incomplete/invalid), `formatTimeInput(input: string): string`. (No CPF mask: the app has no CPF field; add `formatCpf` only when one is introduced.)
 
 - [ ] **Step 1: failing test**
 
 ```ts
-import { formatCpf, formatDateInput, formatTimeInput, parseDateInput } from "../../src/lib/input-masks";
+import { formatDateInput, formatTimeInput, parseDateInput } from "../../src/lib/input-masks";
 
 describe("formatDateInput", () => {
   it("masks pt/es as DD/MM/YYYY", () => {
@@ -63,13 +63,6 @@ describe("formatTimeInput", () => {
   });
 });
 
-describe("formatCpf", () => {
-  it("masks 000.000.000-00", () => {
-    expect(formatCpf("12345678901")).toBe("123.456.789-01");
-    expect(formatCpf("1234")).toBe("123.4");
-    expect(formatCpf("123456789012345")).toBe("123.456.789-01");
-  });
-});
 ```
 
 - [ ] **Step 2:** `npx jest tests/unit/input-masks.test.ts` → FAIL (module missing).
@@ -104,13 +97,6 @@ export function formatTimeInput(input: string) {
   return d.length <= 2 ? d : `${d.slice(0, 2)}:${d.slice(2)}`;
 }
 
-export function formatCpf(input: string) {
-  const d = digits(input).slice(0, 11);
-  const groups = [d.slice(0, 3), d.slice(3, 6), d.slice(6, 9)].filter(Boolean);
-  const head = groups.join(".");
-
-  return d.length > 9 ? `${head}-${d.slice(9)}` : head;
-}
 ```
 
 Note: `new Date("2026-02-31T12:00:00Z")` is an Invalid Date in some engines and throws on `toISOString`; wrap with `Number.isNaN(date.getTime())` guard if the test for `31/02/2026` throws.
@@ -197,7 +183,6 @@ Replace `Input` with `DateInput`/`TimeInput` (prop `onChangeText` → `onChangeV
 - Dates: `app/(owner)/agenda.tsx:106`, `app/(owner)/appointment-form.tsx:152`, `app/(owner)/schedule.tsx:166`, `app/(owner)/revenue.tsx:277`, `app/(owner)/monthly-customers.tsx:184,198`.
 - Times: `app/(owner)/shop.tsx:124-125`, `app/(owner)/schedule.tsx:147-148,179-180`, `app/(owner)/monthly-customers.tsx:188`, `app/(barber)/my-agenda.tsx:390-391`.
 - Phone: `app/(owner)/customers.tsx:94` → `onChangeText={(v) => setPhone(formatPhone(v))}` (import from `src/features/account/phone`).
-- CPF: `formatCpf` has no consumer yet (no CPF field exists) — do not wire.
 - Label text: `src/i18n/locales/{en,es,pt}.ts` `common.localDate` currently "Local date (YYYY-MM-DD)" → drop the format suffix in all three (the placeholder now carries the hint). Check `tests/e2e` for assertions on that label.
 
 - [ ] **Step 1:** make the edits file by file; after each: `npm run typecheck`.
@@ -216,6 +201,7 @@ Replace `Input` with `DateInput`/`TimeInput` (prop `onChangeText` → `onChangeV
 - [ ] **Step 2:** add `backBehavior="history"` to `<Tabs …>` in owner and barber layouts (customer uses `TopTabs`; add the same prop if the e2e audit in step 4 shows the issue there).
 - [ ] **Step 3:** run e2e → PASS.
 - [ ] **Step 4 (app-wide audit):** for each role, from every hidden/nested screen press back and assert previous screen: owner (barbers, services, customers, monthly-customers, schedule, shop, appointment-form, recurrence-conflicts, language), barber (my-profile/*, clients/[id], move-appointment), customer (me/*, reschedule, book/* steps). Fix any that fail: replace ad-hoc `const back = () => router.canGoBack() ? …` in the 8 owner files with a shared `useBack(fallback)`.
+- [ ] **Step 5a (barber fallbacks):** `useBack()` defaults to `/profile`, a *customer* route, so on a cold start/web refresh barber screens go nowhere. Pass explicit fallbacks: `app/(barber)/my-profile/{account,compensation,hours,privacy,security,services,settings}.tsx` → `useBack("/my-profile")`; `my-profile/security/password.tsx` → `useBack("/my-profile/security")`; `app/(barber)/clients/[id].tsx` → `useBack("/clients")`; `move-appointment.tsx` → `useBack("/my-agenda")`. Add a Playwright case per role that loads one inner screen directly (cold start), presses back, and lands on that role's hub (`/my-profile`, `/clients`).
 - [ ] **Step 5:** extend `src/lib/navigation/use-back.ts` to `useBack(fallback = "/profile")`; swap the 8 owner copies (`/manage`, `/agenda`, `/monthly-customers` fallbacks kept).
 - [ ] **Step 6:** `npm run typecheck && npm run lint && npx jest`; commit `fix: back navigation uses history`.
 

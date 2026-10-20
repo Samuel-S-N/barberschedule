@@ -35,9 +35,11 @@
 `list_recurrence_requests(target_shop_id uuid) → (id, customer_name, customer_phone, barber_id, barber_name, service_name, interval_weeks, local_start_date, local_start_time, normal_cents, recurrence_cents)` (pending only; owner = whole shop, barber = own),
 `decide_recurrence_request(target_request_id uuid, accept boolean) → setof recurrence_requests`,
 `set_recurrence_price(target_service_id uuid, target_interval_weeks integer, target_price_cents integer) → void` (null price deletes), `list_recurrence_prices(target_shop_id uuid) → (service_id, interval_weeks, price_cents)`,
-`add_inbox_event(target_user uuid, target_kind text, target_params jsonb, target_key text) → void`; `notifications.kind` check extended with `recurrence_requested`, `recurrence_accepted`, `recurrence_rejected`.
+`create_recurrence_for_customer(target_customer_id uuid, target_barber_service_id uuid, target_interval_weeks integer, target_start_date date, target_start_time time) → setof recurrence_series` (staff-initiated, for customers without an account; owner or the service's own barber; price from the table),
+`add_inbox_event(target_user uuid, target_kind text, target_params jsonb, target_key text, push_event text default null) → void` (inbox row + optional push row in `notification_outbox`; the outbox `event_type` check already allows `recurrence.requested|accepted|rejected` from Plan 2),
+internal `materialize_shop_as_owner(target_shop_id uuid) → void` (not granted); `notifications.kind` check extended with `recurrence_requested`, `recurrence_accepted`, `recurrence_rejected`.
 
-- [ ] **Step 1: failing pgTAP.** Fixture: copy `supabase/tests/009_notifications.sql` setup (owner `90…01`, customer `90…02` with customers row, shop, barber `92…01` with `user_id` = new barber user `90…03` profile role `barber`, service `93…01` price 3500, barber_service `94…01`) plus `working_periods` for the weekday of the chosen date (see `004_availability.sql`). Assertions (`plan(12)`):
+- [ ] **Step 1: failing pgTAP.** Fixture: copy `supabase/tests/009_notifications.sql` setup (owner `90…01`, customer `90…02` with customers row, shop, barber `92…01` with `user_id` = new barber user `90…03` profile role `barber`, service `93…01` price 3500, barber_service `94…01`) plus `working_periods` for the weekday of the chosen date (see `004_availability.sql`). Assertions (`plan(18)`):
 
 ```sql
 -- owner sets prices
@@ -50,6 +52,8 @@ select is((select recurrence_cents from public.get_recurrence_quote('94…01') w
 select is((select normal_cents from public.get_recurrence_quote('94…01') where interval_weeks = 2), 3500, 'normal price shown');
 select is((select count(*)::int from public.request_recurrence('94…01', 1, :future_monday, '10:00')), 1, 'request created');
 select throws_ok($$ select * from public.request_recurrence('94…01', 1, :future_monday, '11:00') $$, '23505', null, 'one pending per customer and barber service');
+select throws_ok($$ select * from public.request_recurrence('94…01', 2, :future_monday, '10:07') $$, 'P0001', null, 'first slot must be a bookable time');
+select is((select count(*)::int from public.notification_outbox where event_type = 'recurrence.requested'), 2, 'barber and owner get a push for the request');
 -- barber sees it, customer must not
 select set_config('request.jwt.claim.sub', barber_user, true);
 select is((select count(*)::int from public.list_recurrence_requests('91…01')), 1, 'barber sees own pending request');
@@ -61,6 +65,12 @@ select lives_ok($$ select * from public.decide_recurrence_request('<id>', true) 
 select is((select special_price_cents from public.recurrence_series limit 1), 2500, 'series carries the recurrence price');
 select ok((select count(*) from public.appointments where source = 'recurrence') >= 1, 'occurrences were materialised');
 select throws_ok($$ select * from public.decide_recurrence_request('<id>', true) $$, 'P0031', null, 'cannot decide twice');
+select is((select count(*)::int from public.notification_outbox where event_type = 'recurrence.accepted' and recipient_user_id = :customer), 1, 'customer gets a push when accepted');
+-- staff-created series for a customer without an account
+select is((select count(*)::int from public.create_recurrence_for_customer(:walkin_customer, '94…01', 2, :future_tuesday, '11:00')), 1, 'barber creates a series for a walk-in customer');
+select is((select special_price_cents from public.recurrence_series where customer_id = :walkin_customer), null, 'no biweekly price set → normal price applies');
+set local role authenticated; select set_config('request.jwt.claim.sub', :customer, true);
+select throws_ok($$ select * from public.create_recurrence_for_customer(:walkin_customer, '94…01', 1, :future_tuesday, '12:00') $$, 'P0010', null, 'customers cannot create series for others');
 ```
 (The request id is read with a `select id into temp` before the calls, as other pgTAP files do.)
 - [ ] **Step 2:** `npm run test:db` → FAIL.
@@ -106,15 +116,35 @@ alter table public.notifications add constraint notifications_kind_check check (
   'appointment_awaiting_confirmation','appointment_booked','appointment_confirmed','appointment_cancelled','appointment_rescheduled',
   'recurrence_requested','recurrence_accepted','recurrence_rejected'));
 
-create function public.add_inbox_event(target_user uuid, target_kind text, target_params jsonb, target_key text)
+create function public.add_inbox_event(target_user uuid, target_kind text, target_params jsonb, target_key text, push_event text default null)
 returns void language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 begin
   if target_user is null or target_user is not distinct from auth.uid() then return; end if;
   insert into public.notifications (user_id, kind, params, event_key) values (target_user, target_kind, target_params, target_key)
   on conflict (event_key) do nothing;
+  if found and push_event is not null then
+    insert into public.notification_outbox (event_key, event_type, recipient_user_id, payload)
+    values ('push:' || target_key, push_event, target_user, target_params)
+    on conflict (event_key) do nothing;
+  end if;
 end;
 $$;
-revoke all on function public.add_inbox_event(uuid, text, jsonb, text) from public;
+revoke all on function public.add_inbox_event(uuid, text, jsonb, text, text) from public;
+
+-- The recurrence engine is owner-gated; this is the same impersonation materialize_recurrence_job uses.
+create function public.materialize_shop_as_owner(target_shop_id uuid)
+returns void language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
+declare
+  shop_row public.shops%rowtype;
+  original_sub text := current_setting('request.jwt.claim.sub', true);
+begin
+  select * into shop_row from public.shops where id = target_shop_id;
+  perform set_config('request.jwt.claim.sub', shop_row.owner_user_id::text, true);
+  perform public.ensure_recurrence_window(target_shop_id, (clock_timestamp() at time zone shop_row.timezone)::date + 90);
+  perform set_config('request.jwt.claim.sub', coalesce(original_sub, ''), true);
+end;
+$$;
+revoke all on function public.materialize_shop_as_owner(uuid) from public;
 
 create function public.set_recurrence_price(target_service_id uuid, target_interval_weeks integer, target_price_cents integer)
 returns void language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
@@ -187,6 +217,11 @@ begin
   if target_interval_weeks not in (1, 2) or target_start_date < local_today or target_start_date > local_today + 90 then
     raise exception using errcode = 'P0015', message = 'RECURRENCE_INVALID';
   end if;
+  if not exists (
+    select 1 from public.get_available_slots(bs.barber_id, target_start_date, bs.id) slot where slot.local_time = target_start_time
+  ) then
+    raise exception using errcode = 'P0001', message = 'SLOT_UNAVAILABLE';
+  end if;
 
   insert into public.recurrence_requests (shop_id, customer_id, barber_id, barber_service_id, interval_weeks, local_start_date, local_start_time)
   values (bs.shop_id, cust.id, bs.barber_id, bs.id, target_interval_weeks, target_start_date, target_start_time)
@@ -195,9 +230,9 @@ begin
   select user_id into barber_user from public.barbers where id = bs.barber_id;
   params := jsonb_build_object('customer_name', cust.full_name, 'interval_weeks', target_interval_weeks,
     'service_name', (select name from public.services where id = bs.service_id));
-  perform public.add_inbox_event(barber_user, 'recurrence_requested', params, format('recreq:%s:%s', created.id, barber_user));
+  perform public.add_inbox_event(barber_user, 'recurrence_requested', params, format('recreq:%s:%s', created.id, barber_user), 'recurrence.requested');
   if owner_user is distinct from barber_user then
-    perform public.add_inbox_event(owner_user, 'recurrence_requested', params, format('recreq:%s:%s', created.id, owner_user));
+    perform public.add_inbox_event(owner_user, 'recurrence_requested', params, format('recreq:%s:%s', created.id, owner_user), 'recurrence.requested');
   end if;
 
   return next created;
@@ -248,11 +283,9 @@ language plpgsql security definer set search_path = pg_catalog, public, pg_temp 
 declare
   req public.recurrence_requests%rowtype;
   bs public.barber_services%rowtype;
-  shop_row public.shops%rowtype;
   new_series_id uuid;
   price integer;
   customer_user uuid;
-  original_sub text := current_setting('request.jwt.claim.sub', true);
   result public.recurrence_requests%rowtype;
 begin
   select * into req from public.recurrence_requests where id = target_request_id for update;
@@ -264,7 +297,6 @@ begin
     raise exception using errcode = 'P0031', message = 'RECURRENCE_REQUEST_NOT_PENDING';
   end if;
 
-  select * into shop_row from public.shops where id = req.shop_id;
   select * into bs from public.barber_services where id = req.barber_service_id;
   select user_id into customer_user from public.customers where id = req.customer_id;
 
@@ -274,10 +306,7 @@ begin
     values (req.shop_id, req.customer_id, req.barber_service_id, req.local_start_date, req.local_start_time, req.interval_weeks, price)
     returning id into new_series_id;
 
-    -- Same impersonation the hourly materialize_recurrence_job uses: the engine is owner-gated.
-    perform set_config('request.jwt.claim.sub', shop_row.owner_user_id::text, true);
-    perform public.ensure_recurrence_window(req.shop_id, (clock_timestamp() at time zone shop_row.timezone)::date + 90);
-    perform set_config('request.jwt.claim.sub', coalesce(original_sub, ''), true);
+    perform public.materialize_shop_as_owner(req.shop_id);
   end if;
 
   update public.recurrence_requests
@@ -287,20 +316,67 @@ begin
 
   perform public.add_inbox_event(customer_user, case when accept then 'recurrence_accepted' else 'recurrence_rejected' end,
     jsonb_build_object('service_name', (select name from public.services where id = bs.service_id), 'interval_weeks', req.interval_weeks),
-    format('recdec:%s', req.id));
+    format('recdec:%s', req.id),
+    case when accept then 'recurrence.accepted' else 'recurrence.rejected' end);
 
   return next result;
 end;
 $$;
 
+create function public.create_recurrence_for_customer(
+  target_customer_id uuid, target_barber_service_id uuid, target_interval_weeks integer, target_start_date date, target_start_time time
+)
+returns setof public.recurrence_series
+language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
+declare
+  bs public.barber_services%rowtype;
+  tz text;
+  local_today date;
+  price integer;
+  created public.recurrence_series%rowtype;
+  customer_user uuid;
+begin
+  select * into bs from public.barber_services where id = target_barber_service_id and active;
+  if bs.id is null or not exists (
+    select 1 from public.customers c where c.id = target_customer_id and c.shop_id = bs.shop_id and c.active
+  ) then
+    raise exception using errcode = 'P0007', message = 'CUSTOMER_UNAVAILABLE';
+  end if;
+  if not (public.is_shop_owner(bs.shop_id) or public.is_own_barber(bs.barber_id)) then
+    raise exception using errcode = 'P0010', message = 'APPOINTMENT_FORBIDDEN';
+  end if;
+  select timezone into tz from public.shops where id = bs.shop_id;
+  local_today := (clock_timestamp() at time zone tz)::date;
+  if target_interval_weeks not in (1, 2) or target_start_date < local_today or target_start_date > local_today + 90 then
+    raise exception using errcode = 'P0015', message = 'RECURRENCE_INVALID';
+  end if;
+
+  select p.price_cents into price from public.service_recurrence_prices p
+  where p.service_id = bs.service_id and p.interval_weeks = target_interval_weeks;
+  insert into public.recurrence_series (shop_id, customer_id, barber_service_id, local_start_date, local_start_time, interval_weeks, special_price_cents)
+  values (bs.shop_id, target_customer_id, bs.id, target_start_date, target_start_time, target_interval_weeks, price)
+  returning * into created;
+  perform public.materialize_shop_as_owner(bs.shop_id);
+
+  select user_id into customer_user from public.customers where id = target_customer_id;
+  perform public.add_inbox_event(customer_user, 'recurrence_accepted',
+    jsonb_build_object('service_name', (select name from public.services where id = bs.service_id), 'interval_weeks', target_interval_weeks),
+    format('recman:%s', created.id), 'recurrence.accepted');
+
+  return next created;
+end;
+$$;
+
 revoke all on function public.set_recurrence_price(uuid, integer, integer), public.list_recurrence_prices(uuid),
   public.get_recurrence_quote(uuid), public.request_recurrence(uuid, integer, date, time), public.cancel_my_recurrence_request(uuid),
-  public.list_my_recurrence_requests(), public.list_recurrence_requests(uuid), public.decide_recurrence_request(uuid, boolean) from public;
+  public.list_my_recurrence_requests(), public.list_recurrence_requests(uuid), public.decide_recurrence_request(uuid, boolean),
+  public.create_recurrence_for_customer(uuid, uuid, integer, date, time) from public;
 grant execute on function public.set_recurrence_price(uuid, integer, integer), public.list_recurrence_prices(uuid),
   public.get_recurrence_quote(uuid), public.request_recurrence(uuid, integer, date, time), public.cancel_my_recurrence_request(uuid),
-  public.list_my_recurrence_requests(), public.list_recurrence_requests(uuid), public.decide_recurrence_request(uuid, boolean) to authenticated;
+  public.list_my_recurrence_requests(), public.list_recurrence_requests(uuid), public.decide_recurrence_request(uuid, boolean),
+  public.create_recurrence_for_customer(uuid, uuid, integer, date, time) to authenticated;
 ```
-Notes: `ensure_recurrence_window` rejects `through_date` > local today + 90 — passing exactly +90 is allowed. In `request_recurrence`, `bs` null-guard uses `bs.id is null`. `notifications.kind` check name `notifications_kind_check` is the auto name from Plan 2 — confirm with `\d public.notifications`.
+Notes: in `request_recurrence` the first occurrence is validated against `get_available_slots` (later occurrences that collide become `recurrence_conflicts` through the existing engine, shown in the owner's conflicts screen). `ensure_recurrence_window` rejects `through_date` > local today + 90 — passing exactly +90 is allowed. In `request_recurrence`, `bs` null-guard uses `bs.id is null`. `notifications.kind` check name `notifications_kind_check` is the auto name from Plan 2 — confirm with `\d public.notifications`.
 - [ ] **Step 4:** `npm run test:db` → PASS (also re-run all earlier pgTAP files). **Step 5:** commit `feat(db): recurrence requests and recurrence prices`.
 
 ---
@@ -326,7 +402,9 @@ listRecurrenceRequests(supabase, shopId): Promise<StaffRecurrenceRequest[]>
 decideRecurrenceRequest(supabase, id, accept: boolean): Promise<void>
 listRecurrencePrices(supabase, shopId): Promise<{ serviceId: string; weeks: RecurrenceWeeks; priceCents: number }[]>
 setRecurrencePrice(supabase, serviceId, weeks, priceCents: number | null): Promise<void>
+createRecurrenceForCustomer(supabase, input: { customerId; barberServiceId; weeks; startDate; startTime }): Promise<void>   // staff-initiated
 ```
+Also extends `inboxRoute` (Plan 2): `recurrence_requested` → `barber: "/my-profile/recurrence"`, `owner: "/monthly-customers"`; `recurrence_accepted|rejected` → `customer: "/me/recurrence"`.
 
 - [ ] **Step 1: failing tests**
 
@@ -338,7 +416,8 @@ it("totals the owner's example: weekly 25 → 100", () => { expect(fourWeekTotal
 it("labels", () => { expect(recurrenceLabelKey(1)).toBe("recurrence.weekly"); expect(recurrenceLabelKey(2)).toBe("recurrence.biweekly"); });
 ```
 ```ts
-import { decideRecurrenceRequest, getRecurrenceQuote, listRecurrenceRequests, requestRecurrence, setRecurrencePrice } from "../../src/features/recurrence/requests-api";
+import { inboxRoute } from "../../src/features/notifications/inbox-route";
+import { createRecurrenceForCustomer, decideRecurrenceRequest, getRecurrenceQuote, listRecurrenceRequests, requestRecurrence, setRecurrencePrice } from "../../src/features/recurrence/requests-api";
 
 it("maps the quote", async () => {
   const rpc = jest.fn().mockResolvedValue({ data: [{ interval_weeks: 1, normal_cents: 3500, recurrence_cents: 2500 }, { interval_weeks: 2, normal_cents: 3500, recurrence_cents: null }], error: null });
@@ -350,6 +429,18 @@ it("sends the request", async () => {
   await requestRecurrence({ rpc } as never, { barberServiceId: "bs1", startDate: "2026-11-02", startTime: "10:00", weeks: 2 });
   expect(rpc).toHaveBeenCalledWith("request_recurrence", { target_barber_service_id: "bs1", target_interval_weeks: 2, target_start_date: "2026-11-02", target_start_time: "10:00" });
 });
+it("creates a series for a customer", async () => {
+  const rpc = jest.fn().mockResolvedValue({ data: [{}], error: null });
+  await createRecurrenceForCustomer({ rpc } as never, { barberServiceId: "bs1", customerId: "c1", startDate: "2026-11-03", startTime: "11:00", weeks: 2 });
+  expect(rpc).toHaveBeenCalledWith("create_recurrence_for_customer", { target_barber_service_id: "bs1", target_customer_id: "c1", target_interval_weeks: 2, target_start_date: "2026-11-03", target_start_time: "11:00" });
+});
+
+it("routes recurrence notifications", () => {
+  expect(inboxRoute("recurrence_requested", "barber")).toBe("/my-profile/recurrence");
+  expect(inboxRoute("recurrence_requested", "owner")).toBe("/monthly-customers");
+  expect(inboxRoute("recurrence_accepted", "customer")).toBe("/me/recurrence");
+});
+
 it("decides and sets prices", async () => {
   const rpc = jest.fn().mockResolvedValue({ data: [{}], error: null });
   await decideRecurrenceRequest({ rpc } as never, "r1", true);
@@ -422,6 +513,10 @@ export async function listRecurrenceRequests(supabase: Client, shopId: string): 
   return rows.map((r) => ({ barberId: String(r.barber_id), barberName: String(r.barber_name), customerName: String(r.customer_name), customerPhone: (r.customer_phone as string | null) ?? null, id: String(r.id), normalCents: Number(r.normal_cents), recurrenceCents: r.recurrence_cents === null ? null : Number(r.recurrence_cents), serviceName: String(r.service_name), startDate: String(r.local_start_date), startTime: time(r.local_start_time), weeks: Number(r.interval_weeks) as RecurrenceWeeks }));
 }
 
+export async function createRecurrenceForCustomer(supabase: Client, input: { barberServiceId: string; customerId: string; startDate: string; startTime: string; weeks: RecurrenceWeeks }) {
+  await call(supabase, "create_recurrence_for_customer", { target_barber_service_id: input.barberServiceId, target_customer_id: input.customerId, target_interval_weeks: input.weeks, target_start_date: input.startDate, target_start_time: input.startTime });
+}
+
 export async function decideRecurrenceRequest(supabase: Client, id: string, accept: boolean) {
   await call(supabase, "decide_recurrence_request", { accept, target_request_id: id });
 }
@@ -434,6 +529,20 @@ export async function listRecurrencePrices(supabase: Client, shopId: string) {
 
 export async function setRecurrencePrice(supabase: Client, serviceId: string, weeks: RecurrenceWeeks, priceCents: number | null) {
   await call(supabase, "set_recurrence_price", { target_interval_weeks: weeks, target_price_cents: priceCents, target_service_id: serviceId });
+}
+```
+- [ ] **Step 3b: inbox routes.** Replace the body of `src/features/notifications/inbox-route.ts` (Plan 2) with the recurrence-aware version and extend `InboxKind` with the 3 recurrence kinds:
+
+```ts
+import type { InboxKind } from "./inbox-api";
+
+type Role = "barber" | "customer" | "owner";
+
+const AGENDA: Record<Role, string> = { barber: "/my-agenda", customer: "/appointments", owner: "/agenda" };
+const REQUESTS: Record<Role, string> = { barber: "/my-profile/recurrence", customer: "/me/recurrence", owner: "/monthly-customers" };
+
+export function inboxRoute(kind: InboxKind, role: Role) {
+  return kind.startsWith("recurrence_") ? REQUESTS[role] : AGENDA[role];
 }
 ```
 - [ ] **Step 4:** run → PASS. Add `P0031`/`P0032` mapping in `domain-errors.ts` + messages in `src/i18n/errors.ts` (look at how `RECURRENCE_INVALID` is wired, copy). Extend `InboxKind` in `inbox-api.ts` with the 3 recurrence kinds; `notifications.*` i18n for them (pt: "Novo pedido de recorrência" / `{{customerName}} · {{serviceName}} · {{label}}`; "Recorrência aceita" / "Recorrência recusada" / `{{serviceName}} · {{label}}`; en/es equivalents). The `label` param is `t(recurrenceLabelKey(params.interval_weeks))` — extend `InboxItem.params` with optional `intervalWeeks` in `listNotifications`.
@@ -457,8 +566,22 @@ export async function setRecurrencePrice(supabase: Client, serviceId: string, we
 **Consumes:** Task 2 API, existing `listMonthlyCustomers` (series), `setRecurrenceSeriesActive`, `cancelRecurrenceOccurrence`, `endRecurrenceSeries`, `listOwnerServices`, `useOwnerShopId`, `parseReaisToCents`, `centsToReaisInput`, `formatPriceBRL`, `fourWeekTotalCents`, `SearchInput`, `DateInput`.
 
 - [ ] **Step 1 (e2e first):** replace the create-form tests with: (a) three tab buttons `recurring-tab-requests|active|prices`; (b) Requests tab lists a mocked pending request (`list_recurrence_requests`) with customer, barber, service, frequency label, start date (masked display), the special price and "4 sessions = R$ 100,00"; clicking `request-accept-<id>` posts `decide_recurrence_request` `{ accept: true }`, `request-reject-<id>` posts `{ accept: false }`; (c) Prices tab: each service shows normal price + two inputs; typing `25,00` in `price-<serviceId>-1` and clicking `price-save-<serviceId>` posts `set_recurrence_price` `{ target_price_cents: 2500, target_interval_weeks: 1 }`; clearing sends `null`; (d) Active tab keeps the old series cards (edit button removed) with frequency label from `recurrenceLabelKey` and the series actions (deactivate / cancel occurrence / end) unchanged. Run → FAIL.
-- [ ] **Step 2:** rewrite the screen: keep `ScreenHeader`, conflicts link, query setup. Remove: creation form, `editRecurrenceSeries` usage, search/customer/service radio selection, interval/time/price inputs. Local state `tab: "requests" | "active" | "prices"` rendered as three `Button size="sm"` (variant `dark`/`outline`). Requests: `useQuery(["owner-recurrence-requests", shopId], listRecurrenceRequests)`; each `Card` shows `customerName`, `serviceName · barberName`, `t(recurrenceLabelKey(weeks))`, `formatDateNumeric(startDate)` + `startTime`, price line (`perSession` + `fourWeeks` when `recurrenceCents !== null`, else `normalPrice`), and two buttons (`Accept` primary, `Reject` `variant="danger"`) calling `decideRecurrenceRequest`; on success invalidate `["owner-recurrence-requests"]`, `["owner-recurring"]`, `["owner-agenda"]`. Prices: query `listRecurrencePrices` + services (`listOwnerServices`, active only); per service row state `drafts[serviceId][weeks]` string initialised from the price list via `centsToReaisInput`; one Save button per service sends both weeks (`parseReaisToCents`; empty ⇒ `null`; invalid ⇒ inline error `owner.services.priceLabel`-style message, reuse `owner.recurring.validation`), then toast `recurrence.priceSaved`; show under each input `fourWeeks` preview via `fourWeekTotalCents(cents, weeks)` when valid. Active: the existing series list (change `everyWeeks` text to `t(recurrenceLabelKey(item.intervalWeeks))`; date via `formatDateNumeric`); keep the occurrence-date `DateInput` (Plan 1). Use `useBack("/manage")`.
+- [ ] **Step 2:** rewrite the screen: keep `ScreenHeader`, conflicts link, query setup. Remove: creation form, `editRecurrenceSeries` usage, search/customer/service radio selection, interval/time/price inputs. Local state `tab: "requests" | "active" | "prices"` rendered as three `Button size="sm"` (variant `dark`/`outline`). Requests: `useQuery(["owner-recurrence-requests", shopId], listRecurrenceRequests)`; each `Card` shows `customerName`, `serviceName · barberName`, `t(recurrenceLabelKey(weeks))`, `formatDateNumeric(startDate)` + `startTime`, price line (`perSession` + `fourWeeks` when `recurrenceCents !== null`, else `normalPrice`), and two buttons (`Accept` primary, `Reject` `variant="danger"`) calling `decideRecurrenceRequest`; on success invalidate `["owner-recurrence-requests"]`, `["owner-recurring"]`, `["owner-agenda"]`. Prices: query `listRecurrencePrices` + services (`listOwnerServices`, active only); per service row state `drafts[serviceId][weeks]` string initialised from the price list via `centsToReaisInput`; one Save button per service sends both weeks (`parseReaisToCents`; empty ⇒ `null`; invalid ⇒ inline error `owner.services.priceLabel`-style message, reuse `owner.recurring.validation`), then toast `recurrence.priceSaved`; show under each input `fourWeeks` preview via `fourWeekTotalCents(cents, weeks)` when valid. Active: an "Adicionar manualmente" button (`recurring-manual`, label `recurrence.addManual` "Adicionar manualmente"/"Add manually"/"Agregar manualmente") that toggles `<ManualRecurrenceForm />` (below) above the existing series list; the existing series list (change `everyWeeks` text to `t(recurrenceLabelKey(item.intervalWeeks))`; date via `formatDateNumeric`); keep the occurrence-date `DateInput` (Plan 1). Use `useBack("/manage")`.
 - [ ] **Step 3:** typecheck/lint/jest/e2e; screenshots (375px) of the three tabs; commit `feat: owner recurrence requests, prices and active series`.
+
+---
+
+### Task 4b: Manual (staff-created) recurrence form
+
+For customers without an account (they cannot send a request). Shared by the owner (Active tab) and the barber (Task 6 screen).
+
+**Files:** Create `src/features/recurrence/ManualRecurrenceForm.tsx`; Test: e2e in Tasks 4 and 6.
+
+**Interfaces — Produces:** `<ManualRecurrenceForm customers={{ id: string; name: string }[]} services={{ barberServiceId: string; label: string }[]} onSearch?={(term: string) => void} onCreated={() => void} />` — owns its state: customer search (`SearchInput`, filters `customers` locally and calls `onSearch` for the barber's server-side search) → `RadioBlock` of customers; `RadioBlock` of services; frequency `RadioBlock` (weekly / biweekly via `recurrenceLabelKey`); `DateInput` start date (default today); `TimeInput` start time (default `09:00`); preview of the price using `getRecurrenceQuote(supabase, barberServiceId)` (`perSession` + `fourWeeks`, or `normalPrice`); submit `testID="manual-recurrence-save"` → `createRecurrenceForCustomer`, then `ensure` nothing else (the RPC already materialises), invalidate `["owner-recurring"]`, `["barber-agenda"]`, call `onCreated`. Disabled until customer, service, a valid ISO date and `HH:MM` time are set. Errors via `errorMessage(error, t, t("recurrence.sendError"))` (`SLOT_UNAVAILABLE` maps to the existing unavailable-slot text).
+
+- [ ] **Step 1 (e2e first, in the owner spec of Task 4):** click `recurring-manual`, pick a customer (`recurrence-customer-<id>`), a service, frequency, type date/time (masked), expect the preview text, click `manual-recurrence-save` → asserts `POST /rpc/create_recurrence_for_customer` body, the form closes and the series list refetches.
+- [ ] **Step 2:** implement the component with the composition above (all building blocks exist: `RadioBlock`, `Input`-based inputs, `Button`).
+- [ ] **Step 3:** typecheck/lint; commit `feat: manual recurrence form for staff`.
 
 ---
 
@@ -481,6 +604,7 @@ export async function setRecurrencePrice(supabase: Client, serviceId: string, we
 
 - [ ] **Step 1 (e2e first):** barber profile → "Recurrence requests" → mocked `list_recurrence_requests` row → Accept posts `decide_recurrence_request {accept:true}`; Reject `{accept:false}`; WhatsApp contact link (`whatsappUrl(customerPhone)`) present. → FAIL.
 - [ ] **Step 2:** screen = the Requests tab card from Task 4 extracted as `src/features/recurrence/RequestCard.tsx` (props `{ request: StaffRecurrenceRequest; busy: boolean; onDecide: (accept: boolean) => void }`) and reused by both owner and barber screens (move code out of Task 4's screen; adjust that task if executing out of order). Shop id for barbers: `getMyBarberProfile(supabase).shopId` (query key `["my-barber-profile", userId]`). Invalidate `["barber-recurrence-requests"]` and `["barber-agenda"]` after deciding.
+- [ ] **Step 2b:** below the requests, a `recurring-manual` button toggling `<ManualRecurrenceForm />` with `customers` from `searchMyCustomers(supabase, term)` (`src/features/appointments/barber-booking.ts`, same call the agenda booking sheet uses; `onSearch` updates the term) and `services` from `listMyBarberServices(supabase)` filtered to `active` (`label: serviceName`). Add an e2e case for it (`create_recurrence_for_customer` called).
 - [ ] **Step 3:** menu item label `barber.hub.menu.recurrence` ("Pedidos de recorrência"); typecheck/lint/e2e; commit `feat: barber recurrence requests`.
 
 ---
@@ -564,6 +688,7 @@ export function closedDates(overrides: Override[], activeBarberIds: string[], to
 
 **Files:** Modify `app/(owner)/schedule.tsx`, `tests/e2e/schedule.spec.ts` / owner schedule spec (`rg -l "owner/schedule|/schedule" tests/e2e`)
 
+- [ ] **Step 0:** read-only lunch line under the selected barber's summary: query `listShopLunchBreaks(supabase, shopId)` (Plan 4; key `["owner-lunch", shopId]`), show `barber.availability.lunchTitle`: `HH:MM–HH:MM` (or hide when none). The owner cannot edit it (barber-owned).
 - [ ] **Step 1 (e2e first):** with a barber that has no periods and mocked `list_shop_hours`: `schedule-copy-shop-hours` appears, click → one `POST working_periods` per shop period for the selected barber; with existing periods the button is hidden. Weekly summary shows each weekday row (`schedule-summary-<n>`). → FAIL.
 - [ ] **Step 2:** summary: render the 7 rows like the barber Availability screen (`day.length === 0 ? t("barber.availability.closed") : periods…`); copy button: `listShopHours(supabase, shopId)` (from `src/features/shops/api`) → `createWorkingPeriod(supabase, parseWorkingPeriodInput({ barberId, shopId, weekday, startTime, endTime }))` sequentially (overlap constraint is DB-side); invalidate `["owner-schedule"]`. Masked `TimeInput`/`DateInput` already applied by Plan 1.
 - [ ] **Step 3:** typecheck/lint/jest/e2e; commit `feat: schedule summary and copy shop hours`.

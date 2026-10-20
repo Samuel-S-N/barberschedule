@@ -7,8 +7,8 @@ Source request: 2026-10-20 (pt-BR list, ~25 items). Split into 6 plans, each ind
 | Topic | Decision |
 |---|---|
 | Split | 6 separate plans |
-| Notifications | Persisted in-app inbox (new `notifications` table + triggers, Realtime, unread badge). Existing push stays as-is. |
-| Recurrence | Frequencies: **weekly (7d) and biweekly (14d)** only. Customer requests; chosen barber **or** owner accepts. Owner sets per-service, per-frequency special price. |
+| Notifications | Persisted in-app inbox (`notifications` table + trigger, unread badge, tap opens the relevant screen) **plus push** to barbers/owners (new events) and customers (confirmation). Recurrence-generated appointments never notify. |
+| Recurrence | Frequencies: **weekly (7d) and biweekly (14d)** only. Customer requests; chosen barber **or** owner accepts. Owner sets per-service, per-frequency special price. Customers without an account: owner/barber create the series manually ("Adicionar manualmente"). |
 | Date display | `pt`/`es`: `DD/MM/AAAA`; `en`: `YYYY-MM-DD`. Storage stays ISO `YYYY-MM-DD`. |
 | Barber menu name | **"Disponibilidade"** (en: "Availability", es: "Disponibilidad"), containing: Working hours, Lunch break, **"Ausências"** (absences; the old "folgas"). |
 | Owner → barber profile | Owner can edit the barber's **services & prices** and **compensation + activate/deactivate** (red). Name/photo/phone and hours are NOT owner-editable (not selected) — see Open Points. |
@@ -18,10 +18,10 @@ Source request: 2026-10-20 (pt-BR list, ~25 items). Split into 6 plans, each ind
 
 | # | File | Branch | Scope |
 |---|---|---|---|
-| 1 | `2026-10-20-01-input-masks-and-nav-stack.md` | `feat-input-masks-nav-stack` | Visual masks (date, time, phone, CPF helper), locale date format, back-navigation stack (`backBehavior="history"`). |
-| 2 | `2026-10-20-02-notifications-inbox.md` | `feat-notifications-inbox` | Bell (top-left) on Home/barber/owner, `notifications` table + triggers, inbox screen. Migration. |
+| 1 | `2026-10-20-01-input-masks-and-nav-stack.md` | `feat-input-masks-nav-stack` | Visual masks (date, time, phone; no CPF — no such field exists), locale date format, back-navigation stack (`backBehavior="history"`). |
+| 2 | `2026-10-20-02-notifications-inbox.md` | `feat-notifications-inbox` | Bell (top-left) on Home/barber/owner, `notifications` table + triggers, inbox screen with tap navigation, push for barber/owner (templates + token registration). Migration. |
 | 3 | `2026-10-20-03-customer-booking-flow.md` | `feat-booking-checkout` | Wizard barber › service › date › time › checkout › confirm; barber photo (needs column grant); "Agenda" title clip. Migration. |
-| 4 | `2026-10-20-04-barber-side.md` | `feat-barber-availability` | "Disponibilidade" (hours + lunch + absences), client search X (`SearchInput`), clickable agenda card + WhatsApp/phone, "Salvar perfil" at end. 2 migrations. |
+| 4 | `2026-10-20-04-barber-side.md` | `feat-barber-availability` | "Disponibilidade" (hours + lunch + absences with conflict warning), client search X (`SearchInput`), clickable agenda card + WhatsApp/phone, "Salvar perfil" at end. 2 migrations. |
 | 5 | `2026-10-20-05-owner-crud.md` | `feat-owner-management` | Agenda labels/title, FAB `+`, create/edit screens for barbers (profile) / services / customers, red "Desativar", back-stack audit. No migration. |
 | 6 | `2026-10-20-06-recurrence-shop-owner-profile.md` | `feat-recurrence-requests` | Recurrence request/accept + recurrence prices, shop & schedule improvements, owner profile (+ "Atender como barbeiro"). 2 migrations. |
 
@@ -30,7 +30,7 @@ Dependencies: 2→(none besides 1), 3→1, 4→1, 5→1,2,4, 6→1,2,4,5. Migrat
 Docs-only PR for the plans: `docs-ux-overhaul-plans`.
 
 ## Open points to flag (not blocking Plan 1)
-1. **CPF**: no CPF field exists anywhere (code or DB). Plan 1 ships `formatCpf` + tests but wires it to nothing (YAGNI). Tell me which form should collect CPF and whether it's required — it's personal data (LGPD): needs a column, RLS, and privacy-export inclusion.
+1. **CPF**: dropped for now (no field exists). Add `formatCpf` + validation when a form needs it.
 2. **Owner can't edit barber name/phone/photo/hours** by the current decision. Probably expected (barber owns their data), but confirm.
 3. **Owner "Atender como barbeiro"** is the largest hidden item: owner needs a `barbers` row, availability, and appears in the booking picker. Plan 6 treats it as a toggle; if you want it later, drop that bullet.
 4. `en` date test expected `MM/DD/YYYY`; Plan 1 changes it to ISO deliberately.
