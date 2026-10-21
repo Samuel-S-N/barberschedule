@@ -8,6 +8,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { AgendaCard } from "../../src/components/domain/AgendaCard";
 import { AppointmentSheet } from "../../src/components/domain/AppointmentSheet";
 import { EmptyState } from "../../src/components/domain/EmptyState";
+import { AgendaScopeSwitch } from "../../src/components/domain/AgendaScopeSwitch";
 import { ScreenTopBar } from "../../src/components/domain/ScreenTopBar";
 import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
 import { Toast } from "../../src/components/domain/Toast";
@@ -113,6 +114,7 @@ export default function OwnerAgendaScreen() {
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <ScreenTopBar title={t(nav.title)} />
+            <AgendaScopeSwitch scope="store" />
             <Button label={t("owner.agenda.newAppointment")} onPress={() => router.push("/appointment-form")} testID="owner-new-appointment" />
 
             <View className="flex-row gap-2">

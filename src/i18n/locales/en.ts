@@ -397,6 +397,8 @@ export const en = {
       title: "Owner settings",
     },
     agenda: {
+      scopeMine: "My agenda",
+      scopeStore: "Shop",
       empty: "No appointments in this range.",
       complete: "Complete",
       loadError: "Unable to load agenda.",
