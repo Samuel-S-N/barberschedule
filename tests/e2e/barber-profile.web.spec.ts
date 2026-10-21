@@ -148,3 +148,17 @@ test("back from a profile sub-screen returns to the profile hub, also after a co
   await page.locator('[data-testid="back"]:not([aria-hidden="true"] *)').click();
   await expect(page).toHaveURL(/\/my-profile$/);
 });
+
+test("the save profile button is the last control of My details", async ({ page }) => {
+  await signIn(page, barberUserId);
+  await mockBarberRest(page);
+
+  await page.goto("/my-profile/account");
+  await page.getByTestId("account-change-email").click();
+  await expect(page.getByTestId("account-send-link")).toBeVisible();
+
+  const save = await page.getByTestId("barber-save").boundingBox();
+  const sendLink = await page.getByTestId("account-send-link").boundingBox();
+
+  expect(save && sendLink && save.y > sendLink.y).toBe(true);
+});

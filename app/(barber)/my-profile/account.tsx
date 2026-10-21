@@ -116,7 +116,6 @@ export default function BarberAccountScreen() {
 
             <Input label={t("barber.profile.bio")} multiline onChangeText={setBio} testID="barber-bio" value={bio} />
             <Text className="-mt-2 text-xs font-sans text-neutral-600">{t("barber.account.bioHint")}</Text>
-            <Button disabled={save.isPending || !barber.data} label={t("barber.profile.save")} onPress={() => save.mutate()} testID="barber-save" />
 
             <Text className="pt-2 text-sm font-sans-medium text-neutral-600">{t("profile.account.emailLabel")}</Text>
             <Text className="text-base font-sans text-ink" testID="account-email">{session?.user.email}</Text>
@@ -146,6 +145,8 @@ export default function BarberAccountScreen() {
               <Button label={t("profile.account.changeEmail")} onPress={() => setChangingEmail(true)} testID="account-change-email" variant="outline" />
             )}
 
+
+            <Button disabled={save.isPending || !barber.data} label={t("barber.profile.save")} onPress={() => save.mutate()} testID="barber-save" />
             <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
           </View>
         </View>
