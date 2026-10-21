@@ -18,7 +18,7 @@ import { pullToRefresh, useRefreshAll } from "../../lib/use-refresh";
 import { useSupabaseSession } from "../../providers/AppProviders";
 import { listNotifications, markRead } from "./inbox-api";
 import type { InboxItem } from "./inbox-api";
-import { recurrenceLabelKey } from "../recurrence/pricing";
+import { recurrenceLabel } from "../recurrence/pricing";
 import { inboxRoute } from "./inbox-route";
 import { inboxText } from "./inbox-text";
 
@@ -78,7 +78,7 @@ export default function NotificationsScreen() {
                             barberName: item.params.barberName,
                             customerName: item.params.customerName,
                             date: when(item.params.startsAt),
-                            label: t(recurrenceLabelKey(item.params.intervalWeeks ?? 1)),
+                            label: recurrenceLabel(t, item.params.intervalWeeks ?? 1),
                             serviceName: item.params.serviceName,
                           })}
                         </Text>

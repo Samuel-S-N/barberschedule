@@ -9,7 +9,8 @@ import { Card } from "../../components/ui/Card";
 import { useLanguage } from "../../i18n/use-language";
 import { formatDateNumeric } from "../../lib/i18n/format";
 import { whatsappUrl } from "../clients/format";
-import { fourWeekTotalCents, recurrenceLabelKey, sessionsPer4Weeks } from "./pricing";
+import { recurrenceLabel } from "./pricing";
+import { recurrencePriceText } from "./price-text";
 import type { StaffRecurrenceRequest } from "./requests-api";
 
 // A pending recurrence request with Accept / Decline; shared by the owner and the barber screens.
@@ -24,12 +25,10 @@ export function RequestCard({ busy, onDecide, request }: { busy: boolean; onDeci
         <Text className="text-base font-sans-semibold text-ink">{request.customerName}</Text>
         <Text className="text-sm font-sans text-neutral-600">{request.serviceName} · {request.barberName}</Text>
         <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>
-          {t(recurrenceLabelKey(request.weeks))} · {formatDateNumeric(request.startDate, language)} {request.startTime}
+          {recurrenceLabel(t, request.weeks)} · {formatDateNumeric(request.startDate, language)} {request.startTime}
         </Text>
         <Text className="text-sm font-sans-medium text-ink">
-          {special !== null
-            ? `${t("recurrence.perSession", { price: formatPriceBRL(special) })} · ${t("recurrence.fourWeeks", { count: sessionsPer4Weeks(request.weeks), total: formatPriceBRL(fourWeekTotalCents(special, request.weeks)) })}`
-            : t("recurrence.normalPrice", { price: formatPriceBRL(request.normalCents) })}
+          {special !== null ? recurrencePriceText(t, special, request.weeks) : t("recurrence.normalPrice", { price: formatPriceBRL(request.normalCents) })}
         </Text>
         <View className="flex-row flex-wrap items-center gap-2">
           <Button disabled={busy} label={t("recurrence.accept")} onPress={() => onDecide(true)} size="sm" testID={`request-accept-${request.id}`} />
