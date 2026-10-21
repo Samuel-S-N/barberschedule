@@ -3,6 +3,25 @@ import type { ScheduleErrorCode } from "../../features/schedule/api";
 import type { DomainErrorCode } from "../../lib/errors/domain-errors";
 
 export const en = {
+  examples: {
+    address: "123 Flower Street",
+    bio: "Fades and classic cuts since 2015",
+    date: "2026-10-25",
+    description: "Classic fade, 30 min",
+    email: "name@example.com",
+    fullName: "Maria Silva",
+    minutes: "30",
+    money: "25,00",
+    nickname: "Mari",
+    note: "Prefers a short fade",
+    notes: "Anything we should know?",
+    percent: "40",
+    phone: "(11)91234-5678",
+    search: "Ana Souza",
+    serviceName: "Haircut",
+    time: "09:00",
+    weeks: "2",
+  },
   common: {
     activate: "Activate",
     allDay: "all day",

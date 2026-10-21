@@ -2,6 +2,25 @@ import type { en } from "./en";
 import type { DeepStringRecord } from "./types";
 
 export const pt: DeepStringRecord<typeof en> = {
+  examples: {
+    address: "Rua das Flores, 123",
+    bio: "Degradês e cortes clássicos desde 2015",
+    date: "25/10/2026",
+    description: "Degradê clássico, 30 min",
+    email: "nome@exemplo.com",
+    fullName: "Maria Silva",
+    minutes: "30",
+    money: "25,00",
+    nickname: "Mari",
+    note: "Prefere degradê baixo",
+    notes: "Algo que devemos saber?",
+    percent: "40",
+    phone: "(11)91234-5678",
+    search: "Ana Souza",
+    serviceName: "Corte",
+    time: "09:00",
+    weeks: "2",
+  },
   common: {
     activate: "Ativar",
     allDay: "dia inteiro",
