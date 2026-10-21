@@ -61,3 +61,25 @@ test("the owner account tab shows who is signed in and can open the language scr
   await page.getByTestId("menu-language").click();
   await expect(page).toHaveURL(/\/language/);
 });
+
+test("back from a Manage screen returns to Manage, not to the agenda", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page);
+
+  await page.goto("/manage");
+  for (const [key, path] of [["barbers", /\/barbers/], ["services", /\/services/], ["customers", /\/customers/], ["schedule", /\/schedule/], ["shop", /\/shop/]] as const) {
+    await page.getByTestId(`menu-${key}`).click();
+    await expect(page).toHaveURL(path);
+    await page.getByTestId("back").click();
+    await expect(page).toHaveURL(/\/manage/);
+  }
+});
+
+test("a cold start on a Manage screen still goes back to Manage", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page);
+
+  await page.goto("/barbers");
+  await page.getByTestId("back").click();
+  await expect(page).toHaveURL(/\/manage/);
+});
