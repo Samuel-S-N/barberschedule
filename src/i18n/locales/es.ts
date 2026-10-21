@@ -219,7 +219,7 @@ export const es: DeepStringRecord<typeof en> = {
       sendLink: "Enviar enlace de confirmación",
       title: "Mis datos",
     },
-    menu: { about: "Acerca de", account: "Mis datos", privacy: "Privacidad y datos", security: "Seguridad", settings: "Configuración" },
+    menu: { about: "Acerca de", account: "Mis datos", privacy: "Privacidad y datos", recurrence: "Recurrencia", security: "Seguridad", settings: "Configuración" },
     privacy: { title: "Privacidad y datos" },
     security: {
       changed: "Contraseña cambiada.",

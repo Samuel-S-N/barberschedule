@@ -220,7 +220,7 @@ export const en = {
       sendLink: "Send confirmation link",
       title: "My data",
     },
-    menu: { about: "About", account: "My data", privacy: "Privacy and data", security: "Security", settings: "Settings" },
+    menu: { about: "About", account: "My data", privacy: "Privacy and data", recurrence: "Recurrence", security: "Security", settings: "Settings" },
     privacy: { title: "Privacy and data" },
     security: {
       changed: "Password changed.",
