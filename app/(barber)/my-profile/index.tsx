@@ -54,7 +54,7 @@ export default function BarberProfileHub() {
             <MenuBlock
               items={[
                 { icon: Scissors, key: "services", label: t("barber.hub.menu.services"), onPress: () => router.push("/my-profile/services") },
-                { icon: Clock, key: "hours", label: t("barber.hub.menu.hours"), onPress: () => router.push("/my-profile/hours") },
+                { icon: Clock, key: "availability", label: t("barber.hub.menu.availability"), onPress: () => router.push("/my-profile/availability") },
                 { icon: Coins, key: "compensation", label: t("barber.hub.menu.compensation"), onPress: () => router.push("/my-profile/compensation") },
               ]}
             />

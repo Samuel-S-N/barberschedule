@@ -3,10 +3,11 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { MessageCircle, Phone } from "lucide-react-native";
 import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Linking, Platform, Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { Avatar } from "../../../src/components/domain/Avatar";
+import { ContactLink } from "../../../src/components/domain/ContactLink";
 import { ScreenHeader } from "../../../src/components/domain/ScreenHeader";
 import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
 import { StatTile } from "../../../src/components/domain/StatTile";
@@ -20,34 +21,11 @@ import { getMyClient, setMyClientNote } from "../../../src/features/clients/api"
 import { telUrl, whatsappUrl } from "../../../src/features/clients/format";
 import { errorMessage } from "../../../src/i18n/errors";
 import { useLanguage } from "../../../src/i18n/use-language";
-import { colors } from "../../../src/lib/design/colors";
 import { formatInstantInShopTime } from "../../../src/lib/dates/shop-time";
 import { formatDateLabel } from "../../../src/lib/i18n/format";
 import { useBack } from "../../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../../src/lib/use-refresh";
-
-function ContactLink({ children, icon: Icon, testID, url }: { children: string; icon: typeof Phone; testID: string; url: string | null }) {
-  const body = (
-    <View className={`min-h-[44px] flex-1 flex-row items-center justify-center gap-2 rounded-full border border-neutral-200 bg-surface px-4 ${url ? "" : "opacity-50"}`}>
-      <Icon color={colors.primary[600]} size={18} />
-      <Text className="text-sm font-sans-semibold text-ink">{children}</Text>
-    </View>
-  );
-
-  if (!url) return <View className="flex-1" testID={testID}>{body}</View>;
-
-  // On the web a real anchor keeps the link openable in a new tab; on native Linking hands it to WhatsApp or the dialer.
-  const linkProps = Platform.OS === "web"
-    ? ({ href: url, hrefAttrs: { rel: "noopener noreferrer", target: "_blank" } } as object)
-    : { onPress: () => void Linking.openURL(url) };
-
-  return (
-    <Pressable accessibilityRole="link" className="flex-1" testID={testID} {...linkProps}>
-      {body}
-    </Pressable>
-  );
-}
 
 function Line({ children, label }: { children: ReactNode; label: string }) {
   return (

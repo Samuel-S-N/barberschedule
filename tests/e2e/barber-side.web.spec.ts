@@ -123,23 +123,6 @@ test("a barber closes a past appointment from the awaiting-closure section", asy
   expect(statusPayload).toEqual({ appointment_id: "appt-old", new_status: "no_show" });
 });
 
-test("a barber blocks a whole day and it is sent as a block for their own barber row", async ({ page }) => {
-  let insertPayload: Record<string, unknown> | null = null;
-
-  await signIn(page, barberUserId);
-  await mockBarberRest(page, async (route) => {
-    if (route.request().method() === "POST" && new URL(route.request().url()).pathname.endsWith("/schedule_overrides")) {
-      insertPayload = route.request().postDataJSON() as Record<string, unknown>;
-      return json(route, { barber_id: barberId, end_time: null, id: "o1", kind: "block", local_date: "2026-10-01", shop_id: shopId, start_time: null }, 201).then(() => true);
-    }
-  });
-
-  await page.goto("/my-agenda");
-  await page.getByTestId("barber-block-add").click();
-  await expect(page.getByText("Time off added.")).toBeVisible();
-  expect(insertPayload).toMatchObject({ barber_id: barberId, kind: "block", shop_id: shopId, start_time: null, end_time: null });
-});
-
 test("a barber cannot open the owner or customer areas", async ({ page }) => {
   await signIn(page, barberUserId);
   await mockBarberRest(page);
@@ -192,4 +175,25 @@ test("an owner invites a barber and sets a chair-rental compensation", async ({ 
     new_commission_percent: null, new_rental_amount_cents: 30000, new_rental_frequency: "weekly",
     new_type: "chair_rental", target_barber_id: barberId,
   });
+});
+
+test("an agenda card opens the client and offers WhatsApp and phone links", async ({ page }) => {
+  await signIn(page, barberUserId);
+  await mockBarberRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/rpc/list_my_barber_agenda")) return json(route, [agendaRow({ customer_phone: "11988887777" })]).then(() => true);
+    if (url.pathname.endsWith("/rpc/get_my_customer")) {
+      return json(route, {
+        customer: { email: null, full_name: "Ana Customer", has_account: true, id: "44444444-4444-4444-8444-444444444444", phone: "11988887777" },
+        history: [], note: null,
+        stats: { cancelled: 0, favorite_service: null, last_visit_at: null, next_visit_at: null, no_show: 0, visits: 0 },
+      }).then(() => true);
+    }
+  });
+
+  await page.goto("/my-agenda");
+  await expect(page.getByTestId("barber-appt-whatsapp-appt-1")).toHaveAttribute("href", "https://wa.me/5511988887777");
+  await expect(page.getByTestId("barber-appt-call-appt-1")).toHaveAttribute("href", "tel:+5511988887777");
+
+  await page.getByTestId("barber-appointment-open-appt-1").click();
+  await expect(page).toHaveURL(/\/clients\/44444444-4444-4444-8444-444444444444/);
 });

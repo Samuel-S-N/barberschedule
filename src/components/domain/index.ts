@@ -38,3 +38,4 @@ export { DaySummaryCard } from "./DaySummaryCard";
 export type { DaySummaryCardProps } from "./DaySummaryCard";
 export { NotificationBell } from "./NotificationBell";
 export { StepIndicator } from "./StepIndicator";
+export { ContactLink } from "./ContactLink";
