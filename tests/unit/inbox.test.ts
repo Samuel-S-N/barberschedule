@@ -14,7 +14,7 @@ it("maps rows", async () => {
 
   expect(item).toEqual({
     appointmentId: "a1", createdAt: "2026-10-20T10:00:00Z", id: "n1", kind: "appointment_cancelled",
-    params: { barberName: "Bia", customerName: "Ana", serviceName: "Cut", startsAt: "2026-10-21T13:00:00Z" }, readAt: null,
+    params: { barberName: "Bia", customerName: "Ana", intervalWeeks: null, serviceName: "Cut", startsAt: "2026-10-21T13:00:00Z" }, readAt: null,
   });
   expect(supabase.from).toHaveBeenCalledWith("notifications");
 });
@@ -41,4 +41,10 @@ it("gives each role its own notifications URL", () => {
   expect(notificationsPath("customer")).toBe("/notifications");
   expect(notificationsPath("barber")).toBe("/barber-notifications");
   expect(notificationsPath("owner")).toBe("/owner-notifications");
+});
+
+it("routes recurrence notifications", () => {
+  expect(inboxRoute("recurrence_requested", "barber")).toBe("/my-profile/recurrence");
+  expect(inboxRoute("recurrence_requested", "owner")).toBe("/monthly-customers");
+  expect(inboxRoute("recurrence_accepted", "customer")).toBe("/me/recurrence");
 });
