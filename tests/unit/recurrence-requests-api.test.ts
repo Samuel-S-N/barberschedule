@@ -1,5 +1,5 @@
 import {
-  createRecurrenceForCustomer, decideRecurrenceRequest, listRecurrenceRequests, requestRecurrence,
+  createRecurrenceForCustomer, decideRecurrenceRequest, listMyRecurrenceRequests, listRecurrenceRequests, requestRecurrence,
 } from "../../src/features/recurrence/requests-api";
 
 it("sends the request", async () => {
@@ -32,4 +32,15 @@ it("maps staff rows and trims seconds", async () => {
   const [row] = await listRecurrenceRequests({ rpc } as never, "shop1");
 
   expect(row).toMatchObject({ customerName: "Ana", recurrenceCents: 2500, startTime: "10:00", weeks: 1 });
+});
+
+it("maps my requests with the series state and the plan title", async () => {
+  const rpc = jest.fn().mockResolvedValue({
+    data: [{ barber_name: "Bia", id: "r1", interval_weeks: 1, local_start_date: "2026-10-23", local_start_time: "16:30:00", plan_name: "Corte mensal", recurrence_cents: 2500, series_active: false, series_ended_at: "2026-10-21T12:12:00Z", series_id: "s1", service_name: "Cut", status: "accepted" }],
+    error: null,
+  });
+
+  expect(await listMyRecurrenceRequests({ rpc } as never)).toEqual([
+    { barberName: "Bia", id: "r1", planName: "Corte mensal", recurrenceCents: 2500, seriesActive: false, seriesEndedAt: "2026-10-21T12:12:00Z", seriesId: "s1", serviceName: "Cut", startDate: "2026-10-23", startTime: "16:30", status: "accepted", weeks: 1 },
+  ]);
 });

@@ -19,6 +19,7 @@ export type DomainErrorCode =
   | "RECURRENCE_PLAN_DUPLICATE"
   | "RECURRENCE_PLAN_NAME_REQUIRED"
   | "RECURRENCE_CONFLICT_RESOLVED"
+  | "RECURRENCE_SERIES_NOT_ENDED"
   | "OWNER_AGENDA_REQUEST_FAILED"
   | "OWNER_STATUS_REQUEST_FAILED"
   | "APPOINTMENT_REQUEST_FAILED"
@@ -101,6 +102,8 @@ export function toDomainError(error: { code?: string; message?: string }): Domai
       return new DomainError("RECURRENCE_REQUEST_NOT_PENDING", "This request was already answered.");
     case "P0032":
       return new DomainError("RECURRENCE_PRICE_INVALID", "Enter a valid recurrence price.");
+    case "P0036":
+      return new DomainError("RECURRENCE_SERIES_NOT_ENDED", "This plan is not ended.");
     case "P0035":
       return new DomainError("RECURRENCE_CONFLICT_RESOLVED", "This conflict was already resolved.");
     case "P0034":

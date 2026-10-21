@@ -19,13 +19,26 @@ const cents = (value: unknown) => (value === null || value === undefined ? null 
 export type RecurrenceRequest = {
   barberName: string;
   id: string;
+  planName: string | null;
   recurrenceCents: number | null;
+  seriesActive: boolean | null;
+  seriesEndedAt: string | null;
+  seriesId: string | null;
   serviceName: string;
   startDate: string;
   startTime: string;
   status: "accepted" | "cancelled" | "pending" | "rejected";
   weeks: RecurrenceWeeks;
 };
+
+export type RequestDisplayStatus = "active" | "cancelled" | "ended" | "pending" | "rejected";
+
+// An accepted request whose series was ended by staff is "ended": the request itself stays "accepted".
+export function requestDisplayStatus(request: Pick<RecurrenceRequest, "seriesEndedAt" | "status">): RequestDisplayStatus {
+  if (request.status === "accepted") return request.seriesEndedAt ? "ended" : "active";
+
+  return request.status;
+}
 
 export type StaffRecurrenceRequest = {
   barberId: string;
@@ -72,7 +85,11 @@ export async function listMyRecurrenceRequests(supabase: Client): Promise<Recurr
   return rows.map((row) => ({
     barberName: String(row.barber_name),
     id: String(row.id),
+    planName: (row.plan_name as string | null) ?? null,
     recurrenceCents: cents(row.recurrence_cents),
+    seriesActive: row.series_active === null || row.series_active === undefined ? null : Boolean(row.series_active),
+    seriesEndedAt: (row.series_ended_at as string | null) ?? null,
+    seriesId: (row.series_id as string | null) ?? null,
     serviceName: String(row.service_name),
     startDate: String(row.local_start_date),
     startTime: time(row.local_start_time),
