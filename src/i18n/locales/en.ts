@@ -178,6 +178,7 @@ export const en = {
     priceHint: "Leave empty to use the regular price.",
     priceLabel: "{{frequency}} price (R$)",
     priceSaved: "Price saved.",
+    savePrice: "Save",
     pricesTab: "Prices",
     reject: "Decline",
     request: "Request recurrence",

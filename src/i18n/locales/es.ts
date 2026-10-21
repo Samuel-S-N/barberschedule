@@ -177,6 +177,7 @@ export const es: DeepStringRecord<typeof en> = {
     priceHint: "Déjalo vacío para usar el precio normal.",
     priceLabel: "Precio {{frequency}} (R$)",
     priceSaved: "Precio guardado.",
+    savePrice: "Guardar",
     pricesTab: "Precios",
     reject: "Rechazar",
     request: "Pedir recurrencia",
