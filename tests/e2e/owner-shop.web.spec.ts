@@ -38,8 +38,8 @@ async function mockOwnerRest(page: Page, calls: Record<string, unknown>) {
     }
     if (path.endsWith("/rpc/list_owner_barbers")) {
       return json(route, [
-        { active: true, archived_at: null, commission_percent: "0.00", compensation_type: "commission", id: "b1", name: "Ana", shop_id: shop, user_id: null },
-        { active: true, archived_at: null, commission_percent: "0.00", compensation_type: "commission", id: "b2", name: "Bruno", shop_id: shop, user_id: null },
+        { active: true, archived_at: null, commission_percent: "0.00", compensation_type: "commission", id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1", name: "Ana", shop_id: shop, user_id: null },
+        { active: true, archived_at: null, commission_percent: "0.00", compensation_type: "commission", id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2", name: "Bruno", shop_id: shop, user_id: null },
       ]);
     }
     if (path.endsWith("/rpc/list_owner_schedule_overrides") || (path.endsWith("/schedule_overrides") && method === "GET")) {
@@ -150,15 +150,15 @@ test("the owner closes the shop on a date for every active barber and reopens it
   await page.getByTestId("shop-closed-add").click();
 
   await expect.poll(() => calls.inserts).toMatchObject([
-    { barber_id: "b1", kind: "block", local_date: date, start_time: null },
-    { barber_id: "b2", kind: "block", local_date: date, start_time: null },
+    { barber_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1", kind: "block", local_date: date, start_time: null },
+    { barber_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2", kind: "block", local_date: date, start_time: null },
   ]);
 });
 
 test("a date closed for every barber is listed and can be reopened", async ({ page }) => {
   const date = "2099-12-25";
   const row = (id: string, barberId: string) => ({ barber_id: barberId, end_time: null, id, kind: "block", local_date: date, shop_id: shop, start_time: null });
-  const calls: Record<string, unknown> = { deletes: [], inserts: [], overrides: [row("o1", "b1"), row("o2", "b2")] };
+  const calls: Record<string, unknown> = { deletes: [], inserts: [], overrides: [row("o1", "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1"), row("o2", "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2")] };
 
   await signInAsOwner(page);
   await mockOwnerRest(page, calls);

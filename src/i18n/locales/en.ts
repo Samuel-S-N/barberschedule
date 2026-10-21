@@ -520,6 +520,8 @@ export const en = {
       title: "Recurrence conflicts",
     },
     schedule: {
+      closedDay: "Closed",
+      copyShopHours: "Copy the shop hours",
       addOverride: "Add override",
       addOverrideError: "Unable to add override.",
       addPeriod: "Add working period",

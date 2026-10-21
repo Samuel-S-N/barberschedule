@@ -519,6 +519,8 @@ export const pt: DeepStringRecord<typeof en> = {
       title: "Conflitos de recorrência",
     },
     schedule: {
+      closedDay: "Fechado",
+      copyShopHours: "Copiar o horário da barbearia",
       addOverride: "Adicionar exceção",
       addOverrideError: "Não foi possível adicionar a exceção.",
       addPeriod: "Adicionar período de trabalho",
