@@ -10,6 +10,7 @@ export const en = {
     archived: "(archived)",
     back: "Back",
     cancel: "Cancel",
+    clear: "Clear",
     cancelEdit: "Cancel edit",
     customer: "Customer",
     deactivate: "Deactivate",

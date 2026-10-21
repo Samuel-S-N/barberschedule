@@ -9,6 +9,7 @@ export const pt: DeepStringRecord<typeof en> = {
     archived: "(arquivado)",
     back: "Voltar",
     cancel: "Cancelar",
+    clear: "Limpar",
     cancelEdit: "Cancelar edição",
     customer: "Cliente",
     deactivate: "Desativar",

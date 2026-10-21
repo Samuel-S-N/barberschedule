@@ -9,6 +9,7 @@ export const es: DeepStringRecord<typeof en> = {
     archived: "(archivado)",
     back: "Volver",
     cancel: "Cancelar",
+    clear: "Borrar",
     cancelEdit: "Cancelar edición",
     customer: "Cliente",
     deactivate: "Desactivar",

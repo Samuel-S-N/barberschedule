@@ -72,6 +72,12 @@ test("the clients tab lists clients, filters lapsed ones and searches", async ({
   await page.getByTestId("clients-filter-all").click();
   await page.getByTestId("client-search").fill("ana");
   await expect.poll(() => calls.some((c) => c.search === "ana")).toBe(true);
+
+  // The X appears with text and clears the field.
+  await expect(page.getByTestId("client-search-clear")).toBeVisible();
+  await page.getByTestId("client-search-clear").click();
+  await expect(page.getByTestId("client-search")).toHaveValue("");
+  await expect(page.getByTestId("client-search-clear")).toHaveCount(0);
 });
 
 test("a client detail shows stats, history, contact links and saves a private note", async ({ page }) => {
