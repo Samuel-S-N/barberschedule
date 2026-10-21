@@ -20,7 +20,7 @@ export default function OwnerServicesScreen() {
   const { t } = useTranslation();
   const pull = useRefreshAll();
   const router = useRouter();
-  const back = useBack("/manage");
+  const back = useBack();
   const { catalog, shop } = useOwnerServiceCatalog();
   const loading = shop.isLoading || catalog.isLoading;
   const loadError = shop.error ?? catalog.error;

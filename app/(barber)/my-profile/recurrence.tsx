@@ -23,7 +23,7 @@ import { useSupabaseSession } from "../../../src/providers/AppProviders";
 export default function BarberRecurrenceScreen() {
   const { t } = useTranslation();
   const pull = useRefreshAll();
-  const back = useBack("/my-profile");
+  const back = useBack();
   const queryClient = useQueryClient();
   const { profile, supabase } = useSupabaseSession();
   const [manualOpen, setManualOpen] = useState(false);

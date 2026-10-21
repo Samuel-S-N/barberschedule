@@ -25,7 +25,7 @@ type Feedback = { message: string; variant: "error" | "success" };
 export default function OwnerAccountScreen() {
   const { t } = useTranslation();
   const field = useFieldChain(2);
-  const back = useBack("/settings");
+  const back = useBack();
   const queryClient = useQueryClient();
   const { session, supabase } = useSupabaseSession();
   const profile = useMyProfile();

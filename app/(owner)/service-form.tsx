@@ -25,7 +25,7 @@ import { useSupabaseSession } from "../../src/providers/AppProviders";
 // Create (no `id`) or edit (`?id=`) a service; editing also manages the standard flag, activation and which barbers offer it.
 export default function OwnerServiceFormScreen() {
   const { t } = useTranslation();
-  const back = useBack("/services");
+  const back = useBack();
   const field = useFieldChain(4);
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();

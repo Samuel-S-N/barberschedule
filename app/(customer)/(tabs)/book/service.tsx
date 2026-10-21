@@ -21,7 +21,7 @@ export default function BookServiceScreen() {
   const shopId = param(rawShopId);
   const router = useRouter();
   const { t } = useTranslation();
-  const back = useBack("/book");
+  const back = useBack();
   const services = useBarberServices(barberId);
 
   return (

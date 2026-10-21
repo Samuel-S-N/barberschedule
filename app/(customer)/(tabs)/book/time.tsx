@@ -30,7 +30,7 @@ export default function BookTimeScreen() {
   const localDate = param(params.localDate);
   const shopId = param(params.shopId);
   const router = useRouter();
-  const back = useBack("/book");
+  const back = useBack();
   const { t } = useTranslation();
   const language = useLanguage();
   const { supabase } = useSupabaseSession();

@@ -24,7 +24,7 @@ import { useSupabaseSession } from "../../src/providers/AppProviders";
 // Create (no `id`) or edit (`?id=`) a customer.
 export default function OwnerCustomerFormScreen() {
   const { t } = useTranslation();
-  const back = useBack("/customers");
+  const back = useBack();
   const field = useFieldChain(3);
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();

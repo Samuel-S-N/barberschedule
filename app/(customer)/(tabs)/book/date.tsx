@@ -23,7 +23,7 @@ export default function BookDateScreen() {
   const barberServiceId = param(params.barberServiceId);
   const shopId = param(params.shopId);
   const { t } = useTranslation();
-  const back = useBack("/book");
+  const back = useBack();
   const today = formatInstantInShopTime(useNow()).localDate;
   const [picked, setLocalDate] = useState(today);
   const localDate = picked < today ? today : picked;

@@ -18,6 +18,7 @@ import { getAvailableSlotsQueryOptions } from "../../src/features/availability/q
 import type { AvailableSlot } from "../../src/features/availability/types";
 import { errorMessage } from "../../src/i18n/errors";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
+import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { Screen } from "../../src/components/ui/Screen";
 
@@ -31,6 +32,7 @@ export default function RescheduleScreen() {
   const barberId = param(params.barberId);
   const barberServiceId = param(params.barberServiceId);
   const router = useRouter();
+  const back = useBack();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
   const { supabase } = useSupabaseSession();
@@ -103,7 +105,7 @@ export default function RescheduleScreen() {
               size="lg"
               testID="reschedule-confirm"
             />
-            <Button label={t("reschedule.keep")} onPress={() => router.back()} variant="ghost" />
+            <Button label={t("reschedule.keep")} onPress={back} variant="ghost" />
           </View>
         </View>
       </ScrollView>

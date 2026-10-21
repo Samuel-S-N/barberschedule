@@ -113,7 +113,7 @@ export default function OwnerAppointmentFormScreen() {
     }
   };
 
-  const back = useBack("/agenda");
+  const back = useBack();
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>

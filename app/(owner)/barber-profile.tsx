@@ -26,7 +26,7 @@ import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 export default function OwnerBarberProfileScreen() {
   const { t } = useTranslation();
   const pull = useRefreshAll();
-  const back = useBack("/barbers");
+  const back = useBack();
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
   const { id } = useLocalSearchParams<{ id: string }>();

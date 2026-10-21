@@ -11,7 +11,7 @@ import { useBack } from "../../../src/lib/navigation/use-back";
 export default function SecurityScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const back = useBack("/settings");
+  const back = useBack();
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
