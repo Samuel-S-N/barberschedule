@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 
 import { BottomTabBar } from "../../src/components/domain/BottomTabBar";
 import { Screen } from "../../src/components/ui/Screen";
+import { usePushRegistration } from "../../src/features/notifications/use-push-registration";
+import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 // Screens reached from the Manage menu: not tabs themselves, and they keep "Manage" highlighted.
 const MANAGE_SCREENS = ["appointment-form", "barbers", "customers", "monthly-customers", "recurrence-conflicts", "schedule", "services", "shop"] as const;
@@ -12,12 +14,14 @@ const ACCOUNT_SCREENS = ["language"] as const;
 
 export default function OwnerLayout() {
   const { t } = useTranslation();
+  const { profile } = useSupabaseSession();
   const items = [
     { icon: CalendarDays, key: "agenda", label: t("tabs.agenda") },
     { icon: Coins, key: "revenue", label: t("tabs.revenue") },
     { icon: LayoutGrid, key: "manage", label: t("tabs.manage") },
     { icon: User, key: "settings", label: t("tabs.account") },
   ];
+  usePushRegistration(profile?.role === "owner");
   const highlight = (name: string) => ((MANAGE_SCREENS as readonly string[]).includes(name) ? "manage" : (ACCOUNT_SCREENS as readonly string[]).includes(name) ? "settings" : name);
 
   return (
