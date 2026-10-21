@@ -74,7 +74,7 @@ test("a barber lands on their own agenda and marks an appointment completed", as
   await page.goto("/");
   await expect(page).toHaveURL(/\/my-agenda/);
   await expect(page.getByRole("heading", { name: "My agenda" })).toBeVisible();
-  await expect(page.getByText("Ana Customer")).toBeVisible();
+  await expect(page.getByTestId("barber-appointment-appt-1")).toContainText("Ana Customer");
   expect(Object.keys(agendaPayload ?? {}).sort()).toEqual(["page_limit", "page_offset", "range_end", "range_start"]);
 
   await page.getByTestId("barber-complete-appt-1").click();
