@@ -18,6 +18,7 @@ import { pullToRefresh, useRefreshAll } from "../../lib/use-refresh";
 import { useSupabaseSession } from "../../providers/AppProviders";
 import { listNotifications, markRead } from "./inbox-api";
 import type { InboxItem } from "./inbox-api";
+import { recurrenceLabelKey } from "../recurrence/pricing";
 import { inboxRoute } from "./inbox-route";
 import { inboxText } from "./inbox-text";
 
@@ -46,6 +47,7 @@ export default function NotificationsScreen() {
   };
 
   const when = (startsAt: string) => {
+    if (!startsAt) return "";
     const local = formatInstantInShopTime(new Date(startsAt));
 
     return `${formatDateNumeric(local.localDate, language)} ${local.localTime}`;
@@ -74,7 +76,13 @@ export default function NotificationsScreen() {
                       <View className="flex-1 gap-1">
                         <Text className={`text-base text-ink ${item.readAt ? "font-sans-medium" : "font-sans-semibold"}`}>{t(text.titleKey)}</Text>
                         <Text className="text-sm font-sans text-neutral-600">
-                          {t(text.bodyKey, { barberName: item.params.barberName, customerName: item.params.customerName, date: when(item.params.startsAt), serviceName: item.params.serviceName })}
+                          {t(text.bodyKey, {
+                            barberName: item.params.barberName,
+                            customerName: item.params.customerName,
+                            date: when(item.params.startsAt),
+                            label: t(recurrenceLabelKey(item.params.intervalWeeks ?? 1)),
+                            serviceName: item.params.serviceName,
+                          })}
                         </Text>
                       </View>
                     </View>

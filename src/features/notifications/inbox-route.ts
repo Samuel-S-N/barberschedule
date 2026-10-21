@@ -1,10 +1,12 @@
 import type { InboxKind } from "./inbox-api";
 
-const AGENDA = { barber: "/my-agenda", customer: "/appointments", owner: "/agenda" } as const;
+type Role = "barber" | "customer" | "owner";
 
-// Plan 6 adds the recurrence kinds here.
-export function inboxRoute(_kind: InboxKind, role: keyof typeof AGENDA) {
-  return AGENDA[role];
+const AGENDA: Record<Role, string> = { barber: "/my-agenda", customer: "/appointments", owner: "/agenda" };
+const REQUESTS: Record<Role, string> = { barber: "/my-profile/recurrence", customer: "/me/recurrence", owner: "/monthly-customers" };
+
+export function inboxRoute(kind: InboxKind, role: Role) {
+  return kind.startsWith("recurrence_") ? REQUESTS[role] : AGENDA[role];
 }
 
 // Role-specific URLs: the role groups share one URL space, so two groups cannot both own "/notifications".

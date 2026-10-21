@@ -7,14 +7,17 @@ export type InboxKind =
   | "appointment_booked"
   | "appointment_confirmed"
   | "appointment_cancelled"
-  | "appointment_rescheduled";
+  | "appointment_rescheduled"
+  | "recurrence_requested"
+  | "recurrence_accepted"
+  | "recurrence_rejected";
 
 export type InboxItem = {
   appointmentId: string | null;
   createdAt: string;
   id: string;
   kind: InboxKind;
-  params: { barberName: string; customerName: string; serviceName: string; startsAt: string };
+  params: { barberName: string; customerName: string; intervalWeeks: number | null; serviceName: string; startsAt: string };
   readAt: string | null;
 };
 
@@ -23,7 +26,7 @@ type Row = {
   created_at: string;
   id: string;
   kind: InboxKind;
-  params: { barber_name: string; customer_name: string; service_name: string; starts_at: string };
+  params: { barber_name?: string; customer_name?: string; interval_weeks?: number; service_name?: string; starts_at?: string };
   read_at: string | null;
 };
 
@@ -40,7 +43,13 @@ export async function listNotifications(supabase: Client, limit = 50): Promise<I
     createdAt: row.created_at,
     id: row.id,
     kind: row.kind,
-    params: { barberName: row.params.barber_name, customerName: row.params.customer_name, serviceName: row.params.service_name, startsAt: row.params.starts_at },
+    params: {
+      barberName: row.params.barber_name ?? "",
+      customerName: row.params.customer_name ?? "",
+      intervalWeeks: row.params.interval_weeks ?? null,
+      serviceName: row.params.service_name ?? "",
+      startsAt: row.params.starts_at ?? "",
+    },
     readAt: row.read_at,
   }));
 }

@@ -58,6 +58,8 @@ test("the owner account tab shows who is signed in and can open the language scr
   await page.goto("/settings");
   await expect(page.getByRole("heading", { name: "Olivia Owner" })).toBeVisible();
   await expect(page.getByTestId("profile-signout")).toBeVisible();
+  await page.getByTestId("menu-settings").click();
+  await expect(page).toHaveURL(/\/owner-profile\/settings/);
   await page.getByTestId("menu-language").click();
   await expect(page).toHaveURL(/\/language/);
 });

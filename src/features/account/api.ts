@@ -127,3 +127,8 @@ export async function changeEmail(supabase: Pick<SupabaseClient, "auth">, email:
 
   if (error) throw new DomainError("ACCOUNT_REQUEST_FAILED", REQUEST_FAILED);
 }
+
+// Staff (owners and barbers) have no customers row, so they use their own profile update.
+export async function updateMyStaffProfile(supabase: RpcClient, input: { fullName: string; nickname: string | null }) {
+  await callRpc(supabase, "update_my_staff_profile", { p_full_name: input.fullName, p_nickname: input.nickname?.trim() || null });
+}

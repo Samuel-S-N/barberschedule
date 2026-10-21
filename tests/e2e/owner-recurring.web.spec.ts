@@ -40,6 +40,29 @@ async function mockOwnerRest(page: Page, calls: Record<string, unknown>) {
     if (path.endsWith("/services") && method === "GET") return json(route, [{ active: true, archived_at: null, description: null, duration_minutes: 30, id: S1, is_standard: true, name: "Cut", price_cents: 4000, shop_id: shop }]);
     if (path.endsWith("/barber_services") && method === "GET") return json(route, [{ active: true, archived_at: null, barber_id: B1, duration_override_minutes: null, id: BS1, price_override_cents: null, service_id: S1, shop_id: shop }]);
     if (path.endsWith("/rpc/list_owner_recurrence_series")) return json(route, series);
+    if (path.endsWith("/rpc/list_recurrence_requests")) {
+      return json(route, [{
+        barber_id: B1, barber_name: "Bruno Barber", customer_name: "Dani Costa", customer_phone: "11912345678", id: "rq1", interval_weeks: 1,
+        local_start_date: "2026-11-02", local_start_time: "10:00:00", normal_cents: 3500, recurrence_cents: 2500, service_name: "Cut",
+      }]);
+    }
+    if (path.endsWith("/rpc/decide_recurrence_request")) {
+      calls.decide = route.request().postDataJSON();
+
+      return json(route, [{}]);
+    }
+    if (path.endsWith("/rpc/list_recurrence_prices")) return json(route, [{ interval_weeks: 1, price_cents: 2500, service_id: S1 }]);
+    if (path.endsWith("/rpc/set_recurrence_price")) {
+      (calls.prices as unknown[] | undefined)?.push(route.request().postDataJSON());
+
+      return json(route, null);
+    }
+    if (path.endsWith("/rpc/get_recurrence_quote")) return json(route, [{ interval_weeks: 1, normal_cents: 4000, recurrence_cents: 3000 }, { interval_weeks: 2, normal_cents: 4000, recurrence_cents: null }]);
+    if (path.endsWith("/rpc/create_recurrence_for_customer")) {
+      calls.manual = route.request().postDataJSON();
+
+      return json(route, [{}]);
+    }
     if (path.endsWith("/rpc/create_recurrence_series")) {
       calls.create = route.request().postDataJSON();
 
@@ -70,36 +93,80 @@ async function mockOwnerRest(page: Page, calls: Record<string, unknown>) {
   });
 }
 
-test("recurring customers show the series with service, interval and price", async ({ page }) => {
-  await signInAsOwner(page);
-  await mockOwnerRest(page, {});
-
-  await page.goto("/monthly-customers");
-  await expect(page.getByTestId(`series-${R1}`)).toContainText("Ana Souza");
-  await expect(page.getByTestId(`series-${R1}`)).toContainText("Bruno Barber · Cut");
-  await expect(page.getByTestId(`series-${R1}`)).toContainText("R$ 30,00");
-  await expect(page.getByTestId(`series-${R2}`)).toContainText("catalog price");
-});
-
-test("the owner creates a recurring booking choosing customer and service by name", async ({ page }) => {
+test("pending requests show the customer, frequency and special price; the owner accepts or declines", async ({ page }) => {
   const calls: Record<string, unknown> = {};
 
   await signInAsOwner(page);
   await mockOwnerRest(page, calls);
 
   await page.goto("/monthly-customers");
-  // The service is chosen by barber and service name, never by an id.
-  await page.getByTestId(`option-${C1}`).click();
-  await page.getByTestId(`option-${BS1}`).click();
-  await page.getByTestId("recurrence-interval").fill("2");
-  await page.getByTestId("recurrence-time").fill("11:00");
-  await page.getByTestId("recurrence-price").fill("30,00");
-  await page.getByTestId("recurrence-save").click();
+  await expect(page.getByTestId("request-rq1")).toContainText("Dani Costa");
+  await expect(page.getByTestId("request-rq1")).toContainText("Weekly");
+  await expect(page.getByTestId("request-rq1")).toContainText("2026-11-02 10:00");
+  // Seed cut 35 → weekly 25: four sessions make R$ 100.
+  await expect(page.getByTestId("request-rq1")).toContainText("R$ 25,00 per session");
+  await expect(page.getByTestId("request-rq1")).toContainText("R$ 100,00");
 
-  await expect.poll(() => calls.create).toMatchObject({
-    interval_weeks: 2, local_start_time: "11:00", special_price_cents: 3000, target_barber_service_id: BS1, target_customer_id: C1,
+  await page.getByTestId("request-accept-rq1").click();
+  await expect.poll(() => calls.decide).toEqual({ accept: true, target_request_id: "rq1" });
+  await page.getByTestId("request-reject-rq1").click();
+  await expect.poll(() => calls.decide).toEqual({ accept: false, target_request_id: "rq1" });
+});
+
+test("the owner sets the recurrence price per service and frequency", async ({ page }) => {
+  const calls: Record<string, unknown> = { prices: [] };
+
+  await signInAsOwner(page);
+  await mockOwnerRest(page, calls);
+
+  await page.goto("/monthly-customers");
+  await page.getByTestId("recurring-tab-prices").click();
+  await expect(page.getByTestId(`price-${S1}-1`)).toHaveValue("25,00");
+  await page.getByTestId(`price-${S1}-2`).fill("30,00");
+  await expect(page.getByTestId(`price-total-${S1}-2`)).toContainText("R$ 60,00");
+  await page.getByTestId(`price-${S1}-1`).fill("");
+  await page.getByTestId(`price-save-${S1}`).click();
+
+  await expect.poll(() => calls.prices).toEqual([
+    { target_interval_weeks: 1, target_price_cents: null, target_service_id: S1 },
+    { target_interval_weeks: 2, target_price_cents: 3000, target_service_id: S1 },
+  ]);
+});
+
+test("active series show frequency, service and price", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, {});
+
+  await page.goto("/monthly-customers");
+  await page.getByTestId("recurring-tab-active").click();
+  await expect(page.getByTestId(`series-${R1}`)).toContainText("Ana Souza");
+  await expect(page.getByTestId(`series-${R1}`)).toContainText("Bruno Barber · Cut");
+  await expect(page.getByTestId(`series-${R1}`)).toContainText("R$ 30,00");
+  await expect(page.getByTestId(`series-${R2}`)).toContainText("catalog price");
+});
+
+test("the owner creates a recurrence for a customer without an account", async ({ page }) => {
+  const calls: Record<string, unknown> = {};
+
+  await signInAsOwner(page);
+  await mockOwnerRest(page, calls);
+
+  await page.goto("/monthly-customers");
+  await page.getByTestId("recurring-tab-active").click();
+  await page.getByTestId("recurring-manual").click();
+  await page.getByTestId(`option-customer-${C1}`).click();
+  await page.getByTestId(`option-service-${BS1}`).click();
+  await page.getByTestId("option-weeks-1").click();
+  await expect(page.getByTestId("manual-recurrence-price")).toContainText("R$ 30,00 per session");
+  await page.getByTestId("manual-recurrence-date").fill("");
+  await page.getByTestId("manual-recurrence-date").pressSequentially("20261102");
+  await page.getByTestId("manual-recurrence-time").fill("");
+  await page.getByTestId("manual-recurrence-time").pressSequentially("1100");
+  await page.getByTestId("manual-recurrence-save").click();
+
+  await expect.poll(() => calls.manual).toEqual({
+    target_barber_service_id: BS1, target_customer_id: C1, target_interval_weeks: 1, target_start_date: "2026-11-02", target_start_time: "11:00",
   });
-  await expect.poll(() => calls.ensure).toBeTruthy();
 });
 
 test("the owner cancels one occurrence and ends a series", async ({ page }) => {
@@ -109,7 +176,9 @@ test("the owner cancels one occurrence and ends a series", async ({ page }) => {
   await mockOwnerRest(page, calls);
 
   await page.goto("/monthly-customers");
-  await page.getByTestId("recurrence-occurrence-date").fill("2026-10-12");
+  await page.getByTestId("recurring-tab-active").click();
+  await page.getByTestId("recurrence-occurrence-date").fill("");
+  await page.getByTestId("recurrence-occurrence-date").pressSequentially("20261012");
   await page.getByTestId(`series-cancel-${R1}`).click();
   await expect.poll(() => calls.cancelOccurrence).toEqual({ target_occurrence_date: "2026-10-12", target_series_id: R1 });
 

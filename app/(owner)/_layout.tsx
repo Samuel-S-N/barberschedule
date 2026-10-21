@@ -12,7 +12,7 @@ const MANAGE_SCREENS = ["appointment-form", "barber-new", "barber-profile", "bar
 // Reached from the Agenda tab (the bell).
 const AGENDA_SCREENS = ["owner-notifications"] as const;
 // Reached from the Account tab.
-const ACCOUNT_SCREENS = ["language"] as const;
+const ACCOUNT_SCREENS = ["language", "owner-profile"] as const;
 
 export default function OwnerLayout() {
   const { t } = useTranslation();

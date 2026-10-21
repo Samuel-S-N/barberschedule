@@ -149,6 +149,8 @@ test.describe("Portuguese owner", () => {
 
     await page.goto("/settings");
     await expect(page.getByRole("heading", { name: "Browser Owner" })).toBeVisible();
+    await expect(page.getByTestId("menu-settings")).toContainText("Configurações");
+    await page.getByTestId("menu-settings").click();
     await expect(page.getByTestId("menu-language")).toContainText("Idioma");
   });
 

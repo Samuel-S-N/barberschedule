@@ -14,6 +14,8 @@ export type DomainErrorCode =
   | "AGENDA_INVALID_RANGE"
   | "RECURRENCE_INVALID"
   | "RECURRENCE_REQUEST_FAILED"
+  | "RECURRENCE_REQUEST_NOT_PENDING"
+  | "RECURRENCE_PRICE_INVALID"
   | "OWNER_AGENDA_REQUEST_FAILED"
   | "OWNER_STATUS_REQUEST_FAILED"
   | "APPOINTMENT_REQUEST_FAILED"
@@ -92,6 +94,10 @@ export function toDomainError(error: { code?: string; message?: string }): Domai
       return new DomainError("AGENDA_INVALID_RANGE", "Choose a valid agenda range.");
     case "P0015":
       return new DomainError("RECURRENCE_INVALID", "Choose a valid recurrence rule and 90-day window.");
+    case "P0031":
+      return new DomainError("RECURRENCE_REQUEST_NOT_PENDING", "This request was already answered.");
+    case "P0032":
+      return new DomainError("RECURRENCE_PRICE_INVALID", "Enter a valid recurrence price.");
     case "P0017":
       return new DomainError("PROFILE_INVALID", "Enter your name and a valid phone number.");
     case "P0018":
