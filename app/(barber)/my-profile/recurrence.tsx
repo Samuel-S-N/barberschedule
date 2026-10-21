@@ -13,8 +13,9 @@ import { Screen } from "../../../src/components/ui/Screen";
 import { searchMyCustomers } from "../../../src/features/appointments/barber-booking";
 import { getMyBarberProfile, listMyBarberServices } from "../../../src/features/barbers/api";
 import { ManualRecurrenceForm } from "../../../src/features/recurrence/ManualRecurrenceForm";
+import { CancellationCard } from "../../../src/features/recurrence/CancellationCard";
 import { RequestCard } from "../../../src/features/recurrence/RequestCard";
-import { decideRecurrenceRequest, listRecurrenceRequests } from "../../../src/features/recurrence/requests-api";
+import { decideRecurrenceRequest, decideSeriesCancellation, listCancellationRequests, listRecurrenceRequests } from "../../../src/features/recurrence/requests-api";
 import { errorMessage } from "../../../src/i18n/errors";
 import { useBack } from "../../../src/lib/navigation/use-back";
 import { pullToRefresh, useRefreshAll } from "../../../src/lib/use-refresh";
@@ -36,6 +37,11 @@ export default function BarberRecurrenceScreen() {
     queryFn: () => listRecurrenceRequests(supabase, barber.data?.shopId ?? ""),
     queryKey: ["barber-recurrence-requests", barber.data?.shopId],
   });
+  const cancellations = useQuery({
+    enabled: Boolean(barber.data),
+    queryFn: () => listCancellationRequests(supabase, barber.data?.shopId ?? ""),
+    queryKey: ["barber-recurrence-cancellations", barber.data?.shopId],
+  });
   const services = useQuery({ queryFn: () => listMyBarberServices(supabase), queryKey: ["my-barber-services"] });
   const customers = useQuery({ enabled: manualOpen, queryFn: () => searchMyCustomers(supabase, term), queryKey: ["barber-customers", term] });
 
@@ -48,6 +54,16 @@ export default function BarberRecurrenceScreen() {
     },
   });
 
+  const decideCancel = useMutation({
+    mutationFn: (input: { accept: boolean; seriesId: string }) => decideSeriesCancellation(supabase, input.seriesId, input.accept),
+    onError: (error) => setFeedback({ message: errorMessage(error, t, t("recurrence.decideError")), variant: "error" }),
+    onSuccess: (_data, input) => {
+      setFeedback({ message: t(input.accept ? "recurrence.cancellationAccepted" : "recurrence.cancellationDeclined"), variant: "success" });
+      void queryClient.invalidateQueries({ queryKey: ["barber-recurrence-cancellations"] });
+      void queryClient.invalidateQueries({ queryKey: ["barber-agenda"] });
+    },
+  });
+
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
       <KeyboardAwareScrollView refreshControl={pullToRefresh(pull)} bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
@@ -56,10 +72,18 @@ export default function BarberRecurrenceScreen() {
             <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("barber.hub.menu.recurrence")} />
             {requests.isLoading ? <SkeletonBlock height={96} width={320} /> : null}
             {requests.error ? <Text className="text-sm font-sans text-danger-500">{errorMessage(requests.error, t, t("recurrence.decideError"))}</Text> : null}
-            {requests.data && requests.data.length === 0 ? <EmptyState title={t("recurrence.noRequests")} /> : null}
+            {requests.data && requests.data.length === 0 && (cancellations.data ?? []).length === 0 ? <EmptyState title={t("recurrence.noRequests")} /> : null}
             {(requests.data ?? []).map((request) => (
               <RequestCard busy={decide.isPending} key={request.id} onDecide={(accept) => decide.mutate({ accept, id: request.id })} request={request} />
             ))}
+            {(cancellations.data ?? []).length > 0 ? (
+              <View className="gap-3">
+                <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{t("recurrence.cancellationTitle")}</Text>
+                {(cancellations.data ?? []).map((request) => (
+                  <CancellationCard busy={decideCancel.isPending} key={request.seriesId} onDecide={(accept) => decideCancel.mutate({ accept, seriesId: request.seriesId })} request={request} />
+                ))}
+              </View>
+            ) : null}
 
             <Button label={t("recurrence.addManual")} onPress={() => setManualOpen((open) => !open)} size="sm" testID="recurring-manual" variant="outline" />
             {manualOpen ? (

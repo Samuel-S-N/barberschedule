@@ -47,4 +47,8 @@ it("routes recurrence notifications", () => {
   expect(inboxRoute("recurrence_requested", "barber")).toBe("/my-profile/recurrence");
   expect(inboxRoute("recurrence_requested", "owner")).toBe("/monthly-customers");
   expect(inboxRoute("recurrence_accepted", "customer")).toBe("/me/recurrence");
+  expect(inboxRoute("recurrence_cancel_requested", "owner")).toBe("/monthly-customers");
+  expect(inboxRoute("recurrence_cancel_requested", "barber")).toBe("/my-profile/recurrence");
+  expect(inboxRoute("recurrence_cancel_accepted", "customer")).toBe("/me/recurrence");
+  expect(inboxRoute("recurrence_cancel_declined", "customer")).toBe("/me/recurrence");
 });

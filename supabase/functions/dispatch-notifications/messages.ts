@@ -50,11 +50,21 @@ const CONFLICT: Catalog = {
 type Ctx = { customer: string; frequency: string; service: string; when: string };
 type ExtendedTemplate = { title: string; body: (c: Ctx) => string };
 
-const FREQUENCY: Record<Locale, Record<1 | 2, string>> = {
-  en: { 1: "weekly", 2: "every 2 weeks" },
-  es: { 1: "semanal", 2: "cada 2 semanas" },
-  pt: { 1: "semanal", 2: "a cada 2 semanas" },
+const FREQUENCY: Record<Locale, { every: (weeks: number) => string; one: string; two: string }> = {
+  en: { every: (weeks) => `every ${weeks} weeks`, one: "weekly", two: "every 2 weeks" },
+  es: { every: (weeks) => `cada ${weeks} semanas`, one: "semanal", two: "cada 2 semanas" },
+  pt: { every: (weeks) => `a cada ${weeks} semanas`, one: "semanal", two: "a cada 2 semanas" },
 };
+
+function frequency(language: Locale, weeks: unknown) {
+  const count = Number(weeks);
+  const names = FREQUENCY[language];
+
+  if (count === 2) return names.two;
+  if (Number.isInteger(count) && count > 2) return names.every(count);
+
+  return names.one;
+}
 
 const EXTENDED: Record<string, Record<Locale, ExtendedTemplate>> = {
   "appointment.confirmed": {
@@ -91,6 +101,21 @@ const EXTENDED: Record<string, Record<Locale, ExtendedTemplate>> = {
     en: { body: (c) => `${c.service} · ${c.frequency}`, title: "Recurrence accepted" },
     es: { body: (c) => `${c.service} · ${c.frequency}`, title: "Recurrencia aceptada" },
     pt: { body: (c) => `${c.service} · ${c.frequency}`, title: "Recorrência aceita" },
+  },
+  "recurrence.cancel_requested": {
+    en: { body: (c) => `${c.customer} · ${c.service} · ${c.frequency}`, title: "Plan cancellation requested" },
+    es: { body: (c) => `${c.customer} · ${c.service} · ${c.frequency}`, title: "Cancelación de plan solicitada" },
+    pt: { body: (c) => `${c.customer} · ${c.service} · ${c.frequency}`, title: "Cancelamento de plano solicitado" },
+  },
+  "recurrence.cancel_accepted": {
+    en: { body: (c) => `${c.service} · ${c.frequency}`, title: "Plan cancelled" },
+    es: { body: (c) => `${c.service} · ${c.frequency}`, title: "Plan cancelado" },
+    pt: { body: (c) => `${c.service} · ${c.frequency}`, title: "Plano cancelado" },
+  },
+  "recurrence.cancel_declined": {
+    en: { body: (c) => `${c.service} · ${c.frequency}`, title: "Cancellation declined" },
+    es: { body: (c) => `${c.service} · ${c.frequency}`, title: "Cancelación rechazada" },
+    pt: { body: (c) => `${c.service} · ${c.frequency}`, title: "Cancelamento recusado" },
   },
   "recurrence.rejected": {
     en: { body: (c) => `${c.service} · ${c.frequency}`, title: "Recurrence declined" },
@@ -146,7 +171,7 @@ export function buildMessage(
     return {
       body: template.body({
         customer: text(payload.customer_name),
-        frequency: FREQUENCY[language][Number(payload.interval_weeks) === 2 ? 2 : 1],
+        frequency: frequency(language, payload.interval_weeks),
         service: text(payload.service_name) || GENERIC_SERVICE[language],
         when: formatWhen(payload.starts_at, language, timeZone),
       }),
