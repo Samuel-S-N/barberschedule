@@ -33,6 +33,7 @@ function toPublicBarber(row: PublicBarberRow): PublicBarber {
   return {
     active: row.active,
     archivedAt: row.archived_at,
+    avatarUrl: row.avatar_url ?? null,
     id: row.id,
     name: row.name,
     shopId: row.shop_id,
@@ -54,7 +55,6 @@ export function toCompensation(row: CompensationRow): BarberCompensation {
 function toOwnerBarber(row: OwnerBarberRow): OwnerBarber {
   return {
     ...toPublicBarber(row),
-    avatarUrl: row.avatar_url ?? null,
     bio: row.bio ?? null,
     compensation: toCompensation(row),
     invitedAt: row.invited_at ?? null,
@@ -70,7 +70,7 @@ function throwBarberError(error: { code?: string }): never {
     : domainError;
 }
 
-const publicBarberColumns = "id, shop_id, name, active, archived_at";
+const publicBarberColumns = "id, shop_id, name, active, archived_at, avatar_url";
 
 export async function listPublicBarbers(
   supabase: BarberSupabaseClient,

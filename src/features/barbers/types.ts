@@ -1,6 +1,7 @@
 export type PublicBarber = {
   active: boolean;
   archivedAt: string | null;
+  avatarUrl: string | null;
   id: string;
   name: string;
   shopId: string;
@@ -13,7 +14,6 @@ export type BarberCompensation =
 export type ChairRentalFrequency = "weekly" | "monthly";
 
 export type OwnerBarber = PublicBarber & {
-  avatarUrl: string | null;
   bio: string | null;
   compensation: BarberCompensation;
   invitedAt: string | null;
@@ -64,6 +64,7 @@ export type BarberInput = {
 export type PublicBarberRow = {
   active: boolean;
   archived_at: string | null;
+  avatar_url?: string | null;
   id: string;
   name: string;
   shop_id: string;
@@ -71,7 +72,6 @@ export type PublicBarberRow = {
 
 export type OwnerBarberRow = PublicBarberRow &
   CompensationRow & {
-    avatar_url?: string | null;
     bio?: string | null;
     invited_at?: string | null;
     user_id: string | null;

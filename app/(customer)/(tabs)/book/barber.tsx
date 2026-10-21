@@ -53,6 +53,7 @@ export default function BookBarberScreen() {
           {barbers.data?.map((barber) => (
             <BarberCard
               key={barber.id}
+              avatarUrl={barber.avatarUrl}
               name={barber.name}
               onPress={() => router.push(
                 `/book/service?shopId=${encodeURIComponent(shopId)}&barberId=${encodeURIComponent(barber.id)}`,

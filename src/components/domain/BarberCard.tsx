@@ -2,9 +2,11 @@ import { Pressable, Text, View } from "react-native";
 import { MapPin, Star } from "lucide-react-native";
 
 import { colors } from "../../lib/design/colors";
+import { Avatar } from "./Avatar";
 
 export type BarberCardProps = {
   name: string;
+  avatarUrl?: string | null;
   specialty?: string;
   rating?: number;
   distanceKm?: number;
@@ -15,6 +17,7 @@ export type BarberCardProps = {
 
 export function BarberCard({
   name,
+  avatarUrl,
   specialty,
   rating,
   distanceKm,
@@ -31,7 +34,7 @@ export function BarberCard({
       onPress={onPress}
       testID={testID}
     >
-      <View className="h-14 w-14 rounded-full bg-mist" />
+      <Avatar name={name} size={56} uri={avatarUrl} />
       <View className="flex-1 gap-0.5">
         <View className="flex-row items-center justify-between">
           <Text className="text-lg font-display-semibold text-ink">{name}</Text>
