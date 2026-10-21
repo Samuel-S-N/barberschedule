@@ -1,6 +1,5 @@
 import { listPlansForBarber, listRecurrencePlans, planTitle, saveRecurrencePlan } from "../../src/features/recurrence/plans-api";
 
-const t = ((key: string, options?: Record<string, unknown>) => (options ? `${key}${JSON.stringify(options)}` : key)) as never;
 
 it("lists plans for the owner", async () => {
   const rpc = jest.fn().mockResolvedValue({ data: [{ active: true, id: "p1", interval_weeks: 3, name: "Trimestral", normal_cents: 3500, price_cents: 4500, service_id: "s1", service_name: "Cut" }], error: null });

@@ -40,6 +40,7 @@ export default function RecurrencePlanFormScreen() {
   const [name, setName] = useState("");
   const [priceText, setPriceText] = useState("");
   const [weeksText, setWeeksText] = useState("1");
+  const [nameTouched, setNameTouched] = useState(false);
   const [feedback, setFeedback] = useState<{ message: string; variant: "error" | "success" } | null>(null);
 
   useEffect(() => {
@@ -53,7 +54,8 @@ export default function RecurrencePlanFormScreen() {
   const priceCents = parseReaisToCents(priceText);
   const weeks = Number(weeksText);
   const weeksValid = Number.isInteger(weeks) && weeks >= 1 && weeks <= 12;
-  const valid = serviceId !== null && priceCents !== null && weeksValid;
+  const nameValid = name.trim().length > 0;
+  const valid = serviceId !== null && nameValid && priceCents !== null && weeksValid;
 
   const save = useMutation({
     mutationFn: (active: boolean) => saveRecurrencePlan(supabase, { active, id: id ?? null, name, priceCents: priceCents ?? 0, serviceId: serviceId ?? "", weeks }),
@@ -80,7 +82,7 @@ export default function RecurrencePlanFormScreen() {
               <>
                 <Text accessibilityRole="header" className="text-lg font-display-semibold text-ink">{t("owner.plans.service")}</Text>
                 <RadioBlock items={services.map((service) => ({ key: `plan-service-${service.id}`, label: service.name, onPress: () => setServiceId(service.id), selected: service.id === serviceId }))} />
-                <Input {...field(0)} label={t("owner.plans.name")} onChangeText={setName} placeholder={t("examples.serviceName")} testID="plan-name" value={name} />
+                <Input {...field(0)} error={nameTouched && !nameValid ? t("owner.plans.nameRequired") : undefined} label={t("owner.plans.name")} onChangeText={(value) => { setNameTouched(true); setName(value.slice(0, 60)); }} placeholder={t("examples.planTitle")} testID="plan-name" value={name} />
                 <Input {...field(1)} keyboardType="numeric" label={t("owner.plans.price")} onChangeText={setPriceText} placeholder={t("examples.money")} testID="plan-price" value={priceText} />
                 <View className="flex-row gap-2">
                   <Button label={t("owner.plans.quickMonthly")} onPress={() => setWeeksText("1")} size="sm" testID="plan-weeks-1" variant={weeksText === "1" ? "dark" : "outline"} />

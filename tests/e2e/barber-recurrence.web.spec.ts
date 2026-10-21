@@ -34,7 +34,7 @@ async function mockBarberRest(page: Page, handler?: RestHandler) {
     if (path.endsWith("/rpc/barber_search_customers")) return json(route, [{ email: null, full_name: "Walk In", has_account: false, id: "c-walk", phone: "11999990000" }]);
     if (path.endsWith("/rpc/list_recurrence_plans_for_barber")) {
       return json(route, [
-        { barber_service_id: "bs1", interval_weeks: 1, name: null, normal_cents: 4000, plan_id: "plan-w1", price_cents: 3000, service_name: "Browser Cut" },
+        { barber_service_id: "bs1", interval_weeks: 1, name: "Corte mensal", normal_cents: 4000, plan_id: "plan-w1", price_cents: 3000, service_name: "Browser Cut" },
         { barber_service_id: "bs1", interval_weeks: 3, name: "Trimestral", normal_cents: 4000, plan_id: "plan-w3", price_cents: 3500, service_name: "Browser Cut" },
       ]);
     }

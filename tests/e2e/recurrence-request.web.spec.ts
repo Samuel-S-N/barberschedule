@@ -12,7 +12,7 @@ test("a customer requests a plan: barber, plan, weekday, time, review, send; and
   await mockCustomerRest(page, async (route, url) => {
     if (url.pathname.endsWith("/rpc/list_recurrence_plans_for_barber")) {
       await json(route, [
-        { barber_service_id: barberServiceId, interval_weeks: 1, name: null, normal_cents: 3500, plan_id: "plan-w1", price_cents: 2500, service_name: "Browser Cut" },
+        { barber_service_id: barberServiceId, interval_weeks: 1, name: "Corte mensal", normal_cents: 3500, plan_id: "plan-w1", price_cents: 2500, service_name: "Browser Cut" },
         { barber_service_id: barberServiceId, interval_weeks: 3, name: "Trimestral", normal_cents: 3500, plan_id: "plan-w3", price_cents: 3000, service_name: "Browser Cut" },
       ]);
       return true;
@@ -42,7 +42,7 @@ test("a customer requests a plan: barber, plan, weekday, time, review, send; and
   await page.goto("/profile");
   await page.getByTestId("menu-recurrence").click();
   await expect(page).toHaveURL(/\/me\/recurrence/);
-  await expect(page.getByText("You have no recurrence requests yet.")).toBeVisible();
+  await expect(page.getByText("You have no plans yet.")).toBeVisible();
 
   await page.getByTestId("recurrence-request").click();
   await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 6 · Barber");
@@ -50,7 +50,7 @@ test("a customer requests a plan: barber, plan, weekday, time, review, send; and
 
   // Plans of that barber: price per session, 4-week total when it exists, and the regular price.
   await expect(page.getByTestId("step-label")).toHaveText("Step 2 of 6 · Plan");
-  await expect(page.getByTestId("plan-card-plan-w1")).toContainText("Browser Cut · Weekly");
+  await expect(page.getByTestId("plan-card-plan-w1")).toContainText("Corte mensal");
   await expect(page.getByTestId("plan-card-plan-w1")).toContainText("R$ 25,00 per session");
   await expect(page.getByTestId("plan-card-plan-w1")).toContainText("R$ 100,00");
   await expect(page.getByTestId("plan-card-plan-w3")).toContainText("Trimestral");
@@ -74,7 +74,7 @@ test("a customer requests a plan: barber, plan, weekday, time, review, send; and
   await page.getByTestId("recurrence-send").click();
   await expect.poll(() => calls.request).toEqual({ target_barber_service_id: barberServiceId, target_interval_weeks: 1, target_start_date: "2099-01-04", target_start_time: "09:00" });
 
-  await expect(page.getByTestId("my-request-status-rq1")).toHaveText("Awaiting reply");
+  await expect(page.getByTestId("my-request-status-rq1")).toHaveText("Waiting for plan confirmation");
   await page.getByTestId("my-request-cancel-rq1").click();
   await expect.poll(() => calls.cancel).toEqual({ target_request_id: "rq1" });
 });

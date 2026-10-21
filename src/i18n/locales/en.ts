@@ -18,6 +18,7 @@ export const en = {
     percent: "40",
     phone: "(11)91234-5678",
     search: "Ana Souza",
+    planTitle: "Monthly cut",
     serviceName: "Haircut",
     time: "09:00",
     weeks: "2",

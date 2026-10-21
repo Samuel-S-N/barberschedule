@@ -17,6 +17,7 @@ export const pt: DeepStringRecord<typeof en> = {
     percent: "40",
     phone: "(11)91234-5678",
     search: "Ana Souza",
+    planTitle: "Corte mensal",
     serviceName: "Corte",
     time: "09:00",
     weeks: "2",
