@@ -13,6 +13,7 @@ import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Input } from "../../src/components/ui/Input";
+import { formatPhone } from "../../src/features/account/phone";
 import { Screen } from "../../src/components/ui/Screen";
 import { createCustomer, listOwnerCustomers, setCustomerActive, updateCustomer } from "../../src/features/customers/api";
 import type { Customer } from "../../src/features/customers/types";
@@ -91,7 +92,7 @@ export default function OwnerCustomersScreen() {
               <View className="gap-3">
                 <Input label={t("owner.customers.nameLabel")} onChangeText={setFullName} testID="customer-name" value={fullName} />
                 <Input autoCapitalize="none" autoComplete="email" keyboardType="email-address" label={t("owner.customers.emailLabel")} onChangeText={setEmail} testID="customer-email" value={email} />
-                <Input keyboardType="phone-pad" label={t("common.phoneOptional")} onChangeText={setPhone} testID="customer-phone" value={phone} />
+                <Input keyboardType="phone-pad" label={t("common.phoneOptional")} onChangeText={(value) => setPhone(formatPhone(value))} testID="customer-phone" value={phone} />
                 <View className="flex-row gap-2">
                   <Button
                     disabled={!canSubmitCustomerForm({ editingId, email, fullName, isLoading: loading, isSaving: busy, phone, shopId })}

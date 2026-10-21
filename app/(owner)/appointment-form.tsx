@@ -11,6 +11,7 @@ import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
 import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Input } from "../../src/components/ui/Input";
+import { DateInput } from "../../src/components/ui/MaskedInputs";
 import { Screen } from "../../src/components/ui/Screen";
 import { bookOwnerAppointment } from "../../src/features/appointments/owner-api";
 import { getAvailableSlots } from "../../src/features/availability/api";
@@ -149,7 +150,7 @@ export default function OwnerAppointmentFormScreen() {
               testID="owner-service-list"
             />
 
-            <Input label={t("common.localDate")} onChangeText={setLocalDate} testID="owner-appointment-date" value={localDate} />
+            <DateInput label={t("common.localDate")} onChangeValue={setLocalDate} testID="owner-appointment-date" value={localDate} />
             <Button disabled={!selectedBarberService || isSaving} label={t("owner.appointmentForm.loadTimes")} onPress={() => void loadSlots()} testID="owner-form-load-times" variant="outline" />
             {slots.length > 0 ? (
               <View className="flex-row flex-wrap gap-2" testID="owner-form-slots">

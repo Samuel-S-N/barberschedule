@@ -11,14 +11,16 @@ import { StatusBadge } from "../../src/components/domain/StatusBadge";
 import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
-import { Input } from "../../src/components/ui/Input";
+import { DateInput } from "../../src/components/ui/MaskedInputs";
 import { Screen } from "../../src/components/ui/Screen";
 import { listOwnerAgenda, listOwnerAgendaOverrides } from "../../src/features/appointments/agenda-query";
 import { cancelAppointment } from "../../src/features/appointments/lifecycle";
 import { setOwnerAppointmentStatus } from "../../src/features/appointments/owner-api";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
+import { useLanguage } from "../../src/i18n/use-language";
 import { errorMessage } from "../../src/i18n/errors";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
+import { formatDateNumeric } from "../../src/lib/i18n/format";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
@@ -43,6 +45,7 @@ const RANGE_LABEL = { day: "owner.agenda.rangeDay", month: "owner.agenda.rangeMo
 
 export default function OwnerAgendaScreen() {
   const { t } = useTranslation();
+  const language = useLanguage();
   const pull = useRefreshAll();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -52,11 +55,13 @@ export default function OwnerAgendaScreen() {
   const [localDate, setLocalDate] = useState(formatInstantInShopTime(new Date()).localDate);
   const [offset, setOffset] = useState(0);
   const [view, setView] = useState<AgendaView>("day");
-  const range = useMemo(() => agendaRange(localDate, view), [localDate, view]);
+  // The date field reports "" while the typed date is incomplete; keep the last valid range until it is complete.
+  const dateValid = /^\d{4}-\d{2}-\d{2}$/.test(localDate);
+  const range = useMemo(() => (dateValid ? agendaRange(localDate, view) : { end: "", start: "" }), [dateValid, localDate, view]);
   const shopId = shop.data ?? null;
 
   const agenda = useQuery({
-    enabled: shopId !== null,
+    enabled: shopId !== null && dateValid,
     queryFn: async () => {
       const input = { limit: PAGE_SIZE, offset, rangeEnd: range.end, rangeStart: range.start, shopId: shopId ?? "" };
       const [appointments, overrides] = await Promise.all([listOwnerAgenda(supabase, input), listOwnerAgendaOverrides(supabase, input)]);
@@ -79,6 +84,7 @@ export default function OwnerAgendaScreen() {
   };
 
   const moveRange = (direction: -1 | 1) => {
+    if (!dateValid) return;
     const days = view === "week" ? 7 : view === "month" ? 31 : 1;
     setOffset(0);
     setLocalDate((date) => addDays(date, direction * days));
@@ -103,8 +109,8 @@ export default function OwnerAgendaScreen() {
                 <Button key={item} label={t(VIEW_LABEL[item])} onPress={() => selectView(item)} size="sm" testID={`owner-view-${item}`} variant={view === item ? "dark" : "outline"} />
               ))}
             </View>
-            <Input label={t("common.localDate")} onChangeText={(value) => { setLocalDate(value); setOffset(0); }} testID="owner-agenda-date" value={localDate} />
-            <Text className="text-center text-sm font-sans text-neutral-600">{t(RANGE_LABEL[view], { date: localDate })}</Text>
+            <DateInput label={t("common.localDate")} onChangeValue={(value) => { setLocalDate(value); setOffset(0); }} testID="owner-agenda-date" value={localDate} />
+            <Text className="text-center text-sm font-sans text-neutral-600">{t(RANGE_LABEL[view], { date: formatDateNumeric(localDate, language) })}</Text>
             <View className="flex-row gap-2">
               <View className="flex-1"><Button disabled={loading} label={t("owner.agenda.previousRange")} onPress={() => moveRange(-1)} size="sm" variant="outline" /></View>
               <View className="flex-1"><Button disabled={loading} label={t("owner.agenda.nextRange")} onPress={() => moveRange(1)} size="sm" variant="outline" /></View>
@@ -123,7 +129,7 @@ export default function OwnerAgendaScreen() {
                 <Card key={appointment.id} testID={`owner-appointment-${appointment.id}`}>
                   <View className="gap-2">
                     <View className="flex-row items-center justify-between">
-                      <Text className="text-lg font-display-semibold text-ink" style={{ fontVariant: ["tabular-nums"] }}>{startsAt.localDate} {startsAt.localTime}</Text>
+                      <Text className="text-lg font-display-semibold text-ink" style={{ fontVariant: ["tabular-nums"] }}>{formatDateNumeric(startsAt.localDate, language)} {startsAt.localTime}</Text>
                       <StatusBadge status={appointment.status} />
                     </View>
                     <Text className="text-base font-sans-medium text-ink">{appointment.customerName} · {appointment.serviceNameSnapshot}</Text>
@@ -145,7 +151,7 @@ export default function OwnerAgendaScreen() {
                 <View className="gap-1">
                   <Text className="text-base font-sans-semibold text-ink">{override.barberName} · {override.kind === "opening" ? t("owner.schedule.kindOpening") : t("owner.schedule.kindBlock")}</Text>
                   <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>
-                    {override.localDate} · {override.startTime ? `${override.startTime.slice(0, 5)}–${override.endTime?.slice(0, 5)}` : t("common.allDay")}
+                    {formatDateNumeric(override.localDate, language)} · {override.startTime ? `${override.startTime.slice(0, 5)}–${override.endTime?.slice(0, 5)}` : t("common.allDay")}
                   </Text>
                 </View>
               </Card>

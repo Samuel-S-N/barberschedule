@@ -8,10 +8,11 @@ import type { InputProps } from "./Input";
 
 type MaskedProps = Omit<InputProps, "onChangeText" | "keyboardType"> & { onChangeValue: (value: string) => void };
 
-// `value` is the stored ISO date (or "" while the typed text is incomplete); the field shows it in the language's format.
+// `value` is the stored ISO date, or "" while the typed text is incomplete. The field shows the typed text while it still
+// matches `value`, and the language's format of `value` when the parent changes it (e.g. previous/next day buttons).
 export function DateInput({ value, onChangeValue, placeholder, ...rest }: MaskedProps) {
   const language = useLanguage();
-  const [draft, setDraft] = useState("");
+  const [draft, setDraft] = useState<string | null>(null);
   const hint = language === "en" ? "YYYY-MM-DD" : "DD/MM/AAAA";
 
   return (
@@ -25,7 +26,7 @@ export function DateInput({ value, onChangeValue, placeholder, ...rest }: Masked
         onChangeValue(parseDateInput(masked, language) ?? "");
       }}
       placeholder={placeholder ?? hint}
-      value={value ? formatDateNumeric(value, language) : draft}
+      value={draft !== null && (parseDateInput(draft, language) ?? "") === value ? draft : value ? formatDateNumeric(value, language) : ""}
     />
   );
 }

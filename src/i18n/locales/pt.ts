@@ -14,7 +14,7 @@ export const pt: DeepStringRecord<typeof en> = {
     deactivate: "Desativar",
     edit: "Editar",
     endTime: "Horário final (HH:mm)",
-    localDate: "Data local (AAAA-MM-DD)",
+    localDate: "Data local",
     nextMonth: "Próximo mês",
     noShop: "Nenhuma barbearia encontrada.",
     previousMonth: "Mês anterior",

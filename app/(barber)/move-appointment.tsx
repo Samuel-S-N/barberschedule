@@ -17,6 +17,8 @@ import { rescheduleAppointment } from "../../src/features/appointments/lifecycle
 import { getAvailableSlotsQueryOptions } from "../../src/features/availability/query";
 import type { AvailableSlot } from "../../src/features/availability/types";
 import { errorMessage } from "../../src/i18n/errors";
+import { useLanguage } from "../../src/i18n/use-language";
+import { formatDateNumeric } from "../../src/lib/i18n/format";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
@@ -34,6 +36,7 @@ export default function MoveAppointmentScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
+  const language = useLanguage();
   const { supabase } = useSupabaseSession();
   const today = formatInstantInShopTime(new Date()).localDate;
   const [localDate, setLocalDate] = useState(today);
@@ -80,7 +83,7 @@ export default function MoveAppointmentScreen() {
             <Card testID="move-current">
               <View className="gap-1">
                 <Text className="text-base font-sans-semibold text-ink">{param(params.customerName)} · {param(params.serviceName)}</Text>
-                {current ? <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>{current.localDate} {current.localTime}</Text> : null}
+                {current ? <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>{formatDateNumeric(current.localDate, language)} {current.localTime}</Text> : null}
               </View>
             </Card>
           </View>

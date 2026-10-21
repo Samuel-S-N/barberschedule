@@ -10,6 +10,7 @@ import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Input } from "../../src/components/ui/Input";
+import { TimeInput } from "../../src/components/ui/MaskedInputs";
 import { Screen } from "../../src/components/ui/Screen";
 import { listPublicShops, listShopHours, saveShopHours, updateShopContact } from "../../src/features/shops/api";
 import { draftToPeriods, periodsToDraft, weekdayLabel } from "../../src/features/shops/hours";
@@ -121,25 +122,25 @@ export default function OwnerShopScreen() {
                     {day.enabled ? (
                       <>
                         <View className="flex-row gap-2">
-                          <View className="flex-1"><Input label={t("common.startTime")} onChangeText={(start) => patchDay(weekday, { start })} placeholder={TIME_HINT} testID={`shop-start-${weekday}`} value={day.start} /></View>
-                          <View className="flex-1"><Input label={t("common.endTime")} onChangeText={(end) => patchDay(weekday, { end })} placeholder={TIME_HINT} testID={`shop-end-${weekday}`} value={day.end} /></View>
+                          <View className="flex-1"><TimeInput label={t("common.startTime")} onChangeValue={(start) => patchDay(weekday, { start })} placeholder={TIME_HINT} testID={`shop-start-${weekday}`} value={day.start} /></View>
+                          <View className="flex-1"><TimeInput label={t("common.endTime")} onChangeValue={(end) => patchDay(weekday, { end })} placeholder={TIME_HINT} testID={`shop-end-${weekday}`} value={day.end} /></View>
                         </View>
                         {day.breaks.map((pause, index) => (
                           <View className="gap-2" key={index}>
                             <View className="flex-row gap-2">
                               <View className="flex-1">
-                                <Input
+                                <TimeInput
                                   label={t("owner.shop.breakStart")}
-                                  onChangeText={(start) => patchDay(weekday, { breaks: day.breaks.map((item, i) => (i === index ? { ...item, start } : item)) })}
+                                  onChangeValue={(start) => patchDay(weekday, { breaks: day.breaks.map((item, i) => (i === index ? { ...item, start } : item)) })}
                                   placeholder={TIME_HINT}
                                   testID={`shop-break-start-${weekday}-${index}`}
                                   value={pause.start}
                                 />
                               </View>
                               <View className="flex-1">
-                                <Input
+                                <TimeInput
                                   label={t("owner.shop.breakEnd")}
-                                  onChangeText={(end) => patchDay(weekday, { breaks: day.breaks.map((item, i) => (i === index ? { ...item, end } : item)) })}
+                                  onChangeValue={(end) => patchDay(weekday, { breaks: day.breaks.map((item, i) => (i === index ? { ...item, end } : item)) })}
                                   placeholder={TIME_HINT}
                                   testID={`shop-break-end-${weekday}-${index}`}
                                   value={pause.end}
