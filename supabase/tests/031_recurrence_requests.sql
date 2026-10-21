@@ -45,9 +45,9 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 -- the owner defines the weekly price
 select set_config('request.jwt.claim.sub', 'f5000000-0000-0000-0000-000000000001', true);
-select lives_ok($$ select public.save_recurrence_plan(null, 'f8000000-0000-0000-0000-000000000001', 1, 2500, null, true) $$, 'the owner sets the weekly price');
-select lives_ok($$ select public.save_recurrence_plan(null, 'f8000000-0000-0000-0000-000000000001', 2, 3000, null, true) $$, 'the owner adds a biweekly plan');
-select throws_ok($$ select public.save_recurrence_plan(null, 'f8000000-0000-0000-0000-000000000001', 13, 2500, null, true) $$, 'P0032', null, 'periodicity is 1 to 12 weeks');
+select lives_ok($$ select public.save_recurrence_plan(null, 'f8000000-0000-0000-0000-000000000001', 1, 2500, 'Test plan', true) $$, 'the owner sets the weekly price');
+select lives_ok($$ select public.save_recurrence_plan(null, 'f8000000-0000-0000-0000-000000000001', 2, 3000, 'Test plan', true) $$, 'the owner adds a biweekly plan');
+select throws_ok($$ select public.save_recurrence_plan(null, 'f8000000-0000-0000-0000-000000000001', 13, 2500, 'Test plan', true) $$, 'P0032', null, 'periodicity is 1 to 12 weeks');
 
 -- the customer sees the quote and requests
 select set_config('request.jwt.claim.sub', 'f5000000-0000-0000-0000-000000000002', true);
