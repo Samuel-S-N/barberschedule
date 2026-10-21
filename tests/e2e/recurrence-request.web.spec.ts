@@ -99,3 +99,25 @@ test("completed steps lead back and a barber without plans says so", async ({ pa
   await page.getByTestId("step-barber").click();
   await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 6 · Barber");
 });
+
+test("a plan whose series was ended shows its title and Ended, not Active", async ({ page }) => {
+  const request = (overrides: Record<string, unknown>) => ({
+    barber_name: "Browser Barber", id: "rq1", interval_weeks: 1, local_start_date: "2026-10-23", local_start_time: "16:30:00", plan_name: "Corte mensal",
+    recurrence_cents: 2500, series_active: true, series_ended_at: null, series_id: "s1", service_name: "Browser Cut", status: "accepted", ...overrides,
+  });
+  let rows = [request({ id: "rq-ended", series_active: false, series_ended_at: "2026-10-21T12:12:00Z" }), request({ id: "rq-live" })];
+
+  await signInAsCustomer(page);
+  await mockCustomerRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/rpc/list_my_recurrence_requests")) {
+      await json(route, rows);
+      return true;
+    }
+  });
+  await page.goto("/me/recurrence");
+
+  await expect(page.getByTestId("my-request-rq-ended")).toContainText("Corte mensal");
+  await expect(page.getByTestId("my-request-status-rq-ended")).toHaveText("Ended");
+  await expect(page.getByTestId("my-request-status-rq-live")).toHaveText("Active");
+  rows = [];
+});

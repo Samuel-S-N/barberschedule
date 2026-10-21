@@ -209,3 +209,39 @@ test.describe("Portuguese on a narrow phone", () => {
     expect(Math.abs(date!.height - time!.height)).toBeLessThan(1);
   });
 });
+
+test("ended plans are listed apart from the active ones and can be reactivated", async ({ page }) => {
+  const calls: Record<string, unknown> = {};
+
+  await signInAsOwner(page);
+  await mockOwnerRest(page, calls);
+  await page.route("**/rest/v1/rpc/list_owner_recurrence_series", async (route) => {
+    const base = { barber_service_id: BS1, customer_id: C1, customer_name: "Ana Souza", ends_on: null, interval_weeks: 1, local_start_date: "2026-10-23", local_start_time: "16:30:00", special_price_cents: 2500 };
+
+    await json(route, [
+      { ...base, active: true, ended_at: null, id: "live-1" },
+      { ...base, active: false, customer_name: "Samuel Neres", ended_at: "2026-10-21T12:12:00Z", id: "ended-1" },
+    ]);
+  });
+  await page.route("**/rest/v1/rpc/reactivate_recurrence_series", async (route) => {
+    calls.reactivate = route.request().postDataJSON();
+    await json(route, null);
+  });
+
+  await page.goto("/monthly-customers");
+  await page.getByTestId("recurring-tab-active").click();
+  await expect(page.getByRole("heading", { name: "Active" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ended" })).toBeVisible();
+  await expect(page.getByTestId("series-live-1")).toBeVisible();
+  const ended = page.getByTestId("series-ended-1");
+
+  await expect(ended).toContainText("Samuel Neres");
+  await expect(ended).toContainText("Ended");
+  await expect(page.getByTestId("series-deactivate-ended-1")).toHaveCount(0);
+  await expect(page.getByTestId("series-end-ended-1")).toHaveCount(0);
+  await expect(page.getByTestId("series-cancel-ended-1")).toHaveCount(0);
+
+  await page.getByTestId("series-reactivate-ended-1").click();
+  await expect.poll(() => calls.reactivate).toEqual({ target_series_id: "ended-1" });
+  await expect(page.getByText("Plan reactivated.")).toBeVisible();
+});
