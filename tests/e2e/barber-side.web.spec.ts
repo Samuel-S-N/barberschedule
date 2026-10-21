@@ -1,3 +1,4 @@
+import { openBarberCard } from "./agenda-helpers";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
@@ -73,7 +74,7 @@ test("a barber lands on their own agenda and marks an appointment completed", as
   await page.goto("/");
   await expect(page).toHaveURL(/\/my-agenda/);
   await expect(page.getByRole("heading", { name: "My agenda" })).toBeVisible();
-  await expect(page.getByText("Ana Customer · Browser Cut")).toBeVisible();
+  await expect(page.getByTestId("barber-appointment-appt-1")).toContainText("Ana Customer");
   expect(Object.keys(agendaPayload ?? {}).sort()).toEqual(["page_limit", "page_offset", "range_end", "range_start"]);
 
   await page.getByTestId("barber-complete-appt-1").click();
@@ -191,9 +192,36 @@ test("an agenda card opens the client and offers WhatsApp and phone links", asyn
   });
 
   await page.goto("/my-agenda");
+  await openBarberCard(page);
   await expect(page.getByTestId("barber-appt-whatsapp-appt-1")).toHaveAttribute("href", "https://wa.me/5511988887777");
   await expect(page.getByTestId("barber-appt-call-appt-1")).toHaveAttribute("href", "tel:+5511988887777");
 
-  await page.getByTestId("barber-appointment-open-appt-1").click();
+  await page.getByTestId("barber-appointment-customer-appt-1").click();
   await expect(page).toHaveURL(/\/clients\/44444444-4444-4444-8444-444444444444/);
+});
+
+test("the agenda card shows only time, customer, status and quick buttons; details are in the pop-up", async ({ page }) => {
+  await signIn(page, barberUserId);
+  await mockBarberRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/rpc/list_my_barber_agenda")) return json(route, [agendaRow({ customer_phone: "11988887777" })]).then(() => true);
+  });
+
+  await page.goto("/my-agenda");
+  const card = page.getByTestId("barber-appointment-appt-1");
+  await expect(card).toContainText("Ana Customer");
+  await expect(card).toContainText("Scheduled");
+  await expect(page.getByTestId("barber-confirm-appt-1")).toBeVisible();
+  await expect(page.getByTestId("barber-complete-appt-1")).toBeVisible();
+  await expect(page.getByTestId("barber-noshow-appt-1")).toBeVisible();
+  // Not on the card any more:
+  for (const id of ["barber-move-appt-1", "barber-cancel-appt-1", "barber-appt-whatsapp-appt-1", "barber-remind-appt-1"]) {
+    await expect(page.getByTestId(id)).toHaveCount(0);
+  }
+  await expect(card).not.toContainText("R$");
+
+  await openBarberCard(page);
+  await expect(page.getByTestId("barber-sheet")).toContainText("Browser Cut");
+  await expect(page.getByTestId("barber-move-appt-1")).toBeVisible();
+  await page.getByTestId("barber-sheet-close").click();
+  await expect(page.getByTestId("barber-sheet")).toHaveCount(0);
 });

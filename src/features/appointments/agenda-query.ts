@@ -9,6 +9,7 @@ type AgendaSupabaseClient = Pick<SupabaseClient, "rpc">;
 type OwnerAgendaRow = AppointmentRow & {
   barber_name: string;
   customer_name: string;
+  customer_phone?: string | null;
 };
 
 export type OwnerAgendaInput = {
@@ -22,6 +23,7 @@ export type OwnerAgendaInput = {
 export type OwnerAgendaAppointment = Appointment & {
   barberName: string;
   customerName: string;
+  customerPhone: string | null;
 };
 
 export type OwnerAgendaOverride = {
@@ -65,6 +67,7 @@ export async function listOwnerAgenda(
       ...toAppointment(agendaRow),
       barberName: agendaRow.barber_name,
       customerName: agendaRow.customer_name,
+      customerPhone: agendaRow.customer_phone ?? null,
     };
   });
 }

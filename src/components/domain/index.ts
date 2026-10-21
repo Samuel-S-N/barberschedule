@@ -40,3 +40,5 @@ export { NotificationBell } from "./NotificationBell";
 export { StepIndicator } from "./StepIndicator";
 export { ContactLink } from "./ContactLink";
 export { ScreenTopBar } from "./ScreenTopBar";
+export { AgendaCard } from "./AgendaCard";
+export { AppointmentSheet } from "./AppointmentSheet";

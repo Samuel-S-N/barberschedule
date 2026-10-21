@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { MessageCircle, Phone } from "lucide-react-native";
 import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { Avatar } from "../../../src/components/domain/Avatar";
@@ -103,15 +103,19 @@ export default function ClientDetailScreen() {
                   <View className="gap-3">
                     <Text accessibilityRole="header" className="text-lg font-display-semibold text-ink">{t("barber.clients.history")}</Text>
                     {data.history.length === 0 ? <Text className="text-sm font-sans text-neutral-600">{t("barber.clients.historyEmpty")}</Text> : null}
-                    {data.history.map((item) => (
-                      <View className="flex-row items-center justify-between gap-2" key={item.id}>
-                        <View className="flex-1">
-                          <Text className="text-sm font-sans-medium text-ink">{item.serviceName}</Text>
-                          <Text className="text-xs font-sans text-neutral-500">{date(item.startsAt)}</Text>
-                        </View>
-                        <StatusBadge status={item.status} />
+                    <ScrollView nestedScrollEnabled style={{ maxHeight: 260 }} testID="client-history-scroll">
+                      <View className="gap-3">
+                        {data.history.map((item) => (
+                          <View className="flex-row items-center justify-between gap-2" key={item.id}>
+                            <View className="flex-1">
+                              <Text className="text-sm font-sans-medium text-ink">{item.serviceName}</Text>
+                              <Text className="text-xs font-sans text-neutral-500">{date(item.startsAt)}</Text>
+                            </View>
+                            <StatusBadge status={item.status} />
+                          </View>
+                        ))}
                       </View>
-                    ))}
+                    </ScrollView>
                   </View>
                 </Card>
 

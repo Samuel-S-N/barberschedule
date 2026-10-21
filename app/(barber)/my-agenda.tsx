@@ -2,23 +2,22 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { MessageCircle, Phone } from "lucide-react-native";
-import { Linking, Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
+import { AgendaCard } from "../../src/components/domain/AgendaCard";
+import { AppointmentSheet } from "../../src/components/domain/AppointmentSheet";
 import { BarberBookingSheet } from "../../src/components/domain/BarberBookingSheet";
 import { CalendarStrip } from "../../src/components/domain/CalendarStrip";
-import { ContactLink } from "../../src/components/domain/ContactLink";
 import { DaySummaryCard } from "../../src/components/domain/DaySummaryCard";
 import { EmptyState } from "../../src/components/domain/EmptyState";
 import { ScreenTopBar } from "../../src/components/domain/ScreenTopBar";
-import { formatPriceBRL } from "../../src/components/domain/ServiceCard";
 import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
-import { StatusBadge } from "../../src/components/domain/StatusBadge";
 import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Screen } from "../../src/components/ui/Screen";
+import { quickActions } from "../../src/features/appointments/agenda-actions";
 import { listMyBarberAgenda, setMyAppointmentStatus, type BarberAgendaAppointment, type BarberAppointmentStatus } from "../../src/features/appointments/barber-agenda";
 import { groupByLocalDate, markAppointmentDays, pendingClosure } from "../../src/features/appointments/agenda-view";
 import { bookAsBarber, searchMyCustomers, type BarberCustomerInput } from "../../src/features/appointments/barber-booking";
@@ -28,7 +27,7 @@ import { buildDaySummary } from "../../src/features/appointments/day-summary";
 import { getAvailableSlots } from "../../src/features/availability/api";
 import type { AvailableSlot } from "../../src/features/availability/types";
 import { cancelAppointment } from "../../src/features/appointments/lifecycle";
-import { telUrl, whatsappUrl } from "../../src/features/clients/format";
+import { whatsappUrl } from "../../src/features/clients/format";
 import { getMyBarberProfile, listMyBarberServices } from "../../src/features/barbers/api";
 import { getMyBarberReport } from "../../src/features/reports/api";
 import { errorMessage } from "../../src/i18n/errors";
@@ -52,8 +51,6 @@ export default function BarberAgendaScreen() {
   const [pickedDate, setPickedDate] = useState<string | null>(null);
   const [bookingSlot, setBookingSlot] = useState<AvailableSlot | null>(null);
   const [customerTerm, setCustomerTerm] = useState("");
-  // Cancel needs a second tap on the same card.
-  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ message: string; variant: "error" | "success" } | null>(null);
   const selectedDate = pickedDate ?? today;
 
@@ -126,6 +123,13 @@ export default function BarberAgendaScreen() {
     }
   }, [bookClient.error]);
 
+  const [openId, setOpenId] = useState<string | null>(null);
+  const openAppointment = [...pending, ...dayAppointments].find((appointment) => appointment.id === openId) ?? null;
+  const openStart = openAppointment ? formatInstantInShopTime(new Date(openAppointment.startsAt)) : null;
+  const openRemindUrl = openAppointment && openStart && new Date(openAppointment.startsAt) > new Date()
+    ? whatsappUrl(openAppointment.customerPhone, t("barber.agenda.remindMessage", { date: openStart.localDate, name: openAppointment.customerName, service: openAppointment.serviceNameSnapshot, time: openStart.localTime }))
+    : null;
+
   const setStatus = useMutation({
     mutationFn: (input: { id: string; status: BarberAppointmentStatus }) => setMyAppointmentStatus(supabase, input.id, input.status),
     onError: (error) => fail(error, t("barber.agenda.updateError")),
@@ -146,8 +150,8 @@ export default function BarberAgendaScreen() {
   const cancel = useMutation({
     mutationFn: (id: string) => cancelAppointment(supabase, id),
     onError: (error) => fail(error, t("barber.agenda.updateError")),
-    onSettled: () => setConfirmCancelId(null),
     onSuccess: () => {
+      setOpenId(null);
       setFeedback({ message: t("barber.agenda.appointmentCancelled"), variant: "success" });
       refreshAgenda();
     },
@@ -177,96 +181,23 @@ export default function BarberAgendaScreen() {
 
   const renderAppointment = (appointment: BarberAgendaAppointment, withDate = false) => {
     const startsAt = formatInstantInShopTime(new Date(appointment.startsAt));
-    const open = appointment.status === "scheduled" || appointment.status === "confirmed";
-    const canConfirm = appointment.status === "scheduled" && new Date(appointment.endsAt) >= new Date();
-    // Account-less customers get no push: the barber reminds them over WhatsApp.
-    const remindUrl = new Date(appointment.startsAt) > new Date()
-      ? whatsappUrl(appointment.customerPhone, t("barber.agenda.remindMessage", { date: startsAt.localDate, name: appointment.customerName, service: appointment.serviceNameSnapshot, time: startsAt.localTime }))
-      : null;
+    const actions = quickActions({ canConfirm: true, endsAt: appointment.endsAt, now: new Date(), status: appointment.status });
 
     return (
-      <Card key={appointment.id} testID={`barber-appointment-${appointment.id}`}>
-        <View className="gap-2">
-          <Pressable accessibilityRole="button" className="gap-2" onPress={() => router.push(`/clients/${appointment.customerId}` as never)} testID={`barber-appointment-open-${appointment.id}`}>
-            <View className="flex-row items-center justify-between">
-              <Text className="text-lg font-display-semibold text-ink" style={{ fontVariant: ["tabular-nums"] }}>
-                {withDate ? `${formatDateNumeric(startsAt.localDate, language)} ` : ""}
-                {startsAt.localTime}
-              </Text>
-              <StatusBadge status={appointment.status} />
-            </View>
-            <Text className="text-base font-sans-medium text-ink">
-              {t("barber.agenda.customerLine", { customer: appointment.customerName, service: appointment.serviceNameSnapshot })}
-            </Text>
-            <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>
-              {formatPriceBRL(appointment.servicePriceCentsSnapshot)}
-            </Text>
-          </Pressable>
-          <View className="flex-row gap-3">
-            <ContactLink icon={MessageCircle} testID={`barber-appt-whatsapp-${appointment.id}`} url={whatsappUrl(appointment.customerPhone)}>{t("barber.clients.whatsapp")}</ContactLink>
-            <ContactLink icon={Phone} testID={`barber-appt-call-${appointment.id}`} url={telUrl(appointment.customerPhone)}>{t("barber.clients.call")}</ContactLink>
-          </View>
-          {open ? (
-            <View className="flex-row flex-wrap gap-2">
-              {canConfirm ? (
-                <Button
-                  disabled={busy}
-                  label={t("barber.agenda.confirm")}
-                  onPress={() => setStatus.mutate({ id: appointment.id, status: "confirmed" })}
-                  size="sm"
-                  testID={`barber-confirm-${appointment.id}`}
-                />
-              ) : null}
-              <Button
-                disabled={busy}
-                label={t("barber.agenda.complete")}
-                onPress={() => setStatus.mutate({ id: appointment.id, status: "completed" })}
-                size="sm"
-                testID={`barber-complete-${appointment.id}`}
-              />
-              <Button
-                disabled={busy}
-                label={t("barber.agenda.noShow")}
-                onPress={() => setStatus.mutate({ id: appointment.id, status: "no_show" })}
-                size="sm"
-                testID={`barber-noshow-${appointment.id}`}
-                variant="outline"
-              />
-              {remindUrl ? (
-                <Button
-                  label={t("barber.agenda.remind")}
-                  onPress={() => void Linking.openURL(remindUrl)}
-                  size="sm"
-                  testID={`barber-remind-${appointment.id}`}
-                  variant="outline"
-                />
-              ) : null}
-              <Button
-                disabled={busy}
-                label={t("barber.agenda.moveAppointment")}
-                onPress={() => {
-                  setConfirmCancelId(null);
-                  router.push({
-                    params: { appointmentId: appointment.id, barberId: appointment.barberId, barberServiceId: appointment.barberServiceId, customerName: appointment.customerName, serviceName: appointment.serviceNameSnapshot, startsAt: appointment.startsAt },
-                    pathname: "/move-appointment",
-                  });
-                }}
-                size="sm"
-                testID={`barber-move-${appointment.id}`}
-                variant="outline"
-              />
-              <Button
-                disabled={busy}
-                label={confirmCancelId === appointment.id ? t("barber.agenda.cancelConfirm") : t("barber.agenda.cancelAppointment")}
-                onPress={() => (confirmCancelId === appointment.id ? cancel.mutate(appointment.id) : setConfirmCancelId(appointment.id))}
-                size="sm"
-                testID={`barber-cancel-${appointment.id}`}
-                variant="danger"
-              />
-            </View>
-          ) : null}
-        </View>
-      </Card>
+      <AgendaCard
+        actions={actions}
+        appointmentId={appointment.id}
+        busy={busy}
+        customerName={appointment.customerName}
+        key={appointment.id}
+        onComplete={() => setStatus.mutate({ id: appointment.id, status: "completed" })}
+        onConfirm={() => setStatus.mutate({ id: appointment.id, status: "confirmed" })}
+        onNoShow={() => setStatus.mutate({ id: appointment.id, status: "no_show" })}
+        onOpen={() => setOpenId(appointment.id)}
+        status={appointment.status}
+        testPrefix="barber"
+        timeLabel={`${withDate ? `${formatDateNumeric(startsAt.localDate, language)} ` : ""}${startsAt.localTime}`}
+      />
     );
   };
 
@@ -329,6 +260,37 @@ export default function BarberAgendaScreen() {
             )}
           </View>
 
+          <AppointmentSheet
+            appointment={openAppointment && openStart ? {
+              customerName: openAppointment.customerName,
+              customerPhone: openAppointment.customerPhone,
+              dateLabel: formatDateNumeric(openStart.localDate, language),
+              id: openAppointment.id,
+              notes: openAppointment.notes ?? null,
+              priceCents: openAppointment.servicePriceCentsSnapshot,
+              serviceName: openAppointment.serviceNameSnapshot,
+              status: openAppointment.status,
+              timeLabel: openStart.localTime,
+            } : null}
+            busy={busy}
+            onCancel={() => cancel.mutate(openAppointment?.id ?? "")}
+            onClose={() => setOpenId(null)}
+            onMove={() => {
+              if (!openAppointment) return;
+              setOpenId(null);
+              router.push({
+                params: { appointmentId: openAppointment.id, barberId: openAppointment.barberId, barberServiceId: openAppointment.barberServiceId, customerName: openAppointment.customerName, serviceName: openAppointment.serviceNameSnapshot, startsAt: openAppointment.startsAt },
+                pathname: "/move-appointment",
+              });
+            }}
+            onOpenCustomer={() => {
+              const customerId = openAppointment?.customerId;
+              setOpenId(null);
+              if (customerId) router.push(`/clients/${customerId}` as never);
+            }}
+            remindUrl={openRemindUrl}
+            testPrefix="barber"
+          />
           <BarberBookingSheet
             busy={book.isPending}
             initialCustomer={initialCustomer}

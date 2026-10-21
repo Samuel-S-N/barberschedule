@@ -22,6 +22,7 @@ export const en = {
     time: "09:00",
     weeks: "2",
   },
+  agendaCard: { barber: "Barber", close: "Close", customer: "Customer", notes: "Notes" },
   common: {
     activate: "Activate",
     allDay: "all day",

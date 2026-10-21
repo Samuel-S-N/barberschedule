@@ -189,3 +189,26 @@ test("the clients list loads more pages while a full page comes back", async ({ 
   await expect(page.getByTestId("clients-load-more")).toHaveCount(0);
   expect(offsets).toEqual([0, 50]);
 });
+
+test("the recent history is a fixed-height scroll area, not a long list", async ({ page }) => {
+  const history = Array.from({ length: 20 }, (_, index) => ({ id: `a${index}`, service_name: `Cut ${index}`, starts_at: `2026-09-${String(10 + (index % 18)).padStart(2, "0")}T15:00:00Z`, status: "completed" }));
+
+  await signIn(page, barberUserId);
+  await mockBarberRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/rpc/get_my_customer")) {
+      return json(route, {
+        customer: { email: null, full_name: "Ana Souza", has_account: false, id: "c1", phone: "11988887777" },
+        history, note: null,
+        stats: { cancelled: 0, favorite_service: "Cut 0", last_visit_at: null, next_visit_at: null, no_show: 0, visits: 20 },
+      }).then(() => true);
+    }
+  });
+
+  await page.goto("/clients/c1");
+  const scroll = page.getByTestId("client-history-scroll");
+  await expect(scroll).toBeVisible();
+  const { client, content } = await scroll.evaluate((element) => ({ client: element.clientHeight, content: element.scrollHeight }));
+
+  expect(client).toBeLessThanOrEqual(260);
+  expect(content).toBeGreaterThan(client);
+});
