@@ -111,7 +111,9 @@ test("Serve as a barber creates a barber linked to the owner and opens its profi
   await page.getByTestId("menu-my-barber").click();
   await expect(page).toHaveURL(new RegExp(`/barber-profile\\?id=${myBarberId}`));
   await page.locator('[data-testid="back"]:not([aria-hidden="true"] *)').click();
-  await expect(page).toHaveURL(/\/settings/);
+  // Fixed parent: a barber profile always goes back to the barber list, even when opened from the owner's account.
+  await expect(page).toHaveURL(/\/barbers/);
+  await page.goto("/settings");
 
   await page.getByTestId("owner-as-barber").click();
   await expect.poll(() => (state.calls.patch as { active?: boolean } | undefined)?.active).toBe(false);

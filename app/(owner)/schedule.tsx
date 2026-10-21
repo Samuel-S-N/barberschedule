@@ -125,7 +125,7 @@ export default function OwnerScheduleScreen() {
   const loading = shop.isLoading || data.isLoading;
   const loadError = shop.error ?? data.error;
   const selectable = (label: string, selected: boolean) => (selected ? t("common.selectedOption", { option: label }) : label);
-  const back = useBack("/manage");
+  const back = useBack();
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>

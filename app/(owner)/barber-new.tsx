@@ -17,7 +17,7 @@ import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 export default function OwnerBarberNewScreen() {
   const { t } = useTranslation();
-  const back = useBack("/barbers");
+  const back = useBack();
   const field = useFieldChain(2);
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();

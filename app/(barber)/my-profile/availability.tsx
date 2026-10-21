@@ -30,7 +30,7 @@ export default function BarberAvailabilityScreen() {
   const { t } = useTranslation();
   const language = useLanguage();
   const pull = useRefreshAll();
-  const back = useBack("/my-profile");
+  const back = useBack();
   const queryClient = useQueryClient();
   const { profile, supabase } = useSupabaseSession();
   const today = formatInstantInShopTime(new Date()).localDate;

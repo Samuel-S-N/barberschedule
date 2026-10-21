@@ -41,7 +41,7 @@ export default function BookReviewScreen() {
   const startsAt = param(params.startsAt);
   const router = useRouter();
   const queryClient = useQueryClient();
-  const back = useBack("/book");
+  const back = useBack();
   const { t } = useTranslation();
   const language = useLanguage();
   const { profile, supabase } = useSupabaseSession();

@@ -126,7 +126,7 @@ export default function OwnerShopScreen() {
   const field = (key: keyof typeof contact, label: string) => (
     <Input label={label} onChangeText={(value) => setContact((current) => ({ ...current, [key]: value }))} testID={`shop-${key}`} value={contact[key]} />
   );
-  const back = useBack("/manage");
+  const back = useBack();
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>

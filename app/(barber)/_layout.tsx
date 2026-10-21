@@ -11,6 +11,7 @@ import { Screen } from "../../src/components/ui/Screen";
 import { getMyBarberProfile } from "../../src/features/barbers/api";
 import { usePushRegistration } from "../../src/features/notifications/use-push-registration";
 import { errorMessage } from "../../src/i18n/errors";
+import { useHardwareBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 export default function BarberLayout() {
@@ -30,6 +31,7 @@ export default function BarberLayout() {
   });
 
   usePushRegistration(Boolean(barber.data));
+  useHardwareBack();
 
   if (barber.isError) {
     return (

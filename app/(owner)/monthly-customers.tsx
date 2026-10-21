@@ -49,7 +49,7 @@ export default function MonthlyCustomersScreen() {
   const language = useLanguage();
   const pull = useRefreshAll();
   const router = useRouter();
-  const back = useBack("/manage");
+  const back = useBack();
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
   const shop = useOwnerShopId();

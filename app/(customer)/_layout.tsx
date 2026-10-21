@@ -7,6 +7,7 @@ import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
 import { Button } from "../../src/components/ui/Button";
 import { ensureMyCustomer } from "../../src/features/account/api";
 import { usePushRegistration } from "../../src/features/notifications/use-push-registration";
+import { useHardwareBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { Screen } from "../../src/components/ui/Screen";
 
@@ -15,6 +16,7 @@ export const unstable_settings = { initialRouteName: "(tabs)" };
 
 export default function CustomerLayout() {
   const { t } = useTranslation();
+  useHardwareBack();
   const { profile, supabase } = useSupabaseSession();
   const bootstrap = useQuery({
     enabled: profile?.role === "customer",

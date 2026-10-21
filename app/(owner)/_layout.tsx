@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { BottomTabBar } from "../../src/components/domain/BottomTabBar";
 import { Screen } from "../../src/components/ui/Screen";
 import { usePushRegistration } from "../../src/features/notifications/use-push-registration";
+import { useHardwareBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 // Screens reached from the Manage menu: not tabs themselves, and they keep "Manage" highlighted.
@@ -24,6 +25,7 @@ export default function OwnerLayout() {
     { icon: User, key: "settings", label: t("tabs.account") },
   ];
   usePushRegistration(profile?.role === "owner");
+  useHardwareBack();
   const highlight = (name: string) => ((MANAGE_SCREENS as readonly string[]).includes(name) ? "manage" : (ACCOUNT_SCREENS as readonly string[]).includes(name) ? "settings" : (AGENDA_SCREENS as readonly string[]).includes(name) ? "agenda" : name);
 
   return (

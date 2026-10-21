@@ -73,3 +73,20 @@ test("the owner bell opens the owner's own notifications screen and back returns
   await page.locator('[data-testid="back"]:not([aria-hidden="true"] *)').click();
   await expect(page).toHaveURL(/\/agenda/);
 });
+
+test("the bell sits at the top-right with the title on a line below it", async ({ page }) => {
+  await page.setViewportSize({ height: 700, width: 375 });
+  await signInAsCustomer(page);
+  await mockCustomerRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/rpc/count_unread_notifications")) return json(route, 0), true;
+    if (url.pathname.endsWith("/appointments")) return json(route, []), true;
+  });
+
+  await page.goto("/home");
+  const bell = await page.getByTestId("notification-bell").boundingBox();
+  const title = await page.getByRole("heading").first().boundingBox();
+
+  expect(bell && title).toBeTruthy();
+  expect(bell!.x + bell!.width).toBeGreaterThan(375 - 40); // right edge
+  expect(bell!.y + bell!.height).toBeLessThanOrEqual(title!.y + 2); // above the title, not beside it
+});

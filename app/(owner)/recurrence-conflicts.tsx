@@ -42,7 +42,7 @@ export default function RecurrenceConflictsScreen() {
 
   const loading = shop.isLoading || conflicts.isLoading;
   const loadError = shop.error ?? conflicts.error;
-  const back = useBack("/monthly-customers");
+  const back = useBack();
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>

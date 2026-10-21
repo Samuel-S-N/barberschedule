@@ -39,7 +39,7 @@ function Line({ children, label }: { children: ReactNode; label: string }) {
 export default function ClientDetailScreen() {
   const { t } = useTranslation();
   const pull = useRefreshAll();
-  const back = useBack("/clients");
+  const back = useBack();
   const router = useRouter();
   const language = useLanguage();
   const queryClient = useQueryClient();

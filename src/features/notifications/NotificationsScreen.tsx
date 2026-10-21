@@ -22,8 +22,6 @@ import { recurrenceLabelKey } from "../recurrence/pricing";
 import { inboxRoute } from "./inbox-route";
 import { inboxText } from "./inbox-text";
 
-const HOME = { barber: "/my-agenda", customer: "/home", owner: "/agenda" } as const;
-
 export default function NotificationsScreen() {
   const { t } = useTranslation();
   const language = useLanguage();
@@ -32,7 +30,7 @@ export default function NotificationsScreen() {
   const queryClient = useQueryClient();
   const { profile, supabase } = useSupabaseSession();
   const role = profile?.role ?? "customer";
-  const back = useBack(HOME[role]);
+  const back = useBack();
   const items = useQuery({ queryFn: () => listNotifications(supabase), queryKey: ["notifications", profile?.userId] });
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: ["notifications"] });

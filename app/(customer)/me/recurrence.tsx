@@ -38,7 +38,7 @@ type Step = "barber" | "frequency" | "list" | "service" | "when";
 export default function CustomerRecurrenceScreen() {
   const { t } = useTranslation();
   const language = useLanguage();
-  const back = useBack("/profile");
+  const back = useBack();
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
   const today = formatInstantInShopTime(useNow()).localDate;
