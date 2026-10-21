@@ -18,13 +18,17 @@ describe("stale slot recovery", () => {
   const book = read("app/(customer)/(tabs)/book/review.tsx");
   const reschedule = read("app/(customer)/reschedule.tsx");
 
-  it.each([
-    ["book", book],
-    ["reschedule", reschedule],
-  ])("%s clears the selection and refetches slots on error", (_name, source) => {
-    const onError = handler(source, "onError");
+  const time = read("app/(customer)/(tabs)/book/time.tsx");
+
+  it("reschedule clears the selection and refetches slots on error", () => {
+    const onError = handler(reschedule, "onError");
     expect(onError).toContain("setStartsAt(null)");
     expect(onError).toMatch(invalidates);
+  });
+
+  it("book refetches slots on error, and the time step drops a selection that is no longer offered", () => {
+    expect(handler(book, "onError")).toMatch(invalidates);
+    expect(time).toContain("availability.data?.some");
   });
 
   it("reschedule refetches slots on success", () => {

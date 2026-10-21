@@ -50,6 +50,7 @@ describe("task 3 catalog and customer helpers", () => {
       {
         active: true,
         archivedAt: null,
+        avatarUrl: null,
         id: "barber-1",
         name: "Alice Barber",
         shopId: "shop-1",
@@ -58,7 +59,7 @@ describe("task 3 catalog and customer helpers", () => {
 
     expect(from).toHaveBeenCalledWith("barbers");
     expect(builder.select).toHaveBeenCalledWith(
-      "id, shop_id, name, active, archived_at",
+      "id, shop_id, name, active, archived_at, avatar_url",
     );
     expect(builder.eq).toHaveBeenCalledWith("shop_id", "shop-1");
     expect(builder.order).toHaveBeenCalledWith("name", { ascending: true });
@@ -84,7 +85,7 @@ describe("task 3 catalog and customer helpers", () => {
     ).resolves.toEqual([
       {
         active: true,
-        archivedAt: null,
+        avatarUrl: null,
         avatarUrl: null,
         bio: null,
         compensation: { commissionPercent: 0, type: "commission" },
@@ -204,6 +205,7 @@ describe("task 3 catalog and customer helpers", () => {
     ).resolves.toEqual({
       active: true,
       archivedAt: null,
+      avatarUrl: null,
       id: "barber-1",
       name: "Renamed Barber",
       shopId: "shop-1",

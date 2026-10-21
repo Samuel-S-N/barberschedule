@@ -44,6 +44,9 @@ export default function BookTimeScreen() {
     time: slot.localTime,
   }));
 
+  // After a lost booking race the list is refetched; a time that is no longer offered must not stay selected.
+  const selectedStillFree = Boolean(startsAt && availability.data?.some((slot: AvailableSlot) => slot.startsAt === startsAt));
+
   const selectSlot = (time: string) => {
     setStartsAt(availability.data?.find((slot: AvailableSlot) => slot.localTime === time)?.startsAt ?? null);
   };
@@ -74,7 +77,7 @@ export default function BookTimeScreen() {
             {slots.length > 0 ? <TimeSlotPicker onSelectSlot={selectSlot} slots={slots} /> : null}
           </View>
           <View className="w-full max-w-[420px]">
-            <Button disabled={!startsAt} label={t("book.continueToCheckout")} onPress={next} testID="book-time-continue" />
+            <Button disabled={!selectedStillFree} label={t("book.continueToCheckout")} onPress={next} testID="book-time-continue" />
           </View>
         </View>
       </ScrollView>
