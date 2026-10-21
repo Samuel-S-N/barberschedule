@@ -14,6 +14,7 @@ import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Input } from "../../src/components/ui/Input";
+import { DateInput, TimeInput } from "../../src/components/ui/MaskedInputs";
 import { Screen } from "../../src/components/ui/Screen";
 import { listOwnerBarbers } from "../../src/features/barbers/api";
 import type { OwnerBarber } from "../../src/features/barbers/types";
@@ -30,9 +31,12 @@ import {
 import type { RecurrenceSeries } from "../../src/features/recurrence/types";
 import { listOwnerBarberServices, listOwnerServices } from "../../src/features/services/api";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
+import { useLanguage } from "../../src/i18n/use-language";
 import { errorMessage } from "../../src/i18n/errors";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { centsToReaisInput, parseReaisToCents } from "../../src/lib/money";
+import { formatDateNumeric } from "../../src/lib/i18n/format";
+import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
@@ -44,6 +48,7 @@ function addDays(localDate: string, days: number) {
 
 export default function MonthlyCustomersScreen() {
   const { t } = useTranslation();
+  const language = useLanguage();
   const pull = useRefreshAll();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -153,7 +158,7 @@ export default function MonthlyCustomersScreen() {
   const busy = save.isPending || change.isPending;
   const loading = shop.isLoading || data.isLoading;
   const loadError = shop.error ?? data.error;
-  const back = () => (router.canGoBack() ? router.back() : router.replace("/manage"));
+  const back = useBack("/manage");
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
@@ -181,11 +186,11 @@ export default function MonthlyCustomersScreen() {
                     </ScrollView>
                     <Text accessibilityRole="header" className="text-lg font-display-semibold text-ink">{t("common.service")}</Text>
                     <RadioBlock items={[...labels.entries()].map(([id, label]) => ({ key: id, label, onPress: () => setSelectedBarberServiceId(id), selected: id === selectedBarberServiceId }))} />
-                    <Input label={t("owner.recurring.startDateLabel")} onChangeText={setLocalStartDate} testID="recurrence-start-date" value={localStartDate} />
+                    <DateInput label={t("owner.recurring.startDateLabel")} onChangeValue={setLocalStartDate} testID="recurrence-start-date" value={localStartDate} />
                   </>
                 )}
                 <Input keyboardType="number-pad" label={t("owner.recurring.intervalLabel")} onChangeText={setIntervalWeeks} testID="recurrence-interval" value={intervalWeeks} />
-                <Input label={t("owner.recurring.timeLabel")} onChangeText={setLocalStartTime} testID="recurrence-time" value={localStartTime} />
+                <TimeInput label={t("owner.recurring.timeLabel")} onChangeValue={setLocalStartTime} testID="recurrence-time" value={localStartTime} />
                 <Input keyboardType="numeric" label={t("owner.recurring.specialPriceLabel")} onChangeText={setPrice} testID="recurrence-price" value={price} />
                 <View className="flex-row gap-2">
                   <Button disabled={busy || loading} label={editing ? t("owner.recurring.saveEdit") : t("owner.recurring.create")} onPress={() => save.mutate()} testID="recurrence-save" />
@@ -195,7 +200,7 @@ export default function MonthlyCustomersScreen() {
             </Card>
 
             <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{t("owner.recurring.series")}</Text>
-            <Input label={t("owner.recurring.occurrenceLabel")} onChangeText={setOccurrenceDate} testID="recurrence-occurrence-date" value={occurrenceDate} />
+            <DateInput label={t("owner.recurring.occurrenceLabel")} onChangeValue={setOccurrenceDate} testID="recurrence-occurrence-date" value={occurrenceDate} />
             {(data.data?.series ?? []).map((item: RecurrenceSeries) => (
               <Card key={item.id} testID={`series-${item.id}`} variant="outlined">
                 <View className="gap-2">
@@ -203,7 +208,7 @@ export default function MonthlyCustomersScreen() {
                   {labels.get(item.barberServiceId) ? <Text className="text-sm font-sans text-neutral-600">{labels.get(item.barberServiceId)}</Text> : null}
                   <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>
                     {t("owner.recurring.detail", {
-                      date: item.localStartDate,
+                      date: formatDateNumeric(item.localStartDate, language),
                       price: item.specialPriceCents === null ? t("owner.recurring.catalogPrice") : formatPriceBRL(item.specialPriceCents),
                       state: item.active ? t("owner.recurring.active") : t("owner.recurring.inactive"),
                       time: item.localStartTime,

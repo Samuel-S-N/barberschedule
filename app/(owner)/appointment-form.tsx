@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
@@ -11,6 +10,7 @@ import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
 import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Input } from "../../src/components/ui/Input";
+import { DateInput } from "../../src/components/ui/MaskedInputs";
 import { Screen } from "../../src/components/ui/Screen";
 import { bookOwnerAppointment } from "../../src/features/appointments/owner-api";
 import { getAvailableSlots } from "../../src/features/availability/api";
@@ -22,13 +22,13 @@ import { listOwnerBarberServices, listOwnerServices } from "../../src/features/s
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
 import { errorMessage } from "../../src/i18n/errors";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
+import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
 export default function OwnerAppointmentFormScreen() {
   const { t } = useTranslation();
   const pull = useRefreshAll();
-  const router = useRouter();
   const { supabase } = useSupabaseSession();
   const shop = useOwnerShopId();
   const shopId = shop.data ?? null;
@@ -113,7 +113,7 @@ export default function OwnerAppointmentFormScreen() {
     }
   };
 
-  const back = () => (router.canGoBack() ? router.back() : router.replace("/agenda"));
+  const back = useBack("/agenda");
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
@@ -149,7 +149,7 @@ export default function OwnerAppointmentFormScreen() {
               testID="owner-service-list"
             />
 
-            <Input label={t("common.localDate")} onChangeText={setLocalDate} testID="owner-appointment-date" value={localDate} />
+            <DateInput label={t("common.localDate")} onChangeValue={setLocalDate} testID="owner-appointment-date" value={localDate} />
             <Button disabled={!selectedBarberService || isSaving} label={t("owner.appointmentForm.loadTimes")} onPress={() => void loadSlots()} testID="owner-form-load-times" variant="outline" />
             {slots.length > 0 ? (
               <View className="flex-row flex-wrap gap-2" testID="owner-form-slots">

@@ -23,10 +23,7 @@ export function formatDateLabel(localDate: string, language: Language) {
 }
 
 export function formatDateNumeric(localDate: string, language: Language) {
-  return new Intl.DateTimeFormat(language === "en" ? "en-US" : DATE_LOCALE[language], {
-    day: "2-digit",
-    month: "2-digit",
-    timeZone: "UTC",
-    year: "numeric",
-  }).format(noonUtc(localDate));
+  const [year, month, day] = localDate.split("-");
+
+  return language === "en" ? localDate : `${day}/${month}/${year}`;
 }

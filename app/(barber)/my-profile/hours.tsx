@@ -17,7 +17,7 @@ const WEEKDAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "s
 export default function BarberHoursScreen() {
   const { t } = useTranslation();
   const pull = useRefreshAll();
-  const back = useBack();
+  const back = useBack("/my-profile");
   const { profile, supabase } = useSupabaseSession();
   const periods = useQuery({ queryFn: () => listMyWorkingPeriods(supabase), queryKey: ["my-working-periods", profile?.userId] });
 

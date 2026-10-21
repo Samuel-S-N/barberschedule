@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
@@ -13,19 +12,20 @@ import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Input } from "../../src/components/ui/Input";
+import { formatPhone } from "../../src/features/account/phone";
 import { Screen } from "../../src/components/ui/Screen";
 import { createCustomer, listOwnerCustomers, setCustomerActive, updateCustomer } from "../../src/features/customers/api";
 import type { Customer } from "../../src/features/customers/types";
 import { canSubmitCustomerForm } from "../../src/features/customers/validation";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
 import { errorMessage } from "../../src/i18n/errors";
+import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
 export default function OwnerCustomersScreen() {
   const { t } = useTranslation();
   const pull = useRefreshAll();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
   const shop = useOwnerShopId();
@@ -78,7 +78,7 @@ export default function OwnerCustomersScreen() {
   const shown = (customers.data ?? []).filter(
     (customer: Customer) => !term || customer.fullName.toLowerCase().includes(term) || (customer.email ?? "").toLowerCase().includes(term) || (customer.phone ?? "").includes(term),
   );
-  const back = () => (router.canGoBack() ? router.back() : router.replace("/manage"));
+  const back = useBack("/manage");
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
@@ -91,7 +91,7 @@ export default function OwnerCustomersScreen() {
               <View className="gap-3">
                 <Input label={t("owner.customers.nameLabel")} onChangeText={setFullName} testID="customer-name" value={fullName} />
                 <Input autoCapitalize="none" autoComplete="email" keyboardType="email-address" label={t("owner.customers.emailLabel")} onChangeText={setEmail} testID="customer-email" value={email} />
-                <Input keyboardType="phone-pad" label={t("common.phoneOptional")} onChangeText={setPhone} testID="customer-phone" value={phone} />
+                <Input keyboardType="phone-pad" label={t("common.phoneOptional")} onChangeText={(value) => setPhone(formatPhone(value))} testID="customer-phone" value={phone} />
                 <View className="flex-row gap-2">
                   <Button
                     disabled={!canSubmitCustomerForm({ editingId, email, fullName, isLoading: loading, isSaving: busy, phone, shopId })}

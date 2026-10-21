@@ -33,6 +33,7 @@ import { createScheduleOverride, deleteScheduleOverride, listMyScheduleOverrides
 import { errorMessage } from "../../src/i18n/errors";
 import { useLanguage } from "../../src/i18n/use-language";
 import { buildCalendarStripDays } from "../../src/lib/dates/calendar-strip-days";
+import { formatDateNumeric } from "../../src/lib/i18n/format";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
@@ -229,7 +230,7 @@ export default function BarberAgendaScreen() {
         <View className="gap-2">
           <View className="flex-row items-center justify-between">
             <Text className="text-lg font-display-semibold text-ink" style={{ fontVariant: ["tabular-nums"] }}>
-              {withDate ? `${startsAt.localDate} ` : ""}
+              {withDate ? `${formatDateNumeric(startsAt.localDate, language)} ` : ""}
               {startsAt.localTime}
             </Text>
             <StatusBadge status={appointment.status} />

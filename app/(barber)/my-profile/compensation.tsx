@@ -16,7 +16,7 @@ import { pullToRefresh, useRefreshAll } from "../../../src/lib/use-refresh";
 export default function BarberCompensationScreen() {
   const { t } = useTranslation();
   const pull = useRefreshAll();
-  const back = useBack();
+  const back = useBack("/my-profile");
   const { profile, supabase } = useSupabaseSession();
   const barber = useQuery({ queryFn: () => getMyBarberProfile(supabase), queryKey: ["my-barber-profile", profile?.userId] });
   const compensation = barber.data?.compensation;

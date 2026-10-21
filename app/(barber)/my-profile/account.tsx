@@ -25,7 +25,7 @@ type Feedback = { message: string; variant: "error" | "success" };
 
 export default function BarberAccountScreen() {
   const { t } = useTranslation();
-  const back = useBack();
+  const back = useBack("/my-profile");
   const queryClient = useQueryClient();
   const { profile: sessionProfile, session, supabase } = useSupabaseSession();
   const profile = useMyProfile();

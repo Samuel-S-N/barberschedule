@@ -132,3 +132,19 @@ test("a barber sees their weekly working hours, read-only", async ({ page }) => 
   await expect(page.getByTestId("barber-hours-tuesday")).toContainText("Day off");
   await expect(page.getByTestId("barber-hours-note")).toBeVisible();
 });
+
+test("back from a profile sub-screen returns to the profile hub, also after a cold start", async ({ page }) => {
+  await signIn(page, barberUserId);
+  await mockBarberRest(page);
+
+  await page.goto("/my-profile");
+  await page.getByTestId("menu-privacy").click();
+  await expect(page).toHaveURL(/\/my-profile\/privacy/);
+  await page.locator('[data-testid="back"]:not([aria-hidden="true"] *)').click();
+  await expect(page).toHaveURL(/\/my-profile$/);
+
+  // Cold start (no history): the fallback is the barber's own hub, not the customer's /profile.
+  await page.goto("/my-profile/privacy");
+  await page.locator('[data-testid="back"]:not([aria-hidden="true"] *)').click();
+  await expect(page).toHaveURL(/\/my-profile$/);
+});

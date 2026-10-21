@@ -6,6 +6,7 @@ import { ScrollView, Text, View } from "react-native";
 
 import { Toast } from "../../src/components/domain/Toast";
 import { Input } from "../../src/components/ui/Input";
+import { DateInput } from "../../src/components/ui/MaskedInputs";
 
 import { ChartSection } from "../../src/components/charts/ChartSection";
 import { ColumnChart } from "../../src/components/charts/ColumnChart";
@@ -274,7 +275,7 @@ export default function OwnerRevenueScreen() {
                       {payingFor === row.barberId ? (
                         <View className="gap-2">
                           <Input label={t("owner.revenue.paymentAmount")} onChangeText={setAmount} testID="rent-amount" value={amount} />
-                          <Input label={t("owner.revenue.paymentDate")} onChangeText={setPaidOn} testID="rent-date" value={paidOn} />
+                          <DateInput label={t("owner.revenue.paymentDate")} onChangeValue={setPaidOn} testID="rent-date" value={paidOn} />
                           <Input label={t("owner.revenue.paymentNote")} onChangeText={setNote} testID="rent-note" value={note} />
                           <View className="flex-row gap-2">
                             <Button disabled={savePayment.isPending} label={t("owner.revenue.savePayment")} onPress={() => submitPayment(row.barberId)} size="sm" testID="rent-pay-save" />

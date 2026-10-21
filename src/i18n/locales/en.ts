@@ -15,7 +15,7 @@ export const en = {
     deactivate: "Deactivate",
     edit: "Edit",
     endTime: "End time (HH:mm)",
-    localDate: "Local date (YYYY-MM-DD)",
+    localDate: "Local date",
     nextMonth: "Next month",
     noShop: "No shop found.",
     previousMonth: "Previous month",

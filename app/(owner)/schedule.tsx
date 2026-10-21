@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
@@ -11,7 +10,7 @@ import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
 import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
-import { Input } from "../../src/components/ui/Input";
+import { DateInput, TimeInput } from "../../src/components/ui/MaskedInputs";
 import { Screen } from "../../src/components/ui/Screen";
 import { listOwnerBarbers } from "../../src/features/barbers/api";
 import type { OwnerBarber } from "../../src/features/barbers/types";
@@ -26,8 +25,11 @@ import {
 import type { ScheduleOverrideKind } from "../../src/features/schedule/types";
 import { assertNoOverlappingWorkingPeriod, parseWorkingPeriodInput } from "../../src/features/schedule/validation";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
+import { useLanguage } from "../../src/i18n/use-language";
 import { errorMessage } from "../../src/i18n/errors";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
+import { formatDateNumeric } from "../../src/lib/i18n/format";
+import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
@@ -35,8 +37,8 @@ const WEEKDAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "s
 
 export default function OwnerScheduleScreen() {
   const { t } = useTranslation();
+  const language = useLanguage();
   const pull = useRefreshAll();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
   const shop = useOwnerShopId();
@@ -110,7 +112,7 @@ export default function OwnerScheduleScreen() {
   const loading = shop.isLoading || data.isLoading;
   const loadError = shop.error ?? data.error;
   const selectable = (label: string, selected: boolean) => (selected ? t("common.selectedOption", { option: label }) : label);
-  const back = () => (router.canGoBack() ? router.back() : router.replace("/manage"));
+  const back = useBack("/manage");
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
@@ -144,8 +146,8 @@ export default function OwnerScheduleScreen() {
                         <Button key={key} label={t(`owner.schedule.weekdays.${key}`)} onPress={() => setWeekday(index + 1)} size="sm" testID={`weekday-${index + 1}`} variant={weekday === index + 1 ? "dark" : "outline"} />
                       ))}
                     </View>
-                    <Input label={t("common.startTime")} onChangeText={setStartTime} testID="period-start" value={startTime} />
-                    <Input label={t("common.endTime")} onChangeText={setEndTime} testID="period-end" value={endTime} />
+                    <TimeInput label={t("common.startTime")} onChangeValue={setStartTime} testID="period-start" value={startTime} />
+                    <TimeInput label={t("common.endTime")} onChangeValue={setEndTime} testID="period-end" value={endTime} />
                     <Button disabled={busy} label={t("owner.schedule.addPeriod")} onPress={() => addPeriod.mutate()} testID="period-add" />
                   </View>
                 </Card>
@@ -163,7 +165,7 @@ export default function OwnerScheduleScreen() {
                 <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{t("owner.schedule.overridesTitle")}</Text>
                 <Card>
                   <View className="gap-3">
-                    <Input label={t("common.localDate")} onChangeText={setLocalDate} testID="override-date" value={localDate} />
+                    <DateInput label={t("common.localDate")} onChangeValue={setLocalDate} testID="override-date" value={localDate} />
                     <View className="flex-row flex-wrap gap-2">
                       <Button label={selectable(t("owner.schedule.blockTime"), overrideKind === "block")} onPress={() => setOverrideKind("block")} size="sm" testID="override-kind-block" variant={overrideKind === "block" ? "dark" : "outline"} />
                       <Button label={selectable(t("owner.schedule.extraOpening"), overrideKind === "opening")} onPress={() => setOverrideKind("opening")} size="sm" testID="override-kind-opening" variant={overrideKind === "opening" ? "dark" : "outline"} />
@@ -176,8 +178,8 @@ export default function OwnerScheduleScreen() {
                     ) : null}
                     {showOverrideTimes ? (
                       <>
-                        <Input label={t("common.startTime")} onChangeText={setOverrideStartTime} testID="override-start" value={overrideStartTime} />
-                        <Input label={t("common.endTime")} onChangeText={setOverrideEndTime} testID="override-end" value={overrideEndTime} />
+                        <TimeInput label={t("common.startTime")} onChangeValue={setOverrideStartTime} testID="override-start" value={overrideStartTime} />
+                        <TimeInput label={t("common.endTime")} onChangeValue={setOverrideEndTime} testID="override-end" value={overrideEndTime} />
                       </>
                     ) : null}
                     <Button disabled={busy} label={t("owner.schedule.addOverride")} onPress={() => addOverride.mutate()} testID="override-add" />
@@ -188,7 +190,7 @@ export default function OwnerScheduleScreen() {
                     <View className="flex-row items-center justify-between gap-2">
                       <Text className="flex-1 text-base font-sans-medium text-ink" style={{ fontVariant: ["tabular-nums"] }}>
                         {t("owner.schedule.overrideLine", {
-                          date: override.localDate,
+                          date: formatDateNumeric(override.localDate, language),
                           kind: override.kind === "opening" ? t("owner.schedule.kindOpening") : t("owner.schedule.kindBlock"),
                           time: override.startTime ? `${override.startTime}–${override.endTime}` : t("common.allDay"),
                         })}

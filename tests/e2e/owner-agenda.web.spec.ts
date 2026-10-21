@@ -82,3 +82,24 @@ test("an empty range shows the empty state and the new-appointment button opens 
   await page.getByTestId("owner-new-appointment").click();
   await expect(page).toHaveURL(/\/appointment-form/);
 });
+
+test("the date field masks what is typed and only requests the range once the date is complete", async ({ page }) => {
+  const ranges: string[] = [];
+
+  await signInAsOwner(page);
+  await mockOwnerRest(page, { calls: {}, noOverrides: true, rows: [] });
+  page.on("request", (request) => {
+    if (request.url().endsWith("/rpc/list_owner_agenda")) ranges.push((request.postDataJSON() as { range_start: string }).range_start);
+  });
+
+  await page.goto("/agenda");
+  const field = page.getByTestId("owner-agenda-date");
+  await field.fill("");
+  await field.pressSequentially("20261002");
+  await expect(field).toHaveValue("2026-10-02");
+  await expect.poll(() => ranges.at(-1)).toBe("2026-10-02");
+  // Deleting one character leaves a partial date: shown as typed, no invalid range requested.
+  await field.press("Backspace");
+  await expect(field).toHaveValue("2026-10-0");
+  expect(ranges.every((range) => /^\d{4}-\d{2}-\d{2}$/.test(range))).toBe(true);
+});
