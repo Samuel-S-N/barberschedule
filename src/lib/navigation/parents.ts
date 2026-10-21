@@ -64,6 +64,8 @@ export const ROUTE_PARENTS: Record<string, Parent> = {
   // owner
   "/owner-notifications": "/agenda",
   "/appointment-form": "/agenda",
+  "/recurrence-plans": "/manage",
+  "/recurrence-plan-form": "/recurrence-plans",
   "/barbers": "/manage",
   "/barber-new": "/barbers",
   "/barber-profile": "/barbers",

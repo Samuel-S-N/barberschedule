@@ -70,7 +70,7 @@ export default function BarberRecurrenceScreen() {
                   setFeedback({ message: t("owner.recurring.saved"), variant: "success" });
                 }}
                 onSearch={setTerm}
-                services={(services.data ?? []).filter((service) => service.active).map((service) => ({ barberServiceId: service.barberServiceId, label: service.serviceName }))}
+                services={(services.data ?? []).filter((service) => service.active).map((service) => ({ barberId: barber.data?.id ?? "", barberServiceId: service.barberServiceId, label: service.serviceName }))}
               />
             ) : null}
             <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />

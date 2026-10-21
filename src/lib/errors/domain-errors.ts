@@ -16,6 +16,7 @@ export type DomainErrorCode =
   | "RECURRENCE_REQUEST_FAILED"
   | "RECURRENCE_REQUEST_NOT_PENDING"
   | "RECURRENCE_PRICE_INVALID"
+  | "RECURRENCE_PLAN_DUPLICATE"
   | "OWNER_AGENDA_REQUEST_FAILED"
   | "OWNER_STATUS_REQUEST_FAILED"
   | "APPOINTMENT_REQUEST_FAILED"
@@ -98,6 +99,8 @@ export function toDomainError(error: { code?: string; message?: string }): Domai
       return new DomainError("RECURRENCE_REQUEST_NOT_PENDING", "This request was already answered.");
     case "P0032":
       return new DomainError("RECURRENCE_PRICE_INVALID", "Enter a valid recurrence price.");
+    case "P0033":
+      return new DomainError("RECURRENCE_PLAN_DUPLICATE", "There is already an active plan for this service and periodicity.");
     case "P0017":
       return new DomainError("PROFILE_INVALID", "Enter your name and a valid phone number.");
     case "P0018":
