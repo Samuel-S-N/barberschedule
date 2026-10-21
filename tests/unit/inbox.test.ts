@@ -1,5 +1,5 @@
 import { countUnread, listNotifications, markRead } from "../../src/features/notifications/inbox-api";
-import { inboxRoute } from "../../src/features/notifications/inbox-route";
+import { inboxRoute, notificationsPath } from "../../src/features/notifications/inbox-route";
 import { inboxText } from "../../src/features/notifications/inbox-text";
 
 it("maps rows", async () => {
@@ -35,4 +35,10 @@ it("routes appointment events to the role's agenda", () => {
   expect(inboxRoute("appointment_confirmed", "customer")).toBe("/appointments");
   expect(inboxRoute("appointment_awaiting_confirmation", "barber")).toBe("/my-agenda");
   expect(inboxRoute("appointment_cancelled", "owner")).toBe("/agenda");
+});
+
+it("gives each role its own notifications URL", () => {
+  expect(notificationsPath("customer")).toBe("/notifications");
+  expect(notificationsPath("barber")).toBe("/barber-notifications");
+  expect(notificationsPath("owner")).toBe("/owner-notifications");
 });

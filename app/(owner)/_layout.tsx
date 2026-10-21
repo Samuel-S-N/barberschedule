@@ -10,7 +10,7 @@ import { useSupabaseSession } from "../../src/providers/AppProviders";
 // Screens reached from the Manage menu: not tabs themselves, and they keep "Manage" highlighted.
 const MANAGE_SCREENS = ["appointment-form", "barbers", "customers", "monthly-customers", "recurrence-conflicts", "schedule", "services", "shop"] as const;
 // Reached from the Agenda tab (the bell).
-const AGENDA_SCREENS = ["notifications"] as const;
+const AGENDA_SCREENS = ["owner-notifications"] as const;
 // Reached from the Account tab.
 const ACCOUNT_SCREENS = ["language"] as const;
 

@@ -43,3 +43,33 @@ test("the bell shows the unread count, opens the list, marks as read and opens t
   await expect.poll(() => calls).toEqual([{ target_ids: ["n1"] }]);
   await expect(page).toHaveURL(/\/appointments/);
 });
+
+test("the owner bell opens the owner's own notifications screen and back returns to the agenda", async ({ page }) => {
+  const ownerId = "55555555-5555-4555-8555-555555555555";
+
+  await page.addInitScript(({ id }) => {
+    const now = Math.floor(Date.now() / 1000);
+    const header = btoa(JSON.stringify({ alg: "none" })).replace(/=+$/, "");
+    const token = `${header}.${btoa(JSON.stringify({ exp: now + 3600, sub: id }))}.`;
+    const session = JSON.stringify({ access_token: token, expires_at: now + 3600, expires_in: 3600, refresh_token: "e2e-refresh-token", token_type: "bearer", user: { id } });
+    localStorage.setItem("sb-example-auth-token", session);
+  }, { id: ownerId });
+  await page.route("**/rest/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+
+    if (path.endsWith("/rpc/get_current_profile")) return json(route, [{ full_name: "Owner", role: "owner", user_id: ownerId }]);
+    if (path.endsWith("/rpc/count_unread_notifications")) return json(route, 1);
+    if (path.endsWith("/notifications")) return json(route, [notification({ id: "n9", kind: "appointment_awaiting_confirmation" })]);
+    if (path.endsWith("/shops")) return json(route, [{ id: "11111111-1111-4111-8111-111111111111" }]);
+    if (path.endsWith("/rpc/list_owner_agenda") || path.endsWith("/rpc/list_owner_agenda_overrides")) return json(route, []);
+    await route.abort();
+  });
+
+  await page.goto("/agenda");
+  await page.getByTestId("notification-bell").click();
+  await expect(page).toHaveURL(/\/owner-notifications/);
+  await expect(page.getByTestId("notification-n9")).toContainText("Awaiting confirmation");
+  await expect(page.getByTestId("tab-agenda")).toHaveAttribute("aria-selected", "true");
+  await page.locator('[data-testid="back"]:not([aria-hidden="true"] *)').click();
+  await expect(page).toHaveURL(/\/agenda/);
+});

@@ -311,7 +311,7 @@ export default function BarberAgendaScreen() {
       <KeyboardAwareScrollView refreshControl={pullToRefresh(pull)} bottomOffset={24} keyboardShouldPersistTaps="handled" className="flex-1">
         <View className="items-center gap-4 p-5">
           <View className="w-full max-w-[420px] flex-row items-center gap-2">
-            <NotificationBell onPress={() => router.push("/notifications" as never)} />
+            <NotificationBell />
             <Text accessibilityRole="header" className="flex-1 text-3xl font-display-bold text-ink">
               {t("barber.agenda.title")}
             </Text>

@@ -1,12 +1,17 @@
+import { useRouter } from "expo-router";
 import { Bell } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { Pressable, Text, View } from "react-native";
 
+import { notificationsPath } from "../../features/notifications/inbox-route";
 import { useUnreadCount } from "../../features/notifications/use-unread";
 import { colors } from "../../lib/design/colors";
+import { useSupabaseSession } from "../../providers/AppProviders";
 
-export function NotificationBell({ onPress }: { onPress: () => void }) {
+export function NotificationBell() {
   const { t } = useTranslation();
+  const router = useRouter();
+  const { profile } = useSupabaseSession();
   const unread = useUnreadCount().data ?? 0;
 
   return (
@@ -15,7 +20,7 @@ export function NotificationBell({ onPress }: { onPress: () => void }) {
       accessibilityRole="button"
       className="min-h-[44px] min-w-[44px] items-center justify-center"
       hitSlop={8}
-      onPress={onPress}
+      onPress={() => router.push(notificationsPath(profile?.role ?? "customer") as never)}
       testID="notification-bell"
     >
       <Bell color={colors.ink} size={26} />

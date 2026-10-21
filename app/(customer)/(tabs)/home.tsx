@@ -46,7 +46,7 @@ export default function CustomerHomeScreen() {
       <ScrollView className="flex-1" refreshControl={<RefreshControl onRefresh={refresh.onRefresh} refreshing={refresh.refreshing} />}>
         <View className="items-center gap-4 p-5">
           <View className="w-full max-w-[420px] flex-row items-center gap-2">
-            <NotificationBell onPress={() => router.push("/notifications" as never)} />
+            <NotificationBell />
             <Text accessibilityRole="header" className="flex-1 text-3xl font-display-bold text-ink">
               {firstName ? t("home.greeting", { name: firstName }) : t("home.welcome")}
             </Text>
