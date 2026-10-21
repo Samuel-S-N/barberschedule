@@ -162,13 +162,13 @@ export default function OwnerShopScreen() {
                     </View>
                     {day.enabled ? (
                       <>
-                        <View className="flex-row gap-2">
+                        <View className="flex-row items-end gap-2">
                           <View className="flex-1"><TimeInput label={t("common.startTime")} onChangeValue={(start) => patchDay(weekday, { start })} testID={`shop-start-${weekday}`} value={day.start} /></View>
                           <View className="flex-1"><TimeInput label={t("common.endTime")} onChangeValue={(end) => patchDay(weekday, { end })} testID={`shop-end-${weekday}`} value={day.end} /></View>
                         </View>
                         {day.breaks.map((pause, index) => (
                           <View className="gap-2" key={index}>
-                            <View className="flex-row gap-2">
+                            <View className="flex-row items-end gap-2">
                               <View className="flex-1">
                                 <TimeInput
                                   label={t("owner.shop.breakStart")}

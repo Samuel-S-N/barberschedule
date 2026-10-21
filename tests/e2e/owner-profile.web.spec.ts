@@ -114,6 +114,8 @@ test("Serve as a barber creates a barber linked to the owner and opens its profi
   // Fixed parent: a barber profile always goes back to the barber list, even when opened from the owner's account.
   await expect(page).toHaveURL(/\/barbers/);
   await page.goto("/settings");
+  // Wait for the barber row to load: toggling before it arrives would try to create another one.
+  await expect(page.getByTestId("menu-my-barber")).toBeVisible();
 
   await page.getByTestId("owner-as-barber").click();
   await expect.poll(() => (state.calls.patch as { active?: boolean } | undefined)?.active).toBe(false);

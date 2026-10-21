@@ -167,7 +167,7 @@ export default function BarberAvailabilityScreen() {
             <Card variant="outlined">
               <View className="gap-3">
                 <Text className="text-sm font-sans text-neutral-600">{t("barber.availability.lunchHint")}</Text>
-                <View className="flex-row gap-2">
+                <View className="flex-row items-end gap-2">
                   <View className="flex-1"><TimeInput label={t("common.startTime")} onChangeValue={setLunchStart} testID="lunch-start" value={lunchStart} /></View>
                   <View className="flex-1"><TimeInput label={t("common.endTime")} onChangeValue={setLunchEnd} testID="lunch-end" value={lunchEnd} /></View>
                 </View>
@@ -192,7 +192,7 @@ export default function BarberAvailabilityScreen() {
               <View className="gap-3">
                 <DateInput label={t("barber.availability.absenceFrom")} onChangeValue={(value) => { setFrom(value); resetWarning(); }} testID="absence-from" value={from} />
                 <DateInput label={t("barber.availability.absenceUntil")} onChangeValue={(value) => { setUntil(value); resetWarning(); }} testID="absence-until" value={until} />
-                <View className="flex-row gap-2">
+                <View className="flex-row items-end gap-2">
                   <View className="flex-1"><TimeInput label={t("common.startTime")} onChangeValue={(value) => { setAbsenceStart(value); resetWarning(); }} testID="absence-start" value={absenceStart} /></View>
                   <View className="flex-1"><TimeInput label={t("common.endTime")} onChangeValue={(value) => { setAbsenceEnd(value); resetWarning(); }} testID="absence-end" value={absenceEnd} /></View>
                 </View>

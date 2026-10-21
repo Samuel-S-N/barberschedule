@@ -78,7 +78,7 @@ export function ManualRecurrenceForm({ customers, onCreated, onSearch, services 
               : t("recurrence.normalPrice", { price: formatPriceBRL(current.normalCents) })}
           </Text>
         ) : null}
-        <View className="flex-row gap-2">
+        <View className="flex-row items-end gap-2">
           <View className="flex-1"><DateInput label={t("owner.recurring.startDateLabel")} onChangeValue={setStartDate} testID="manual-recurrence-date" value={startDate} /></View>
           <View className="flex-1"><TimeInput label={t("owner.recurring.timeLabel")} onChangeValue={setStartTime} testID="manual-recurrence-time" value={startTime} /></View>
         </View>
