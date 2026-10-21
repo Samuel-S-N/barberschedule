@@ -16,7 +16,6 @@ import { StatusBadge } from "../../src/components/domain/StatusBadge";
 import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
-import { Input, useFieldChain } from "../../src/components/ui/Input";
 import { Screen } from "../../src/components/ui/Screen";
 import { listMyBarberAgenda, setMyAppointmentStatus, type BarberAgendaAppointment, type BarberAppointmentStatus } from "../../src/features/appointments/barber-agenda";
 import { groupByLocalDate, markAppointmentDays, pendingClosure } from "../../src/features/appointments/agenda-view";
@@ -30,7 +29,6 @@ import { cancelAppointment } from "../../src/features/appointments/lifecycle";
 import { whatsappUrl } from "../../src/features/clients/format";
 import { getMyBarberProfile, listMyBarberServices } from "../../src/features/barbers/api";
 import { getMyBarberReport } from "../../src/features/reports/api";
-import { createScheduleOverride, deleteScheduleOverride, listMyScheduleOverrides } from "../../src/features/schedule/api";
 import { errorMessage } from "../../src/i18n/errors";
 import { useLanguage } from "../../src/i18n/use-language";
 import { buildCalendarStripDays } from "../../src/lib/dates/calendar-strip-days";
@@ -45,14 +43,11 @@ const PENDING_DAYS_BACK = 30;
 export default function BarberAgendaScreen() {
   const { t } = useTranslation();
   const pull = useRefreshAll();
-  const field = useFieldChain(2);
   const language = useLanguage();
   const queryClient = useQueryClient();
   const { profile, supabase } = useSupabaseSession();
   const today = formatInstantInShopTime(new Date()).localDate;
   const [pickedDate, setPickedDate] = useState<string | null>(null);
-  const [blockStart, setBlockStart] = useState("");
-  const [blockEnd, setBlockEnd] = useState("");
   const [bookingSlot, setBookingSlot] = useState<AvailableSlot | null>(null);
   const [customerTerm, setCustomerTerm] = useState("");
   // Cancel needs a second tap on the same card.
@@ -71,12 +66,6 @@ export default function BarberAgendaScreen() {
     queryFn: () => listMyBarberAgenda(supabase, { limit: 100, offset: 0, rangeEnd: today, rangeStart: pendingStart }),
     queryKey: ["barber-agenda", "pending", pendingStart, today],
   });
-  const blocks = useQuery({
-    enabled: Boolean(barber.data),
-    queryFn: () => listMyScheduleOverrides(supabase, barber.data?.id ?? "", today),
-    queryKey: ["barber-blocks", barber.data?.id, today],
-  });
-
   const services = useQuery({ queryFn: () => listMyBarberServices(supabase), queryKey: ["my-barber-services"] });
   const activeServices = useMemo(() => (services.data ?? []).filter((service) => service.active), [services.data]);
   // Free times come from the shortest service; the sheet then disables services that do not fit the chosen time.
@@ -125,7 +114,6 @@ export default function BarberAgendaScreen() {
 
     return dayAppointments.filter((a) => a.status !== "cancelled" && a.startsAt > startsAt).map((a) => a.startsAt).sort()[0] ?? null;
   }, [bookingSlot, dayAppointments]);
-  const dayBlocks = (blocks.data ?? []).filter((block) => block.localDate === selectedDate && block.kind === "block");
 
   const fail = (error: unknown, fallback: string) => setFeedback({ message: errorMessage(error, t, fallback), variant: "error" });
 
@@ -163,38 +151,6 @@ export default function BarberAgendaScreen() {
     },
   });
 
-  const addBlock = useMutation({
-    mutationFn: () => {
-      if (!barber.data) throw new Error("Barber profile not loaded.");
-      const timed = blockStart.trim() !== "" || blockEnd.trim() !== "";
-
-      return createScheduleOverride(supabase, {
-        barberId: barber.data.id,
-        endTime: timed ? blockEnd.trim() : null,
-        kind: "block",
-        localDate: selectedDate,
-        shopId: barber.data.shopId,
-        startTime: timed ? blockStart.trim() : null,
-      });
-    },
-    onError: (error) => fail(error, t("barber.agenda.blockError")),
-    onSuccess: () => {
-      setBlockStart("");
-      setBlockEnd("");
-      setFeedback({ message: t("barber.agenda.blockAdded"), variant: "success" });
-      void queryClient.invalidateQueries({ queryKey: ["barber-blocks"] });
-    },
-  });
-
-  const removeBlock = useMutation({
-    mutationFn: (id: string) => deleteScheduleOverride(supabase, id),
-    onError: (error) => fail(error, t("barber.agenda.blockError")),
-    onSuccess: () => {
-      setFeedback({ message: t("barber.agenda.blockRemoved"), variant: "success" });
-      void queryClient.invalidateQueries({ queryKey: ["barber-blocks"] });
-    },
-  });
-
   const book = useMutation({
     mutationFn: (input: { barberServiceId: string; customer: BarberCustomerInput | { id: string } }) => {
       if (!bookingSlot) throw new Error("No slot selected.");
@@ -215,7 +171,7 @@ export default function BarberAgendaScreen() {
     },
   });
 
-  const busy = setStatus.isPending || addBlock.isPending || removeBlock.isPending || book.isPending || cancel.isPending;
+  const busy = setStatus.isPending || book.isPending || cancel.isPending;
 
   const renderAppointment = (appointment: BarberAgendaAppointment, withDate = false) => {
     const startsAt = formatInstantInShopTime(new Date(appointment.startsAt));
@@ -370,38 +326,6 @@ export default function BarberAgendaScreen() {
             )}
           </View>
 
-          <View className="w-full max-w-[420px] gap-3">
-            <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">
-              {t("barber.agenda.blocksTitle")}
-            </Text>
-            {dayBlocks.length === 0 ? <Text className="text-sm font-sans text-neutral-600">{t("barber.agenda.noBlocks")}</Text> : null}
-            {dayBlocks.map((block) => (
-              <Card key={block.id} variant="outlined">
-                <View className="flex-row items-center justify-between gap-2">
-                  <Text className="text-base font-sans-medium text-ink" style={{ fontVariant: ["tabular-nums"] }}>
-                    {block.startTime ? t("barber.agenda.timeRange", { end: block.endTime, start: block.startTime }) : t("common.allDay")}
-                  </Text>
-                  <Button
-                    disabled={busy}
-                    label={t("barber.agenda.removeBlock")}
-                    onPress={() => removeBlock.mutate(block.id)}
-                    size="sm"
-                    testID={`barber-block-remove-${block.id}`}
-                    variant="danger"
-                  />
-                </View>
-              </Card>
-            ))}
-            <Input {...field(0)} label={t("common.startTime")} onChangeText={setBlockStart} placeholder={"12:00"} testID="barber-block-start" value={blockStart} />
-            <Input {...field(1)} label={t("common.endTime")} onChangeText={setBlockEnd} placeholder={"13:00"} testID="barber-block-end" value={blockEnd} />
-            <Button
-              disabled={busy || !barber.data}
-              label={blockStart.trim() || blockEnd.trim() ? t("barber.agenda.addBlock") : t("barber.agenda.blockWholeDay")}
-              onPress={() => addBlock.mutate()}
-              testID="barber-block-add"
-              variant="outline"
-            />
-          </View>
           <BarberBookingSheet
             busy={book.isPending}
             initialCustomer={initialCustomer}

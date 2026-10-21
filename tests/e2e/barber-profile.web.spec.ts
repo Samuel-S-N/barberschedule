@@ -48,7 +48,7 @@ test("the barber profile is a hub with barber and account sections", async ({ pa
 
   await page.goto("/my-profile");
   await expect(page.getByRole("heading", { name: "Browser Barber" })).toBeVisible();
-  for (const key of ["account", "security", "services", "compensation", "privacy", "settings", "about"]) {
+  for (const key of ["account", "security", "services", "availability", "compensation", "privacy", "settings", "about"]) {
     await expect(page.getByTestId(`menu-${key}`)).toBeVisible();
   }
 
@@ -124,12 +124,12 @@ test("a barber sees their weekly working hours, read-only", async ({ page }) => 
   });
 
   await page.goto("/my-profile");
-  await page.getByTestId("menu-hours").click();
+  await page.getByTestId("menu-availability").click();
 
-  await expect(page).toHaveURL(/\/my-profile\/hours/);
+  await expect(page).toHaveURL(/\/my-profile\/availability/);
   await expect(page.getByTestId("barber-hours-monday")).toContainText("09:00–12:00, 14:00–18:00");
   await expect(page.getByTestId("barber-hours-wednesday")).toContainText("09:00–17:00");
-  await expect(page.getByTestId("barber-hours-tuesday")).toContainText("Day off");
+  await expect(page.getByTestId("barber-hours-tuesday")).toContainText("Closed");
   await expect(page.getByTestId("barber-hours-note")).toBeVisible();
 });
 

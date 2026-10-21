@@ -123,23 +123,6 @@ test("a barber closes a past appointment from the awaiting-closure section", asy
   expect(statusPayload).toEqual({ appointment_id: "appt-old", new_status: "no_show" });
 });
 
-test("a barber blocks a whole day and it is sent as a block for their own barber row", async ({ page }) => {
-  let insertPayload: Record<string, unknown> | null = null;
-
-  await signIn(page, barberUserId);
-  await mockBarberRest(page, async (route) => {
-    if (route.request().method() === "POST" && new URL(route.request().url()).pathname.endsWith("/schedule_overrides")) {
-      insertPayload = route.request().postDataJSON() as Record<string, unknown>;
-      return json(route, { barber_id: barberId, end_time: null, id: "o1", kind: "block", local_date: "2026-10-01", shop_id: shopId, start_time: null }, 201).then(() => true);
-    }
-  });
-
-  await page.goto("/my-agenda");
-  await page.getByTestId("barber-block-add").click();
-  await expect(page.getByText("Time off added.")).toBeVisible();
-  expect(insertPayload).toMatchObject({ barber_id: barberId, kind: "block", shop_id: shopId, start_time: null, end_time: null });
-});
-
 test("a barber cannot open the owner or customer areas", async ({ page }) => {
   await signIn(page, barberUserId);
   await mockBarberRest(page);
