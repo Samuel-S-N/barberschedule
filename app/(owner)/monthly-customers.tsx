@@ -18,7 +18,7 @@ import { listOwnerBarbers } from "../../src/features/barbers/api";
 import type { OwnerBarber } from "../../src/features/barbers/types";
 import { listOwnerCustomers } from "../../src/features/customers/api";
 import { listMonthlyCustomers } from "../../src/features/customers/monthly-api";
-import { cancelRecurrenceOccurrence, endRecurrenceSeries, setRecurrenceSeriesActive } from "../../src/features/recurrence/api";
+import { cancelRecurrenceOccurrence, endRecurrenceSeries, reactivateRecurrenceSeries, setRecurrenceSeriesActive } from "../../src/features/recurrence/api";
 import { ManualRecurrenceForm } from "../../src/features/recurrence/ManualRecurrenceForm";
 import { recurrenceLabel } from "../../src/features/recurrence/pricing";
 import { RequestCard } from "../../src/features/recurrence/RequestCard";
@@ -100,6 +100,8 @@ export default function MonthlyCustomersScreen() {
     onSuccess: refresh,
   });
 
+  const activeSeries = (data.data?.series ?? []).filter((item: RecurrenceSeries) => item.endedAt === null);
+  const endedSeries = (data.data?.series ?? []).filter((item: RecurrenceSeries) => item.endedAt !== null);
   const busy = decide.isPending || change.isPending;
   const loading = shop.isLoading || data.isLoading;
   const loadError = shop.error ?? data.error;
@@ -146,26 +148,52 @@ export default function MonthlyCustomersScreen() {
                   />
                 ) : null}
                 <DateInput label={t("owner.recurring.occurrenceLabel")} onChangeValue={setOccurrenceDate} testID="recurrence-occurrence-date" value={occurrenceDate} />
-                {(data.data?.series ?? []).map((item: RecurrenceSeries) => (
-                  <Card key={item.id} testID={`series-${item.id}`} variant="outlined">
-                    <View className="gap-2">
-                      <Text className="text-base font-sans-semibold text-ink">{item.customerName || item.customerId} · {recurrenceLabel(t, item.intervalWeeks)}</Text>
-                      {labels.get(item.barberServiceId) ? <Text className="text-sm font-sans text-neutral-600">{labels.get(item.barberServiceId)?.label}</Text> : null}
-                      <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>
-                        {t("owner.recurring.detail", {
-                          date: formatDateNumeric(item.localStartDate, language),
-                          price: item.specialPriceCents === null ? t("owner.recurring.catalogPrice") : formatPriceBRL(item.specialPriceCents),
-                          state: item.active ? t("owner.recurring.active") : t("owner.recurring.inactive"),
-                          time: item.localStartTime,
-                        })}
-                      </Text>
-                      <View className="flex-row flex-wrap gap-2">
-                        {item.active ? <Button disabled={busy} label={t("common.deactivate")} onPress={() => change.mutate(() => setRecurrenceSeriesActive(supabase, item.id, false))} size="sm" testID={`series-deactivate-${item.id}`} variant="outline" /> : null}
-                        <Button disabled={busy} label={t("owner.recurring.cancelOccurrence")} onPress={() => change.mutate(() => cancelRecurrenceOccurrence(supabase, item.id, occurrenceDate))} size="sm" testID={`series-cancel-${item.id}`} variant="outline" />
-                        <Button disabled={busy || !item.active} label={t("owner.recurring.endSeries")} onPress={() => change.mutate(() => endRecurrenceSeries(supabase, item.id))} size="sm" testID={`series-end-${item.id}`} variant="danger" />
-                      </View>
+                {[
+                  { items: activeSeries, key: "active", title: t("owner.recurring.activeSection") },
+                  { items: endedSeries, key: "ended", title: t("owner.recurring.endedSection") },
+                ].map((group) => (
+                  group.items.length > 0 ? (
+                    <View className="gap-3" key={group.key}>
+                      <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{group.title}</Text>
+                      {group.items.map((item: RecurrenceSeries) => (
+                      <Card key={item.id} testID={`series-${item.id}`} variant="outlined">
+                        <View className={`gap-2 ${item.endedAt !== null ? "opacity-70" : ""}`}>
+                          <Text className="text-base font-sans-semibold text-ink">{item.customerName || item.customerId} · {recurrenceLabel(t, item.intervalWeeks)}</Text>
+                          {labels.get(item.barberServiceId) ? <Text className="text-sm font-sans text-neutral-600">{labels.get(item.barberServiceId)?.label}</Text> : null}
+                          <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>
+                            {t("owner.recurring.detail", {
+                              date: formatDateNumeric(item.localStartDate, language),
+                              price: item.specialPriceCents === null ? t("owner.recurring.catalogPrice") : formatPriceBRL(item.specialPriceCents),
+                              state: item.endedAt !== null ? t("owner.recurring.endedBadge") : item.active ? t("owner.recurring.active") : t("owner.recurring.inactive"),
+                              time: item.localStartTime,
+                            })}
+                          </Text>
+                          <View className="flex-row flex-wrap gap-2">
+                            {item.endedAt !== null ? (
+                              <Button
+                                disabled={busy}
+                                label={t("owner.recurring.reactivate")}
+                                onPress={() => change.mutate(async () => {
+                                  await reactivateRecurrenceSeries(supabase, item.id);
+                                  setFeedback({ message: t("owner.recurring.reactivated"), variant: "success" });
+                                })}
+                                size="sm"
+                                testID={`series-reactivate-${item.id}`}
+                              />
+                            ) : (
+                              <>
+                                {item.active ? <Button disabled={busy} label={t("common.deactivate")} onPress={() => change.mutate(() => setRecurrenceSeriesActive(supabase, item.id, false))} size="sm" testID={`series-deactivate-${item.id}`} variant="outline" /> : null}
+                                <Button disabled={busy} label={t("owner.recurring.cancelOccurrence")} onPress={() => change.mutate(() => cancelRecurrenceOccurrence(supabase, item.id, occurrenceDate))} size="sm" testID={`series-cancel-${item.id}`} variant="outline" />
+                                <Button disabled={busy || !item.active} label={t("owner.recurring.endSeries")} onPress={() => change.mutate(() => endRecurrenceSeries(supabase, item.id))} size="sm" testID={`series-end-${item.id}`} variant="danger" />
+                              </>
+                            )}
+                          </View>
+                        </View>
+                      </Card>
+
+                      ))}
                     </View>
-                  </Card>
+                  ) : null
                 ))}
               </>
             ) : null}

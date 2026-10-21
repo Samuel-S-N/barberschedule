@@ -23,7 +23,7 @@ import { listPlansForBarber, planTitle } from "../../../src/features/recurrence/
 import type { BarberPlan } from "../../../src/features/recurrence/plans-api";
 import { recurrenceLabel } from "../../../src/features/recurrence/pricing";
 import { recurrencePriceText } from "../../../src/features/recurrence/price-text";
-import { cancelMyRecurrenceRequest, listMyRecurrenceRequests, requestRecurrence } from "../../../src/features/recurrence/requests-api";
+import { cancelMyRecurrenceRequest, listMyRecurrenceRequests, requestDisplayStatus, requestRecurrence } from "../../../src/features/recurrence/requests-api";
 import { nextDateForWeekday } from "../../../src/features/recurrence/weekday";
 import { listPublicShops } from "../../../src/features/shops/api";
 import { errorMessage } from "../../../src/i18n/errors";
@@ -118,22 +118,26 @@ export default function CustomerRecurrenceScreen() {
                 <Text className="text-sm font-sans text-neutral-600">{t("recurrence.contactToEnd")}</Text>
                 {requests.isLoading ? <SkeletonBlock height={72} width={320} /> : null}
                 {requests.data && requests.data.length === 0 ? <EmptyState title={t("recurrence.empty")} /> : null}
-                {(requests.data ?? []).map((request) => (
-                  <Card key={request.id} testID={`my-request-${request.id}`} variant="outlined">
-                    <View className="gap-2">
-                      <Text className="text-base font-sans-semibold text-ink">{request.serviceName} · {request.barberName}</Text>
-                      <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>
-                        {recurrenceLabel(t, request.weeks)} · {formatDateNumeric(request.startDate, language)} {request.startTime}
-                      </Text>
-                      <Text className="text-sm font-sans-medium text-ink" testID={`my-request-status-${request.id}`}>{t(`recurrence.status.${request.status}`)}</Text>
-                      {request.status === "pending" ? (
-                        <View className="flex-row">
-                          <Button disabled={cancel.isPending} label={t("recurrence.cancelRequest")} onPress={() => cancel.mutate(request.id)} size="sm" testID={`my-request-cancel-${request.id}`} variant="outline" />
-                        </View>
-                      ) : null}
-                    </View>
-                  </Card>
-                ))}
+                {(requests.data ?? []).map((request) => {
+                  const status = requestDisplayStatus(request);
+
+                  return (
+                    <Card key={request.id} testID={`my-request-${request.id}`} variant="outlined">
+                      <View className={`gap-2 ${status === "pending" || status === "active" ? "" : "opacity-60"}`}>
+                        <Text className="text-base font-sans-semibold text-ink">{request.planName ?? request.serviceName} · {request.barberName}</Text>
+                        <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>
+                          {recurrenceLabel(t, request.weeks)} · {formatDateNumeric(request.startDate, language)} {request.startTime}
+                        </Text>
+                        <Text className="text-sm font-sans-medium text-ink" testID={`my-request-status-${request.id}`}>{t(`recurrence.status.${status}`)}</Text>
+                        {status === "pending" ? (
+                          <View className="flex-row">
+                            <Button disabled={cancel.isPending} label={t("recurrence.cancelRequest")} onPress={() => cancel.mutate(request.id)} size="sm" testID={`my-request-cancel-${request.id}`} variant="outline" />
+                          </View>
+                        ) : null}
+                      </View>
+                    </Card>
+                  );
+                })}
               </>
             ) : null}
 

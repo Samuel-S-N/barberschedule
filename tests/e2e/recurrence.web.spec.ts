@@ -126,6 +126,7 @@ test("an owner can cancel an occurrence and end a recurring booking", async ({ p
   expect(cancelOccurrencePayload).toEqual({ target_occurrence_date: "2026-08-24", target_series_id: currentSeries.id });
 
   await page.getByRole("button", { name: "End series" }).click();
-  await expect(page.getByText(/inactive/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ended" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Reactivate" })).toBeVisible();
   expect(endPayload).toEqual({ target_series_id: currentSeries.id });
 });

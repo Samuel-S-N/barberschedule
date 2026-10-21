@@ -111,6 +111,11 @@ export async function setRecurrenceSeriesActive(
   return toRecurrenceSeries(singleRow(data as RecurrenceSeriesRow[] | null, error));
 }
 
+export async function reactivateRecurrenceSeries(supabase: RecurrenceSupabaseClient, seriesId: string) {
+  const { error } = await supabase.rpc("reactivate_recurrence_series", { target_series_id: seriesId });
+  if (error) throw toRecurrenceError(error);
+}
+
 export async function cancelRecurrenceOccurrence(
   supabase: RecurrenceSupabaseClient,
   seriesId: string,
