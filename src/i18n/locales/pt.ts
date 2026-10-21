@@ -150,6 +150,18 @@ export const pt: DeepStringRecord<typeof en> = {
     startAt: "Começar a agendar em {{shop}}",
     timesError: "Não foi possível carregar a disponibilidade.",
   },
+  notifications: {
+    appointment_awaiting_confirmation: { body: "{{customerName}} · {{serviceName}} · {{date}}", title: "Aguardando confirmação" },
+    appointment_booked: { body: "{{customerName}} · {{serviceName}} · {{date}}", title: "Novo agendamento" },
+    appointment_cancelled: { body: "{{serviceName}} · {{date}}", title: "Agendamento cancelado" },
+    appointment_confirmed: { body: "{{serviceName}} com {{barberName}} · {{date}}", title: "Agendamento confirmado" },
+    appointment_rescheduled: { body: "{{serviceName}} · agora {{date}}", title: "Agendamento remarcado" },
+    bellLabel: "Notificações",
+    empty: "Nenhuma notificação ainda",
+    loadError: "Não foi possível carregar as notificações.",
+    markAllRead: "Marcar todas como lidas",
+    title: "Notificações",
+  },
   profile: {
     about: { title: "Sobre", version: "Versão {{version}}" },
     account: {

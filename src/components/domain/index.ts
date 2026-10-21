@@ -36,3 +36,4 @@ export { BarberBookingSheet } from "./BarberBookingSheet";
 export type { BarberBookingSheetProps } from "./BarberBookingSheet";
 export { DaySummaryCard } from "./DaySummaryCard";
 export type { DaySummaryCardProps } from "./DaySummaryCard";
+export { NotificationBell } from "./NotificationBell";
