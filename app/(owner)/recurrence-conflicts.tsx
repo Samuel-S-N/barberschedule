@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking, ScrollView, Text, View } from "react-native";
@@ -10,31 +10,48 @@ import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Screen } from "../../src/components/ui/Screen";
-import { buildWhatsAppRecurrenceConflictUrl, listOwnerRecurrenceConflicts } from "../../src/features/recurrence/api";
+import { buildWhatsAppRecurrenceConflictUrl, listOwnerRecurrenceConflicts, resolveRecurrenceConflict } from "../../src/features/recurrence/api";
+import { ConflictRescheduleSheet } from "../../src/features/recurrence/ConflictRescheduleSheet";
 import type { RecurrenceConflict } from "../../src/features/recurrence/types";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
 import { errorMessage } from "../../src/i18n/errors";
+import { useLanguage } from "../../src/i18n/use-language";
+import { formatDateNumeric } from "../../src/lib/i18n/format";
 import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
 export default function RecurrenceConflictsScreen() {
   const { t } = useTranslation();
+  const language = useLanguage();
   const pull = useRefreshAll();
   const { supabase } = useSupabaseSession();
   const shop = useOwnerShopId();
   const shopId = shop.data ?? null;
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const [feedback, setFeedback] = useState<{ message: string; variant: "error" | "success" } | null>(null);
+  const [rescheduling, setRescheduling] = useState<RecurrenceConflict | null>(null);
   const conflicts = useQuery({
     enabled: shopId !== null,
     queryFn: () => listOwnerRecurrenceConflicts(supabase, shopId ?? ""),
     queryKey: ["owner-recurrence-conflicts", shopId],
   });
 
+  const resolve = useMutation({
+    mutationFn: (input: { id: string; startsAt: string | null }) => resolveRecurrenceConflict(supabase, input),
+    onError: (error) => setFeedback({ message: errorMessage(error, t, t("owner.conflicts.resolveError")), variant: "error" }),
+    onSuccess: (_data, input) => {
+      setRescheduling(null);
+      setFeedback({ message: t(input.startsAt ? "owner.conflicts.rescheduled" : "owner.conflicts.dismissed"), variant: "success" });
+      void queryClient.invalidateQueries({ queryKey: ["owner-recurrence-conflicts"] });
+      void queryClient.invalidateQueries({ queryKey: ["owner-agenda"] });
+    },
+  });
+
   const openWhatsApp = async (conflict: RecurrenceConflict) => {
     const url = buildWhatsAppRecurrenceConflictUrl({ customerName: conflict.customerName, localDate: conflict.occurrenceDate, phone: conflict.customerPhone, serviceName: conflict.serviceName });
     if (!url) {
-      setFeedback(t("owner.conflicts.noPhone"));
+      setFeedback({ message: t("owner.conflicts.noPhone"), variant: "error" });
       return;
     }
     await Linking.openURL(url);
@@ -54,16 +71,39 @@ export default function RecurrenceConflictsScreen() {
             {loading ? <SkeletonBlock height={96} width={320} /> : null}
             {loadError ? <Text className="text-sm font-sans text-danger-500">{errorMessage(loadError, t, t("owner.conflicts.loadError"))}</Text> : null}
             {shop.data === null ? <EmptyState title={t("common.noShop")} /> : null}
-            {(conflicts.data ?? []).map((conflict: RecurrenceConflict) => (
-              <Card key={conflict.id} testID={`conflict-${conflict.id}`} variant="outlined">
-                <View className="gap-2">
-                  <Text className="text-base font-sans-semibold text-ink">{conflict.customerName} · {conflict.serviceName}</Text>
-                  <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>{conflict.occurrenceDate} · {conflict.localStartTime} · {conflict.reason} · {conflict.status}</Text>
-                  <Button label={t("owner.conflicts.openWhatsApp")} onPress={() => void openWhatsApp(conflict)} size="sm" testID={`conflict-whatsapp-${conflict.id}`} variant="outline" />
-                </View>
-              </Card>
-            ))}
-            <Toast message={feedback ?? ""} onDismiss={() => setFeedback(null)} variant="error" visible={feedback !== null} />
+            {(conflicts.data ?? []).map((conflict: RecurrenceConflict) => {
+              const open = conflict.status === "open";
+
+              return (
+                <Card key={conflict.id} testID={`conflict-${conflict.id}`} variant="outlined">
+                  <View className={`gap-2 ${open ? "" : "opacity-60"}`}>
+                    <Text className="text-base font-sans-semibold text-ink">{conflict.customerName} · {conflict.serviceName}</Text>
+                    <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>
+                      {formatDateNumeric(conflict.occurrenceDate, language)} · {conflict.localStartTime} · {conflict.reason === "SLOT_UNAVAILABLE" ? t("owner.conflicts.reasonSLOT_UNAVAILABLE") : conflict.reason}
+                    </Text>
+                    {open ? (
+                      <View className="flex-row flex-wrap gap-2">
+                        <Button label={t("owner.conflicts.reschedule")} onPress={() => setRescheduling(conflict)} size="sm" testID={`conflict-reschedule-${conflict.id}`} />
+                        <Button disabled={resolve.isPending} label={t("owner.conflicts.dismiss")} onPress={() => resolve.mutate({ id: conflict.id, startsAt: null })} size="sm" testID={`conflict-dismiss-${conflict.id}`} variant="outline" />
+                        <Button label={t("owner.conflicts.openWhatsApp")} onPress={() => void openWhatsApp(conflict)} size="sm" testID={`conflict-whatsapp-${conflict.id}`} variant="outline" />
+                      </View>
+                    ) : (
+                      <Text className="text-sm font-sans-semibold text-success-700">{t("owner.conflicts.resolved")}</Text>
+                    )}
+                  </View>
+                </Card>
+              );
+            })}
+            <ConflictRescheduleSheet
+              barberId={rescheduling?.barberId ?? ""}
+              barberServiceId={rescheduling?.barberServiceId ?? ""}
+              busy={resolve.isPending}
+              date={rescheduling?.occurrenceDate ?? ""}
+              onClose={() => setRescheduling(null)}
+              onConfirm={(startsAt) => rescheduling && resolve.mutate({ id: rescheduling.id, startsAt })}
+              visible={rescheduling !== null}
+            />
+            <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
           </View>
         </View>
       </ScrollView>
