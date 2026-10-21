@@ -195,7 +195,7 @@ export default function MonthlyCustomersScreen() {
                               keyboardType="numeric"
                               label={t("recurrence.priceLabel", { frequency: t(recurrenceLabelKey(weeks)) })}
                               onChangeText={(value) => setDrafts((current) => ({ ...current, [`${service.id}:${weeks}`]: value }))}
-                              testID={`price-${service.id}-${weeks}`}
+                              placeholder={t("examples.money")} testID={`price-${service.id}-${weeks}`}
                               value={text}
                             />
                             {cents !== null ? (

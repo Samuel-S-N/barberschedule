@@ -76,9 +76,9 @@ export default function OwnerCustomerFormScreen() {
             {!id || customer ? (
               <Card>
                 <View className="gap-3">
-                  <Input {...field(0)} label={t("owner.customers.nameLabel")} onChangeText={setFullName} testID="customer-name" value={fullName} />
-                  <Input {...field(1)} autoCapitalize="none" autoComplete="email" keyboardType="email-address" label={t("owner.customers.emailLabel")} onChangeText={setEmail} testID="customer-email" value={email} />
-                  <Input {...field(2)} keyboardType="phone-pad" label={t("common.phoneOptional")} onChangeText={(value) => setPhone(formatPhone(value))} testID="customer-phone" value={phone} />
+                  <Input {...field(0)} label={t("owner.customers.nameLabel")} onChangeText={setFullName} placeholder={t("examples.fullName")} testID="customer-name" value={fullName} />
+                  <Input {...field(1)} autoCapitalize="none" autoComplete="email" keyboardType="email-address" label={t("owner.customers.emailLabel")} onChangeText={setEmail} placeholder={t("examples.email")} testID="customer-email" value={email} />
+                  <Input {...field(2)} keyboardType="phone-pad" label={t("common.phoneOptional")} onChangeText={(value) => setPhone(formatPhone(value))} placeholder={t("examples.phone")} testID="customer-phone" value={phone} />
                   <Button
                     disabled={!canSubmitCustomerForm({ editingId: id ?? null, email, fullName, isLoading: loading, isSaving: save.isPending, phone, shopId })}
                     label={id ? t("owner.customers.save") : t("owner.customers.add")}

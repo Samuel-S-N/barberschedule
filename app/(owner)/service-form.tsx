@@ -87,10 +87,10 @@ export default function OwnerServiceFormScreen() {
             {!id || service ? (
               <Card>
                 <View className="gap-3">
-                  <Input {...field(0)} label={t("owner.services.nameLabel")} onChangeText={setName} testID="service-name" value={name} />
-                  <Input {...field(1)} keyboardType="numeric" label={t("owner.services.durationLabel")} onChangeText={setDurationMinutes} testID="service-duration" value={durationMinutes} />
-                  <Input {...field(2)} keyboardType="numeric" label={t("owner.services.priceLabel")} onChangeText={setPrice} testID="service-price" value={price} />
-                  <Input {...field(3)} label={t("owner.services.descriptionLabel")} onChangeText={setDescription} testID="service-description" value={description} />
+                  <Input {...field(0)} label={t("owner.services.nameLabel")} onChangeText={setName} placeholder={t("examples.serviceName")} testID="service-name" value={name} />
+                  <Input {...field(1)} keyboardType="numeric" label={t("owner.services.durationLabel")} onChangeText={setDurationMinutes} placeholder={t("examples.minutes")} testID="service-duration" value={durationMinutes} />
+                  <Input {...field(2)} keyboardType="numeric" label={t("owner.services.priceLabel")} onChangeText={setPrice} placeholder={t("examples.money")} testID="service-price" value={price} />
+                  <Input {...field(3)} label={t("owner.services.descriptionLabel")} onChangeText={setDescription} placeholder={t("examples.description")} testID="service-description" value={description} />
                   <Button disabled={!validForm || loading || busy || !shopId} label={id ? t("owner.services.save") : t("owner.services.add")} onPress={() => save.mutate()} testID="service-save" />
                 </View>
               </Card>

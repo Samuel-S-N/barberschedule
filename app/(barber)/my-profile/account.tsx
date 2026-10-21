@@ -114,7 +114,7 @@ export default function BarberAccountScreen() {
               <Text className="text-xs font-sans text-neutral-600">{t("barber.account.nameHint")}</Text>
             </View>
 
-            <Input label={t("barber.profile.bio")} multiline onChangeText={setBio} testID="barber-bio" value={bio} />
+            <Input label={t("barber.profile.bio")} multiline onChangeText={setBio} placeholder={t("examples.bio")} testID="barber-bio" value={bio} />
             <Text className="-mt-2 text-xs font-sans text-neutral-600">{t("barber.account.bioHint")}</Text>
 
             <Text className="pt-2 text-sm font-sans-medium text-neutral-600">{t("profile.account.emailLabel")}</Text>
@@ -130,7 +130,7 @@ export default function BarberAccountScreen() {
                   error={newEmail && !isValidEmail(newEmail) ? t("profile.account.emailInvalid") : undefined}
                   label={t("profile.account.newEmail")}
                   onChangeText={setNewEmail}
-                  testID="account-new-email"
+                  placeholder={t("examples.email")} testID="account-new-email"
                   value={newEmail}
                 />
                 <Button

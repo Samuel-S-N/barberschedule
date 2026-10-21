@@ -48,7 +48,7 @@ export default function LoginScreen() {
           <View className="w-full max-w-[420px] gap-4">
             <Text accessibilityRole="header" className="text-3xl leading-[44px] font-display-bold text-ink">{t("auth.login.title")}</Text>
             <Text className="text-base font-sans text-neutral-600">{t("auth.login.subtitle")}</Text>
-            <Input {...field(0)} autoCapitalize="none" autoComplete="email" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" label={t("common.email")} onChangeText={setEmail} testID="login-email" value={email} />
+            <Input {...field(0)} autoCapitalize="none" autoComplete="email" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" label={t("common.email")} onChangeText={setEmail} placeholder={t("examples.email")} testID="login-email" value={email} />
             <Input {...field(1)} autoComplete="current-password" label={t("common.password")} onChangeText={setPassword} onSubmitEditing={submitFromKeyboard} returnKeyType="go" textContentType="password" secureTextEntry testID="login-password" value={password} />
             <Toast message={t("auth.login.passwordReset")} onDismiss={() => setNoticeDismissed(true)} variant="success" visible={notice === "password-reset" && !noticeDismissed} />
             <Toast message={error ?? ""} onDismiss={() => setError(null)} variant="error" visible={error !== null} />

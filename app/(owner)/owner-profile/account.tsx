@@ -97,8 +97,8 @@ export default function OwnerAccountScreen() {
               <Button label={t("profile.account.changePhoto")} onPress={() => photo.mutate()} size="sm" variant="ghost" />
             </View>
 
-            <Input {...field(0)} label={t("common.fullName")} onChangeText={setFullName} testID="owner-full-name" value={fullName} />
-            <Input {...field(1)} autoCapitalize="words" label={t("common.nicknameOptional")} onChangeText={setNickname} testID="owner-nickname" value={nickname} />
+            <Input {...field(0)} label={t("common.fullName")} onChangeText={setFullName} placeholder={t("examples.fullName")} testID="owner-full-name" value={fullName} />
+            <Input {...field(1)} autoCapitalize="words" label={t("common.nicknameOptional")} onChangeText={setNickname} placeholder={t("examples.nickname")} testID="owner-nickname" value={nickname} />
 
             <Text className="pt-2 text-sm font-sans-medium text-neutral-600">{t("profile.account.emailLabel")}</Text>
             <Text className="text-base font-sans text-ink" testID="account-email">{session?.user.email}</Text>
@@ -112,7 +112,7 @@ export default function OwnerAccountScreen() {
                   keyboardType="email-address"
                   label={t("profile.account.newEmail")}
                   onChangeText={setNewEmail}
-                  testID="account-new-email"
+                  placeholder={t("examples.email")} testID="account-new-email"
                   textContentType="emailAddress"
                   value={newEmail}
                 />

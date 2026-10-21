@@ -28,8 +28,7 @@ import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
-// A format hint, not a sentence: the same in every language.
-const TIME_HINT = "HH:mm";
+const CONTACT_EXAMPLE = { address: "examples.address", phone: "examples.phone", whatsapp: "examples.phone" } as const;
 
 export default function OwnerShopScreen() {
   const { t } = useTranslation();
@@ -124,7 +123,7 @@ export default function OwnerShopScreen() {
   };
 
   const field = (key: keyof typeof contact, label: string) => (
-    <Input label={label} onChangeText={(value) => setContact((current) => ({ ...current, [key]: value }))} testID={`shop-${key}`} value={contact[key]} />
+    <Input label={label} onChangeText={(value) => setContact((current) => ({ ...current, [key]: value }))} placeholder={t(CONTACT_EXAMPLE[key])} testID={`shop-${key}`} value={contact[key]} />
   );
   const back = useBack();
 
@@ -164,8 +163,8 @@ export default function OwnerShopScreen() {
                     {day.enabled ? (
                       <>
                         <View className="flex-row gap-2">
-                          <View className="flex-1"><TimeInput label={t("common.startTime")} onChangeValue={(start) => patchDay(weekday, { start })} placeholder={TIME_HINT} testID={`shop-start-${weekday}`} value={day.start} /></View>
-                          <View className="flex-1"><TimeInput label={t("common.endTime")} onChangeValue={(end) => patchDay(weekday, { end })} placeholder={TIME_HINT} testID={`shop-end-${weekday}`} value={day.end} /></View>
+                          <View className="flex-1"><TimeInput label={t("common.startTime")} onChangeValue={(start) => patchDay(weekday, { start })} testID={`shop-start-${weekday}`} value={day.start} /></View>
+                          <View className="flex-1"><TimeInput label={t("common.endTime")} onChangeValue={(end) => patchDay(weekday, { end })} testID={`shop-end-${weekday}`} value={day.end} /></View>
                         </View>
                         {day.breaks.map((pause, index) => (
                           <View className="gap-2" key={index}>
@@ -174,7 +173,7 @@ export default function OwnerShopScreen() {
                                 <TimeInput
                                   label={t("owner.shop.breakStart")}
                                   onChangeValue={(start) => patchDay(weekday, { breaks: day.breaks.map((item, i) => (i === index ? { ...item, start } : item)) })}
-                                  placeholder={TIME_HINT}
+                                 
                                   testID={`shop-break-start-${weekday}-${index}`}
                                   value={pause.start}
                                 />
@@ -183,7 +182,7 @@ export default function OwnerShopScreen() {
                                 <TimeInput
                                   label={t("owner.shop.breakEnd")}
                                   onChangeValue={(end) => patchDay(weekday, { breaks: day.breaks.map((item, i) => (i === index ? { ...item, end } : item)) })}
-                                  placeholder={TIME_HINT}
+                                 
                                   testID={`shop-break-end-${weekday}-${index}`}
                                   value={pause.end}
                                 />

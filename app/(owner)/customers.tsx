@@ -59,7 +59,7 @@ export default function OwnerCustomersScreen() {
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("owner.customers.title")} />
-            <SearchInput label={t("owner.appointmentForm.searchCustomer")} onChangeText={setSearch} testID="customer-search" value={search} />
+            <SearchInput label={t("owner.appointmentForm.searchCustomer")} onChangeText={setSearch} placeholder={t("examples.search")} testID="customer-search" value={search} />
             {loading ? <SkeletonBlock height={96} width={320} /> : null}
             {loadError ? <Text className="text-sm font-sans text-danger-500">{errorMessage(loadError, t, t("owner.customers.loadError"))}</Text> : null}
             {shop.data === null ? <EmptyState title={t("common.noShop")} /> : null}
