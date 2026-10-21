@@ -21,8 +21,9 @@ import { listMonthlyCustomers } from "../../src/features/customers/monthly-api";
 import { cancelRecurrenceOccurrence, endRecurrenceSeries, reactivateRecurrenceSeries, setRecurrenceSeriesActive } from "../../src/features/recurrence/api";
 import { ManualRecurrenceForm } from "../../src/features/recurrence/ManualRecurrenceForm";
 import { recurrenceLabel } from "../../src/features/recurrence/pricing";
+import { CancellationCard } from "../../src/features/recurrence/CancellationCard";
 import { RequestCard } from "../../src/features/recurrence/RequestCard";
-import { decideRecurrenceRequest, listRecurrenceRequests } from "../../src/features/recurrence/requests-api";
+import { decideRecurrenceRequest, decideSeriesCancellation, listCancellationRequests, listRecurrenceRequests } from "../../src/features/recurrence/requests-api";
 import type { RecurrenceSeries } from "../../src/features/recurrence/types";
 import { listOwnerBarberServices, listOwnerServices } from "../../src/features/services/api";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
@@ -69,6 +70,7 @@ export default function MonthlyCustomersScreen() {
     queryKey: ["owner-recurring", shopId],
   });
   const requests = useQuery({ enabled: shopId !== null, queryFn: () => listRecurrenceRequests(supabase, shopId ?? ""), queryKey: ["owner-recurrence-requests", shopId] });
+  const cancellations = useQuery({ enabled: shopId !== null, queryFn: () => listCancellationRequests(supabase, shopId ?? ""), queryKey: ["owner-recurrence-cancellations", shopId] });
 
   // Service choices are labelled "Barber · Service"; the same label names the service on each series.
   const labels = useMemo(() => {
@@ -86,6 +88,7 @@ export default function MonthlyCustomersScreen() {
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: ["owner-recurring"] });
     void queryClient.invalidateQueries({ queryKey: ["owner-recurrence-requests"] });
+    void queryClient.invalidateQueries({ queryKey: ["owner-recurrence-cancellations"] });
     void queryClient.invalidateQueries({ queryKey: ["owner-agenda"] });
   };
 
@@ -93,6 +96,14 @@ export default function MonthlyCustomersScreen() {
     mutationFn: (input: { accept: boolean; id: string }) => decideRecurrenceRequest(supabase, input.id, input.accept),
     onError: (error) => fail(error, t("recurrence.decideError")),
     onSuccess: refresh,
+  });
+  const decideCancel = useMutation({
+    mutationFn: (input: { accept: boolean; seriesId: string }) => decideSeriesCancellation(supabase, input.seriesId, input.accept),
+    onError: (error) => fail(error, t("recurrence.decideError")),
+    onSuccess: (_data, input) => {
+      setFeedback({ message: t(input.accept ? "recurrence.cancellationAccepted" : "recurrence.cancellationDeclined"), variant: "success" });
+      refresh();
+    },
   });
   const change = useMutation({
     mutationFn: (job: () => Promise<unknown>) => job(),
@@ -102,7 +113,7 @@ export default function MonthlyCustomersScreen() {
 
   const activeSeries = (data.data?.series ?? []).filter((item: RecurrenceSeries) => item.endedAt === null);
   const endedSeries = (data.data?.series ?? []).filter((item: RecurrenceSeries) => item.endedAt !== null);
-  const busy = decide.isPending || change.isPending;
+  const busy = decide.isPending || change.isPending || decideCancel.isPending;
   const loading = shop.isLoading || data.isLoading;
   const loadError = shop.error ?? data.error;
   const tabButton = (key: Tab, label: string) => (
@@ -127,10 +138,18 @@ export default function MonthlyCustomersScreen() {
 
             {tab === "requests" ? (
               <>
-                {requests.data && requests.data.length === 0 ? <EmptyState title={t("recurrence.noRequests")} /> : null}
+                {requests.data && requests.data.length === 0 && (cancellations.data ?? []).length === 0 ? <EmptyState title={t("recurrence.noRequests")} /> : null}
                 {(requests.data ?? []).map((request) => (
                   <RequestCard busy={busy} key={request.id} onDecide={(accept) => decide.mutate({ accept, id: request.id })} request={request} />
                 ))}
+                {(cancellations.data ?? []).length > 0 ? (
+                  <View className="gap-3">
+                    <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{t("recurrence.cancellationTitle")}</Text>
+                    {(cancellations.data ?? []).map((request) => (
+                      <CancellationCard busy={busy} key={request.seriesId} onDecide={(accept) => decideCancel.mutate({ accept, seriesId: request.seriesId })} request={request} />
+                    ))}
+                  </View>
+                ) : null}
               </>
             ) : null}
 

@@ -10,7 +10,10 @@ export type InboxKind =
   | "appointment_rescheduled"
   | "recurrence_requested"
   | "recurrence_accepted"
-  | "recurrence_rejected";
+  | "recurrence_rejected"
+  | "recurrence_cancel_requested"
+  | "recurrence_cancel_accepted"
+  | "recurrence_cancel_declined";
 
 export type InboxItem = {
   appointmentId: string | null;
