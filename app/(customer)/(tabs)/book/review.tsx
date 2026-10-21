@@ -7,22 +7,20 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { z } from "zod";
 
 import { BookingSummary } from "../../../../src/components/domain/BookingSummary";
-import { EmptyState } from "../../../../src/components/domain/EmptyState";
-import { SkeletonBlock } from "../../../../src/components/domain/SkeletonLoader";
-import { TimeSlotPicker } from "../../../../src/components/domain/TimeSlotPicker";
-import type { TimeSlot } from "../../../../src/components/domain/TimeSlotPicker";
+import { ScreenHeader } from "../../../../src/components/domain/ScreenHeader";
+import { StepIndicator } from "../../../../src/components/domain/StepIndicator";
 import { Toast } from "../../../../src/components/domain/Toast";
 import { Button } from "../../../../src/components/ui/Button";
 import { Input } from "../../../../src/components/ui/Input";
 import { bookAppointment } from "../../../../src/features/appointments/api";
-import { getAvailableSlotsQueryOptions } from "../../../../src/features/availability/query";
-import type { AvailableSlot } from "../../../../src/features/availability/types";
 import { listPublicBarbers } from "../../../../src/features/barbers/api";
 import { listMyCustomers } from "../../../../src/features/customers/api";
 import { useBarberServices } from "../../../../src/features/services/use-barber-services";
 import { errorMessage } from "../../../../src/i18n/errors";
 import { useLanguage } from "../../../../src/i18n/use-language";
+import { formatInstantInShopTime } from "../../../../src/lib/dates/shop-time";
 import { formatDateNumeric } from "../../../../src/lib/i18n/format";
+import { useBack } from "../../../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../../../src/providers/AppProviders";
 import { Screen } from "../../../../src/components/ui/Screen";
 
@@ -35,23 +33,20 @@ function param(value: string | string[] | undefined) {
 }
 
 export default function BookReviewScreen() {
-  const params = useLocalSearchParams<{ barberId?: string; barberServiceId?: string; localDate?: string; shopId?: string }>();
+  const params = useLocalSearchParams<{ barberId?: string; barberServiceId?: string; localDate?: string; shopId?: string; startsAt?: string }>();
   const shopId = param(params.shopId);
   const barberId = param(params.barberId);
   const barberServiceId = param(params.barberServiceId);
   const localDate = param(params.localDate);
+  const startsAt = param(params.startsAt);
   const router = useRouter();
   const queryClient = useQueryClient();
+  const back = useBack("/book");
   const { t } = useTranslation();
   const language = useLanguage();
   const { profile, supabase } = useSupabaseSession();
-  const [startsAt, setStartsAt] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [feedback, setFeedback] = useState<{ message: string; variant: "success" | "error" } | null>(null);
-  const availability = useQuery({
-    ...getAvailableSlotsQueryOptions(supabase, { barberId, barberServiceId, localDate }),
-    enabled: Boolean(barberId && barberServiceId && localDate),
-  });
   const barbers = useQuery({
     enabled: Boolean(shopId),
     queryFn: () => listPublicBarbers(supabase, shopId),
@@ -90,8 +85,7 @@ export default function BookReviewScreen() {
         ),
         variant: "error",
       });
-      // The slot may have just been taken by someone else; drop the stale choice and refetch the list.
-      setStartsAt(null);
+      // The slot may have just been taken by someone else; refresh the list so the time step shows it as gone.
       void queryClient.invalidateQueries({ queryKey: ["available-slots"] });
     },
     onSuccess: () => {
@@ -103,16 +97,6 @@ export default function BookReviewScreen() {
       router.navigate(`/home?booked=${Date.now()}`);
     },
   });
-
-  const slots: TimeSlot[] = (availability.data ?? []).map((slot: AvailableSlot) => ({
-    status: slot.startsAt === startsAt ? "selected" : "free",
-    time: slot.localTime,
-  }));
-
-  const selectSlot = (time: string) => {
-    const match = availability.data?.find((slot: AvailableSlot) => slot.localTime === time);
-    setStartsAt(match?.startsAt ?? null);
-  };
 
   const submit = () => {
     const parsed = notesSchema.safeParse({ notes });
@@ -128,9 +112,10 @@ export default function BookReviewScreen() {
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
       <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled" testID="booking-review-scroll">
         <View className="items-center gap-4 p-5">
-          <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
-            {t("book.reviewTitle")}
-          </Text>
+          <View className="w-full max-w-[420px]">
+            <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("book.reviewTitle")} />
+          </View>
+          <StepIndicator current="review" ids={{ barberId, barberServiceId, localDate, shopId }} />
           {option && barber && localDate ? (
             <View className="w-full max-w-[420px]">
               <BookingSummary
@@ -139,26 +124,12 @@ export default function BookReviewScreen() {
                 durationMinutes={option.durationMinutes}
                 priceCents={option.priceCents}
                 serviceName={option.name ?? t("book.fallbackService")}
+                timeLabel={startsAt ? formatInstantInShopTime(new Date(startsAt)).localTime : undefined}
               />
             </View>
           ) : (
             <Text className="w-full max-w-[420px] text-base font-sans text-neutral-600">{localDate ? formatDateNumeric(localDate, language) : ""}</Text>
           )}
-          <View className="w-full max-w-[420px] gap-2">
-            {availability.isLoading ? (
-              <>
-                <SkeletonBlock height={56} width={320} />
-                <SkeletonBlock height={56} width={320} />
-              </>
-            ) : null}
-            {availability.error ? (
-              <Text className="text-sm font-sans text-danger-500">{t("book.timesError")}</Text>
-            ) : null}
-            {!availability.isLoading && !availability.error && slots.length === 0 ? (
-              <EmptyState title={t("book.noTimes")} />
-            ) : null}
-            {slots.length > 0 ? <TimeSlotPicker onSelectSlot={selectSlot} slots={slots} /> : null}
-          </View>
           <View className="w-full max-w-[420px]">
             <Input label={t("book.notes")} multiline onChangeText={setNotes} testID="booking-notes-input" value={notes} />
           </View>

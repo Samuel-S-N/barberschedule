@@ -7,6 +7,7 @@ import { BarberCard } from "../../../../src/components/domain/BarberCard";
 import { EmptyState } from "../../../../src/components/domain/EmptyState";
 import { ErrorRetry } from "../../../../src/components/domain/ErrorRetry";
 import { SkeletonBlock } from "../../../../src/components/domain/SkeletonLoader";
+import { StepIndicator } from "../../../../src/components/domain/StepIndicator";
 import { listPublicBarbers } from "../../../../src/features/barbers/api";
 import { useRefresh } from "../../../../src/lib/use-refresh";
 import { useSupabaseSession } from "../../../../src/providers/AppProviders";
@@ -37,6 +38,7 @@ export default function BookBarberScreen() {
         <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
           {t("book.barberTitle")}
         </Text>
+        <StepIndicator current="barber" ids={{ shopId }} />
         <View className="w-full max-w-[420px] gap-3">
           {barbers.isLoading ? (
             <>

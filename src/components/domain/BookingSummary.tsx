@@ -6,12 +6,13 @@ import { formatPriceBRL } from "./ServiceCard";
 export type BookingSummaryProps = {
   barberName: string;
   dateLabel: string;
+  timeLabel?: string;
   durationMinutes: number;
   priceCents: number;
   serviceName: string;
 };
 
-export function BookingSummary({ barberName, dateLabel, durationMinutes, priceCents, serviceName }: BookingSummaryProps) {
+export function BookingSummary({ barberName, dateLabel, timeLabel, durationMinutes, priceCents, serviceName }: BookingSummaryProps) {
   const { t } = useTranslation();
   const rows: Array<[string, string]> = [
     [t("book.summary.barber"), barberName],
@@ -19,6 +20,7 @@ export function BookingSummary({ barberName, dateLabel, durationMinutes, priceCe
     [t("book.summary.duration"), `${durationMinutes} min`],
     [t("book.summary.price"), formatPriceBRL(priceCents)],
     [t("book.summary.date"), dateLabel],
+    ...(timeLabel ? ([[t("book.summary.time"), timeLabel]] as Array<[string, string]>) : []),
   ];
 
   return (

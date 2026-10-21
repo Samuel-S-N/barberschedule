@@ -56,11 +56,16 @@ async function walkToReview(page: import("@playwright/test").Page) {
     await page.getByTestId("month-calendar-next").click();
     await page.getByTestId("month-calendar-prev").click();
   }
-  await page.getByRole("button", { name: "Continue to review" }).click();
-  await expect(page.getByTestId("booking-review-scroll")).toBeVisible();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Choose a time" })).toBeVisible();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 4 of 6 · Time");
   await expect(page.getByText(/^\d{4}-\d{2}-\d{2}$/)).toBeVisible();
+  await expect(page.getByTestId("book-time-continue")).toBeDisabled();
   await page.getByRole("button", { name: "09:00" }).click();
+  await page.getByTestId("book-time-continue").click();
+  await expect(page.getByTestId("booking-review-scroll")).toBeVisible();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 5 of 6 · Review");
+  await expect(page.getByTestId("booking-summary")).toContainText("09:00");
   await page.getByRole("button", { name: "Confirm booking" }).click();
 }
 
@@ -95,8 +100,9 @@ test("a new booking appears on Home and Agenda without reloading", async ({ page
   await page.getByTestId("tab-book").click();
   await page.getByRole("button", { name: "Browser Barber" }).click();
   await page.getByRole("button", { name: "Browser Cut" }).click();
-  await page.getByRole("button", { name: "Continue to review" }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("button", { name: "09:00" }).click();
+  await page.getByTestId("book-time-continue").click();
   await page.getByRole("button", { name: "Confirm booking" }).click();
 
   // Confirming returns to Home, which already lists the new appointment.
@@ -128,8 +134,9 @@ async function openReview(page: import("@playwright/test").Page) {
   await page.goto("/book");
   await page.getByRole("button", { name: "Browser Barber" }).click();
   await page.getByRole("button", { name: "Browser Cut" }).click();
-  await page.getByRole("button", { name: "Continue to review" }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("button", { name: "09:00" }).click();
+  await page.getByTestId("book-time-continue").click();
 }
 
 test("review explains the disabled confirm button when the customer lookup fails, and retry recovers", async ({ page }) => {
@@ -213,4 +220,26 @@ test("an owner is redirected away from the customer booking flow", async ({ page
   await expect(page.getByTestId("tab-manage")).toBeVisible();
   await page.goto("/home");
   await expect(page).toHaveURL(/\/agenda/);
+});
+
+test("the step indicator marks the current step and completed steps lead back", async ({ page }) => {
+  await signInAsCustomer(page);
+  await bookingRest(page, () => undefined);
+
+  await page.goto("/book");
+  await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 6 · Barber");
+  await expect(page.getByTestId("step-barber")).toBeDisabled();
+  await page.getByRole("button", { name: "Browser Barber" }).click();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 2 of 6 · Service");
+  await page.getByRole("button", { name: "Browser Cut" }).click();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 3 of 6 · Date");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "09:00" }).click();
+  await page.getByTestId("book-time-continue").click();
+
+  // Back from checkout returns to the time step; a completed segment jumps to its step.
+  await page.locator('[data-testid="back"]:not([aria-hidden="true"] *)').click();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 4 of 6 · Time");
+  await page.getByTestId("step-date").click();
+  await expect(page.getByTestId("month-calendar-title")).toBeVisible();
 });
