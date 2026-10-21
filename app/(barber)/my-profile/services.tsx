@@ -20,7 +20,7 @@ import { pullToRefresh, useRefreshAll } from "../../../src/lib/use-refresh";
 export default function BarberServicesScreen() {
   const { t } = useTranslation();
   const pull = useRefreshAll();
-  const back = useBack();
+  const back = useBack("/my-profile");
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
   const [error, setError] = useState<string | null>(null);

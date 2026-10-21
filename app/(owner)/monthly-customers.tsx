@@ -36,6 +36,7 @@ import { errorMessage } from "../../src/i18n/errors";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { centsToReaisInput, parseReaisToCents } from "../../src/lib/money";
 import { formatDateNumeric } from "../../src/lib/i18n/format";
+import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
@@ -157,7 +158,7 @@ export default function MonthlyCustomersScreen() {
   const busy = save.isPending || change.isPending;
   const loading = shop.isLoading || data.isLoading;
   const loadError = shop.error ?? data.error;
-  const back = () => (router.canGoBack() ? router.back() : router.replace("/manage"));
+  const back = useBack("/manage");
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>

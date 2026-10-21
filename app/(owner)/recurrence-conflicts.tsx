@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking, ScrollView, Text, View } from "react-native";
@@ -15,13 +14,13 @@ import { buildWhatsAppRecurrenceConflictUrl, listOwnerRecurrenceConflicts } from
 import type { RecurrenceConflict } from "../../src/features/recurrence/types";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
 import { errorMessage } from "../../src/i18n/errors";
+import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
 export default function RecurrenceConflictsScreen() {
   const { t } = useTranslation();
   const pull = useRefreshAll();
-  const router = useRouter();
   const { supabase } = useSupabaseSession();
   const shop = useOwnerShopId();
   const shopId = shop.data ?? null;
@@ -43,7 +42,7 @@ export default function RecurrenceConflictsScreen() {
 
   const loading = shop.isLoading || conflicts.isLoading;
   const loadError = shop.error ?? conflicts.error;
-  const back = () => (router.canGoBack() ? router.back() : router.replace("/monthly-customers"));
+  const back = useBack("/monthly-customers");
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>

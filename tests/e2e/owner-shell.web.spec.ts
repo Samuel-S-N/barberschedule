@@ -70,7 +70,8 @@ test("back from a Manage screen returns to Manage, not to the agenda", async ({ 
   for (const [key, path] of [["barbers", /\/barbers/], ["services", /\/services/], ["customers", /\/customers/], ["schedule", /\/schedule/], ["shop", /\/shop/]] as const) {
     await page.getByTestId(`menu-${key}`).click();
     await expect(page).toHaveURL(path);
-    await page.getByTestId("back").click();
+    // Earlier Manage screens stay mounted in the tab navigator but are aria-hidden; click the active one.
+    await page.locator('[data-testid="back"]:not([aria-hidden="true"] *)').click();
     await expect(page).toHaveURL(/\/manage/);
   }
 });

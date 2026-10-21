@@ -1,5 +1,4 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Switch, Text, View } from "react-native";
@@ -18,6 +17,7 @@ import type { DayDraft, ShopPeriod } from "../../src/features/shops/hours";
 import { errorMessage } from "../../src/i18n/errors";
 import { useLanguage } from "../../src/i18n/use-language";
 import { colors } from "../../src/lib/design/colors";
+import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
@@ -29,7 +29,6 @@ export default function OwnerShopScreen() {
   const { t } = useTranslation();
   const pull = useRefreshAll();
   const language = useLanguage();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
   const shops = useQuery({ queryFn: () => listPublicShops(supabase), queryKey: ["public-shops"] });
@@ -84,7 +83,7 @@ export default function OwnerShopScreen() {
   const field = (key: keyof typeof contact, label: string) => (
     <Input label={label} onChangeText={(value) => setContact((current) => ({ ...current, [key]: value }))} testID={`shop-${key}`} value={contact[key]} />
   );
-  const back = () => (router.canGoBack() ? router.back() : router.replace("/manage"));
+  const back = useBack("/manage");
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>

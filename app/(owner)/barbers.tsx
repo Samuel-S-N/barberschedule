@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
@@ -28,13 +27,13 @@ import type { BarberCompensation, OwnerBarber } from "../../src/features/barbers
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
 import { errorMessage } from "../../src/i18n/errors";
 import { centsToReaisInput, parseReaisToCents } from "../../src/lib/money";
+import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
 export default function OwnerBarbersScreen() {
   const { t } = useTranslation();
   const pull = useRefreshAll();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
   const shop = useOwnerShopId();
@@ -131,7 +130,7 @@ export default function OwnerBarbersScreen() {
   const busy = save.isPending || toggle.isPending || invite.isPending || saveCompensation.isPending;
   const loading = shop.isLoading || barbers.isLoading;
   const loadError = shop.error ?? barbers.error;
-  const back = () => (router.canGoBack() ? router.back() : router.replace("/manage"));
+  const back = useBack("/manage");
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>

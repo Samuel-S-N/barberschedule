@@ -52,6 +52,7 @@ export default function BarberLayout() {
 
   return (
     <Tabs
+      backBehavior="history"
       screenOptions={{ headerShown: false }}
       tabBar={({ navigation, state }) => (
         <Screen className="bg-surface" edges={["bottom", "left", "right"]}>

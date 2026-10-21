@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
@@ -20,13 +19,13 @@ import type { Customer } from "../../src/features/customers/types";
 import { canSubmitCustomerForm } from "../../src/features/customers/validation";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
 import { errorMessage } from "../../src/i18n/errors";
+import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
 export default function OwnerCustomersScreen() {
   const { t } = useTranslation();
   const pull = useRefreshAll();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
   const shop = useOwnerShopId();
@@ -79,7 +78,7 @@ export default function OwnerCustomersScreen() {
   const shown = (customers.data ?? []).filter(
     (customer: Customer) => !term || customer.fullName.toLowerCase().includes(term) || (customer.email ?? "").toLowerCase().includes(term) || (customer.phone ?? "").includes(term),
   );
-  const back = () => (router.canGoBack() ? router.back() : router.replace("/manage"));
+  const back = useBack("/manage");
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>

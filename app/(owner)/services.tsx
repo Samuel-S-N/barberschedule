@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
@@ -32,13 +31,13 @@ import { isIntegerInput, parseIntegerInput } from "../../src/features/services/v
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
 import { errorMessage } from "../../src/i18n/errors";
 import { centsToReaisInput, parseReaisToCents } from "../../src/lib/money";
+import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
 export default function OwnerServicesScreen() {
   const { t } = useTranslation();
   const pull = useRefreshAll();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
   const shop = useOwnerShopId();
@@ -126,7 +125,7 @@ export default function OwnerServicesScreen() {
   const busy = save.isPending || change.isPending || saveOverride.isPending;
   const loading = shop.isLoading || catalog.isLoading;
   const loadError = shop.error ?? catalog.error;
-  const back = () => (router.canGoBack() ? router.back() : router.replace("/manage"));
+  const back = useBack("/manage");
 
   const renderAssignments = (service: Service) => (
     <View className="gap-2" testID={`barbers-${service.id}`}>

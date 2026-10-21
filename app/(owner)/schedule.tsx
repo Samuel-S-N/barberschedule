@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
@@ -30,6 +29,7 @@ import { useLanguage } from "../../src/i18n/use-language";
 import { errorMessage } from "../../src/i18n/errors";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { formatDateNumeric } from "../../src/lib/i18n/format";
+import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
@@ -39,7 +39,6 @@ export default function OwnerScheduleScreen() {
   const { t } = useTranslation();
   const language = useLanguage();
   const pull = useRefreshAll();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
   const shop = useOwnerShopId();
@@ -113,7 +112,7 @@ export default function OwnerScheduleScreen() {
   const loading = shop.isLoading || data.isLoading;
   const loadError = shop.error ?? data.error;
   const selectable = (label: string, selected: boolean) => (selected ? t("common.selectedOption", { option: label }) : label);
-  const back = () => (router.canGoBack() ? router.back() : router.replace("/manage"));
+  const back = useBack("/manage");
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
