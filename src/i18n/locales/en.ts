@@ -404,6 +404,10 @@ export const en = {
       updateError: "Unable to update customer.",
     },
     services: {
+      newTitle: "New service",
+      editTitle: "Edit service",
+      saved: "Service saved.",
+      notFound: "Service not found.",
       makeStandard: "Make standard for all barbers",
       removeStandard: "Remove standard",
       standardBadge: "Standard",
