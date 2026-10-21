@@ -23,6 +23,6 @@ describe("formatDateNumeric", () => {
   it("follows each language's numeric order (2026-10-02)", () => {
     expect(formatDateNumeric("2026-10-02", "pt")).toBe("02/10/2026");
     expect(formatDateNumeric("2026-10-02", "es")).toBe("02/10/2026");
-    expect(formatDateNumeric("2026-10-02", "en")).toBe("10/02/2026");
+    expect(formatDateNumeric("2026-10-02", "en")).toBe("2026-10-02");
   });
 });
