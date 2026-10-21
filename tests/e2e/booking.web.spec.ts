@@ -82,7 +82,7 @@ test("an authenticated customer can select a slot and submit a booking", async (
 
   // After confirming, the customer goes back to Home, where the confirmation is shown.
   await expect(page).toHaveURL(/\/home/);
-  await expect(page.getByText("Booking confirmed.")).toBeVisible();
+  await expect(page.getByText("Booked! Waiting for the barber to confirm.")).toBeVisible();
   expect(bookingPayload).toMatchObject({ customer_id: customerId, source: "customer", starts_at: "2026-08-17T12:00:00Z" });
 });
 
@@ -129,7 +129,7 @@ test("a customer sees an unavailable error when booking loses the slot", async (
   await walkToReview(page);
 
   await expect(page.getByText("That time is no longer available.")).toBeVisible();
-  await expect(page.getByText("Booking confirmed.")).not.toBeVisible();
+  await expect(page.getByText("Booked! Waiting for the barber to confirm.")).not.toBeVisible();
   expect(bookingPayload).toMatchObject({ customer_id: customerId, source: "customer", starts_at: "2026-08-17T12:00:00Z" });
 });
 

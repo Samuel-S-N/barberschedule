@@ -67,3 +67,10 @@ export async function markRead(supabase: Pick<SupabaseClient, "rpc">, ids?: stri
 
   return Number(data ?? 0);
 }
+
+export async function deleteNotifications(supabase: Pick<SupabaseClient, "rpc">, ids?: string[]) {
+  const { data, error } = await supabase.rpc("delete_notifications", { target_ids: ids ?? null });
+  if (error) throw error;
+
+  return Number(data ?? 0);
+}

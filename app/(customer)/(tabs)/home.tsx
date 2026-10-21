@@ -55,7 +55,7 @@ export default function CustomerHomeScreen() {
             <Button label={t("home.bookCta")} onPress={() => router.push("/book")} size="lg" />
             {shop ? <ShopInfoCard hours={hours} shop={shop} /> : null}
           </View>
-          <Toast message={t("home.bookingConfirmed")} onDismiss={() => setConfirmed(false)} variant="success" visible={confirmed} />
+          <Toast message={t("home.bookingScheduled")} onDismiss={() => setConfirmed(false)} variant="success" visible={confirmed} />
         </View>
       </ScrollView>
     </Screen>
