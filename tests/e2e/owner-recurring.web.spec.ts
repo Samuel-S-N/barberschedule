@@ -51,13 +51,12 @@ async function mockOwnerRest(page: Page, calls: Record<string, unknown>) {
 
       return json(route, [{}]);
     }
-    if (path.endsWith("/rpc/list_recurrence_prices")) return json(route, [{ interval_weeks: 1, price_cents: 2500, service_id: S1 }]);
-    if (path.endsWith("/rpc/set_recurrence_price")) {
-      (calls.prices as unknown[] | undefined)?.push(route.request().postDataJSON());
-
-      return json(route, null);
+    if (path.endsWith("/rpc/list_recurrence_plans_for_barber")) {
+      return json(route, [
+        { barber_service_id: BS1, interval_weeks: 1, name: null, normal_cents: 4000, plan_id: "plan-w1", price_cents: 3000, service_name: "Browser Cut" },
+        { barber_service_id: BS1, interval_weeks: 3, name: "Trimestral", normal_cents: 4000, plan_id: "plan-w3", price_cents: 3500, service_name: "Browser Cut" },
+      ]);
     }
-    if (path.endsWith("/rpc/get_recurrence_quote")) return json(route, [{ interval_weeks: 1, normal_cents: 4000, recurrence_cents: 3000 }, { interval_weeks: 2, normal_cents: 4000, recurrence_cents: null }]);
     if (path.endsWith("/rpc/create_recurrence_for_customer")) {
       calls.manual = route.request().postDataJSON();
 
@@ -113,24 +112,14 @@ test("pending requests show the customer, frequency and special price; the owner
   await expect.poll(() => calls.decide).toEqual({ accept: false, target_request_id: "rq1" });
 });
 
-test("the owner sets the recurrence price per service and frequency", async ({ page }) => {
-  const calls: Record<string, unknown> = { prices: [] };
-
+test("the owner screen has only Requests and Active tabs; prices now live in the plans", async ({ page }) => {
   await signInAsOwner(page);
-  await mockOwnerRest(page, calls);
+  await mockOwnerRest(page, {});
 
   await page.goto("/monthly-customers");
-  await page.getByTestId("recurring-tab-prices").click();
-  await expect(page.getByTestId(`price-${S1}-1`)).toHaveValue("25,00");
-  await page.getByTestId(`price-${S1}-2`).fill("30,00");
-  await expect(page.getByTestId(`price-total-${S1}-2`)).toContainText("R$ 60,00");
-  await page.getByTestId(`price-${S1}-1`).fill("");
-  await page.getByTestId(`price-save-${S1}`).click();
-
-  await expect.poll(() => calls.prices).toEqual([
-    { target_interval_weeks: 1, target_price_cents: null, target_service_id: S1 },
-    { target_interval_weeks: 2, target_price_cents: 3000, target_service_id: S1 },
-  ]);
+  await expect(page.getByTestId("recurring-tab-requests")).toBeVisible();
+  await expect(page.getByTestId("recurring-tab-active")).toBeVisible();
+  await expect(page.getByTestId("recurring-tab-prices")).toHaveCount(0);
 });
 
 test("active series show frequency, service and price", async ({ page }) => {
@@ -156,7 +145,7 @@ test("the owner creates a recurrence for a customer without an account", async (
   await page.getByTestId("recurring-manual").click();
   await page.getByTestId(`option-customer-${C1}`).click();
   await page.getByTestId(`option-service-${BS1}`).click();
-  await page.getByTestId("option-weeks-1").click();
+  await page.getByTestId("option-plan-plan-w1").click();
   await expect(page.getByTestId("manual-recurrence-price")).toContainText("R$ 30,00 per session");
   await page.getByTestId("manual-recurrence-date").fill("");
   await page.getByTestId("manual-recurrence-date").pressSequentially("20261102");

@@ -12,18 +12,18 @@ import { SearchInput } from "../../components/ui/SearchInput";
 import { errorMessage } from "../../i18n/errors";
 import { formatInstantInShopTime } from "../../lib/dates/shop-time";
 import { useSupabaseSession } from "../../providers/AppProviders";
-import { fourWeekTotalCents, recurrenceLabelKey, sessionsPer4Weeks } from "./pricing";
-import type { RecurrenceWeeks } from "./pricing";
-import { createRecurrenceForCustomer, getRecurrenceQuote } from "./requests-api";
+import { listPlansForBarber, planTitle } from "./plans-api";
+import { recurrencePriceText } from "./price-text";
+import { createRecurrenceForCustomer } from "./requests-api";
 
 type Props = {
   customers: { id: string; name: string }[];
   onCreated: () => void;
   onSearch?: (term: string) => void;
-  services: { barberServiceId: string; label: string }[];
+  services: { barberId: string; barberServiceId: string; label: string }[];
 };
 
-// Staff-created recurring series, for customers who cannot send a request (no account). The price comes from the price table.
+// Staff-created recurring series, for customers who cannot send a request (no account). The periodicity and price come from the barber's plans.
 export function ManualRecurrenceForm({ customers, onCreated, onSearch, services }: Props) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -32,24 +32,26 @@ export function ManualRecurrenceForm({ customers, onCreated, onSearch, services 
   const [search, setSearch] = useState("");
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [barberServiceId, setBarberServiceId] = useState<string | null>(null);
-  const [weeks, setWeeks] = useState<RecurrenceWeeks>(1);
+  const [planId, setPlanId] = useState<string | null>(null);
   const [startDate, setStartDate] = useState(today);
   const [startTime, setStartTime] = useState("09:00");
   const [error, setError] = useState<string | null>(null);
 
-  const quote = useQuery({
-    enabled: barberServiceId !== null,
-    queryFn: () => getRecurrenceQuote(supabase, barberServiceId ?? ""),
-    queryKey: ["recurrence-quote", barberServiceId],
+  const service = services.find((item) => item.barberServiceId === barberServiceId) ?? null;
+  const plans = useQuery({
+    enabled: service !== null,
+    queryFn: () => listPlansForBarber(supabase, service?.barberId ?? ""),
+    queryKey: ["barber-plans", service?.barberId],
   });
-  const current = quote.data?.find((item) => item.weeks === weeks);
+  const servicePlans = (plans.data ?? []).filter((plan) => plan.barberServiceId === barberServiceId);
+  const plan = servicePlans.find((candidate) => candidate.planId === planId) ?? null;
 
   const term = search.trim().toLowerCase();
   const shown = customers.filter((customer) => !term || customer.name.toLowerCase().includes(term));
-  const valid = customerId !== null && barberServiceId !== null && /^\d{4}-\d{2}-\d{2}$/.test(startDate) && /^([01]\d|2[0-3]):[0-5]\d$/.test(startTime);
+  const valid = customerId !== null && plan !== null && /^\d{4}-\d{2}-\d{2}$/.test(startDate) && /^([01]\d|2[0-3]):[0-5]\d$/.test(startTime);
 
   const create = useMutation({
-    mutationFn: () => createRecurrenceForCustomer(supabase, { barberServiceId: barberServiceId ?? "", customerId: customerId ?? "", startDate, startTime, weeks }),
+    mutationFn: () => createRecurrenceForCustomer(supabase, { barberServiceId: barberServiceId ?? "", customerId: customerId ?? "", startDate, startTime, weeks: plan?.weeks ?? 1 }),
     onError: (caught) => setError(errorMessage(caught, t, t("recurrence.sendError"))),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["owner-recurring"] });
@@ -68,14 +70,17 @@ export function ManualRecurrenceForm({ customers, onCreated, onSearch, services 
           <RadioBlock items={shown.map((customer) => ({ key: `customer-${customer.id}`, label: customer.name, onPress: () => setCustomerId(customer.id), selected: customer.id === customerId }))} />
         </ScrollView>
         <Text accessibilityRole="header" className="text-lg font-display-semibold text-ink">{t("recurrence.manualService")}</Text>
-        <RadioBlock items={services.map((service) => ({ key: `service-${service.barberServiceId}`, label: service.label, onPress: () => setBarberServiceId(service.barberServiceId), selected: service.barberServiceId === barberServiceId }))} />
-        <Text accessibilityRole="header" className="text-lg font-display-semibold text-ink">{t("recurrence.chooseFrequency")}</Text>
-        <RadioBlock items={([1, 2] as const).map((value) => ({ key: `weeks-${value}`, label: t(recurrenceLabelKey(value)), onPress: () => setWeeks(value), selected: value === weeks }))} />
-        {current ? (
+        <RadioBlock items={services.map((item) => ({ key: `service-${item.barberServiceId}`, label: item.label, onPress: () => { setBarberServiceId(item.barberServiceId); setPlanId(null); }, selected: item.barberServiceId === barberServiceId }))} />
+        {service !== null ? (
+          <>
+            <Text accessibilityRole="header" className="text-lg font-display-semibold text-ink">{t("recurrence.choosePlan")}</Text>
+            {plans.data && servicePlans.length === 0 ? <Text className="text-sm font-sans text-neutral-600">{t("recurrence.noPlans")}</Text> : null}
+            <RadioBlock items={servicePlans.map((candidate) => ({ key: `plan-${candidate.planId}`, label: planTitle(t, candidate), onPress: () => setPlanId(candidate.planId), selected: candidate.planId === planId }))} />
+          </>
+        ) : null}
+        {plan ? (
           <Text className="text-sm font-sans-medium text-ink" testID="manual-recurrence-price">
-            {current.recurrenceCents !== null
-              ? `${t("recurrence.perSession", { price: formatPriceBRL(current.recurrenceCents) })} · ${t("recurrence.fourWeeks", { count: sessionsPer4Weeks(weeks), total: formatPriceBRL(fourWeekTotalCents(current.recurrenceCents, weeks)) })}`
-              : t("recurrence.normalPrice", { price: formatPriceBRL(current.normalCents) })}
+            {recurrencePriceText(t, plan.priceCents, plan.weeks)} · {t("recurrence.normalPrice", { price: formatPriceBRL(plan.normalCents) })}
           </Text>
         ) : null}
         <View className="flex-row items-end gap-2">

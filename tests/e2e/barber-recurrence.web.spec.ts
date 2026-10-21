@@ -32,7 +32,12 @@ async function mockBarberRest(page: Page, handler?: RestHandler) {
     if (path.endsWith("/rpc/get_my_barber_profile")) return json(route, [barberProfile]);
     if (path.endsWith("/rpc/list_my_barber_services")) return json(route, [{ active: true, barber_service_id: "bs1", duration_minutes: 30, price_cents: 4000, service_id: "s1", service_name: "Browser Cut" }]);
     if (path.endsWith("/rpc/barber_search_customers")) return json(route, [{ email: null, full_name: "Walk In", has_account: false, id: "c-walk", phone: "11999990000" }]);
-    if (path.endsWith("/rpc/get_recurrence_quote")) return json(route, [{ interval_weeks: 1, normal_cents: 4000, recurrence_cents: 3000 }, { interval_weeks: 2, normal_cents: 4000, recurrence_cents: null }]);
+    if (path.endsWith("/rpc/list_recurrence_plans_for_barber")) {
+      return json(route, [
+        { barber_service_id: "bs1", interval_weeks: 1, name: null, normal_cents: 4000, plan_id: "plan-w1", price_cents: 3000, service_name: "Browser Cut" },
+        { barber_service_id: "bs1", interval_weeks: 3, name: "Trimestral", normal_cents: 4000, plan_id: "plan-w3", price_cents: 3500, service_name: "Browser Cut" },
+      ]);
+    }
     if (path.endsWith("/schedule_overrides") && route.request().method() === "GET") return json(route, []);
     if (path.endsWith("/rpc/list_my_barber_agenda")) return json(route, []);
     await route.abort();
@@ -85,12 +90,12 @@ test("a barber creates a recurrence for a customer without an account", async ({
   await page.getByTestId("recurring-manual").click();
   await page.getByTestId("option-customer-c-walk").click();
   await page.getByTestId("option-service-bs1").click();
-  await page.getByTestId("option-weeks-2").click();
+  await page.getByTestId("option-plan-plan-w3").click();
   await page.getByTestId("manual-recurrence-date").fill("");
   await page.getByTestId("manual-recurrence-date").pressSequentially("20261103");
   await page.getByTestId("manual-recurrence-save").click();
 
   await expect.poll(() => created).toEqual({
-    target_barber_service_id: "bs1", target_customer_id: "c-walk", target_interval_weeks: 2, target_start_date: "2026-11-03", target_start_time: "09:00",
+    target_barber_service_id: "bs1", target_customer_id: "c-walk", target_interval_weeks: 3, target_start_date: "2026-11-03", target_start_time: "09:00",
   });
 });

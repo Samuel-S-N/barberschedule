@@ -40,7 +40,7 @@ test("an owner can create a recurring booking for a customer and inspect its con
     if (path.endsWith("/services")) return json([{ active: true, archived_at: null, description: null, duration_minutes: 30, id: "service-1", is_standard: true, name: "Cut", price_cents: 4000, shop_id: shopId }]);
     if (path.endsWith("/rpc/list_owner_recurrence_series")) return json([series]);
     if (path.endsWith("/rpc/create_recurrence_for_customer")) return json([series]);
-    if (path.endsWith("/rpc/get_recurrence_quote")) return json([{ interval_weeks: 1, normal_cents: 4000, recurrence_cents: 3000 }, { interval_weeks: 2, normal_cents: 4000, recurrence_cents: null }]);
+    if (path.endsWith("/rpc/list_recurrence_plans_for_barber")) return json([{ barber_service_id: barberServiceId, interval_weeks: 1, name: null, normal_cents: 4000, plan_id: "plan-w1", price_cents: 3000, service_name: "Cut" }]);
     if (path.endsWith("/rpc/ensure_recurrence_window")) return json([{ appointments_created: 1, conflicts_created: 0 }]);
     if (path.endsWith("/rpc/list_owner_recurrence_conflicts")) return json([{
       customer_name: "Monthly Customer", customer_phone: "+55 11 99999-9999", id: "conflict-1",
@@ -56,6 +56,7 @@ test("an owner can create a recurring booking for a customer and inspect its con
   await page.getByTestId("recurring-manual").click();
   await page.getByTestId(`option-customer-${customerId}`).click();
   await page.getByTestId(`option-service-${barberServiceId}`).click();
+  await page.getByTestId("option-plan-plan-w1").click();
   await page.getByTestId("manual-recurrence-date").fill("");
   await page.getByTestId("manual-recurrence-date").pressSequentially("20260817");
   await page.getByTestId("manual-recurrence-save").click();
