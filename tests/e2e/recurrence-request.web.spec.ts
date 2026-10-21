@@ -47,12 +47,23 @@ test("a customer subscribes plan-first: plan, barber, day (vertical list), time,
 
   await page.getByTestId("recurrence-request").click();
   await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 6 · Plan");
-  // Plan-first: price per session, 4-week total when it exists, and the regular price.
-  await expect(page.getByTestId("offer-plan-w1")).toContainText("Corte mensal");
-  await expect(page.getByTestId("offer-plan-w1")).toContainText("R$ 25,00 per session");
-  await expect(page.getByTestId("offer-plan-w1")).toContainText("R$ 100,00");
-  await expect(page.getByTestId("offer-plan-w3")).toContainText("Trimestral");
-  await expect(page.getByTestId("offer-plan-w3")).not.toContainText("sessions in 4 weeks");
+  // The plan's value for the month (4 weeks) is highlighted on the right; no price per session. The regular price stays.
+  const weekly = page.getByTestId("offer-plan-w1");
+
+  await expect(weekly).toContainText("Corte mensal");
+  await expect(weekly).toContainText("Weekly");
+  await expect(weekly.getByTestId("plan-amount")).toHaveText("R$ 100,00");
+  await expect(weekly).toContainText("4 sessions per month");
+  await expect(weekly).toContainText("Regular price R$ 35,00");
+  await expect(weekly).not.toContainText("R$ 25,00");
+  await expect(weekly).not.toContainText("per session");
+  // Every 3 weeks has no whole month of sessions: the price per session stands in for the value.
+  const quarterly = page.getByTestId("offer-plan-w3");
+
+  await expect(quarterly).toContainText("Trimestral");
+  await expect(quarterly).toContainText("Every 3 weeks");
+  await expect(quarterly.getByTestId("plan-amount")).toHaveText("R$ 30,00");
+  await expect(quarterly).toContainText("per session");
   await page.getByTestId("offer-plan-w1").click();
 
   await expect(page.getByTestId("step-label")).toHaveText("Step 2 of 6 · Barber");
@@ -79,6 +90,10 @@ test("a customer subscribes plan-first: plan, barber, day (vertical list), time,
   await expect(page.getByTestId("recurrence-review")).toContainText("Corte mensal");
   await expect(page.getByTestId("recurrence-review")).toContainText("Browser Barber");
   await expect(page.getByTestId("recurrence-review")).toContainText("Every Monday");
+  await expect(page.getByTestId("recurrence-review").getByTestId("plan-amount")).toHaveText("R$ 100,00");
+  await expect(page.getByTestId("recurrence-review")).toContainText("4 sessions per month");
+  await expect(page.getByTestId("recurrence-review")).toContainText("Regular price R$ 35,00");
+  await expect(page.getByTestId("recurrence-review")).not.toContainText("per session");
   await page.getByTestId("recurrence-send").click();
   await expect.poll(() => calls.request).toEqual({
     target_barber_service_id: barberServiceId, target_interval_weeks: 1, target_replaces_request_id: null, target_replaces_series_id: null, target_start_date: "2099-01-04", target_start_time: "09:00",

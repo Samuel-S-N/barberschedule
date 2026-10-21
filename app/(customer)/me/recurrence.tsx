@@ -26,7 +26,8 @@ import { buildPlanOffers } from "../../../src/features/recurrence/plan-offers";
 import type { PlanOffer, PlanOfferBarber } from "../../../src/features/recurrence/plan-offers";
 import { listPlansForBarber } from "../../../src/features/recurrence/plans-api";
 import { recurrenceLabel } from "../../../src/features/recurrence/pricing";
-import { recurrencePriceText } from "../../../src/features/recurrence/price-text";
+import { planValue } from "../../../src/features/recurrence/price-text";
+import { PlanSummary } from "../../../src/features/recurrence/PlanSummary";
 import {
   cancelMyRecurrenceRequest, listMyRecurrenceRequests, requestDisplayStatus, requestRecurrence, requestSeriesCancellation,
 } from "../../../src/features/recurrence/requests-api";
@@ -222,16 +223,22 @@ export default function CustomerRecurrenceScreen() {
                 <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{t("recurrence.choosePlan")}</Text>
                 {plansLoading ? <SkeletonBlock height={72} width={320} /> : null}
                 {!plansLoading && offers.length === 0 ? <Text className="text-sm font-sans text-neutral-600">{t("recurrence.noPlansShop")}</Text> : null}
-                {offers.map((candidate) => (
-                  <PlanCard
-                    key={candidate.planId}
-                    normalText={t("recurrence.normalPrice", { price: formatPriceBRL(candidate.normalCents) })}
-                    onPress={() => { setOffer(candidate); setBarber(null); setWeekday(null); setStartsAt(null); go("barber"); }}
-                    priceText={recurrencePriceText(t, candidate.priceCents, candidate.weeks)}
-                    testID={`offer-${candidate.planId}`}
-                    title={candidate.name}
-                  />
-                ))}
+                {offers.map((candidate) => {
+                  const value = planValue(t, candidate.priceCents, candidate.weeks);
+
+                  return (
+                    <PlanCard
+                      amountText={formatPriceBRL(value.amountCents)}
+                      caption={value.caption}
+                      key={candidate.planId}
+                      normalText={t("recurrence.normalPrice", { price: formatPriceBRL(candidate.normalCents) })}
+                      onPress={() => { setOffer(candidate); setBarber(null); setWeekday(null); setStartsAt(null); go("barber"); }}
+                      periodicity={recurrenceLabel(t, candidate.weeks)}
+                      testID={`offer-${candidate.planId}`}
+                      title={candidate.name}
+                    />
+                  );
+                })}
               </>
             ) : null}
 
@@ -267,11 +274,16 @@ export default function CustomerRecurrenceScreen() {
                 <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{t("recurrence.review")}</Text>
                 <Card testID="recurrence-review">
                   <View className="gap-2">
-                    <Text className="text-base font-sans-semibold text-ink">{offer.name}</Text>
+                    <PlanSummary
+                      amountText={formatPriceBRL(planValue(t, offer.priceCents, offer.weeks).amountCents)}
+                      caption={planValue(t, offer.priceCents, offer.weeks).caption}
+                      normalText={t("recurrence.normalPrice", { price: formatPriceBRL(offer.normalCents) })}
+                      periodicity={recurrenceLabel(t, offer.weeks)}
+                      title={offer.name}
+                    />
                     <Text className="text-sm font-sans text-neutral-700">{barber.barberName}</Text>
-                    <Text className="text-sm font-sans text-neutral-700">{t("recurrence.everyWeekday", { weekday: weekdayName })} · {recurrenceLabel(t, offer.weeks)}</Text>
+                    <Text className="text-sm font-sans text-neutral-700">{t("recurrence.everyWeekday", { weekday: weekdayName })}</Text>
                     <Text className="text-sm font-sans text-neutral-700" style={{ fontVariant: ["tabular-nums"] }}>{t("recurrence.startsOn", { date: formatDateNumeric(chosen.localDate, language) })} · {chosen.localTime}</Text>
-                    <Text className="text-sm font-sans-medium text-ink">{recurrencePriceText(t, offer.priceCents, offer.weeks)}</Text>
                   </View>
                 </Card>
                 <Button disabled={send.isPending} label={t("recurrence.send")} onPress={() => send.mutate()} testID="recurrence-send" />
