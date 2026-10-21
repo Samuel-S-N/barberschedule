@@ -37,6 +37,8 @@ export type { BarberBookingSheetProps } from "./BarberBookingSheet";
 export { DaySummaryCard } from "./DaySummaryCard";
 export type { DaySummaryCardProps } from "./DaySummaryCard";
 export { NotificationBell } from "./NotificationBell";
+export { ConfirmDialog } from "./ConfirmDialog";
+export { NotificationActionSheet } from "./NotificationActionSheet";
 export { StepBar } from "./StepBar";
 export { StepIndicator } from "./StepIndicator";
 export { ContactLink } from "./ContactLink";
