@@ -95,6 +95,10 @@ describe("staff and recurrence push messages", () => {
     ["recurrence.requested", "pt", "Novo pedido de recorrência"],
     ["recurrence.accepted", "en", "Recurrence accepted"],
     ["recurrence.rejected", "es", "Recurrencia rechazada"],
+    ["recurrence.cancel_requested", "pt", "Cancelamento de plano solicitado"],
+    ["recurrence.cancel_requested", "en", "Plan cancellation requested"],
+    ["recurrence.cancel_accepted", "es", "Plan cancelado"],
+    ["recurrence.cancel_declined", "pt", "Cancelamento recusado"],
   ])("%s in %s has the title %s", (eventType, locale, title) => {
     expect(buildMessage(eventType, locale, staff).title).toBe(title);
   });
@@ -110,5 +114,11 @@ describe("staff and recurrence push messages", () => {
   it("names the frequency for recurrence events", () => {
     expect(buildMessage("recurrence.requested", "pt", staff).body).toContain("a cada 2 semanas");
     expect(buildMessage("recurrence.requested", "en", { ...staff, interval_weeks: 1 }).body).toContain("weekly");
+  });
+
+  it("names any number of weeks, not only weekly and biweekly", () => {
+    expect(buildMessage("recurrence.requested", "pt", { ...staff, interval_weeks: 3 }).body).toContain("a cada 3 semanas");
+    expect(buildMessage("recurrence.requested", "en", { ...staff, interval_weeks: 3 }).body).toContain("every 3 weeks");
+    expect(buildMessage("recurrence.requested", "es", { ...staff, interval_weeks: 4 }).body).toContain("cada 4 semanas");
   });
 });

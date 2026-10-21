@@ -20,6 +20,8 @@ export type DomainErrorCode =
   | "RECURRENCE_PLAN_NAME_REQUIRED"
   | "RECURRENCE_CONFLICT_RESOLVED"
   | "RECURRENCE_SERIES_NOT_ENDED"
+  | "RECURRENCE_CANCEL_NOT_ALLOWED"
+  | "RECURRENCE_CANCEL_NOT_REQUESTED"
   | "OWNER_AGENDA_REQUEST_FAILED"
   | "OWNER_STATUS_REQUEST_FAILED"
   | "APPOINTMENT_REQUEST_FAILED"
@@ -102,6 +104,10 @@ export function toDomainError(error: { code?: string; message?: string }): Domai
       return new DomainError("RECURRENCE_REQUEST_NOT_PENDING", "This request was already answered.");
     case "P0032":
       return new DomainError("RECURRENCE_PRICE_INVALID", "Enter a valid recurrence price.");
+    case "P0038":
+      return new DomainError("RECURRENCE_CANCEL_NOT_REQUESTED", "No cancellation was requested.");
+    case "P0037":
+      return new DomainError("RECURRENCE_CANCEL_NOT_ALLOWED", "You cannot request the cancellation of this plan.");
     case "P0036":
       return new DomainError("RECURRENCE_SERIES_NOT_ENDED", "This plan is not ended.");
     case "P0035":
