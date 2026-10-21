@@ -53,7 +53,7 @@ async function mockOwnerRest(page: Page, calls: Record<string, unknown>) {
     }
     if (path.endsWith("/rpc/list_recurrence_plans_for_barber")) {
       return json(route, [
-        { barber_service_id: BS1, interval_weeks: 1, name: null, normal_cents: 4000, plan_id: "plan-w1", price_cents: 3000, service_name: "Browser Cut" },
+        { barber_service_id: BS1, interval_weeks: 1, name: "Corte mensal", normal_cents: 4000, plan_id: "plan-w1", price_cents: 3000, service_name: "Browser Cut" },
         { barber_service_id: BS1, interval_weeks: 3, name: "Trimestral", normal_cents: 4000, plan_id: "plan-w3", price_cents: 3500, service_name: "Browser Cut" },
       ]);
     }

@@ -75,7 +75,7 @@ export function ManualRecurrenceForm({ customers, onCreated, onSearch, services 
           <>
             <Text accessibilityRole="header" className="text-lg font-display-semibold text-ink">{t("recurrence.choosePlan")}</Text>
             {plans.data && servicePlans.length === 0 ? <Text className="text-sm font-sans text-neutral-600">{t("recurrence.noPlans")}</Text> : null}
-            <RadioBlock items={servicePlans.map((candidate) => ({ key: `plan-${candidate.planId}`, label: planTitle(t, candidate), onPress: () => setPlanId(candidate.planId), selected: candidate.planId === planId }))} />
+            <RadioBlock items={servicePlans.map((candidate) => ({ key: `plan-${candidate.planId}`, label: planTitle(candidate), onPress: () => setPlanId(candidate.planId), selected: candidate.planId === planId }))} />
           </>
         ) : null}
         {plan ? (

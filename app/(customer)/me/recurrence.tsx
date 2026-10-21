@@ -158,7 +158,7 @@ export default function CustomerRecurrenceScreen() {
                     onPress={() => { setPlan(candidate); setWeekday(null); setStartsAt(null); go("weekday"); }}
                     priceText={recurrencePriceText(t, candidate.priceCents, candidate.weeks)}
                     testID={`plan-card-${candidate.planId}`}
-                    title={planTitle(t, candidate)}
+                    title={planTitle(candidate)}
                   />
                 ))}
               </>
@@ -203,7 +203,7 @@ export default function CustomerRecurrenceScreen() {
                 <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{t("recurrence.review")}</Text>
                 <Card testID="recurrence-review">
                   <View className="gap-2">
-                    <Text className="text-base font-sans-semibold text-ink">{planTitle(t, plan)}</Text>
+                    <Text className="text-base font-sans-semibold text-ink">{planTitle(plan)}</Text>
                     <Text className="text-sm font-sans text-neutral-700">{t("recurrence.everyWeekday", { weekday: weekdayName })} · {recurrenceLabel(t, plan.weeks)}</Text>
                     <Text className="text-sm font-sans text-neutral-700" style={{ fontVariant: ["tabular-nums"] }}>{t("recurrence.startsOn", { date: formatDateNumeric(chosen.localDate, language) })} · {chosen.localTime}</Text>
                     <Text className="text-sm font-sans-medium text-ink">{recurrencePriceText(t, plan.priceCents, plan.weeks)}</Text>

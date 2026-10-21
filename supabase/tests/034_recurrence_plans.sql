@@ -28,16 +28,16 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 -- the owner creates plans
 select set_config('request.jwt.claim.sub', 'fe000000-0000-0000-0000-000000000001', true);
-select lives_ok($$ select public.save_recurrence_plan(null, 'fe400000-0000-0000-0000-000000000001', 1, 2500, null, true) $$, 'the owner creates a weekly plan');
+select lives_ok($$ select public.save_recurrence_plan(null, 'fe400000-0000-0000-0000-000000000001', 1, 2500, 'Test plan', true) $$, 'the owner creates a weekly plan');
 select lives_ok($$ select public.save_recurrence_plan(null, 'fe400000-0000-0000-0000-000000000001', 3, 4500, 'Trimestral', true) $$, 'the owner creates a plan for every 3 weeks');
-select throws_ok($$ select public.save_recurrence_plan(null, 'fe400000-0000-0000-0000-000000000001', 1, 2000, null, true) $$, 'P0033', null, 'only one active plan per service and periodicity');
-select throws_ok($$ select public.save_recurrence_plan(null, 'fe400000-0000-0000-0000-000000000001', 13, 2000, null, true) $$, 'P0032', null, 'periodicity is 1 to 12 weeks');
+select throws_ok($$ select public.save_recurrence_plan(null, 'fe400000-0000-0000-0000-000000000001', 1, 2000, 'Test plan', true) $$, 'P0033', null, 'only one active plan per service and periodicity');
+select throws_ok($$ select public.save_recurrence_plan(null, 'fe400000-0000-0000-0000-000000000001', 13, 2000, 'Test plan', true) $$, 'P0032', null, 'periodicity is 1 to 12 weeks');
 select is((select count(*)::int from public.list_recurrence_plans('fe100000-0000-0000-0000-000000000001')), 2, 'the owner lists both plans');
 
 -- the customer sees them through the barber, and cannot manage plans
 select set_config('request.jwt.claim.sub', 'fe000000-0000-0000-0000-000000000002', true);
 select is((select count(*)::int from public.list_recurrence_plans_for_barber('fe300000-0000-0000-0000-000000000001') where barber_service_id = 'fe500000-0000-0000-0000-000000000001'), 2, 'the customer sees the barber''s plans with the barber service id');
-select throws_ok($$ select public.save_recurrence_plan(null, 'fe400000-0000-0000-0000-000000000001', 2, 3000, null, true) $$, 'P0010', null, 'a customer cannot create plans');
+select throws_ok($$ select public.save_recurrence_plan(null, 'fe400000-0000-0000-0000-000000000001', 2, 3000, 'Test plan', true) $$, 'P0010', null, 'a customer cannot create plans');
 
 -- a request needs an active plan for that periodicity
 select throws_ok($$ select * from public.request_recurrence('fe500000-0000-0000-0000-000000000001', 4, (select monday from plan_dates), '10:00') $$, 'P0015', null, 'no plan for 4 weeks: the request is invalid');

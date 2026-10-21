@@ -21,7 +21,7 @@ async function signInAsOwner(page: Page) {
 }
 
 const plans = [
-  { active: true, id: P1, interval_weeks: 1, name: null, normal_cents: 3500, price_cents: 2500, service_id: S1, service_name: "Seed cut" },
+  { active: true, id: P1, interval_weeks: 1, name: "Corte mensal", normal_cents: 3500, price_cents: 2500, service_id: S1, service_name: "Seed cut" },
   { active: false, id: "99999999-9999-4999-8999-999999999992", interval_weeks: 3, name: "Trimestral", normal_cents: 3500, price_cents: 4500, service_id: S1, service_name: "Seed cut" },
 ];
 
@@ -57,7 +57,7 @@ test("Manage has a Recurrence plans entry; the list shows price, periodicity and
   await page.goto("/manage");
   await page.getByTestId("menu-recurrence-plans").click();
   await expect(page).toHaveURL(/\/recurrence-plans/);
-  await expect(page.getByTestId(`plan-${P1}`)).toContainText("Seed cut · Weekly");
+  await expect(page.getByTestId(`plan-${P1}`)).toContainText("Corte mensal");
   await expect(page.getByTestId(`plan-${P1}`)).toContainText("R$ 25,00 per session");
   await expect(page.getByTestId(`plan-${P1}`)).toContainText("R$ 100,00");
   await expect(page.getByTestId("plan-99999999-9999-4999-8999-999999999992")).toContainText("Trimestral");
@@ -80,7 +80,9 @@ test("the owner creates a plan: service, price, free periodicity", async ({ page
   await page.getByTestId("plan-weeks-2").click(); // quick chip: every 2 weeks
   await expect(page.getByTestId("plan-weeks")).toHaveValue("2");
   await page.getByTestId("plan-weeks").fill("3");
+  await expect(page.getByTestId("plan-save")).toBeDisabled(); // the title is still empty
   await page.getByTestId("plan-name").fill("Barba trimestral");
+  await expect(page.getByTestId("plan-save")).toBeEnabled();
   await page.getByTestId("plan-save").click();
 
   await expect.poll(() => calls.saves).toEqual([{ target_active: true, target_interval_weeks: 3, target_name: "Barba trimestral", target_plan_id: null, target_price_cents: 3000, target_service_id: S2 }]);
@@ -100,7 +102,7 @@ test("the owner edits a plan and deactivates it with the red button", async ({ p
   await expect(page.getByTestId("plan-weeks")).toHaveValue("1");
   await page.getByTestId("plan-price").fill("27,00");
   await page.getByTestId("plan-save").click();
-  await expect.poll(() => calls.saves).toEqual([{ target_active: true, target_interval_weeks: 1, target_name: null, target_plan_id: P1, target_price_cents: 2700, target_service_id: S1 }]);
+  await expect.poll(() => calls.saves).toEqual([{ target_active: true, target_interval_weeks: 1, target_name: "Corte mensal", target_plan_id: P1, target_price_cents: 2700, target_service_id: S1 }]);
 
   await expect(page.getByTestId("plan-toggle")).toHaveCSS("background-color", "rgb(220, 59, 48)");
   await page.getByTestId("plan-toggle").click();
