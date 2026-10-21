@@ -7,6 +7,7 @@ import { BarberCard } from "../../../../src/components/domain/BarberCard";
 import { EmptyState } from "../../../../src/components/domain/EmptyState";
 import { ErrorRetry } from "../../../../src/components/domain/ErrorRetry";
 import { SkeletonBlock } from "../../../../src/components/domain/SkeletonLoader";
+import { StepIndicator } from "../../../../src/components/domain/StepIndicator";
 import { listPublicBarbers } from "../../../../src/features/barbers/api";
 import { useRefresh } from "../../../../src/lib/use-refresh";
 import { useSupabaseSession } from "../../../../src/providers/AppProviders";
@@ -34,9 +35,10 @@ export default function BookBarberScreen() {
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
       <ScrollView className="flex-1" refreshControl={<RefreshControl onRefresh={refresh.onRefresh} refreshing={refresh.refreshing} />}>
       <View className="items-center gap-4 p-5">
-        <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
+        <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl leading-[44px] font-display-bold text-ink">
           {t("book.barberTitle")}
         </Text>
+        <StepIndicator current="barber" ids={{ shopId }} />
         <View className="w-full max-w-[420px] gap-3">
           {barbers.isLoading ? (
             <>
@@ -53,6 +55,7 @@ export default function BookBarberScreen() {
           {barbers.data?.map((barber) => (
             <BarberCard
               key={barber.id}
+              avatarUrl={barber.avatarUrl}
               name={barber.name}
               onPress={() => router.push(
                 `/book/service?shopId=${encodeURIComponent(shopId)}&barberId=${encodeURIComponent(barber.id)}`,

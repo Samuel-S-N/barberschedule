@@ -15,7 +15,7 @@ export default function LegalScreen() {
       <ScrollView className="flex-1">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
-            <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("legal.title")}</Text>
+            <Text accessibilityRole="header" className="text-3xl leading-[44px] font-display-bold text-ink">{t("legal.title")}</Text>
             <Text className="text-sm font-sans text-neutral-500">{t("legal.version", { version: TERMS_VERSION })}</Text>
             <Text className="text-sm font-sans text-neutral-500">{t("legal.translationNote")}</Text>
             {LEGAL_SECTION_KEYS.map((key) => (

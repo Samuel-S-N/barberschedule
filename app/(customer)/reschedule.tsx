@@ -71,7 +71,7 @@ export default function RescheduleScreen() {
     <Screen edges={["top", "bottom", "left", "right"]} className="flex-1 bg-canvas">
       <ScrollView className="flex-1">
         <View className="items-center gap-4 p-5">
-          <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">{t("reschedule.title")}</Text>
+          <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl leading-[44px] font-display-bold text-ink">{t("reschedule.title")}</Text>
           {current ? (
             <View className="w-full max-w-[420px] gap-2">
               <Text className="text-sm font-sans-medium text-neutral-600">{t("reschedule.current")}</Text>

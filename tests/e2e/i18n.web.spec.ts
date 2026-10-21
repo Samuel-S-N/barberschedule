@@ -97,8 +97,9 @@ test.describe("Portuguese customer", () => {
     await page.goto("/book");
     await page.getByRole("button", { name: "Browser Barber" }).click();
     await page.getByRole("button", { name: "Corte" }).click();
-    await page.getByRole("button", { name: "Continuar para a revisão" }).click();
+    await page.getByRole("button", { name: "Continuar", exact: true }).click();
     await page.getByRole("button", { name: "09:00" }).click();
+    await page.getByRole("button", { name: "Ir para o checkout" }).click();
     await page.getByRole("button", { name: "Confirmar agendamento" }).click();
 
     await expect(page.getByText("Esse horário não está mais disponível.")).toBeVisible();

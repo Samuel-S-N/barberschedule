@@ -175,7 +175,7 @@ export default function AgendaScreen() {
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
       <ScrollView className="flex-1" refreshControl={<RefreshControl onRefresh={refresh.onRefresh} refreshing={refresh.refreshing} />}>
         <View className="items-center gap-4 p-5">
-          <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">{t("appointments.title")}</Text>
+          <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl leading-[44px] font-display-bold text-ink">{t("appointments.title")}</Text>
           <View className="w-full max-w-[420px] flex-row gap-2">
             <Button
               label={t("appointments.upcoming")}

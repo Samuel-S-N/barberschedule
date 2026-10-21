@@ -87,7 +87,7 @@ export default function ResetPasswordScreen() {
             ) : null}
             {status === "invalid" ? (
               <>
-                <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("auth.reset.invalidTitle")}</Text>
+                <Text accessibilityRole="header" className="text-3xl leading-[44px] font-display-bold text-ink">{t("auth.reset.invalidTitle")}</Text>
                 <Text className="text-base font-sans text-neutral-600">{t("auth.reset.invalidBody")}</Text>
                 <Button label={t("auth.reset.requestNew")} onPress={() => router.replace("/forgot-password")} size="lg" />
                 <Button label={t("auth.reset.backToSignIn")} onPress={() => router.replace("/login")} variant="ghost" />
@@ -95,7 +95,7 @@ export default function ResetPasswordScreen() {
             ) : null}
             {status === "ready" ? (
               <>
-                <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("auth.reset.setTitle")}</Text>
+                <Text accessibilityRole="header" className="text-3xl leading-[44px] font-display-bold text-ink">{t("auth.reset.setTitle")}</Text>
                 <Text className="text-base font-sans text-neutral-600">{t("auth.reset.setSubtitle")}</Text>
                 <Input {...field(0)} autoComplete="new-password" label={t("auth.reset.newPassword")} onChangeText={setNext} secureTextEntry testID="reset-new" textContentType="newPassword" value={next} />
                 <Input {...field(1)} autoComplete="new-password" error={problemText} label={t("auth.reset.confirm")} onChangeText={setConfirm} secureTextEntry onSubmitEditing={() => canSave && void save()} returnKeyType="go" testID="reset-confirm" textContentType="newPassword" value={confirm} />

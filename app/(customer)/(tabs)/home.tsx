@@ -47,7 +47,7 @@ export default function CustomerHomeScreen() {
         <View className="items-center gap-4 p-5">
           <View className="w-full max-w-[420px] flex-row items-center gap-2">
             <NotificationBell />
-            <Text accessibilityRole="header" className="flex-1 text-3xl font-display-bold text-ink">
+            <Text accessibilityRole="header" className="flex-1 text-3xl leading-[44px] font-display-bold text-ink">
               {firstName ? t("home.greeting", { name: firstName }) : t("home.welcome")}
             </Text>
           </View>

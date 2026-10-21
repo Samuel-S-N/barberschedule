@@ -16,7 +16,7 @@ export default function OwnerManageScreen() {
       <ScrollView className="flex-1">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-5">
-            <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("owner.manage.title")}</Text>
+            <Text accessibilityRole="header" className="text-3xl leading-[44px] font-display-bold text-ink">{t("owner.manage.title")}</Text>
             <MenuBlock
               items={[
                 { icon: Users, key: "barbers", label: t("owner.hub.manageBarbers"), onPress: go("/barbers") },
