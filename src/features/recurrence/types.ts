@@ -27,6 +27,8 @@ export type RecurrenceSeries = {
 };
 
 export type RecurrenceConflict = {
+  barberId: string;
+  barberServiceId: string;
   customerName: string;
   customerPhone: string | null;
   id: string;
