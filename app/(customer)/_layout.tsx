@@ -51,6 +51,7 @@ export default function CustomerLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="reschedule" />
+      <Stack.Screen name="notifications" />
       <Stack.Screen name="me/account" />
       <Stack.Screen name="me/security" />
       <Stack.Screen name="me/security/password" />

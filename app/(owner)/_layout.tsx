@@ -9,6 +9,8 @@ import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 // Screens reached from the Manage menu: not tabs themselves, and they keep "Manage" highlighted.
 const MANAGE_SCREENS = ["appointment-form", "barbers", "customers", "monthly-customers", "recurrence-conflicts", "schedule", "services", "shop"] as const;
+// Reached from the Agenda tab (the bell).
+const AGENDA_SCREENS = ["notifications"] as const;
 // Reached from the Account tab.
 const ACCOUNT_SCREENS = ["language"] as const;
 
@@ -22,7 +24,7 @@ export default function OwnerLayout() {
     { icon: User, key: "settings", label: t("tabs.account") },
   ];
   usePushRegistration(profile?.role === "owner");
-  const highlight = (name: string) => ((MANAGE_SCREENS as readonly string[]).includes(name) ? "manage" : (ACCOUNT_SCREENS as readonly string[]).includes(name) ? "settings" : name);
+  const highlight = (name: string) => ((MANAGE_SCREENS as readonly string[]).includes(name) ? "manage" : (ACCOUNT_SCREENS as readonly string[]).includes(name) ? "settings" : (AGENDA_SCREENS as readonly string[]).includes(name) ? "agenda" : name);
 
   return (
     <Tabs
@@ -38,7 +40,7 @@ export default function OwnerLayout() {
       <Tabs.Screen name="revenue" />
       <Tabs.Screen name="manage" />
       <Tabs.Screen name="settings" />
-      {[...MANAGE_SCREENS, ...ACCOUNT_SCREENS].map((name) => (
+      {[...MANAGE_SCREENS, ...ACCOUNT_SCREENS, ...AGENDA_SCREENS].map((name) => (
         <Tabs.Screen key={name} name={name} options={{ href: null }} />
       ))}
     </Tabs>

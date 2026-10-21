@@ -7,6 +7,7 @@ import { RefreshControl, ScrollView, Text, View } from "react-native";
 import { AppointmentCard } from "../../../src/components/domain/AppointmentCard";
 import { EmptyState } from "../../../src/components/domain/EmptyState";
 import { ErrorRetry } from "../../../src/components/domain/ErrorRetry";
+import { NotificationBell } from "../../../src/components/domain/NotificationBell";
 import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
 import { ShopInfoCard } from "../../../src/components/domain/ShopInfoCard";
 import { Toast } from "../../../src/components/domain/Toast";
@@ -44,9 +45,12 @@ export default function CustomerHomeScreen() {
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
       <ScrollView className="flex-1" refreshControl={<RefreshControl onRefresh={refresh.onRefresh} refreshing={refresh.refreshing} />}>
         <View className="items-center gap-4 p-5">
-          <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
-            {firstName ? t("home.greeting", { name: firstName }) : t("home.welcome")}
-          </Text>
+          <View className="w-full max-w-[420px] flex-row items-center gap-2">
+            <NotificationBell onPress={() => router.push("/notifications" as never)} />
+            <Text accessibilityRole="header" className="flex-1 text-3xl font-display-bold text-ink">
+              {firstName ? t("home.greeting", { name: firstName }) : t("home.welcome")}
+            </Text>
+          </View>
           <View className="w-full max-w-[420px] gap-3">
             <Text className="text-sm font-sans-medium text-neutral-600">{t("home.nextAppointment")}</Text>
             {upcoming.isLoading ? <SkeletonBlock height={120} width={320} /> : null}
