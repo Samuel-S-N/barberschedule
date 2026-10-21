@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { Clock, Coins, Info, Lock, LogOut, Scissors, Settings, ShieldCheck, User } from "lucide-react-native";
+import { Clock, Coins, Repeat, Info, Lock, LogOut, Scissors, Settings, ShieldCheck, User } from "lucide-react-native";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -55,6 +55,7 @@ export default function BarberProfileHub() {
               items={[
                 { icon: Scissors, key: "services", label: t("barber.hub.menu.services"), onPress: () => router.push("/my-profile/services") },
                 { icon: Clock, key: "availability", label: t("barber.hub.menu.availability"), onPress: () => router.push("/my-profile/availability") },
+                { icon: Repeat, key: "recurrence", label: t("barber.hub.menu.recurrence"), onPress: () => router.push("/my-profile/recurrence") },
                 { icon: Coins, key: "compensation", label: t("barber.hub.menu.compensation"), onPress: () => router.push("/my-profile/compensation") },
               ]}
             />

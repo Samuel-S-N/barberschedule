@@ -674,7 +674,7 @@ export const en = {
       lunchTitle: "Lunch break",
     },
     hub: {
-      menu: { account: "My details", availability: "Availability", compensation: "Compensation", services: "My services" },
+      menu: { account: "My details", availability: "Availability", compensation: "Compensation", recurrence: "Recurrence requests", services: "My services" },
       role: "Barber",
     },
     agenda: {

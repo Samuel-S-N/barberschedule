@@ -673,7 +673,7 @@ export const es: DeepStringRecord<typeof en> = {
       lunchTitle: "Pausa para el almuerzo",
     },
     hub: {
-      menu: { account: "Mis datos", availability: "Disponibilidad", compensation: "Remuneración", services: "Mis servicios" },
+      menu: { account: "Mis datos", availability: "Disponibilidad", compensation: "Remuneración", recurrence: "Pedidos de recurrencia", services: "Mis servicios" },
       role: "Barbero",
     },
     agenda: {
