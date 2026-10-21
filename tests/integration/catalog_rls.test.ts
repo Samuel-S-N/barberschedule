@@ -85,7 +85,7 @@ describe("task 3 catalog and customer helpers", () => {
     ).resolves.toEqual([
       {
         active: true,
-        avatarUrl: null,
+        archivedAt: null,
         avatarUrl: null,
         bio: null,
         compensation: { commissionPercent: 0, type: "commission" },
