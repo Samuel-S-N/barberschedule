@@ -62,23 +62,43 @@ test("customers list contact info, archived state, and filter by search", async 
   await expect(page.getByTestId(`owner-customer-${C1}`)).toBeVisible();
 });
 
-test("the owner adds a customer; the form needs a name and a contact", async ({ page }) => {
+test("the list has no form at the top: a search with an X and a + button", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, {});
+
+  await page.goto("/customers");
+  await expect(page.getByTestId("customer-name")).toHaveCount(0);
+  await expect(page.getByTestId("fab-add")).toBeVisible();
+
+  await page.getByTestId("customer-search").fill("caio");
+  await expect(page.getByTestId(`owner-customer-${C1}`)).toHaveCount(0);
+  await page.getByTestId("customer-search-clear").click();
+  await expect(page.getByTestId("customer-search")).toHaveValue("");
+  await expect(page.getByTestId(`owner-customer-${C1}`)).toBeVisible();
+});
+
+test("the + button opens the registration screen; it needs a name and a contact", async ({ page }) => {
   const calls: Record<string, unknown> = {};
 
   await signInAsOwner(page);
   await mockOwnerRest(page, calls);
 
   await page.goto("/customers");
+  await page.getByTestId("fab-add").click();
+  await expect(page).toHaveURL(/\/customer-form/);
   await expect(page.getByTestId("customer-save")).toBeDisabled();
   await page.getByTestId("customer-name").fill("Dani Costa");
   await expect(page.getByTestId("customer-save")).toBeDisabled();
   await page.getByTestId("customer-email").fill("dani@x.com");
+  await page.getByTestId("customer-phone").pressSequentially("11912345678");
+  await expect(page.getByTestId("customer-phone")).toHaveValue("(11)91234-5678");
   await page.getByTestId("customer-save").click();
 
   await expect.poll(() => calls.create).toMatchObject({ email: "dani@x.com", full_name: "Dani Costa", shop_id: shop });
+  await expect(page).toHaveURL(/\/customers/);
 });
 
-test("the owner edits and deactivates a customer", async ({ page }) => {
+test("the owner edits a customer on its own screen and deactivates from the list (red button)", async ({ page }) => {
   const calls: Record<string, unknown> = {};
 
   await signInAsOwner(page);
@@ -86,11 +106,14 @@ test("the owner edits and deactivates a customer", async ({ page }) => {
 
   await page.goto("/customers");
   await page.getByTestId(`customer-edit-${C1}`).click();
+  await expect(page).toHaveURL(new RegExp(`/customer-form\\?id=${C1}`));
   await expect(page.getByTestId("customer-name")).toHaveValue("Ana Souza");
   await page.getByTestId("customer-name").fill("Ana S. Souza");
   await page.getByTestId("customer-save").click();
   await expect.poll(() => (calls.patch as { full_name?: string } | undefined)?.full_name).toBe("Ana S. Souza");
+  await expect(page).toHaveURL(/\/customers/);
 
+  await expect(page.getByTestId(`customer-toggle-${C1}`)).toHaveCSS("background-color", "rgb(220, 59, 48)");
   await page.getByTestId(`customer-toggle-${C1}`).click();
   await expect.poll(() => (calls.patch as { active?: boolean } | undefined)?.active).toBe(false);
 });

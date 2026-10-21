@@ -391,6 +391,9 @@ export const pt: DeepStringRecord<typeof en> = {
       updateError: "Não foi possível atualizar o barbeiro.",
     },
     customers: {
+      newTitle: "Novo cliente",
+      editTitle: "Editar cliente",
+      notFound: "Cliente não encontrado.",
       add: "Adicionar cliente",
       emailLabel: "E-mail (opcional)",
       loadError: "Não foi possível carregar os clientes.",

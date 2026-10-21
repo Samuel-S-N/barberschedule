@@ -392,6 +392,9 @@ export const en = {
       updateError: "Unable to update barber.",
     },
     customers: {
+      newTitle: "New customer",
+      editTitle: "Edit customer",
+      notFound: "Customer not found.",
       add: "Add customer",
       emailLabel: "Email (optional)",
       loadError: "Unable to load customers.",
