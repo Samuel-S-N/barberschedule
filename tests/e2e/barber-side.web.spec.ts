@@ -176,3 +176,24 @@ test("an owner invites a barber and sets a chair-rental compensation", async ({ 
     new_type: "chair_rental", target_barber_id: barberId,
   });
 });
+
+test("an agenda card opens the client and offers WhatsApp and phone links", async ({ page }) => {
+  await signIn(page, barberUserId);
+  await mockBarberRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/rpc/list_my_barber_agenda")) return json(route, [agendaRow({ customer_phone: "11988887777" })]).then(() => true);
+    if (url.pathname.endsWith("/rpc/get_my_customer")) {
+      return json(route, {
+        customer: { email: null, full_name: "Ana Customer", has_account: true, id: "44444444-4444-4444-8444-444444444444", phone: "11988887777" },
+        history: [], note: null,
+        stats: { cancelled: 0, favorite_service: null, last_visit_at: null, next_visit_at: null, no_show: 0, visits: 0 },
+      }).then(() => true);
+    }
+  });
+
+  await page.goto("/my-agenda");
+  await expect(page.getByTestId("barber-appt-whatsapp-appt-1")).toHaveAttribute("href", "https://wa.me/5511988887777");
+  await expect(page.getByTestId("barber-appt-call-appt-1")).toHaveAttribute("href", "tel:+5511988887777");
+
+  await page.getByTestId("barber-appointment-open-appt-1").click();
+  await expect(page).toHaveURL(/\/clients\/44444444-4444-4444-8444-444444444444/);
+});

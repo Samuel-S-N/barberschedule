@@ -2,11 +2,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { MessageCircle, Phone } from "lucide-react-native";
 import { Linking, Pressable, Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { BarberBookingSheet } from "../../src/components/domain/BarberBookingSheet";
 import { CalendarStrip } from "../../src/components/domain/CalendarStrip";
+import { ContactLink } from "../../src/components/domain/ContactLink";
 import { DaySummaryCard } from "../../src/components/domain/DaySummaryCard";
 import { EmptyState } from "../../src/components/domain/EmptyState";
 import { NotificationBell } from "../../src/components/domain/NotificationBell";
@@ -26,7 +28,7 @@ import { buildDaySummary } from "../../src/features/appointments/day-summary";
 import { getAvailableSlots } from "../../src/features/availability/api";
 import type { AvailableSlot } from "../../src/features/availability/types";
 import { cancelAppointment } from "../../src/features/appointments/lifecycle";
-import { whatsappUrl } from "../../src/features/clients/format";
+import { telUrl, whatsappUrl } from "../../src/features/clients/format";
 import { getMyBarberProfile, listMyBarberServices } from "../../src/features/barbers/api";
 import { getMyBarberReport } from "../../src/features/reports/api";
 import { errorMessage } from "../../src/i18n/errors";
@@ -185,19 +187,25 @@ export default function BarberAgendaScreen() {
     return (
       <Card key={appointment.id} testID={`barber-appointment-${appointment.id}`}>
         <View className="gap-2">
-          <View className="flex-row items-center justify-between">
-            <Text className="text-lg font-display-semibold text-ink" style={{ fontVariant: ["tabular-nums"] }}>
-              {withDate ? `${formatDateNumeric(startsAt.localDate, language)} ` : ""}
-              {startsAt.localTime}
+          <Pressable accessibilityRole="button" className="gap-2" onPress={() => router.push(`/clients/${appointment.customerId}` as never)} testID={`barber-appointment-open-${appointment.id}`}>
+            <View className="flex-row items-center justify-between">
+              <Text className="text-lg font-display-semibold text-ink" style={{ fontVariant: ["tabular-nums"] }}>
+                {withDate ? `${formatDateNumeric(startsAt.localDate, language)} ` : ""}
+                {startsAt.localTime}
+              </Text>
+              <StatusBadge status={appointment.status} />
+            </View>
+            <Text className="text-base font-sans-medium text-ink">
+              {t("barber.agenda.customerLine", { customer: appointment.customerName, service: appointment.serviceNameSnapshot })}
             </Text>
-            <StatusBadge status={appointment.status} />
+            <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>
+              {formatPriceBRL(appointment.servicePriceCentsSnapshot)}
+            </Text>
+          </Pressable>
+          <View className="flex-row gap-3">
+            <ContactLink icon={MessageCircle} testID={`barber-appt-whatsapp-${appointment.id}`} url={whatsappUrl(appointment.customerPhone)}>{t("barber.clients.whatsapp")}</ContactLink>
+            <ContactLink icon={Phone} testID={`barber-appt-call-${appointment.id}`} url={telUrl(appointment.customerPhone)}>{t("barber.clients.call")}</ContactLink>
           </View>
-          <Text className="text-base font-sans-medium text-ink">
-            {t("barber.agenda.customerLine", { customer: appointment.customerName, service: appointment.serviceNameSnapshot })}
-          </Text>
-          <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>
-            {formatPriceBRL(appointment.servicePriceCentsSnapshot)}
-          </Text>
           {open ? (
             <View className="flex-row flex-wrap gap-2">
               {canConfirm ? (
