@@ -31,7 +31,7 @@ export type AppointmentSheetProps = {
   onCancel: () => void;
   onClose: () => void;
   onMove?: () => void;
-  onOpenCustomer: () => void;
+  onOpenCustomer?: () => void;
   remindUrl?: string | null;
   testPrefix: "barber" | "owner";
 };
@@ -61,13 +61,20 @@ export function AppointmentSheet({ appointment, busy, onCancel, onClose, onMove,
             </Pressable>
           </View>
 
-          <Pressable accessibilityRole="button" className="min-h-[44px] flex-row items-center justify-between rounded-xl border border-neutral-200 px-4" onPress={onOpenCustomer} testID={`${testPrefix}-appointment-customer-${id}`}>
-            <View>
+          {onOpenCustomer ? (
+            <Pressable accessibilityRole="button" className="min-h-[44px] flex-row items-center justify-between rounded-xl border border-neutral-200 px-4" onPress={onOpenCustomer} testID={`${testPrefix}-appointment-customer-${id}`}>
+              <View>
+                <Text className="text-xs font-sans text-neutral-500">{t("agendaCard.customer")}</Text>
+                <Text className="text-base font-sans-semibold text-ink">{appointment.customerName}</Text>
+              </View>
+              <ChevronRight color={colors.neutral[500]} size={20} />
+            </Pressable>
+          ) : (
+            <View className="min-h-[44px] justify-center rounded-xl border border-neutral-200 px-4" testID={`${testPrefix}-appointment-customer-${id}`}>
               <Text className="text-xs font-sans text-neutral-500">{t("agendaCard.customer")}</Text>
               <Text className="text-base font-sans-semibold text-ink">{appointment.customerName}</Text>
             </View>
-            <ChevronRight color={colors.neutral[500]} size={20} />
-          </Pressable>
+          )}
 
           <View className="gap-1">
             <Text className="text-base font-sans-medium text-ink">{appointment.serviceName} · {formatPriceBRL(appointment.priceCents)}</Text>

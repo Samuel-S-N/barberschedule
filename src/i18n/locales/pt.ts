@@ -396,6 +396,8 @@ export const pt: DeepStringRecord<typeof en> = {
       title: "Configurações do dono",
     },
     agenda: {
+      scopeMine: "Minha agenda",
+      scopeStore: "Loja",
       empty: "Nenhum agendamento neste período.",
       complete: "Concluir",
       loadError: "Não foi possível carregar a agenda.",
