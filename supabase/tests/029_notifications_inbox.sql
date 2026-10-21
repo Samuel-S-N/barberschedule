@@ -44,7 +44,7 @@ insert into public.appointments (
 select is((select count(*)::int from public.notifications where user_id = 'e0000000-0000-0000-0000-000000000003' and kind = 'appointment_awaiting_confirmation'), 1, 'barber is told about a new scheduled appointment');
 select is((select count(*)::int from public.notifications where user_id = 'e0000000-0000-0000-0000-000000000001' and kind = 'appointment_awaiting_confirmation'), 1, 'owner is told too');
 select is((select count(*)::int from public.notifications where user_id = 'e0000000-0000-0000-0000-000000000002'), 0, 'customer gets nothing for a booking');
-select is((select count(*)::int from public.notification_outbox where event_type = 'staff.awaiting_confirmation'), 2, 'barber and owner get a push for the new appointment');
+select is((select count(*)::int from public.notification_outbox where appointment_id = 'e5000000-0000-0000-0000-000000000001' and event_type = 'staff.awaiting_confirmation'), 2, 'barber and owner get a push for the new appointment');
 
 update public.appointments set status = 'confirmed' where id = 'e5000000-0000-0000-0000-000000000001';
 
@@ -57,7 +57,7 @@ update public.appointments set status = 'cancelled' where id = 'e5000000-0000-00
 set constraints all immediate;
 
 select is((select count(*)::int from public.notifications where kind = 'appointment_cancelled'), 3, 'customer, barber and owner are told about cancellation');
-select is((select count(*)::int from public.notification_outbox where event_type = 'staff.cancelled'), 2, 'barber and owner get a cancellation push');
+select is((select count(*)::int from public.notification_outbox where appointment_id = 'e5000000-0000-0000-0000-000000000001' and event_type = 'staff.cancelled'), 2, 'barber and owner get a cancellation push');
 select is((select count(*)::int from public.notification_outbox where event_type = 'appointment.cancelled' and recipient_user_id = 'e0000000-0000-0000-0000-000000000002'), 1, 'the customer cancellation push comes only from the existing trigger');
 
 -- Recurrence-generated appointments stay silent.
