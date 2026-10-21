@@ -3,8 +3,8 @@ import { z } from "zod";
 import type { RecurrenceSeriesInput } from "./types";
 
 const recurrenceSeriesSchema = z.object({
-  barberServiceId: z.string().uuid(),
-  customerId: z.string().uuid(),
+  barberServiceId: z.string().guid(),
+  customerId: z.string().guid(),
   intervalWeeks: z.number().int().positive(),
   localStartDate: z.iso.date(),
   localStartTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
