@@ -1,11 +1,12 @@
 import { ChevronLeft } from "lucide-react-native";
+import type { ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import { colors } from "../../lib/design/colors";
 
-export type ScreenHeaderProps = { title: string; onBack: () => void; backLabel: string; testID?: string };
+export type ScreenHeaderProps = { title: string; onBack: () => void; backLabel: string; right?: ReactNode; testID?: string };
 
-export function ScreenHeader({ title, onBack, backLabel, testID }: ScreenHeaderProps) {
+export function ScreenHeader({ title, onBack, backLabel, right, testID }: ScreenHeaderProps) {
   return (
     <View className="flex-row items-center gap-2" testID={testID}>
       <Pressable
@@ -18,7 +19,8 @@ export function ScreenHeader({ title, onBack, backLabel, testID }: ScreenHeaderP
       >
         <ChevronLeft color={colors.ink} size={26} />
       </Pressable>
-      <Text accessibilityRole="header" className="text-2xl font-display-bold text-ink">{title}</Text>
+      <Text accessibilityRole="header" className={`text-2xl font-display-bold text-ink${right ? " flex-1" : ""}`}>{title}</Text>
+      {right}
     </View>
   );
 }

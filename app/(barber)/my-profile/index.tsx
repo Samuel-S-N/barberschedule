@@ -61,8 +61,8 @@ export default function BarberProfileHub() {
             />
             <MenuBlock
               items={[
-                { icon: Lock, key: "privacy", label: t("profile.menu.privacy"), onPress: () => router.push("/my-profile/privacy") },
                 { icon: Settings, key: "settings", label: t("profile.menu.settings"), onPress: () => router.push("/my-profile/settings") },
+                { icon: Lock, key: "privacy", label: t("profile.menu.privacy"), onPress: () => router.push("/my-profile/privacy") },
                 { icon: Info, key: "about", label: t("profile.menu.about"), onPress: () => router.push("/my-profile/about") },
               ]}
             />
