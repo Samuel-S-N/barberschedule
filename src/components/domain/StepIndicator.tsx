@@ -25,7 +25,7 @@ export function StepIndicator({ current, ids }: { current: BookingStep; ids: Boo
               className="flex-1 justify-center py-2"
               disabled={!href}
               key={step}
-              onPress={() => href && router.navigate(href as never)}
+              onPress={() => href && router.dismissTo(href as never)}
               testID={`step-${step}`}
             >
               <View className={`h-1.5 rounded-full ${color}`} />
