@@ -32,9 +32,9 @@ function timeToMinutes(time: string) {
 const timeSchema = z.string().regex(timePattern, "Time must use HH:mm.");
 
 const workingPeriodSchema = z.object({
-  barberId: z.string().uuid("Barber id must be a UUID."),
+  barberId: z.string().guid("Barber id must be a UUID."),
   endTime: timeSchema,
-  shopId: z.string().uuid("Shop id must be a UUID."),
+  shopId: z.string().guid("Shop id must be a UUID."),
   startTime: timeSchema,
   weekday: z.number().int().min(1).max(7),
 }).refine(
@@ -43,11 +43,11 @@ const workingPeriodSchema = z.object({
 );
 
 const scheduleOverrideSchema = z.object({
-  barberId: z.string().uuid("Barber id must be a UUID."),
+  barberId: z.string().guid("Barber id must be a UUID."),
   endTime: timeSchema.nullish(),
   kind: z.enum(["block", "opening"]),
   localDate: z.string().refine(isIsoDate, "Local date must use YYYY-MM-DD."),
-  shopId: z.string().uuid("Shop id must be a UUID."),
+  shopId: z.string().guid("Shop id must be a UUID."),
   startTime: timeSchema.nullish(),
 }).superRefine(({ endTime, kind, startTime }, context) => {
   const hasStartTime = startTime !== null && startTime !== undefined;

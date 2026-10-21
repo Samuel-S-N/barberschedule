@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { Clock, Coins, Info, Lock, LogOut, Scissors, Settings, ShieldCheck, User } from "lucide-react-native";
+import { Clock, Coins, Repeat, Info, Lock, LogOut, Scissors, Settings, ShieldCheck, User } from "lucide-react-native";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -54,14 +54,15 @@ export default function BarberProfileHub() {
             <MenuBlock
               items={[
                 { icon: Scissors, key: "services", label: t("barber.hub.menu.services"), onPress: () => router.push("/my-profile/services") },
-                { icon: Clock, key: "hours", label: t("barber.hub.menu.hours"), onPress: () => router.push("/my-profile/hours") },
+                { icon: Clock, key: "availability", label: t("barber.hub.menu.availability"), onPress: () => router.push("/my-profile/availability") },
+                { icon: Repeat, key: "recurrence", label: t("barber.hub.menu.recurrence"), onPress: () => router.push("/my-profile/recurrence") },
                 { icon: Coins, key: "compensation", label: t("barber.hub.menu.compensation"), onPress: () => router.push("/my-profile/compensation") },
               ]}
             />
             <MenuBlock
               items={[
-                { icon: Lock, key: "privacy", label: t("profile.menu.privacy"), onPress: () => router.push("/my-profile/privacy") },
                 { icon: Settings, key: "settings", label: t("profile.menu.settings"), onPress: () => router.push("/my-profile/settings") },
+                { icon: Lock, key: "privacy", label: t("profile.menu.privacy"), onPress: () => router.push("/my-profile/privacy") },
                 { icon: Info, key: "about", label: t("profile.menu.about"), onPress: () => router.push("/my-profile/about") },
               ]}
             />

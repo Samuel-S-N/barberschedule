@@ -1,3 +1,4 @@
+import { openBarberCard } from "./agenda-helpers";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
@@ -157,6 +158,7 @@ test("a barber cancels an appointment after a second tap", async ({ page }) => {
   });
 
   await page.goto("/my-agenda");
+  await openBarberCard(page);
   await page.getByTestId("barber-cancel-appt-1").click();
   expect(cancelPayload).toBeNull();
   await page.getByTestId("barber-cancel-appt-1").click();
@@ -185,6 +187,7 @@ test("a barber moves an appointment: opens the calendar, picks the day, then the
   });
 
   await page.goto("/my-agenda");
+  await openBarberCard(page);
   await page.getByTestId("barber-move-appt-1").click();
 
   // Like the customer's reschedule: the month calendar first, then the times of the chosen day.
@@ -220,6 +223,7 @@ test("a failed move shows the error and stays on the calendar", async ({ page })
   });
 
   await page.goto("/my-agenda");
+  await openBarberCard(page);
   await page.getByTestId("barber-move-appt-1").click();
   await page.getByTestId("time-slot-10:30").click();
   await page.getByTestId("move-confirm").click();
@@ -240,6 +244,7 @@ test("keeping the current time goes back to the agenda without calling the datab
   });
 
   await page.goto("/my-agenda");
+  await openBarberCard(page);
   await page.getByTestId("barber-move-appt-1").click();
   await page.getByTestId("move-keep").click();
 
@@ -266,6 +271,7 @@ test("an upcoming appointment of an account-less customer offers a WhatsApp remi
   // Keep the external WhatsApp host out of the test: the popup URL is what we assert on.
   await page.context().route("https://wa.me/**", (route) => route.fulfill({ body: "ok", contentType: "text/html" }));
   await page.goto("/my-agenda");
+  await openBarberCard(page);
   const popup = page.waitForEvent("popup");
   await page.getByTestId("barber-remind-appt-1").click();
   const url = new URL((await popup).url());
@@ -282,5 +288,6 @@ test("no reminder button without a phone number", async ({ page }) => {
 
   await page.goto("/my-agenda");
   await expect(page.getByTestId("barber-confirm-appt-1")).toBeVisible();
+  await openBarberCard(page);
   await expect(page.getByTestId("barber-remind-appt-1")).toHaveCount(0);
 });

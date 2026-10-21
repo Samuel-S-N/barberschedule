@@ -7,11 +7,11 @@ const serviceSchema = z.object({
   durationMinutes: z.number().int().positive("Duration must be positive."),
   name: z.string().trim().min(1, "Name is required."),
   priceCents: z.number().int().min(0, "Price cannot be negative."),
-  shopId: z.string().uuid("Shop id must be a UUID."),
+  shopId: z.string().guid("Shop id must be a UUID."),
 });
 
 const barberServiceSchema = z.object({
-  barberId: z.string().uuid("Barber id must be a UUID."),
+  barberId: z.string().guid("Barber id must be a UUID."),
   durationOverrideMinutes: z
     .number()
     .int()
@@ -24,8 +24,8 @@ const barberServiceSchema = z.object({
     .min(0, "Price override cannot be negative.")
     .nullable()
     .optional(),
-  serviceId: z.string().uuid("Service id must be a UUID."),
-  shopId: z.string().uuid("Shop id must be a UUID."),
+  serviceId: z.string().guid("Service id must be a UUID."),
+  shopId: z.string().guid("Shop id must be a UUID."),
 });
 
 const integerInputPattern = /^-?\d+$/;

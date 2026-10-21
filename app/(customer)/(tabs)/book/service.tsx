@@ -4,9 +4,12 @@ import { Text, View } from "react-native";
 
 import { EmptyState } from "../../../../src/components/domain/EmptyState";
 import { ServiceCard } from "../../../../src/components/domain/ServiceCard";
+import { ScreenHeader } from "../../../../src/components/domain/ScreenHeader";
 import { SkeletonBlock } from "../../../../src/components/domain/SkeletonLoader";
+import { StepIndicator } from "../../../../src/components/domain/StepIndicator";
 import { useBarberServices } from "../../../../src/features/services/use-barber-services";
 import { Screen } from "../../../../src/components/ui/Screen";
+import { useBack } from "../../../../src/lib/navigation/use-back";
 
 function param(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";
@@ -18,14 +21,16 @@ export default function BookServiceScreen() {
   const shopId = param(rawShopId);
   const router = useRouter();
   const { t } = useTranslation();
+  const back = useBack();
   const services = useBarberServices(barberId);
 
   return (
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
       <View className="flex-1 items-center gap-4 p-5">
-        <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
-          {t("book.serviceTitle")}
-        </Text>
+        <View className="w-full max-w-[420px]">
+          <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("book.serviceTitle")} />
+        </View>
+        <StepIndicator current="service" ids={{ barberId, shopId }} />
         <View className="w-full max-w-[420px] gap-3">
           {services.isLoading ? (
             <>

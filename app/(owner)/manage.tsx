@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { AlertTriangle, Clock, Contact, Repeat, Scissors, Store, Users } from "lucide-react-native";
+import { AlertTriangle, Clock, Contact, Repeat, Scissors, Store, Tags, Users } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
 
@@ -16,13 +16,14 @@ export default function OwnerManageScreen() {
       <ScrollView className="flex-1">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-5">
-            <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("owner.manage.title")}</Text>
+            <Text accessibilityRole="header" className="text-3xl leading-[44px] font-display-bold text-ink">{t("owner.manage.title")}</Text>
             <MenuBlock
               items={[
                 { icon: Users, key: "barbers", label: t("owner.hub.manageBarbers"), onPress: go("/barbers") },
                 { icon: Scissors, key: "services", label: t("owner.hub.manageServices"), onPress: go("/services") },
                 { icon: Contact, key: "customers", label: t("owner.hub.manageCustomers"), onPress: go("/customers") },
                 { icon: Repeat, key: "monthly-customers", label: t("owner.manage.recurring"), onPress: go("/monthly-customers") },
+                { icon: Tags, key: "recurrence-plans", label: t("owner.manage.plans"), onPress: go("/recurrence-plans") },
               ]}
             />
             <MenuBlock

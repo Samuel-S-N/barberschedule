@@ -18,6 +18,7 @@ import { getAvailableSlotsQueryOptions } from "../../src/features/availability/q
 import type { AvailableSlot } from "../../src/features/availability/types";
 import { errorMessage } from "../../src/i18n/errors";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
+import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { Screen } from "../../src/components/ui/Screen";
 
@@ -31,6 +32,7 @@ export default function RescheduleScreen() {
   const barberId = param(params.barberId);
   const barberServiceId = param(params.barberServiceId);
   const router = useRouter();
+  const back = useBack();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
   const { supabase } = useSupabaseSession();
@@ -71,7 +73,7 @@ export default function RescheduleScreen() {
     <Screen edges={["top", "bottom", "left", "right"]} className="flex-1 bg-canvas">
       <ScrollView className="flex-1">
         <View className="items-center gap-4 p-5">
-          <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">{t("reschedule.title")}</Text>
+          <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl leading-[44px] font-display-bold text-ink">{t("reschedule.title")}</Text>
           {current ? (
             <View className="w-full max-w-[420px] gap-2">
               <Text className="text-sm font-sans-medium text-neutral-600">{t("reschedule.current")}</Text>
@@ -103,7 +105,7 @@ export default function RescheduleScreen() {
               size="lg"
               testID="reschedule-confirm"
             />
-            <Button label={t("reschedule.keep")} onPress={() => router.back()} variant="ghost" />
+            <Button label={t("reschedule.keep")} onPress={back} variant="ghost" />
           </View>
         </View>
       </ScrollView>

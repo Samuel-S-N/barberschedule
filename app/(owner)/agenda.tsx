@@ -5,9 +5,12 @@ import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
+import { AgendaCard } from "../../src/components/domain/AgendaCard";
+import { AppointmentSheet } from "../../src/components/domain/AppointmentSheet";
 import { EmptyState } from "../../src/components/domain/EmptyState";
+import { AgendaScopeSwitch } from "../../src/components/domain/AgendaScopeSwitch";
+import { ScreenTopBar } from "../../src/components/domain/ScreenTopBar";
 import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
-import { StatusBadge } from "../../src/components/domain/StatusBadge";
 import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
@@ -16,6 +19,8 @@ import { Screen } from "../../src/components/ui/Screen";
 import { listOwnerAgenda, listOwnerAgendaOverrides } from "../../src/features/appointments/agenda-query";
 import { cancelAppointment } from "../../src/features/appointments/lifecycle";
 import { setOwnerAppointmentStatus } from "../../src/features/appointments/owner-api";
+import { quickActions } from "../../src/features/appointments/agenda-actions";
+import { agendaNavKeys } from "../../src/features/appointments/agenda-nav";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
 import { useLanguage } from "../../src/i18n/use-language";
 import { errorMessage } from "../../src/i18n/errors";
@@ -75,7 +80,10 @@ export default function OwnerAgendaScreen() {
     mutationFn: (input: { id: string; status: "completed" | "no_show" | "cancelled" }) =>
       input.status === "cancelled" ? cancelAppointment(supabase, input.id) : setOwnerAppointmentStatus(supabase, input.id, input.status),
     onError: (error) => setFeedback({ message: errorMessage(error, t, t("owner.agenda.updateError")), variant: "error" }),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["owner-agenda"] }),
+    onSuccess: () => {
+      setOpenId(null);
+      void queryClient.invalidateQueries({ queryKey: ["owner-agenda"] });
+    },
   });
 
   const selectView = (nextView: AgendaView) => {
@@ -90,9 +98,13 @@ export default function OwnerAgendaScreen() {
     setLocalDate((date) => addDays(date, direction * days));
   };
 
+  const nav = agendaNavKeys(view);
   const loading = shop.isLoading || agenda.isLoading;
   const loadError = shop.error ?? agenda.error;
   const appointments = agenda.data?.appointments ?? [];
+  const [openId, setOpenId] = useState<string | null>(null);
+  const openAppointment = appointments.find((appointment) => appointment.id === openId) ?? null;
+  const openStart = openAppointment ? formatInstantInShopTime(new Date(openAppointment.startsAt)) : null;
   const overrides = agenda.data?.overrides ?? [];
   const busy = update.isPending;
 
@@ -101,7 +113,8 @@ export default function OwnerAgendaScreen() {
       <KeyboardAwareScrollView refreshControl={pullToRefresh(pull)} bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
-            <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("owner.agenda.title")}</Text>
+            <ScreenTopBar title={t(nav.title)} />
+            <AgendaScopeSwitch scope="store" />
             <Button label={t("owner.agenda.newAppointment")} onPress={() => router.push("/appointment-form")} testID="owner-new-appointment" />
 
             <View className="flex-row gap-2">
@@ -112,8 +125,8 @@ export default function OwnerAgendaScreen() {
             <DateInput label={t("common.localDate")} onChangeValue={(value) => { setLocalDate(value); setOffset(0); }} testID="owner-agenda-date" value={localDate} />
             <Text className="text-center text-sm font-sans text-neutral-600">{t(RANGE_LABEL[view], { date: formatDateNumeric(localDate, language) })}</Text>
             <View className="flex-row gap-2">
-              <View className="flex-1"><Button disabled={loading} label={t("owner.agenda.previousRange")} onPress={() => moveRange(-1)} size="sm" variant="outline" /></View>
-              <View className="flex-1"><Button disabled={loading} label={t("owner.agenda.nextRange")} onPress={() => moveRange(1)} size="sm" variant="outline" /></View>
+              <View className="flex-1"><Button disabled={loading} label={t(nav.previous)} onPress={() => moveRange(-1)} testID="owner-range-prev" size="sm" variant="outline" /></View>
+              <View className="flex-1"><Button disabled={loading} label={t(nav.next)} onPress={() => moveRange(1)} testID="owner-range-next" size="sm" variant="outline" /></View>
             </View>
 
             {loading ? <SkeletonBlock height={96} width={320} /> : null}
@@ -123,26 +136,23 @@ export default function OwnerAgendaScreen() {
 
             {appointments.map((appointment) => {
               const startsAt = formatInstantInShopTime(new Date(appointment.startsAt));
-              const open = appointment.status === "scheduled" || appointment.status === "confirmed";
 
               return (
-                <Card key={appointment.id} testID={`owner-appointment-${appointment.id}`}>
-                  <View className="gap-2">
-                    <View className="flex-row items-center justify-between">
-                      <Text className="text-lg font-display-semibold text-ink" style={{ fontVariant: ["tabular-nums"] }}>{formatDateNumeric(startsAt.localDate, language)} {startsAt.localTime}</Text>
-                      <StatusBadge status={appointment.status} />
-                    </View>
-                    <Text className="text-base font-sans-medium text-ink">{appointment.customerName} · {appointment.serviceNameSnapshot}</Text>
-                    <Text className="text-sm font-sans text-neutral-600">{appointment.barberName}</Text>
-                    {open ? (
-                      <View className="flex-row flex-wrap gap-2">
-                        <Button disabled={busy} label={t("owner.agenda.complete")} onPress={() => update.mutate({ id: appointment.id, status: "completed" })} size="sm" testID={`owner-complete-${appointment.id}`} />
-                        <Button disabled={busy} label={t("status.no_show")} onPress={() => update.mutate({ id: appointment.id, status: "no_show" })} size="sm" testID={`owner-noshow-${appointment.id}`} variant="outline" />
-                        <Button disabled={busy} label={t("common.cancel")} onPress={() => update.mutate({ id: appointment.id, status: "cancelled" })} size="sm" testID={`owner-cancel-${appointment.id}`} variant="danger" />
-                      </View>
-                    ) : null}
-                  </View>
-                </Card>
+                <AgendaCard
+                  actions={quickActions({ canConfirm: false, endsAt: appointment.endsAt, now: new Date(), status: appointment.status })}
+                  appointmentId={appointment.id}
+                  busy={busy}
+                  customerName={appointment.customerName}
+                  key={appointment.id}
+                  onComplete={() => update.mutate({ id: appointment.id, status: "completed" })}
+                  onConfirm={() => undefined}
+                  onNoShow={() => update.mutate({ id: appointment.id, status: "no_show" })}
+                  onOpen={() => setOpenId(appointment.id)}
+                  status={appointment.status}
+                  subtitle={appointment.barberName}
+                  testPrefix="owner"
+                  timeLabel={`${formatDateNumeric(startsAt.localDate, language)} ${startsAt.localTime}`}
+                />
               );
             })}
 
@@ -156,6 +166,30 @@ export default function OwnerAgendaScreen() {
                 </View>
               </Card>
             ))}
+
+            <AppointmentSheet
+              appointment={openAppointment && openStart ? {
+                barberName: openAppointment.barberName,
+                customerName: openAppointment.customerName,
+                customerPhone: openAppointment.customerPhone,
+                dateLabel: formatDateNumeric(openStart.localDate, language),
+                id: openAppointment.id,
+                notes: openAppointment.notes ?? null,
+                priceCents: openAppointment.servicePriceCentsSnapshot,
+                serviceName: openAppointment.serviceNameSnapshot,
+                status: openAppointment.status,
+                timeLabel: openStart.localTime,
+              } : null}
+              busy={busy}
+              onCancel={() => update.mutate({ id: openAppointment?.id ?? "", status: "cancelled" })}
+              onClose={() => setOpenId(null)}
+              onOpenCustomer={() => {
+                const customerId = openAppointment?.customerId;
+                setOpenId(null);
+                if (customerId) router.push({ params: { id: customerId }, pathname: "/customer-form" });
+              }}
+              testPrefix="owner"
+            />
 
             {offset > 0 || appointments.length >= PAGE_SIZE ? (
               <View className="flex-row justify-between gap-2">

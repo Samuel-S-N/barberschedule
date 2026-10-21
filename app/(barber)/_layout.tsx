@@ -9,7 +9,9 @@ import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
 import { Button } from "../../src/components/ui/Button";
 import { Screen } from "../../src/components/ui/Screen";
 import { getMyBarberProfile } from "../../src/features/barbers/api";
+import { usePushRegistration } from "../../src/features/notifications/use-push-registration";
 import { errorMessage } from "../../src/i18n/errors";
+import { useHardwareBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 export default function BarberLayout() {
@@ -27,6 +29,9 @@ export default function BarberLayout() {
     queryFn: () => getMyBarberProfile(supabase),
     queryKey: ["my-barber-profile", profile?.userId],
   });
+
+  usePushRegistration(Boolean(barber.data));
+  useHardwareBack();
 
   if (barber.isError) {
     return (
@@ -65,6 +70,7 @@ export default function BarberLayout() {
       <Tabs.Screen name="earnings" />
       <Tabs.Screen name="my-profile" />
       <Tabs.Screen name="move-appointment" options={{ href: null }} />
+      <Tabs.Screen name="barber-notifications" options={{ href: null }} />
     </Tabs>
   );
 }

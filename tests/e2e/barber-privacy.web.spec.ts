@@ -50,7 +50,7 @@ test("a barber reaches the privacy screen from the profile hub", async ({ page }
   await page.getByTestId("menu-privacy").click();
 
   await expect(page).toHaveURL(/\/my-profile\/privacy/);
-  await expect(page.getByTestId("barber-privacy-note")).toBeVisible();
-  await page.getByTestId("barber-privacy-terms").click();
+  await expect(page.getByTestId("profile-export")).toBeVisible();
+  await page.getByTestId("privacy-terms").click();
   await expect(page).toHaveURL(/\/legal/);
 });

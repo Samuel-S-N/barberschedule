@@ -1,3 +1,4 @@
+import { openOwnerCard } from "./agenda-helpers";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
@@ -51,11 +52,12 @@ test("the owner agenda lists appointments and time off with status badges", asyn
   await mockOwnerRest(page, { calls: {}, rows: [agendaRow()] });
 
   await page.goto("/agenda");
-  await expect(page.getByRole("heading", { name: "Agenda" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Day agenda" })).toBeVisible();
   const card = page.getByTestId("owner-appointment-appt-1");
   await expect(card).toContainText("Ana Customer");
   await expect(card).toContainText("Bruno Barber");
   await expect(card).toContainText("Scheduled");
+  await expect(card).not.toContainText("R$");
   await expect(page.getByTestId("owner-override-ov-1")).toContainText("12:00–13:00");
 });
 
@@ -69,6 +71,9 @@ test("the owner completes and cancels from the agenda", async ({ page }) => {
   await page.getByTestId("owner-complete-appt-1").click();
   await expect.poll(() => state.calls.status).toEqual({ appointment_id: "appt-1", new_status: "completed" });
 
+  await openOwnerCard(page);
+  await page.getByTestId("owner-cancel-appt-1").click(); // first tap only asks for confirmation
+  expect(state.calls.cancel).toBeUndefined();
   await page.getByTestId("owner-cancel-appt-1").click();
   await expect.poll(() => state.calls.cancel).toEqual({ appointment_id: "appt-1" });
 });
@@ -102,4 +107,45 @@ test("the date field masks what is typed and only requests the range once the da
   await field.press("Backspace");
   await expect(field).toHaveValue("2026-10-0");
   expect(ranges.every((range) => /^\d{4}-\d{2}-\d{2}$/.test(range))).toBe(true);
+});
+
+test("the previous/next buttons and the title follow the selected view", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, { calls: {}, noOverrides: true, rows: [] });
+
+  await page.goto("/agenda");
+  await expect(page.getByRole("heading", { name: "Day agenda" })).toBeVisible();
+  await expect(page.getByTestId("owner-range-prev")).toHaveText("Previous day");
+  await expect(page.getByTestId("owner-range-next")).toHaveText("Next day");
+
+  await page.getByTestId("owner-view-week").click();
+  await expect(page.getByRole("heading", { name: "Week agenda" })).toBeVisible();
+  await expect(page.getByTestId("owner-range-prev")).toHaveText("Previous week");
+  await expect(page.getByTestId("owner-range-next")).toHaveText("Next week");
+
+  await page.getByTestId("owner-view-month").click();
+  await expect(page.getByRole("heading", { name: "Month agenda" })).toBeVisible();
+  await expect(page.getByTestId("owner-range-prev")).toHaveText("Previous month");
+  await expect(page.getByTestId("owner-range-next")).toHaveText("Next month");
+});
+
+test("the agenda date field has a ghost example when empty and no format hint in its label", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, { calls: {}, noOverrides: true, rows: [] });
+
+  await page.goto("/agenda");
+  await expect(page.getByTestId("owner-agenda-date")).toHaveAttribute("placeholder", "2026-10-25");
+  await expect(page.getByText("Local date", { exact: true })).toBeVisible();
+});
+
+test("the owner pop-up has the customer's WhatsApp and phone and opens the customer", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, { calls: {}, rows: [agendaRow({ customer_phone: "11988887777" })] });
+
+  await page.goto("/agenda");
+  await openOwnerCard(page);
+  await expect(page.getByTestId("owner-appt-whatsapp-appt-1")).toHaveAttribute("href", "https://wa.me/5511988887777");
+  await expect(page.getByTestId("owner-appt-call-appt-1")).toHaveAttribute("href", "tel:+5511988887777");
+  await page.getByTestId("owner-appointment-customer-appt-1").click();
+  await expect(page).toHaveURL(/\/customer-form\?id=/);
 });

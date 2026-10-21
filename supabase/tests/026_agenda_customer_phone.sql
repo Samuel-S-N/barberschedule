@@ -42,7 +42,7 @@ select is(
 );
 select is(
   (select customer_phone from public.list_my_barber_agenda(current_date - 1, current_date + 2) where customer_name = 'Has Account'),
-  null, 'a customer with an account gets push, so no phone is exposed'
+  '11999990002', 'the phone of a customer with an account is returned too (same data as the Clients tab)'
 );
 
 select * from finish();

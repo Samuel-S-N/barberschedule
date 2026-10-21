@@ -81,3 +81,34 @@ describe("buildMessage", () => {
     }
   });
 });
+
+describe("staff and recurrence push messages", () => {
+  const staff = { customer_name: "Ana", interval_weeks: 2, service_name: "Corte", starts_at: "2026-08-17T12:00:00Z" };
+
+  it.each([
+    ["appointment.confirmed", "pt", "Agendamento confirmado"],
+    ["staff.awaiting_confirmation", "pt", "Aguardando confirmação"],
+    ["staff.awaiting_confirmation", "en", "Awaiting confirmation"],
+    ["staff.booked", "es", "Nueva cita"],
+    ["staff.cancelled", "pt", "Agendamento cancelado"],
+    ["staff.rescheduled", "en", "Appointment rescheduled"],
+    ["recurrence.requested", "pt", "Novo pedido de recorrência"],
+    ["recurrence.accepted", "en", "Recurrence accepted"],
+    ["recurrence.rejected", "es", "Recurrencia rechazada"],
+  ])("%s in %s has the title %s", (eventType, locale, title) => {
+    expect(buildMessage(eventType, locale, staff).title).toBe(title);
+  });
+
+  it("names the customer, service and shop-local time for staff events", () => {
+    const body = buildMessage("staff.booked", "pt", staff).body;
+
+    expect(body).toContain("Ana");
+    expect(body).toContain("Corte");
+    expect(body).toContain("09:00");
+  });
+
+  it("names the frequency for recurrence events", () => {
+    expect(buildMessage("recurrence.requested", "pt", staff).body).toContain("a cada 2 semanas");
+    expect(buildMessage("recurrence.requested", "en", { ...staff, interval_weeks: 1 }).body).toContain("weekly");
+  });
+});

@@ -140,6 +140,8 @@ export async function listOwnerRecurrenceConflicts(supabase: RecurrenceSupabaseC
 
   return (data ?? []).map((row: unknown) => {
     const conflict = row as {
+      barber_id: string;
+      barber_service_id: string;
       customer_name: string;
       customer_phone: string | null;
       id: string;
@@ -151,6 +153,8 @@ export async function listOwnerRecurrenceConflicts(supabase: RecurrenceSupabaseC
       status: "open" | "resolved";
     };
     return {
+      barberId: conflict.barber_id,
+      barberServiceId: conflict.barber_service_id,
       customerName: conflict.customer_name,
       customerPhone: conflict.customer_phone,
       id: conflict.id,
@@ -162,6 +166,11 @@ export async function listOwnerRecurrenceConflicts(supabase: RecurrenceSupabaseC
       status: conflict.status,
     } satisfies RecurrenceConflict;
   });
+}
+
+export async function resolveRecurrenceConflict(supabase: RecurrenceSupabaseClient, input: { id: string; startsAt: string | null }) {
+  const { error } = await supabase.rpc("resolve_recurrence_conflict", { new_starts_at: input.startsAt, target_conflict_id: input.id });
+  if (error) throw toRecurrenceError(error);
 }
 
 export function buildWhatsAppRecurrenceConflictUrl(input: {

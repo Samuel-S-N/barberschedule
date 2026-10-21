@@ -150,7 +150,7 @@ export default function OwnerRevenueScreen() {
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
       <ScrollView refreshControl={pullToRefresh(pull)} className="flex-1">
         <View className="items-center gap-4 p-5">
-          <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">{t("owner.revenue.title")}</Text>
+          <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl leading-[44px] font-display-bold text-ink">{t("owner.revenue.title")}</Text>
           <View className="w-full max-w-[420px] flex-row flex-wrap gap-2">
             {(["week", "month", "quarter"] as const).map((key) => (
               <Button
@@ -274,9 +274,9 @@ export default function OwnerRevenueScreen() {
                       ) : null}
                       {payingFor === row.barberId ? (
                         <View className="gap-2">
-                          <Input label={t("owner.revenue.paymentAmount")} onChangeText={setAmount} testID="rent-amount" value={amount} />
+                          <Input label={t("owner.revenue.paymentAmount")} onChangeText={setAmount} placeholder={t("examples.money")} testID="rent-amount" value={amount} />
                           <DateInput label={t("owner.revenue.paymentDate")} onChangeValue={setPaidOn} testID="rent-date" value={paidOn} />
-                          <Input label={t("owner.revenue.paymentNote")} onChangeText={setNote} testID="rent-note" value={note} />
+                          <Input label={t("owner.revenue.paymentNote")} onChangeText={setNote} placeholder={t("examples.note")} testID="rent-note" value={note} />
                           <View className="flex-row gap-2">
                             <Button disabled={savePayment.isPending} label={t("owner.revenue.savePayment")} onPress={() => submitPayment(row.barberId)} size="sm" testID="rent-pay-save" />
                             <Button label={t("owner.revenue.cancelPayment")} onPress={() => setPayingFor(null)} size="sm" variant="outline" />

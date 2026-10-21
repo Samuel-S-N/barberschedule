@@ -45,9 +45,9 @@ export default function ForgotPasswordScreen() {
       <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
-            <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("auth.reset.title")}</Text>
+            <Text accessibilityRole="header" className="text-3xl leading-[44px] font-display-bold text-ink">{t("auth.reset.title")}</Text>
             <Text className="text-base font-sans text-neutral-600">{t("auth.reset.subtitle")}</Text>
-            <Input autoCapitalize="none" autoComplete="email" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" label={t("common.email")} onChangeText={setEmail} onSubmitEditing={submitFromKeyboard} returnKeyType="send" testID="reset-email" value={email} />
+            <Input autoCapitalize="none" autoComplete="email" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" label={t("common.email")} onChangeText={setEmail} onSubmitEditing={submitFromKeyboard} returnKeyType="send" placeholder={t("examples.email")} testID="reset-email" value={email} />
             <Toast
               message={feedback?.message ?? ""}
               onDismiss={() => setFeedback(null)}

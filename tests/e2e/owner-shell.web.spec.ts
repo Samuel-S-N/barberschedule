@@ -58,6 +58,8 @@ test("the owner account tab shows who is signed in and can open the language scr
   await page.goto("/settings");
   await expect(page.getByRole("heading", { name: "Olivia Owner" })).toBeVisible();
   await expect(page.getByTestId("profile-signout")).toBeVisible();
+  await page.getByTestId("menu-settings").click();
+  await expect(page).toHaveURL(/\/owner-profile\/settings/);
   await page.getByTestId("menu-language").click();
   await expect(page).toHaveURL(/\/language/);
 });
@@ -83,4 +85,31 @@ test("a cold start on a Manage screen still goes back to Manage", async ({ page 
   await page.goto("/barbers");
   await page.getByTestId("back").click();
   await expect(page).toHaveURL(/\/manage/);
+});
+
+test("back walks the stack one screen at a time: Manage › Barbers › New barber", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page);
+
+  const back = () => page.locator('[data-testid="back"]:not([aria-hidden="true"] *)').click();
+
+  await page.goto("/manage");
+  await page.getByTestId("menu-barbers").click();
+  await page.getByTestId("fab-add").click();
+  await expect(page).toHaveURL(/\/barber-new/);
+  await back();
+  await expect(page).toHaveURL(/\/barbers/);
+  await back();
+  await expect(page).toHaveURL(/\/manage/);
+});
+
+test("back from the new-appointment form returns to the agenda", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page);
+
+  await page.goto("/agenda");
+  await page.getByTestId("owner-new-appointment").click();
+  await expect(page).toHaveURL(/\/appointment-form/);
+  await page.locator('[data-testid="back"]:not([aria-hidden="true"] *)').click();
+  await expect(page).toHaveURL(/\/agenda/);
 });

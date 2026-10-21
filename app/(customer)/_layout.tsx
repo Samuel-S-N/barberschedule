@@ -7,6 +7,7 @@ import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
 import { Button } from "../../src/components/ui/Button";
 import { ensureMyCustomer } from "../../src/features/account/api";
 import { usePushRegistration } from "../../src/features/notifications/use-push-registration";
+import { useHardwareBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { Screen } from "../../src/components/ui/Screen";
 
@@ -15,6 +16,7 @@ export const unstable_settings = { initialRouteName: "(tabs)" };
 
 export default function CustomerLayout() {
   const { t } = useTranslation();
+  useHardwareBack();
   const { profile, supabase } = useSupabaseSession();
   const bootstrap = useQuery({
     enabled: profile?.role === "customer",
@@ -51,12 +53,14 @@ export default function CustomerLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="reschedule" />
+      <Stack.Screen name="notifications" />
       <Stack.Screen name="me/account" />
       <Stack.Screen name="me/security" />
       <Stack.Screen name="me/security/password" />
       <Stack.Screen name="me/settings" />
       <Stack.Screen name="me/language" />
       <Stack.Screen name="me/privacy" />
+      <Stack.Screen name="me/recurrence" />
       <Stack.Screen name="me/about" />
     </Stack>
   );

@@ -94,7 +94,7 @@ export function BarberBookingSheet({ busy = false, fitsService, initialCustomer 
                     edit(setName)(value);
                     onSearch(value);
                   }}
-                  testID="barber-book-name"
+                  placeholder={t("examples.fullName")} testID="barber-book-name"
                   value={name}
                 />
                 {recent.length > 0 ? (
@@ -115,8 +115,8 @@ export function BarberBookingSheet({ busy = false, fitsService, initialCustomer 
                     </View>
                   </View>
                 ) : null}
-                <Input {...field(1)} autoCapitalize="none" keyboardType="email-address" label={t("barber.agenda.bookEmail")} onChangeText={edit(setEmail)} testID="barber-book-email" value={email} />
-                <Input {...field(2)} keyboardType="phone-pad" label={t("barber.agenda.bookPhone")} onChangeText={edit(setPhone)} testID="barber-book-phone" value={phone} />
+                <Input {...field(1)} autoCapitalize="none" keyboardType="email-address" label={t("barber.agenda.bookEmail")} onChangeText={edit(setEmail)} placeholder={t("examples.email")} testID="barber-book-email" value={email} />
+                <Input {...field(2)} keyboardType="phone-pad" label={t("barber.agenda.bookPhone")} onChangeText={edit(setPhone)} placeholder={t("examples.phone")} testID="barber-book-phone" value={phone} />
                 {name.trim() !== "" && email.trim() === "" ? (
                   <Text className="text-sm font-sans text-neutral-600" testID="barber-book-no-email">
                     {t("barber.agenda.bookNoEmailHint")}

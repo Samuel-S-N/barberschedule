@@ -33,6 +33,7 @@ function toPublicBarber(row: PublicBarberRow): PublicBarber {
   return {
     active: row.active,
     archivedAt: row.archived_at,
+    avatarUrl: row.avatar_url ?? null,
     id: row.id,
     name: row.name,
     shopId: row.shop_id,
@@ -54,7 +55,6 @@ export function toCompensation(row: CompensationRow): BarberCompensation {
 function toOwnerBarber(row: OwnerBarberRow): OwnerBarber {
   return {
     ...toPublicBarber(row),
-    avatarUrl: row.avatar_url ?? null,
     bio: row.bio ?? null,
     compensation: toCompensation(row),
     invitedAt: row.invited_at ?? null,
@@ -70,7 +70,7 @@ function throwBarberError(error: { code?: string }): never {
     : domainError;
 }
 
-const publicBarberColumns = "id, shop_id, name, active, archived_at";
+const publicBarberColumns = "id, shop_id, name, active, archived_at, avatar_url";
 
 export async function listPublicBarbers(
   supabase: BarberSupabaseClient,
@@ -327,4 +327,28 @@ export async function listMyWorkingPeriods(supabase: Pick<SupabaseClient, "rpc">
 
     return { endTime: r.end_time.slice(0, 5), startTime: r.start_time.slice(0, 5), weekday: r.weekday };
   });
+}
+
+export async function getMyLunchBreak(supabase: Pick<SupabaseClient, "rpc">) {
+  const { data, error } = await supabase.rpc("get_my_lunch_break");
+  if (error) throwBarberError(error);
+  const row = (Array.isArray(data) ? data[0] : data) as { lunch_end: string | null; lunch_start: string | null } | undefined;
+
+  return row?.lunch_start && row.lunch_end ? { end: row.lunch_end.slice(0, 5), start: row.lunch_start.slice(0, 5) } : null;
+}
+
+export async function setMyLunchBreak(supabase: Pick<SupabaseClient, "rpc">, lunch: { end: string; start: string } | null) {
+  const { error } = await supabase.rpc("set_my_lunch_break", { new_end: lunch?.end ?? null, new_start: lunch?.start ?? null });
+  if (error) throwBarberError(error);
+}
+
+export async function listShopLunchBreaks(supabase: Pick<SupabaseClient, "rpc">, shopId: string) {
+  const { data, error } = await supabase.rpc("list_shop_lunch_breaks", { target_shop_id: shopId });
+  if (error) throwBarberError(error);
+
+  return ((data ?? []) as { barber_id: string; lunch_end: string; lunch_start: string }[]).map((row) => ({
+    barberId: row.barber_id,
+    end: row.lunch_end.slice(0, 5),
+    start: row.lunch_start.slice(0, 5),
+  }));
 }

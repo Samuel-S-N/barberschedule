@@ -16,11 +16,11 @@ const customerFields = {
   ),
   fullName: z.string().trim().min(1, "Full name is required."),
   phone: optionalTrimmedText,
-  shopId: z.string().uuid("Shop id must be a UUID."),
+  shopId: z.string().guid("Shop id must be a UUID."),
   userId: z
     .string()
     .trim()
-    .uuid("User id must be a UUID.")
+    .guid("User id must be a UUID.")
     .nullable()
     .optional(),
 };

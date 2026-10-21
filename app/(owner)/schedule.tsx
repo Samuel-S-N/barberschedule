@@ -12,7 +12,7 @@ import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { DateInput, TimeInput } from "../../src/components/ui/MaskedInputs";
 import { Screen } from "../../src/components/ui/Screen";
-import { listOwnerBarbers } from "../../src/features/barbers/api";
+import { listOwnerBarbers, listShopLunchBreaks } from "../../src/features/barbers/api";
 import type { OwnerBarber } from "../../src/features/barbers/types";
 import {
   createScheduleOverride,
@@ -24,6 +24,7 @@ import {
 } from "../../src/features/schedule/api";
 import type { ScheduleOverrideKind } from "../../src/features/schedule/types";
 import { assertNoOverlappingWorkingPeriod, parseWorkingPeriodInput } from "../../src/features/schedule/validation";
+import { listShopHours } from "../../src/features/shops/api";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
 import { useLanguage } from "../../src/i18n/use-language";
 import { errorMessage } from "../../src/i18n/errors";
@@ -64,6 +65,7 @@ export default function OwnerScheduleScreen() {
     },
     queryKey: ["owner-schedule", shopId],
   });
+  const lunches = useQuery({ enabled: shopId !== null, queryFn: () => listShopLunchBreaks(supabase, shopId ?? ""), queryKey: ["owner-lunch", shopId] });
   const barbers = data.data?.barbers ?? [];
 
   useEffect(() => {
@@ -73,6 +75,7 @@ export default function OwnerScheduleScreen() {
   const selectedBarber = barbers.find((barber: OwnerBarber) => barber.id === selectedBarberId);
   const selectedPeriods = (data.data?.periods ?? []).filter((period) => period.barberId === selectedBarberId);
   const selectedOverrides = (data.data?.overrides ?? []).filter((override) => override.barberId === selectedBarberId);
+  const lunch = lunches.data?.find((item) => item.barberId === selectedBarberId) ?? null;
   const showOverrideTimes = overrideKind === "opening" || !isAllDayBlock;
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["owner-schedule"] });
   const fail = (error: unknown, fallback: string) => setFeedback(errorMessage(error, t, fallback));
@@ -83,6 +86,16 @@ export default function OwnerScheduleScreen() {
       assertNoOverlappingWorkingPeriod(input, selectedPeriods);
 
       return createWorkingPeriod(supabase, input);
+    },
+    onError: (error) => fail(error, t("owner.schedule.addPeriodError")),
+    onSuccess: () => void refresh(),
+  });
+
+  const copyShopHours = useMutation({
+    mutationFn: async () => {
+      for (const period of await listShopHours(supabase, shopId ?? "")) {
+        await createWorkingPeriod(supabase, parseWorkingPeriodInput({ barberId: selectedBarberId ?? "", endTime: period.end, shopId: shopId ?? "", startTime: period.start, weekday: period.weekday }));
+      }
     },
     onError: (error) => fail(error, t("owner.schedule.addPeriodError")),
     onSuccess: () => void refresh(),
@@ -108,11 +121,11 @@ export default function OwnerScheduleScreen() {
     onSuccess: () => void refresh(),
   });
 
-  const busy = addPeriod.isPending || addOverride.isPending || remove.isPending;
+  const busy = addPeriod.isPending || addOverride.isPending || remove.isPending || copyShopHours.isPending;
   const loading = shop.isLoading || data.isLoading;
   const loadError = shop.error ?? data.error;
   const selectable = (label: string, selected: boolean) => (selected ? t("common.selectedOption", { option: label }) : label);
-  const back = useBack("/manage");
+  const back = useBack();
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
@@ -137,6 +150,26 @@ export default function OwnerScheduleScreen() {
               <>
                 <Text className="text-sm font-sans text-neutral-600">{t("owner.schedule.selectedBarber", { name: selectedBarber.name })}</Text>
 
+                <Card variant="outlined" testID="schedule-summary">
+                  <View className="gap-2">
+                    {WEEKDAY_KEYS.map((key, index) => {
+                      const day = selectedPeriods.filter((period) => period.weekday === index + 1);
+
+                      return (
+                        <View className="flex-row items-center justify-between gap-3" key={key} testID={`schedule-summary-${index + 1}`}>
+                          <Text className="text-base font-sans-medium text-ink">{t(`owner.schedule.weekdays.${key}`)}</Text>
+                          <Text className="flex-1 text-right text-base font-sans text-neutral-700" style={{ fontVariant: ["tabular-nums"] }}>
+                            {day.length === 0 ? t("owner.schedule.closedDay") : day.map((period) => `${period.startTime}–${period.endTime}`).join(", ")}
+                          </Text>
+                        </View>
+                      );
+                    })}
+                    {lunch ? <Text className="pt-1 text-sm font-sans text-neutral-600" testID="schedule-lunch">{t("barber.availability.lunchTitle")}: {lunch.start}–{lunch.end}</Text> : null}
+                  </View>
+                </Card>
+                {selectedPeriods.length === 0 ? (
+                  <Button disabled={busy} label={t("owner.schedule.copyShopHours")} onPress={() => copyShopHours.mutate()} testID="schedule-copy-shop-hours" variant="outline" />
+                ) : null}
                 <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{t("owner.schedule.periodsTitle", { name: selectedBarber.name })}</Text>
                 <Card>
                   <View className="gap-3">

@@ -7,3 +7,5 @@ export type { ScreenEdge, ScreenProps } from "./Screen";
 export { Card } from "./Card";
 export type { CardProps, CardVariant } from "./Card";
 export { DateInput, TimeInput } from "./MaskedInputs";
+export { SearchInput } from "./SearchInput";
+export { FabAdd } from "./FabAdd";

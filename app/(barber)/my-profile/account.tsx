@@ -25,7 +25,7 @@ type Feedback = { message: string; variant: "error" | "success" };
 
 export default function BarberAccountScreen() {
   const { t } = useTranslation();
-  const back = useBack("/my-profile");
+  const back = useBack();
   const queryClient = useQueryClient();
   const { profile: sessionProfile, session, supabase } = useSupabaseSession();
   const profile = useMyProfile();
@@ -114,9 +114,8 @@ export default function BarberAccountScreen() {
               <Text className="text-xs font-sans text-neutral-600">{t("barber.account.nameHint")}</Text>
             </View>
 
-            <Input label={t("barber.profile.bio")} multiline onChangeText={setBio} testID="barber-bio" value={bio} />
+            <Input label={t("barber.profile.bio")} multiline onChangeText={setBio} placeholder={t("examples.bio")} testID="barber-bio" value={bio} />
             <Text className="-mt-2 text-xs font-sans text-neutral-600">{t("barber.account.bioHint")}</Text>
-            <Button disabled={save.isPending || !barber.data} label={t("barber.profile.save")} onPress={() => save.mutate()} testID="barber-save" />
 
             <Text className="pt-2 text-sm font-sans-medium text-neutral-600">{t("profile.account.emailLabel")}</Text>
             <Text className="text-base font-sans text-ink" testID="account-email">{session?.user.email}</Text>
@@ -131,7 +130,7 @@ export default function BarberAccountScreen() {
                   error={newEmail && !isValidEmail(newEmail) ? t("profile.account.emailInvalid") : undefined}
                   label={t("profile.account.newEmail")}
                   onChangeText={setNewEmail}
-                  testID="account-new-email"
+                  placeholder={t("examples.email")} testID="account-new-email"
                   value={newEmail}
                 />
                 <Button
@@ -146,6 +145,8 @@ export default function BarberAccountScreen() {
               <Button label={t("profile.account.changeEmail")} onPress={() => setChangingEmail(true)} testID="account-change-email" variant="outline" />
             )}
 
+
+            <Button disabled={save.isPending || !barber.data} label={t("barber.profile.save")} onPress={() => save.mutate()} testID="barber-save" />
             <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
           </View>
         </View>
