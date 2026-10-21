@@ -104,7 +104,7 @@ export default function OwnerAgendaScreen() {
           <View className="w-full max-w-[420px] gap-4">
             <View className="flex-row items-center gap-2">
               <NotificationBell />
-              <Text accessibilityRole="header" className="flex-1 text-3xl font-display-bold text-ink">{t("owner.agenda.title")}</Text>
+              <Text accessibilityRole="header" className="flex-1 text-3xl leading-[44px] font-display-bold text-ink">{t("owner.agenda.title")}</Text>
             </View>
             <Button label={t("owner.agenda.newAppointment")} onPress={() => router.push("/appointment-form")} testID="owner-new-appointment" />
 

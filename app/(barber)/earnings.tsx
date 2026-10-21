@@ -92,7 +92,7 @@ export default function BarberReportsScreen() {
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
       <ScrollView refreshControl={pullToRefresh(pull)} className="flex-1">
         <View className="items-center gap-4 p-5">
-          <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">{t("barber.reports.title")}</Text>
+          <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl leading-[44px] font-display-bold text-ink">{t("barber.reports.title")}</Text>
           <View className="w-full max-w-[420px] flex-row flex-wrap gap-2">
             {(["week", "month", "quarter"] as const).map((key) => (
               <Button

@@ -51,7 +51,7 @@ export default function ClientsScreen() {
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
       <ScrollView refreshControl={pullToRefresh(pull)} className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center gap-4 p-5">
-          <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">{t("barber.clients.title")}</Text>
+          <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl leading-[44px] font-display-bold text-ink">{t("barber.clients.title")}</Text>
           <View className="w-full max-w-[420px] gap-3">
             <Input label={t("barber.clients.searchLabel")} onChangeText={setSearch} testID="client-search" value={search} />
             <View className="flex-row gap-2">

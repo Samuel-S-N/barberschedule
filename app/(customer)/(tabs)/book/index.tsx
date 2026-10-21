@@ -26,7 +26,7 @@ export default function BookIndexScreen() {
   return (
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
       <View className="flex-1 items-center gap-4 p-5">
-        <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl font-display-bold text-ink">
+        <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl leading-[44px] font-display-bold text-ink">
           {t("book.shopTitle")}
         </Text>
         <View className="w-full max-w-[420px] gap-3">

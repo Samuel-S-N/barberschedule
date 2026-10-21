@@ -70,7 +70,7 @@ export default function SignupScreen() {
       <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
-            <Text accessibilityRole="header" className="text-3xl font-display-bold text-ink">{t("auth.signup.title")}</Text>
+            <Text accessibilityRole="header" className="text-3xl leading-[44px] font-display-bold text-ink">{t("auth.signup.title")}</Text>
             <Input {...field(0)} autoCapitalize="words" autoComplete="name" error={fieldError("fullName")} label={t("common.fullName")} onChangeText={set("fullName")} testID="signup-name" value={form.fullName} />
             <Input {...field(1)} autoCapitalize="words" error={fieldError("nickname")} label={t("common.nicknameOptional")} onChangeText={set("nickname")} testID="signup-nickname" value={form.nickname} />
             <Input {...field(2)} autoCapitalize="none" autoComplete="email" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" error={fieldError("email")} label={t("common.email")} onChangeText={set("email")} testID="signup-email" value={form.email} />
