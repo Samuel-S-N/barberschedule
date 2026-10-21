@@ -77,6 +77,16 @@ test("services show duration and price in reais with the standard badge", async 
   await expect(page.getByTestId(`owner-service-${S2}`)).toContainText("R$ 45,00");
 });
 
+test("the list has a + button instead of a form, and it opens the registration screen", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, {});
+
+  await page.goto("/services");
+  await expect(page.getByTestId("service-name")).toHaveCount(0);
+  await page.getByTestId("fab-add").click();
+  await expect(page).toHaveURL(/\/service-form/);
+});
+
 test("the owner adds a service typing the price in reais", async ({ page }) => {
   const calls: Record<string, unknown> = {};
 
@@ -84,6 +94,7 @@ test("the owner adds a service typing the price in reais", async ({ page }) => {
   await mockOwnerRest(page, calls);
 
   await page.goto("/services");
+  await page.getByTestId("fab-add").click();
   await expect(page.getByTestId("service-save")).toBeDisabled();
   await page.getByTestId("service-name").fill("Shave");
   await page.getByTestId("service-duration").fill("20");
@@ -91,16 +102,21 @@ test("the owner adds a service typing the price in reais", async ({ page }) => {
   await page.getByTestId("service-save").click();
 
   await expect.poll(() => calls.createService).toMatchObject({ duration_minutes: 20, name: "Shave", price_cents: 3550, shop_id: shop });
+  await expect(page).toHaveURL(/\/services/);
 });
 
-test("the owner assigns a service to a barber and sets a price override", async ({ page }) => {
+test("Edit opens the service form with its barbers, price overrides and a red Deactivate", async ({ page }) => {
   const calls: Record<string, unknown> = {};
 
   await signInAsOwner(page);
   await mockOwnerRest(page, calls);
 
   await page.goto("/services");
-  await page.getByTestId(`service-barbers-${S1}`).click();
+  await page.getByTestId(`service-edit-${S1}`).click();
+  await expect(page).toHaveURL(new RegExp(`/service-form\\?id=${S1}`));
+  await expect(page.getByTestId("service-name")).toHaveValue("Cut");
+  await expect(page.getByTestId("service-price")).toHaveValue("25,00");
+
   // Ana already offers it with an override; Bruno does not offer it yet.
   await expect(page.getByTestId(`assignment-${S1}-${B1}`)).toContainText("R$ 30,00");
   await expect(page.getByTestId(`assignment-${S1}-${B2}`)).toContainText("Not offered");
@@ -113,4 +129,7 @@ test("the owner assigns a service to a barber and sets a price override", async 
   await page.getByTestId("override-duration").fill("40");
   await page.getByTestId("override-save").click();
   await expect.poll(() => calls.patch).toMatchObject({ duration_override_minutes: 40, price_override_cents: 3200 });
+
+  await expect(page.getByTestId(`service-toggle-${S1}`)).toContainText("Deactivate");
+  await expect(page.getByTestId(`service-toggle-${S1}`)).toHaveCSS("background-color", "rgb(220, 59, 48)");
 });

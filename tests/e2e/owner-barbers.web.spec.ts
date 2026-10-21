@@ -20,6 +20,7 @@ async function signInAsOwner(page: Page) {
 const barbers = [
   { active: true, archived_at: null, commission_percent: "40.00", compensation_type: "commission", id: "b1", name: "Ana Barber", shop_id: shop, user_id: "u1" },
   { active: true, archived_at: null, chair_rental_amount_cents: 30000, chair_rental_frequency: "monthly", commission_percent: "0.00", compensation_type: "chair_rental", id: "b2", name: "Bruno Chair", shop_id: shop, user_id: null },
+  { active: false, archived_at: "2026-09-01T00:00:00Z", commission_percent: "30.00", compensation_type: "commission", id: "b9", name: "Dani Inactive", shop_id: shop, user_id: null },
 ];
 
 async function mockOwnerRest(page: Page, calls: Record<string, unknown>) {
@@ -35,6 +36,11 @@ async function mockOwnerRest(page: Page, calls: Record<string, unknown>) {
       calls.create = route.request().postDataJSON();
 
       return json(route, { active: true, archived_at: null, id: "b3", name: "Caio New", shop_id: shop });
+    }
+    if (path.endsWith("/rpc/set_barber_compensation")) {
+      calls.compensation = route.request().postDataJSON();
+
+      return json(route, [{ ...barbers[0], commission_percent: "55.00" }]);
     }
     if (path.endsWith("/barbers") && method === "PATCH") {
       calls.patch = route.request().postDataJSON();
@@ -57,23 +63,37 @@ test("the owner sees each barber with account status and a readable compensation
   await expect(page.getByTestId("owner-barber-b2")).toContainText("R$ 300,00");
 });
 
-test("the owner adds a barber and deactivates another", async ({ page }) => {
+test("the barbers list shows the active ones, hides inactive ones behind a toggle, and has a + button instead of a form", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, {});
+
+  await page.goto("/barbers");
+  await expect(page.getByTestId("barber-name-input")).toHaveCount(0);
+  await expect(page.getByTestId("fab-add")).toBeVisible();
+  await expect(page.getByTestId("owner-barber-b1")).toBeVisible();
+  await expect(page.getByTestId("owner-barber-b9")).toHaveCount(0);
+
+  await page.getByTestId("barbers-show-inactive").click();
+  await expect(page.getByTestId("owner-barber-b9")).toContainText("Dani Inactive");
+});
+
+test("the + button opens the registration screen and creates the barber", async ({ page }) => {
   const calls: Record<string, unknown> = {};
 
   await signInAsOwner(page);
   await mockOwnerRest(page, calls);
 
   await page.goto("/barbers");
+  await page.getByTestId("fab-add").click();
+  await expect(page).toHaveURL(/\/barber-new/);
   await expect(page.getByTestId("barber-save")).toBeDisabled();
   await page.getByTestId("barber-name-input").fill("Caio New");
   await page.getByTestId("barber-save").click();
   await expect.poll(() => calls.create).toMatchObject({ name: "Caio New", shop_id: shop });
-
-  await page.getByTestId("barber-toggle-b1").click();
-  await expect.poll(() => (calls.patch as { active?: boolean } | undefined)?.active).toBe(false);
+  await expect(page).toHaveURL(/\/barbers/);
 });
 
-test("the owner edits a barber name", async ({ page }) => {
+test("Edit opens the barber profile: rename, compensation and a red Deactivate", async ({ page }) => {
   const calls: Record<string, unknown> = {};
 
   await signInAsOwner(page);
@@ -81,8 +101,20 @@ test("the owner edits a barber name", async ({ page }) => {
 
   await page.goto("/barbers");
   await page.getByTestId("barber-edit-b1").click();
+  await expect(page).toHaveURL(/\/barber-profile\?id=b1/);
   await expect(page.getByTestId("barber-name-input")).toHaveValue("Ana Barber");
   await page.getByTestId("barber-name-input").fill("Ana Silva");
   await page.getByTestId("barber-save").click();
   await expect.poll(() => (calls.patch as { name?: string } | undefined)?.name).toBe("Ana Silva");
+
+  await page.getByTestId("barber-comp-edit").click();
+  await page.getByTestId("comp-percent").fill("55");
+  await page.getByTestId("comp-save").click();
+  await expect.poll(() => calls.compensation).toMatchObject({ new_commission_percent: 55 });
+
+  // Deactivate uses the app's danger colour (danger-500 #DC3B30).
+  await expect(page.getByTestId("barber-toggle")).toContainText("Deactivate");
+  await expect(page.getByTestId("barber-toggle")).toHaveCSS("background-color", "rgb(220, 59, 48)");
+  await page.getByTestId("barber-toggle").click();
+  await expect.poll(() => (calls.patch as { active?: boolean } | undefined)?.active).toBe(false);
 });

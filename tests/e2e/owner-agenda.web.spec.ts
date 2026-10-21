@@ -51,7 +51,7 @@ test("the owner agenda lists appointments and time off with status badges", asyn
   await mockOwnerRest(page, { calls: {}, rows: [agendaRow()] });
 
   await page.goto("/agenda");
-  await expect(page.getByRole("heading", { name: "Agenda" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Day agenda" })).toBeVisible();
   const card = page.getByTestId("owner-appointment-appt-1");
   await expect(card).toContainText("Ana Customer");
   await expect(card).toContainText("Bruno Barber");
@@ -102,4 +102,24 @@ test("the date field masks what is typed and only requests the range once the da
   await field.press("Backspace");
   await expect(field).toHaveValue("2026-10-0");
   expect(ranges.every((range) => /^\d{4}-\d{2}-\d{2}$/.test(range))).toBe(true);
+});
+
+test("the previous/next buttons and the title follow the selected view", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, { calls: {}, noOverrides: true, rows: [] });
+
+  await page.goto("/agenda");
+  await expect(page.getByRole("heading", { name: "Day agenda" })).toBeVisible();
+  await expect(page.getByTestId("owner-range-prev")).toHaveText("Previous day");
+  await expect(page.getByTestId("owner-range-next")).toHaveText("Next day");
+
+  await page.getByTestId("owner-view-week").click();
+  await expect(page.getByRole("heading", { name: "Week agenda" })).toBeVisible();
+  await expect(page.getByTestId("owner-range-prev")).toHaveText("Previous week");
+  await expect(page.getByTestId("owner-range-next")).toHaveText("Next week");
+
+  await page.getByTestId("owner-view-month").click();
+  await expect(page.getByRole("heading", { name: "Month agenda" })).toBeVisible();
+  await expect(page.getByTestId("owner-range-prev")).toHaveText("Previous month");
+  await expect(page.getByTestId("owner-range-next")).toHaveText("Next month");
 });

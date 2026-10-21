@@ -17,6 +17,7 @@ import { Screen } from "../../src/components/ui/Screen";
 import { listOwnerAgenda, listOwnerAgendaOverrides } from "../../src/features/appointments/agenda-query";
 import { cancelAppointment } from "../../src/features/appointments/lifecycle";
 import { setOwnerAppointmentStatus } from "../../src/features/appointments/owner-api";
+import { agendaNavKeys } from "../../src/features/appointments/agenda-nav";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
 import { useLanguage } from "../../src/i18n/use-language";
 import { errorMessage } from "../../src/i18n/errors";
@@ -91,6 +92,7 @@ export default function OwnerAgendaScreen() {
     setLocalDate((date) => addDays(date, direction * days));
   };
 
+  const nav = agendaNavKeys(view);
   const loading = shop.isLoading || agenda.isLoading;
   const loadError = shop.error ?? agenda.error;
   const appointments = agenda.data?.appointments ?? [];
@@ -104,7 +106,7 @@ export default function OwnerAgendaScreen() {
           <View className="w-full max-w-[420px] gap-4">
             <View className="flex-row items-center gap-2">
               <NotificationBell />
-              <Text accessibilityRole="header" className="flex-1 text-3xl leading-[44px] font-display-bold text-ink">{t("owner.agenda.title")}</Text>
+              <Text accessibilityRole="header" className="flex-1 text-3xl leading-[44px] font-display-bold text-ink">{t(nav.title)}</Text>
             </View>
             <Button label={t("owner.agenda.newAppointment")} onPress={() => router.push("/appointment-form")} testID="owner-new-appointment" />
 
@@ -116,8 +118,8 @@ export default function OwnerAgendaScreen() {
             <DateInput label={t("common.localDate")} onChangeValue={(value) => { setLocalDate(value); setOffset(0); }} testID="owner-agenda-date" value={localDate} />
             <Text className="text-center text-sm font-sans text-neutral-600">{t(RANGE_LABEL[view], { date: formatDateNumeric(localDate, language) })}</Text>
             <View className="flex-row gap-2">
-              <View className="flex-1"><Button disabled={loading} label={t("owner.agenda.previousRange")} onPress={() => moveRange(-1)} size="sm" variant="outline" /></View>
-              <View className="flex-1"><Button disabled={loading} label={t("owner.agenda.nextRange")} onPress={() => moveRange(1)} size="sm" variant="outline" /></View>
+              <View className="flex-1"><Button disabled={loading} label={t(nav.previous)} onPress={() => moveRange(-1)} testID="owner-range-prev" size="sm" variant="outline" /></View>
+              <View className="flex-1"><Button disabled={loading} label={t(nav.next)} onPress={() => moveRange(1)} testID="owner-range-next" size="sm" variant="outline" /></View>
             </View>
 
             {loading ? <SkeletonBlock height={96} width={320} /> : null}
