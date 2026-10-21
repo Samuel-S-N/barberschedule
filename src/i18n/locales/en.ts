@@ -151,6 +151,18 @@ export const en = {
     startAt: "Start booking at {{shop}}",
     timesError: "Unable to load availability.",
   },
+  notifications: {
+    appointment_awaiting_confirmation: { body: "{{customerName}} · {{serviceName}} · {{date}}", title: "Awaiting confirmation" },
+    appointment_booked: { body: "{{customerName}} · {{serviceName}} · {{date}}", title: "New appointment" },
+    appointment_cancelled: { body: "{{serviceName}} · {{date}}", title: "Appointment cancelled" },
+    appointment_confirmed: { body: "{{serviceName}} with {{barberName}} · {{date}}", title: "Appointment confirmed" },
+    appointment_rescheduled: { body: "{{serviceName}} · now {{date}}", title: "Appointment rescheduled" },
+    bellLabel: "Notifications",
+    empty: "No notifications yet",
+    loadError: "Unable to load notifications.",
+    markAllRead: "Mark all as read",
+    title: "Notifications",
+  },
   profile: {
     about: { title: "About", version: "Version {{version}}" },
     account: {
