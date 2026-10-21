@@ -285,6 +285,14 @@ export const es: DeepStringRecord<typeof en> = {
   },
   owner: {
     shop: {
+      copyToAll: "Copiar a todos los días",
+      copyToWeekdays: "Copiar a lun–vie",
+      closedTitle: "Días cerrados",
+      closedAdd: "Cerrar la barbería en esta fecha",
+      closedNone: "No hay fechas cerradas.",
+      reopen: "Reabrir",
+      closedAdded: "Barbería cerrada en esa fecha.",
+      closedError: "No se pudo cambiar la fecha.",
       address: "Dirección",
       addBreak: "Agregar pausa",
       breakEnd: "Fin de la pausa (HH:mm)",

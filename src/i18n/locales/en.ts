@@ -286,6 +286,14 @@ export const en = {
   },
   owner: {
     shop: {
+      copyToAll: "Copy to all days",
+      copyToWeekdays: "Copy to Mon–Fri",
+      closedTitle: "Closed dates",
+      closedAdd: "Close the shop on this date",
+      closedNone: "No closed dates.",
+      reopen: "Reopen",
+      closedAdded: "Shop closed on that date.",
+      closedError: "Unable to change the date.",
       address: "Address",
       addBreak: "Add break",
       breakEnd: "Break end (HH:mm)",

@@ -36,6 +36,26 @@ async function mockOwnerRest(page: Page, calls: Record<string, unknown>) {
         { end_time: "18:00:00", start_time: "14:00:00", weekday: 1 },
       ]);
     }
+    if (path.endsWith("/rpc/list_owner_barbers")) {
+      return json(route, [
+        { active: true, archived_at: null, commission_percent: "0.00", compensation_type: "commission", id: "b1", name: "Ana", shop_id: shop, user_id: null },
+        { active: true, archived_at: null, commission_percent: "0.00", compensation_type: "commission", id: "b2", name: "Bruno", shop_id: shop, user_id: null },
+      ]);
+    }
+    if (path.endsWith("/rpc/list_owner_schedule_overrides") || (path.endsWith("/schedule_overrides") && method === "GET")) {
+      return json(route, (calls.overrides as unknown[] | undefined) ?? []);
+    }
+    if (path.endsWith("/schedule_overrides") && method === "POST") {
+      const body = route.request().postDataJSON() as Record<string, unknown>;
+      (calls.inserts as unknown[] | undefined)?.push(body);
+
+      return json(route, { ...body, id: `o-${(calls.inserts as unknown[]).length}` }, 201);
+    }
+    if (path.endsWith("/schedule_overrides") && method === "DELETE") {
+      (calls.deletes as unknown[] | undefined)?.push(new URL(route.request().url()).search);
+
+      return json(route, null, 204);
+    }
     if (path.endsWith("/rpc/set_shop_hours")) {
       calls.hours = route.request().postDataJSON();
 
@@ -96,4 +116,55 @@ test("a day can be opened and a break added", async ({ page }) => {
   await expect(page.getByTestId("shop-day-2")).toContainText("Open");
   await page.getByTestId("shop-add-break-2").click();
   await expect(page.getByTestId("shop-break-start-2-0")).toHaveValue("12:00");
+});
+
+test("a day's hours can be copied to every other day or to Monday-Friday", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, {});
+
+  await page.goto("/shop");
+  await expect(page.getByTestId("shop-day-1")).toBeVisible();
+  await page.getByTestId("shop-copy-weekdays-1").click();
+  for (const weekday of [2, 3, 4, 5]) {
+    await expect(page.getByTestId(`shop-day-${weekday}`)).toContainText("Open");
+    await expect(page.getByTestId(`shop-start-${weekday}`)).toHaveValue("09:00");
+    await expect(page.getByTestId(`shop-break-start-${weekday}-0`)).toHaveValue("12:00");
+  }
+  await expect(page.getByTestId("shop-day-6")).toContainText("Closed");
+
+  await page.getByTestId("shop-copy-all-1").click();
+  await expect(page.getByTestId("shop-day-7")).toContainText("Open");
+});
+
+test("the owner closes the shop on a date for every active barber and reopens it", async ({ page }) => {
+  const date = "2099-12-25";
+  const calls: Record<string, unknown> = { deletes: [], inserts: [] };
+
+  await signInAsOwner(page);
+  await mockOwnerRest(page, calls);
+
+  await page.goto("/shop");
+  await expect(page.getByText("No closed dates.")).toBeVisible();
+  await page.getByTestId("shop-closed-date").fill("");
+  await page.getByTestId("shop-closed-date").pressSequentially("20991225");
+  await page.getByTestId("shop-closed-add").click();
+
+  await expect.poll(() => calls.inserts).toMatchObject([
+    { barber_id: "b1", kind: "block", local_date: date, start_time: null },
+    { barber_id: "b2", kind: "block", local_date: date, start_time: null },
+  ]);
+});
+
+test("a date closed for every barber is listed and can be reopened", async ({ page }) => {
+  const date = "2099-12-25";
+  const row = (id: string, barberId: string) => ({ barber_id: barberId, end_time: null, id, kind: "block", local_date: date, shop_id: shop, start_time: null });
+  const calls: Record<string, unknown> = { deletes: [], inserts: [], overrides: [row("o1", "b1"), row("o2", "b2")] };
+
+  await signInAsOwner(page);
+  await mockOwnerRest(page, calls);
+
+  await page.goto("/shop");
+  await expect(page.getByTestId(`shop-closed-${date}`)).toContainText("2099-12-25");
+  await page.getByTestId(`shop-reopen-${date}`).click();
+  await expect.poll(() => (calls.deletes as string[]).length).toBe(2);
 });
