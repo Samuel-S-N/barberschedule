@@ -21,6 +21,7 @@ export const es: DeepStringRecord<typeof en> = {
     time: "09:00",
     weeks: "2",
   },
+  agendaCard: { barber: "Barbero", close: "Cerrar", customer: "Cliente", notes: "Notas" },
   common: {
     activate: "Activar",
     allDay: "todo el día",
