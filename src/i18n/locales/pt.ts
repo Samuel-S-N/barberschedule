@@ -308,6 +308,13 @@ export const pt: DeepStringRecord<typeof en> = {
       title: "Dados da barbearia",
       whatsapp: "WhatsApp",
     },
+    profile: {
+      save: "Salvar perfil",
+      privacyNote: "A conta do dono da barbearia não pode ser excluída pelo app. Fale com o suporte para encerrá-la. Os dados de clientes que você vê aqui servem apenas para administrar a barbearia.",
+      asBarber: "Atender como barbeiro",
+      asBarberHint: "Apareça na lista de agendamento com seus próprios serviços e horários.",
+      myBarber: "Meus serviços e horários",
+    },
     roles: { account: "conta", owner: "dono" },
     hub: {
       manageAgenda: "Gerenciar agenda",

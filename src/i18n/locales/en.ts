@@ -309,6 +309,13 @@ export const en = {
       title: "Shop details",
       whatsapp: "WhatsApp",
     },
+    profile: {
+      save: "Save profile",
+      privacyNote: "The shop owner account cannot be deleted from the app. Contact support to close it. Customer data you see here is for running the shop only.",
+      asBarber: "Serve as a barber",
+      asBarberHint: "Appear in the booking list with your own services and hours.",
+      myBarber: "My services and hours",
+    },
     roles: { account: "account", owner: "owner" },
     hub: {
       manageAgenda: "Manage agenda",
