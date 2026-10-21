@@ -63,7 +63,7 @@ export function ManualRecurrenceForm({ customers, onCreated, onSearch, services 
     <Card testID="manual-recurrence">
       <View className="gap-3">
         <Text accessibilityRole="header" className="text-lg font-display-semibold text-ink">{t("recurrence.manualCustomer")}</Text>
-        <SearchInput label={t("owner.appointmentForm.searchCustomer")} onChangeText={(value) => { setSearch(value); onSearch?.(value); }} testID="manual-customer-search" value={search} />
+        <SearchInput label={t("owner.appointmentForm.searchCustomer")} onChangeText={(value) => { setSearch(value); onSearch?.(value); }} placeholder={t("examples.search")} testID="manual-customer-search" value={search} />
         <ScrollView className="max-h-[220px]" nestedScrollEnabled>
           <RadioBlock items={shown.map((customer) => ({ key: `customer-${customer.id}`, label: customer.name, onPress: () => setCustomerId(customer.id), selected: customer.id === customerId }))} />
         </ScrollView>
@@ -78,7 +78,7 @@ export function ManualRecurrenceForm({ customers, onCreated, onSearch, services 
               : t("recurrence.normalPrice", { price: formatPriceBRL(current.normalCents) })}
           </Text>
         ) : null}
-        <View className="flex-row gap-2">
+        <View className="flex-row items-end gap-2">
           <View className="flex-1"><DateInput label={t("owner.recurring.startDateLabel")} onChangeValue={setStartDate} testID="manual-recurrence-date" value={startDate} /></View>
           <View className="flex-1"><TimeInput label={t("owner.recurring.timeLabel")} onChangeValue={setStartTime} testID="manual-recurrence-time" value={startTime} /></View>
         </View>

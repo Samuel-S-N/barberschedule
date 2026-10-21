@@ -47,8 +47,8 @@ export default function OwnerBarberNewScreen() {
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("owner.barbers.newTitle")} />
-            <Input {...field(0)} label={t("owner.barbers.nameLabel")} onChangeText={setName} testID="barber-name-input" value={name} />
-            <Input {...field(1)} autoCapitalize="none" keyboardType="email-address" label={t("owner.barbers.inviteOptional")} onChangeText={setEmail} testID="barber-invite-email" value={email} />
+            <Input {...field(0)} label={t("owner.barbers.nameLabel")} onChangeText={setName} placeholder={t("examples.fullName")} testID="barber-name-input" value={name} />
+            <Input {...field(1)} autoCapitalize="none" keyboardType="email-address" label={t("owner.barbers.inviteOptional")} onChangeText={setEmail} placeholder={t("examples.email")} testID="barber-invite-email" value={email} />
             <Button disabled={create.isPending || name.trim().length === 0 || !shopId} label={t("owner.barbers.add")} onPress={() => create.mutate()} testID="barber-save" />
             <Toast message={error ?? ""} onDismiss={() => setError(null)} variant="error" visible={error !== null} />
           </View>

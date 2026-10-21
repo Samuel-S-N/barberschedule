@@ -55,10 +55,10 @@ export function CompensationEditor({ barber, onFeedback }: { barber: OwnerBarber
               <Button label={t("owner.barbers.chairRentalTab")} onPress={() => setCompType("chair_rental")} size="sm" testID="comp-type-chair_rental" variant={compType === "chair_rental" ? "dark" : "outline"} />
             </View>
             {compType === "commission" ? (
-              <Input keyboardType="numeric" label={t("owner.barbers.commissionPercentLabel")} onChangeText={setPercent} testID="comp-percent" value={percent} />
+              <Input keyboardType="numeric" label={t("owner.barbers.commissionPercentLabel")} onChangeText={setPercent} placeholder={t("examples.percent")} testID="comp-percent" value={percent} />
             ) : (
               <>
-                <Input keyboardType="numeric" label={t("owner.barbers.rentalAmountLabel")} onChangeText={setRent} testID="comp-rent" value={rent} />
+                <Input keyboardType="numeric" label={t("owner.barbers.rentalAmountLabel")} onChangeText={setRent} placeholder={t("examples.money")} testID="comp-rent" value={rent} />
                 <View className="flex-row gap-2">
                   {(["weekly", "monthly"] as const).map((frequency) => (
                     <Button key={frequency} label={t(`barber.frequency.${frequency}`)} onPress={() => setRentFrequency(frequency)} size="sm" testID={`comp-freq-${frequency}`} variant={rentFrequency === frequency ? "dark" : "outline"} />

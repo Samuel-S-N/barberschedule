@@ -131,7 +131,7 @@ export default function BookReviewScreen() {
             <Text className="w-full max-w-[420px] text-base font-sans text-neutral-600">{localDate ? formatDateNumeric(localDate, language) : ""}</Text>
           )}
           <View className="w-full max-w-[420px]">
-            <Input label={t("book.notes")} multiline onChangeText={setNotes} testID="booking-notes-input" value={notes} />
+            <Input label={t("book.notes")} multiline onChangeText={setNotes} placeholder={t("examples.notes")} testID="booking-notes-input" value={notes} />
           </View>
           <Toast
             message={feedback?.message ?? ""}

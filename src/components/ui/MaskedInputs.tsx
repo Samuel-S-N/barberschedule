@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useLanguage } from "../../i18n/use-language";
 import { formatDateNumeric } from "../../lib/i18n/format";
@@ -11,9 +12,9 @@ type MaskedProps = Omit<InputProps, "onChangeText" | "keyboardType"> & { onChang
 // `value` is the stored ISO date, or "" while the typed text is incomplete. The field shows the typed text while it still
 // matches `value`, and the language's format of `value` when the parent changes it (e.g. previous/next day buttons).
 export function DateInput({ value, onChangeValue, placeholder, ...rest }: MaskedProps) {
+  const { t } = useTranslation();
   const language = useLanguage();
   const [draft, setDraft] = useState<string | null>(null);
-  const hint = language === "en" ? "YYYY-MM-DD" : "DD/MM/AAAA";
 
   return (
     <Input
@@ -25,12 +26,14 @@ export function DateInput({ value, onChangeValue, placeholder, ...rest }: Masked
         setDraft(masked);
         onChangeValue(parseDateInput(masked, language) ?? "");
       }}
-      placeholder={placeholder ?? hint}
+      placeholder={placeholder ?? t("examples.date")}
       value={draft !== null && (parseDateInput(draft, language) ?? "") === value ? draft : value ? formatDateNumeric(value, language) : ""}
     />
   );
 }
 
 export function TimeInput({ value, onChangeValue, placeholder, ...rest }: MaskedProps) {
-  return <Input {...rest} keyboardType="number-pad" onChangeText={(text) => onChangeValue(formatTimeInput(text))} placeholder={placeholder ?? "HH:MM"} value={value} />;
+  const { t } = useTranslation();
+
+  return <Input {...rest} keyboardType="number-pad" onChangeText={(text) => onChangeValue(formatTimeInput(text))} placeholder={placeholder ?? t("examples.time")} value={value} />;
 }

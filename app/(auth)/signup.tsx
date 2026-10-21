@@ -71,10 +71,10 @@ export default function SignupScreen() {
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <Text accessibilityRole="header" className="text-3xl leading-[44px] font-display-bold text-ink">{t("auth.signup.title")}</Text>
-            <Input {...field(0)} autoCapitalize="words" autoComplete="name" error={fieldError("fullName")} label={t("common.fullName")} onChangeText={set("fullName")} testID="signup-name" value={form.fullName} />
-            <Input {...field(1)} autoCapitalize="words" error={fieldError("nickname")} label={t("common.nicknameOptional")} onChangeText={set("nickname")} testID="signup-nickname" value={form.nickname} />
-            <Input {...field(2)} autoCapitalize="none" autoComplete="email" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" error={fieldError("email")} label={t("common.email")} onChangeText={set("email")} testID="signup-email" value={form.email} />
-            <Input {...field(3)} autoComplete="tel" keyboardType="phone-pad" error={fieldError("phone")} label={t("common.phoneOptional")} onChangeText={(value) => set("phone")(formatPhone(value))} testID="signup-phone" value={form.phone} />
+            <Input {...field(0)} autoCapitalize="words" autoComplete="name" error={fieldError("fullName")} label={t("common.fullName")} onChangeText={set("fullName")} placeholder={t("examples.fullName")} testID="signup-name" value={form.fullName} />
+            <Input {...field(1)} autoCapitalize="words" error={fieldError("nickname")} label={t("common.nicknameOptional")} onChangeText={set("nickname")} placeholder={t("examples.nickname")} testID="signup-nickname" value={form.nickname} />
+            <Input {...field(2)} autoCapitalize="none" autoComplete="email" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" error={fieldError("email")} label={t("common.email")} onChangeText={set("email")} placeholder={t("examples.email")} testID="signup-email" value={form.email} />
+            <Input {...field(3)} autoComplete="tel" keyboardType="phone-pad" error={fieldError("phone")} label={t("common.phoneOptional")} onChangeText={(value) => set("phone")(formatPhone(value))} placeholder={t("examples.phone")} testID="signup-phone" value={form.phone} />
             <Input {...field(4)} autoComplete="new-password" error={fieldError("password")} label={t("common.password")} onChangeText={set("password")} secureTextEntry testID="signup-password" textContentType="newPassword" value={form.password} />
             <Input {...field(5)} autoComplete="new-password" error={fieldError("confirmPassword")} label={t("auth.signup.confirmPassword")} onChangeText={set("confirmPassword")} secureTextEntry onSubmitEditing={() => !isSubmitting && void submit()} returnKeyType="go" testID="signup-confirm-password" textContentType="newPassword" value={form.confirmPassword} />
             <Pressable

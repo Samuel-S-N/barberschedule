@@ -200,3 +200,23 @@ test("conflicts list the affected customers and open WhatsApp only when there is
   await page.getByTestId("conflict-whatsapp-f2").click();
   await expect(page.getByText("This customer has no phone number for WhatsApp.")).toBeVisible();
 });
+
+test.describe("Portuguese on a narrow phone", () => {
+  test.use({ locale: "pt-BR", viewport: { height: 700, width: 320 } });
+
+  test("the start date and time fields of the manual form line up", async ({ page }) => {
+    await signInAsOwner(page);
+    await mockOwnerRest(page, {});
+
+    await page.goto("/monthly-customers");
+    await page.getByTestId("recurring-tab-active").click();
+    await page.getByTestId("recurring-manual").click();
+
+    const date = await page.getByTestId("manual-recurrence-date").boundingBox();
+    const time = await page.getByTestId("manual-recurrence-time").boundingBox();
+
+    expect(date && time).toBeTruthy();
+    expect(Math.abs(date!.y - time!.y)).toBeLessThan(1);
+    expect(Math.abs(date!.height - time!.height)).toBeLessThan(1);
+  });
+});

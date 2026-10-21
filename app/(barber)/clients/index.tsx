@@ -53,7 +53,7 @@ export default function ClientsScreen() {
         <View className="items-center gap-4 p-5">
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl leading-[44px] font-display-bold text-ink">{t("barber.clients.title")}</Text>
           <View className="w-full max-w-[420px] gap-3">
-            <SearchInput label={t("barber.clients.searchLabel")} onChangeText={setSearch} testID="client-search" value={search} />
+            <SearchInput label={t("barber.clients.searchLabel")} onChangeText={setSearch} placeholder={t("examples.search")} testID="client-search" value={search} />
             <View className="flex-row gap-2">
               <Button label={t("barber.clients.filterAll")} onPress={() => setOnlyLapsed(false)} size="sm" testID="clients-filter-all" variant={onlyLapsed ? "outline" : "dark"} />
               <Button label={t("barber.clients.filterLapsed")} onPress={() => setOnlyLapsed(true)} size="sm" testID="clients-filter-lapsed" variant={onlyLapsed ? "dark" : "outline"} />

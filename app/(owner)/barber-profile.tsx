@@ -92,7 +92,7 @@ export default function OwnerBarberProfileScreen() {
                 <Card variant="outlined">
                   <View className="gap-3">
                     <Text accessibilityRole="header" className="text-lg font-display-semibold text-ink">{t("owner.barbers.dataTitle")}</Text>
-                    <Input label={t("owner.barbers.nameLabel")} onChangeText={setName} testID="barber-name-input" value={name} />
+                    <Input label={t("owner.barbers.nameLabel")} onChangeText={setName} placeholder={t("examples.fullName")} testID="barber-name-input" value={name} />
                     <Button disabled={rename.isPending || name.trim().length === 0 || name.trim() === barber.name} label={t("owner.barbers.save")} onPress={() => rename.mutate()} size="sm" testID="barber-save" />
                   </View>
                 </Card>
@@ -101,7 +101,7 @@ export default function OwnerBarberProfileScreen() {
                   <Card variant="outlined">
                     <View className="gap-3">
                       <Text accessibilityRole="header" className="text-lg font-display-semibold text-ink">{t("owner.barbers.accessTitle")}</Text>
-                      <Input autoCapitalize="none" keyboardType="email-address" label={t("owner.barbers.inviteEmailLabel")} onChangeText={setInviteEmail} testID="barber-invite-email" value={inviteEmail} />
+                      <Input autoCapitalize="none" keyboardType="email-address" label={t("owner.barbers.inviteEmailLabel")} onChangeText={setInviteEmail} placeholder={t("examples.email")} testID="barber-invite-email" value={inviteEmail} />
                       <Button disabled={invite.isPending || !inviteEmail.includes("@")} label={t("owner.barbers.sendInvite")} onPress={() => invite.mutate()} size="sm" testID="barber-invite-send" />
                     </View>
                   </Card>

@@ -126,7 +126,7 @@ export default function OwnerAppointmentFormScreen() {
             {shop.data === null ? <Text className="text-sm font-sans text-neutral-600">{t("common.noShop")}</Text> : null}
 
             <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{t("common.customer")}</Text>
-            <Input label={t("owner.appointmentForm.searchCustomer")} onChangeText={setSearch} testID="owner-customer-search" value={search} />
+            <Input label={t("owner.appointmentForm.searchCustomer")} onChangeText={setSearch} placeholder={t("examples.search")} testID="owner-customer-search" value={search} />
             <ScrollView className="max-h-[280px]" nestedScrollEnabled>
               <RadioBlock
                 items={customers.map((customer) => ({ key: customer.id, label: customer.fullName, onPress: () => setSelectedCustomerId(customer.id), selected: customer.id === selectedCustomerId }))}
@@ -159,7 +159,7 @@ export default function OwnerAppointmentFormScreen() {
               </View>
             ) : null}
 
-            <Input label={t("book.notes")} onChangeText={setNotes} testID="owner-form-notes" value={notes} />
+            <Input label={t("book.notes")} onChangeText={setNotes} placeholder={t("examples.notes")} testID="owner-form-notes" value={notes} />
             <Button
               disabled={!selectedBarberServiceId || !selectedCustomerId || !selectedStartsAt || isSaving}
               label={t("owner.appointmentForm.create")}

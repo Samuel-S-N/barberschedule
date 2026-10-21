@@ -93,8 +93,8 @@ export function ServiceAssignments({ barberServices, barbers, onFeedback, servic
             </View>
             {overrideId !== null && overrideId === assignment?.id ? (
               <View className="gap-2">
-                <Input keyboardType="numeric" label={t("owner.services.overridePrice")} onChangeText={setOverridePrice} testID="override-price" value={overridePrice} />
-                <Input keyboardType="numeric" label={t("owner.services.overrideDuration")} onChangeText={setOverrideDuration} testID="override-duration" value={overrideDuration} />
+                <Input keyboardType="numeric" label={t("owner.services.overridePrice")} onChangeText={setOverridePrice} placeholder={t("examples.money")} testID="override-price" value={overridePrice} />
+                <Input keyboardType="numeric" label={t("owner.services.overrideDuration")} onChangeText={setOverrideDuration} placeholder={t("examples.minutes")} testID="override-duration" value={overrideDuration} />
                 <Text className="text-xs font-sans text-neutral-500">{t("owner.services.overrideHint")}</Text>
                 <View className="flex-row gap-2">
                   <Button disabled={busy} label={t("owner.services.overrideSave")} onPress={() => saveOverride.mutate()} size="sm" testID="override-save" />

@@ -274,9 +274,9 @@ export default function OwnerRevenueScreen() {
                       ) : null}
                       {payingFor === row.barberId ? (
                         <View className="gap-2">
-                          <Input label={t("owner.revenue.paymentAmount")} onChangeText={setAmount} testID="rent-amount" value={amount} />
+                          <Input label={t("owner.revenue.paymentAmount")} onChangeText={setAmount} placeholder={t("examples.money")} testID="rent-amount" value={amount} />
                           <DateInput label={t("owner.revenue.paymentDate")} onChangeValue={setPaidOn} testID="rent-date" value={paidOn} />
-                          <Input label={t("owner.revenue.paymentNote")} onChangeText={setNote} testID="rent-note" value={note} />
+                          <Input label={t("owner.revenue.paymentNote")} onChangeText={setNote} placeholder={t("examples.note")} testID="rent-note" value={note} />
                           <View className="flex-row gap-2">
                             <Button disabled={savePayment.isPending} label={t("owner.revenue.savePayment")} onPress={() => submitPayment(row.barberId)} size="sm" testID="rent-pay-save" />
                             <Button label={t("owner.revenue.cancelPayment")} onPress={() => setPayingFor(null)} size="sm" variant="outline" />

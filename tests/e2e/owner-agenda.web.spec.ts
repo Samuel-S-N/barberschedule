@@ -123,3 +123,12 @@ test("the previous/next buttons and the title follow the selected view", async (
   await expect(page.getByTestId("owner-range-prev")).toHaveText("Previous month");
   await expect(page.getByTestId("owner-range-next")).toHaveText("Next month");
 });
+
+test("the agenda date field has a ghost example when empty and no format hint in its label", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, { calls: {}, noOverrides: true, rows: [] });
+
+  await page.goto("/agenda");
+  await expect(page.getByTestId("owner-agenda-date")).toHaveAttribute("placeholder", "2026-10-25");
+  await expect(page.getByText("Local date", { exact: true })).toBeVisible();
+});
