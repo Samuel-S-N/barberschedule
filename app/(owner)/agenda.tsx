@@ -6,7 +6,7 @@ import { Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { EmptyState } from "../../src/components/domain/EmptyState";
-import { NotificationBell } from "../../src/components/domain/NotificationBell";
+import { ScreenTopBar } from "../../src/components/domain/ScreenTopBar";
 import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
 import { StatusBadge } from "../../src/components/domain/StatusBadge";
 import { Toast } from "../../src/components/domain/Toast";
@@ -104,10 +104,7 @@ export default function OwnerAgendaScreen() {
       <KeyboardAwareScrollView refreshControl={pullToRefresh(pull)} bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
-            <View className="flex-row items-center gap-2">
-              <NotificationBell />
-              <Text accessibilityRole="header" className="flex-1 text-3xl leading-[44px] font-display-bold text-ink">{t(nav.title)}</Text>
-            </View>
+            <ScreenTopBar title={t(nav.title)} />
             <Button label={t("owner.agenda.newAppointment")} onPress={() => router.push("/appointment-form")} testID="owner-new-appointment" />
 
             <View className="flex-row gap-2">

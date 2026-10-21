@@ -11,7 +11,7 @@ import { CalendarStrip } from "../../src/components/domain/CalendarStrip";
 import { ContactLink } from "../../src/components/domain/ContactLink";
 import { DaySummaryCard } from "../../src/components/domain/DaySummaryCard";
 import { EmptyState } from "../../src/components/domain/EmptyState";
-import { NotificationBell } from "../../src/components/domain/NotificationBell";
+import { ScreenTopBar } from "../../src/components/domain/ScreenTopBar";
 import { formatPriceBRL } from "../../src/components/domain/ServiceCard";
 import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
 import { StatusBadge } from "../../src/components/domain/StatusBadge";
@@ -274,12 +274,7 @@ export default function BarberAgendaScreen() {
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
       <KeyboardAwareScrollView refreshControl={pullToRefresh(pull)} bottomOffset={24} keyboardShouldPersistTaps="handled" className="flex-1">
         <View className="items-center gap-4 p-5">
-          <View className="w-full max-w-[420px] flex-row items-center gap-2">
-            <NotificationBell />
-            <Text accessibilityRole="header" className="flex-1 text-3xl leading-[44px] font-display-bold text-ink">
-              {t("barber.agenda.title")}
-            </Text>
-          </View>
+          <ScreenTopBar title={t("barber.agenda.title")} />
           {pending.length > 0 ? (
             <View className="w-full max-w-[420px] gap-3" testID="barber-pending-closure">
               <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">
