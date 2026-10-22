@@ -18,7 +18,10 @@ async function signInAsOwner(page: Page) {
   }, { id: ownerId });
 }
 
-let occurrenceDate = "2026-11-09";
+// Shop-local dates (the shop is in São Paulo), not UTC.
+const inDays = (days: number) => new Date(Date.now() + days * 24 * 3600 * 1000).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+// A conflict inside the 30-day booking window by default.
+let occurrenceDate = inDays(10);
 const conflict = (id: string, status: "open" | "resolved") => ({
   barber_id: barberId, barber_service_id: barberServiceId, customer_name: "Ana Souza", customer_phone: "11999999999", id,
   local_start_time: "10:00:00", occurrence_date: occurrenceDate, reason: "SLOT_UNAVAILABLE", series_id: "s1", service_name: "Cut", status,
@@ -101,21 +104,35 @@ test("Reschedule is the booking steps: date, time, review, then it books and ret
   await expect(page.getByTestId(`conflict-${OPEN}`)).toContainText("Resolved");
 });
 
-test("a conflict up to 90 days ahead opens the flow on its own day", async ({ page }) => {
-  const far = new Date(Date.now() + 60 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+test("a conflict inside the 30-day window opens the calendar on its own day", async ({ page }) => {
+  const asked: string[] = [];
+
+  await openConflicts(page);
+  await page.route("**/rest/v1/rpc/get_available_slots", async (route) => {
+    asked.push((route.request().postDataJSON() as { local_date: string }).local_date);
+    await json(route, [{ ends_at: "2099-01-01T13:30:00Z", local_date: "2099-01-01", local_time: "10:00:00", starts_at: "2099-01-01T13:00:00Z" }]);
+  });
+  await page.getByTestId(`conflict-reschedule-${OPEN}`).click();
+  await expect(page.getByTestId(`month-calendar-day-${occurrenceDate}`)).toBeInViewport();
+  await page.getByTestId("conflict-continue").click();
+  await expect.poll(() => asked).toContain(occurrenceDate);
+});
+
+test("a conflict beyond the 30-day window starts on today: the calendar never goes past 30 days", async ({ page }) => {
+  const far = inDays(60);
   const asked: string[] = [];
 
   occurrenceDate = far;
   await openConflicts(page);
   await page.route("**/rest/v1/rpc/get_available_slots", async (route) => {
     asked.push((route.request().postDataJSON() as { local_date: string }).local_date);
-    await json(route, [{ ends_at: `${far}T13:30:00Z`, local_date: far, local_time: "10:00:00", starts_at: `${far}T13:00:00Z` }]);
+    await json(route, []);
   });
   await page.getByTestId(`conflict-reschedule-${OPEN}`).click();
-  await expect(page.getByTestId(`month-calendar-day-${far}`)).toBeVisible();
+  await expect(page.getByTestId(`month-calendar-day-${far}`)).toHaveCount(0);
   await page.getByTestId("conflict-continue").click();
-  await expect.poll(() => asked).toContain(far);
-  occurrenceDate = "2026-11-09";
+  await expect.poll(() => asked).toContain(inDays(0));
+  occurrenceDate = inDays(10);
 });
 
 test("back steps back and, on the first step, returns to the conflicts list", async ({ page }) => {
