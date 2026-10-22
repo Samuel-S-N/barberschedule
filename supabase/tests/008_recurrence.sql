@@ -178,7 +178,7 @@ select ok(
 select ok(
   position(
     'perform pg_advisory_xact_lock(hashtextextended(format(''recurrence:%s'', target_shop_id), 0));'
-    in pg_get_functiondef('public.edit_recurrence_series(uuid, time, integer, integer, date)'::regprocedure)
+    in pg_get_functiondef('public.edit_recurrence_series(uuid, time, integer, integer)'::regprocedure)
   ) > 0,
   'editing a series uses the same shop advisory lock as materialization'
 );
@@ -331,7 +331,7 @@ select lives_ok(
 );
 
 select lives_ok(
-  $$ select * from public.edit_recurrence_series(current_setting('task9.edit_series')::uuid, '14:00', 1, 3000, null) $$,
+  $$ select * from public.edit_recurrence_series(current_setting('task9.edit_series')::uuid, '14:00', 1, 3000) $$,
   'owner may edit the prospective recurrence configuration'
 );
 
