@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 
 import { AppointmentCard } from "../../src/components/domain/AppointmentCard";
-import { listMyAppointments } from "../../src/features/appointments/lifecycle";
+import { listMyAppointments, rescheduleAppointment } from "../../src/features/appointments/lifecycle";
 import { RescheduleFlow } from "../../src/features/appointments/RescheduleFlow";
 import { useAppointmentCards } from "../../src/features/appointments/use-appointment-cards";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
@@ -32,7 +32,6 @@ export default function RescheduleScreen() {
 
   return (
     <RescheduleFlow
-      appointmentId={appointmentId}
       barberId={param(params.barberId)}
       barberServiceId={param(params.barberServiceId)}
       current={currentSlot}
@@ -43,6 +42,7 @@ export default function RescheduleScreen() {
         // dismissTo pops back to the tabs already underneath; replace would mount a second tab navigator.
         router.dismissTo("/appointments");
       }}
+      submit={(startsAt) => rescheduleAppointment(supabase, appointmentId, startsAt)}
       summaryRows={[
         [t("book.summary.service"), cardProps?.serviceName ?? ""],
         [t("book.summary.barber"), cardProps?.barberName ?? ""],

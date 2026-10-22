@@ -4,10 +4,12 @@ import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 
 import { Card } from "../../src/components/ui/Card";
+import { rescheduleAppointment } from "../../src/features/appointments/lifecycle";
 import { RescheduleFlow } from "../../src/features/appointments/RescheduleFlow";
 import { useLanguage } from "../../src/i18n/use-language";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { formatDateNumeric } from "../../src/lib/i18n/format";
+import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 function param(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";
@@ -21,6 +23,7 @@ export default function MoveAppointmentScreen() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
   const language = useLanguage();
+  const { supabase } = useSupabaseSession();
   const current = currentStart ? formatInstantInShopTime(new Date(currentStart)) : null;
 
   const goToAgenda = (moved: boolean) =>
@@ -28,7 +31,6 @@ export default function MoveAppointmentScreen() {
 
   return (
     <RescheduleFlow
-      appointmentId={param(params.appointmentId)}
       barberId={param(params.barberId)}
       barberServiceId={param(params.barberServiceId)}
       current={current}
@@ -47,6 +49,7 @@ export default function MoveAppointmentScreen() {
         await queryClient.invalidateQueries({ queryKey: ["barber-agenda"] });
         goToAgenda(true);
       }}
+      submit={(startsAt) => rescheduleAppointment(supabase, param(params.appointmentId), startsAt)}
       summaryRows={[
         [t("agendaCard.customer"), param(params.customerName)],
         [t("book.summary.service"), param(params.serviceName)],

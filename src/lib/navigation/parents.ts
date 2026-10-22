@@ -76,6 +76,7 @@ export const ROUTE_PARENTS: Record<string, Parent> = {
   "/customer-form": "/customers",
   "/monthly-customers": "/manage",
   "/recurrence-conflicts": "/monthly-customers",
+  "/conflict-reschedule": "/recurrence-conflicts",
   "/schedule": "/manage",
   "/shop": "/manage",
   "/owner-profile/account": "/settings",

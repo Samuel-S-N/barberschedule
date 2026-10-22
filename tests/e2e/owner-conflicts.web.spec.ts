@@ -18,12 +18,16 @@ async function signInAsOwner(page: Page) {
   }, { id: ownerId });
 }
 
+// Shop-local dates (the shop is in São Paulo), not UTC.
+const inDays = (days: number) => new Date(Date.now() + days * 24 * 3600 * 1000).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+// A conflict inside the 30-day booking window by default.
+let occurrenceDate = inDays(10);
 const conflict = (id: string, status: "open" | "resolved") => ({
   barber_id: barberId, barber_service_id: barberServiceId, customer_name: "Ana Souza", customer_phone: "11999999999", id,
-  local_start_time: "10:00:00", occurrence_date: "2026-11-09", reason: "SLOT_UNAVAILABLE", series_id: "s1", service_name: "Cut", status,
+  local_start_time: "10:00:00", occurrence_date: occurrenceDate, reason: "SLOT_UNAVAILABLE", series_id: "s1", service_name: "Cut", status,
 });
 
-async function openConflicts(page: Page, options: { slots?: unknown[] } = {}) {
+async function openConflicts(page: Page, options: { failResolve?: boolean; slots?: unknown[] } = {}) {
   const resolves: unknown[] = [];
   const state = { open: true };
 
@@ -39,6 +43,7 @@ async function openConflicts(page: Page, options: { slots?: unknown[] } = {}) {
     }
     if (path.endsWith("/rpc/resolve_recurrence_conflict")) {
       resolves.push(route.request().postDataJSON());
+      if (options.failResolve) return json(route, { code: "P0001", message: "SLOT_UNAVAILABLE" }, 400);
       state.open = false;
 
       return json(route, null);
@@ -72,26 +77,96 @@ test("Dismiss skips the date and the card turns resolved", async ({ page }) => {
   await expect(page.getByTestId(`conflict-dismiss-${OPEN}`)).toHaveCount(0);
 });
 
-test("Reschedule picks a date and a free time and books it", async ({ page }) => {
+test("Reschedule is the booking steps: date, time, review, then it books and returns to the list", async ({ page }) => {
   const resolves = await openConflicts(page);
 
   await page.getByTestId(`conflict-reschedule-${OPEN}`).click();
-  await expect(page.getByTestId("conflict-sheet")).toBeVisible();
-  await expect(page.getByTestId("conflict-sheet-date")).toHaveValue("2026-11-09");
-  await expect(page.getByTestId("conflict-sheet-confirm")).toBeDisabled();
+  await expect(page).toHaveURL(/\/conflict-reschedule/);
+  await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 4 · Date");
+  await expect(page.getByTestId("conflict-current")).toContainText("Ana Souza");
+  await expect(page.getByTestId("month-calendar")).toBeVisible();
+  await page.getByTestId("conflict-continue").click();
+
+  await expect(page.getByTestId("step-label")).toHaveText("Step 2 of 4 · Time");
+  await expect(page.getByTestId("conflict-continue")).toBeDisabled();
   await page.getByRole("button", { name: "11:00" }).click();
-  await expect(page.getByTestId("conflict-sheet-confirm")).toBeEnabled();
-  await page.getByTestId("conflict-sheet-confirm").click();
+  await page.getByTestId("conflict-continue").click();
+
+  await expect(page.getByTestId("step-label")).toHaveText("Step 3 of 4 · Review");
+  await expect(page.getByTestId("conflict-summary")).toContainText("Ana Souza");
+  await expect(page.getByTestId("conflict-summary")).toContainText("Conflicted date");
+  await expect(page.getByTestId("conflict-summary")).toContainText("New time");
+  await page.getByTestId("conflict-confirm").click();
 
   await expect.poll(() => resolves).toEqual([{ new_starts_at: "2026-11-09T13:00:00Z", target_conflict_id: OPEN }]);
-  await expect(page.getByTestId("conflict-sheet")).toHaveCount(0);
+  await expect(page).toHaveURL(/\/recurrence-conflicts/);
+  await expect(page.getByText("Rescheduled.")).toBeVisible();
   await expect(page.getByTestId(`conflict-${OPEN}`)).toContainText("Resolved");
 });
 
-test("with no free time on the date the sheet says so", async ({ page }) => {
+test("a conflict inside the 30-day window opens the calendar on its own day", async ({ page }) => {
+  const asked: string[] = [];
+
+  await openConflicts(page);
+  await page.route("**/rest/v1/rpc/get_available_slots", async (route) => {
+    asked.push((route.request().postDataJSON() as { local_date: string }).local_date);
+    await json(route, [{ ends_at: "2099-01-01T13:30:00Z", local_date: "2099-01-01", local_time: "10:00:00", starts_at: "2099-01-01T13:00:00Z" }]);
+  });
+  await page.getByTestId(`conflict-reschedule-${OPEN}`).click();
+  await expect(page.getByTestId(`month-calendar-day-${occurrenceDate}`)).toBeInViewport();
+  await page.getByTestId("conflict-continue").click();
+  await expect.poll(() => asked).toContain(occurrenceDate);
+});
+
+test("a conflict beyond the 30-day window starts on today: the calendar never goes past 30 days", async ({ page }) => {
+  const far = inDays(60);
+  const asked: string[] = [];
+
+  occurrenceDate = far;
+  await openConflicts(page);
+  await page.route("**/rest/v1/rpc/get_available_slots", async (route) => {
+    asked.push((route.request().postDataJSON() as { local_date: string }).local_date);
+    await json(route, []);
+  });
+  await page.getByTestId(`conflict-reschedule-${OPEN}`).click();
+  await expect(page.getByTestId(`month-calendar-day-${far}`)).toHaveCount(0);
+  await page.getByTestId("conflict-continue").click();
+  await expect.poll(() => asked).toContain(inDays(0));
+  occurrenceDate = inDays(10);
+});
+
+test("back steps back and, on the first step, returns to the conflicts list", async ({ page }) => {
+  await openConflicts(page);
+  const back = () => page.locator('[data-testid="back"]:not([aria-hidden="true"] *)').click();
+
+  await page.getByTestId(`conflict-reschedule-${OPEN}`).click();
+  await page.getByTestId("conflict-continue").click();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 2 of 4 · Time");
+  await back();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 4 · Date");
+  await back();
+  await expect(page).toHaveURL(/\/recurrence-conflicts$/);
+  await expect(page.getByTestId(`conflict-${OPEN}`)).toBeVisible();
+});
+
+test("with no free time on the date the time step says so and cannot continue", async ({ page }) => {
   await openConflicts(page, { slots: [] });
 
   await page.getByTestId(`conflict-reschedule-${OPEN}`).click();
-  await expect(page.getByText("No free times on this date.")).toBeVisible();
-  await expect(page.getByTestId("conflict-sheet-confirm")).toBeDisabled();
+  await page.getByTestId("conflict-continue").click();
+  await expect(page.getByText("No times available this day")).toBeVisible();
+  await expect(page.getByTestId("conflict-continue")).toBeDisabled();
+});
+
+test("a refused time returns to the time step with the error", async ({ page }) => {
+  await openConflicts(page, { failResolve: true });
+
+  await page.getByTestId(`conflict-reschedule-${OPEN}`).click();
+  await page.getByTestId("conflict-continue").click();
+  await page.getByRole("button", { name: "11:00" }).click();
+  await page.getByTestId("conflict-continue").click();
+  await page.getByTestId("conflict-confirm").click();
+
+  await expect(page.getByText("That time is no longer available.")).toBeVisible();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 2 of 4 · Time");
 });
