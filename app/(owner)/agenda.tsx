@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
@@ -53,10 +53,17 @@ export default function OwnerAgendaScreen() {
   const language = useLanguage();
   const pull = useRefreshAll();
   const router = useRouter();
+  const { created } = useLocalSearchParams<{ created?: string }>();
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
   const shop = useOwnerShopId();
   const [feedback, setFeedback] = useState<{ message: string; variant: "error" | "success" } | null>(null);
+  // Coming back from the new-appointment steps after a successful booking: confirm it here, once.
+  useEffect(() => {
+    if (!created) return;
+    setFeedback({ message: t("owner.appointmentForm.created"), variant: "success" });
+    router.setParams({ created: undefined });
+  }, [created]);
   const [localDate, setLocalDate] = useState(formatInstantInShopTime(new Date()).localDate);
   const [offset, setOffset] = useState(0);
   const [view, setView] = useState<AgendaView>("day");
