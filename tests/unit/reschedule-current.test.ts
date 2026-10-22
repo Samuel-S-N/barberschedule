@@ -7,7 +7,7 @@ describe("reschedule screen", () => {
   const screen = read("app/(customer)/reschedule.tsx");
 
   it("shows the appointment being moved", () => {
-    expect(screen).toContain('t("reschedule.current")');
+    expect(read("src/features/appointments/RescheduleFlow.tsx")).toContain('t("reschedule.current")');
     expect(screen).toContain("useAppointmentCards");
     expect(screen).toContain('testID="reschedule-current"');
   });

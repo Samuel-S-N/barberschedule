@@ -190,16 +190,21 @@ test("a barber moves an appointment: opens the calendar, picks the day, then the
   await openBarberCard(page);
   await page.getByTestId("barber-move-appt-1").click();
 
-  // Like the customer's reschedule: the month calendar first, then the times of the chosen day.
+  // Like the customer's reschedule: date, then time, then review, with the step bar on top.
   await expect(page).toHaveURL(/\/move-appointment/);
+  await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 4 · Date");
   await expect(page.getByTestId("move-current")).toContainText("Ana Customer");
   await expect(page.getByTestId("month-calendar")).toBeVisible();
-  await expect(page.getByTestId("move-confirm")).toBeDisabled();
   // The month on screen is the first page of the strip; the next month sits off screen.
   const day = page.getByTestId("month-pages").locator("> div").first().locator('[data-testid^="month-calendar-day-"]:not([aria-disabled="true"])').last();
   const chosenDate = ((await day.getAttribute("data-testid")) ?? "").replace("month-calendar-day-", "");
   await day.click();
+  await page.getByTestId("move-continue").click();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 2 of 4 · Time");
+  await expect(page.getByTestId("move-continue")).toBeDisabled();
   await page.getByTestId("time-slot-10:30").click();
+  await page.getByTestId("move-continue").click();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 3 of 4 · Review");
   await page.getByTestId("move-confirm").click();
 
   await expect(page).toHaveURL(/\/my-agenda/);
@@ -209,7 +214,7 @@ test("a barber moves an appointment: opens the calendar, picks the day, then the
   expect(new Date(moved.payload?.new_starts_at ?? "").getTime()).toBe(slotStart.getTime());
 });
 
-test("a failed move shows the error and stays on the calendar", async ({ page }) => {
+test("a failed move shows the error and goes back to the times", async ({ page }) => {
   const slotStart = new Date(Date.now() + 3 * 60 * 60 * 1000);
 
   await signIn(page, barberUserId);
@@ -225,11 +230,14 @@ test("a failed move shows the error and stays on the calendar", async ({ page })
   await page.goto("/my-agenda");
   await openBarberCard(page);
   await page.getByTestId("barber-move-appt-1").click();
+  await page.getByTestId("move-continue").click();
   await page.getByTestId("time-slot-10:30").click();
+  await page.getByTestId("move-continue").click();
   await page.getByTestId("move-confirm").click();
 
   await expect(page.getByText("That time is no longer available.")).toBeVisible();
   await expect(page).toHaveURL(/\/move-appointment/);
+  await expect(page.getByTestId("step-label")).toHaveText("Step 2 of 4 · Time");
 });
 
 test("keeping the current time goes back to the agenda without calling the database", async ({ page }) => {
@@ -239,13 +247,20 @@ test("keeping the current time goes back to the agenda without calling the datab
   await mockBarberRest(page, async (route, url) => {
     const name = url.pathname.split("/rpc/")[1];
     if (name === "list_my_barber_agenda") return json(route, [openAppointmentRow()]).then(() => true);
-    if (name === "get_available_slots") return json(route, []).then(() => true);
+    if (name === "get_available_slots") {
+      const start = new Date(Date.now() + 3 * 60 * 60 * 1000);
+
+      return json(route, [{ ends_at: start.toISOString(), local_date: "2026-10-01", local_time: "10:30:00", starts_at: start.toISOString() }]).then(() => true);
+    }
     if (name === "reschedule_appointment") rescheduled = true;
   });
 
   await page.goto("/my-agenda");
   await openBarberCard(page);
   await page.getByTestId("barber-move-appt-1").click();
+  await page.getByTestId("move-continue").click();
+  await page.getByTestId("time-slot-10:30").click();
+  await page.getByTestId("move-continue").click();
   await page.getByTestId("move-keep").click();
 
   await expect(page).toHaveURL(/\/my-agenda/);
