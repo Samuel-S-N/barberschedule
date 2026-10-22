@@ -12,7 +12,7 @@
 
 ## Global Constraints
 - Branch `feat-manual-recurrence-steps` from `feat-owner-booking-steps`; PR base `main`, merge after the other two. No database/API change (`createRecurrenceForCustomer` reused).
-- Steps keys `customer, plan, barber, weekday, time, review, send`; the `barber` step is shown only when the chosen plan is offered by more than one barber (so the barber role never sees it); the "Step N of M" numbers follow the steps actually in the flow. Labels: Cliente/Plano/Barbeiro/Dia/Horário/Revisão/Enviar (en Customer/Plan/Barber/Day/Time/Review/Send) in `recurrence.manualSteps`.
+- Steps keys `customer, plan, barber, weekday, time, review, send`; the `barber` step is part of the flow whenever more than one barber is passed to it (owner of a shop with 2+ barbers); it lists only the barbers offering the chosen plan; the barber role and single-barber shops never see it, so the step bar keeps its length. Labels: Cliente/Plano/Barbeiro/Dia/Horário/Revisão/Enviar (en Customer/Plan/Barber/Day/Time/Review/Send) in `recurrence.manualSteps`.
 - Routes: owner hidden tab `recurrence-manual` (in `MANAGE_SCREENS`, parent `/monthly-customers`), barber `app/(barber)/my-profile/recurrence-manual.tsx` (parent `/my-profile/recurrence`); add both to `ROUTE_PARENTS`.
 - First date = `nextDateForWeekday(today, weekday)` (never today), the same rule as the customer's flow.
 - Success returns to the originating list with the toast `owner.recurring.saved` through a `created` param.

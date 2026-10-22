@@ -5,7 +5,7 @@ const barberServiceId = "22222222-2222-4222-8222-222222222222";
 const customerId = "33333333-3333-4333-8333-333333333333";
 const ownerId = "44444444-4444-4444-8444-444444444444";
 
-test("an owner can create a recurring booking for a customer and inspect its conflict", async ({ page }) => {
+test("an owner opens the manual recurrence steps and inspects a conflict", async ({ page }) => {
   await page.addInitScript(({ userId }) => {
     const now = Math.floor(Date.now() / 1000);
     const token = `eyJhbGciOiJub25lIn0.${btoa(JSON.stringify({ exp: now + 3600, sub: userId }))}.`;
@@ -53,14 +53,10 @@ test("an owner can create a recurring booking for a customer and inspect its con
   await page.goto("/monthly-customers");
   await expect(page.getByRole("heading", { name: "Recurring customers" })).toBeVisible();
   await page.getByTestId("recurring-tab-active").click();
+  // "Add manually" opens the step-by-step flow (covered in manual-recurrence-steps).
   await page.getByTestId("recurring-manual").click();
-  await page.getByTestId(`option-customer-${customerId}`).click();
-  await page.getByTestId(`option-service-${barberServiceId}`).click();
-  await page.getByTestId("option-plan-plan-w1").click();
-  await page.getByTestId("manual-recurrence-date").fill("");
-  await page.getByTestId("manual-recurrence-date").pressSequentially("20260817");
-  await page.getByTestId("manual-recurrence-save").click();
-  await expect(page.getByText("Recurring booking saved.")).toBeVisible();
+  await expect(page).toHaveURL(/\/recurrence-manual$/);
+  await page.goBack();
   await page.getByTestId("recurrence-conflicts-link").click();
   await expect(page.getByRole("heading", { name: "Recurrence conflicts" })).toBeVisible();
   await expect(page.getByText("Monthly Customer · Cut")).toBeVisible();

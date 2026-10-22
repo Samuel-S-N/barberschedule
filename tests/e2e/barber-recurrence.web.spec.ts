@@ -74,28 +74,3 @@ test("a barber answers a recurrence request and sees the customer's WhatsApp", a
   await expect.poll(() => calls).toEqual([{ accept: true, target_request_id: "rq1" }, { accept: false, target_request_id: "rq1" }]);
 });
 
-test("a barber creates a recurrence for a customer without an account", async ({ page }) => {
-  let created: unknown = null;
-
-  await signIn(page);
-  await mockBarberRest(page, async (route, url) => {
-    if (url.pathname.endsWith("/rpc/list_recurrence_requests")) return json(route, []).then(() => true);
-    if (url.pathname.endsWith("/rpc/create_recurrence_for_customer")) {
-      created = route.request().postDataJSON();
-      return json(route, [{}]).then(() => true);
-    }
-  });
-
-  await page.goto("/my-profile/recurrence");
-  await page.getByTestId("recurring-manual").click();
-  await page.getByTestId("option-customer-c-walk").click();
-  await page.getByTestId("option-service-bs1").click();
-  await page.getByTestId("option-plan-plan-w3").click();
-  await page.getByTestId("manual-recurrence-date").fill("");
-  await page.getByTestId("manual-recurrence-date").pressSequentially("20261103");
-  await page.getByTestId("manual-recurrence-save").click();
-
-  await expect.poll(() => created).toEqual({
-    target_barber_service_id: "bs1", target_customer_id: "c-walk", target_interval_weeks: 3, target_start_date: "2026-11-03", target_start_time: "09:00",
-  });
-});
