@@ -17,9 +17,9 @@ import { Toast } from "../../../src/components/domain/Toast";
 import { Button } from "../../../src/components/ui/Button";
 import { Card } from "../../../src/components/ui/Card";
 import { Screen } from "../../../src/components/ui/Screen";
-import { getAvailableSlotsQueryOptions } from "../../../src/features/availability/query";
 import type { AvailableSlot } from "../../../src/features/availability/types";
 import { listPublicBarbers } from "../../../src/features/barbers/api";
+import { useWeekdaySlots } from "../../../src/features/recurrence/customer-flow/use-weekday-slots";
 import { WeekdayList } from "../../../src/features/recurrence/customer-flow/WeekdayList";
 import { PlanCard } from "../../../src/features/recurrence/PlanCard";
 import { buildPlanOffers } from "../../../src/features/recurrence/plan-offers";
@@ -32,7 +32,6 @@ import {
   cancelMyRecurrenceRequest, listMyRecurrenceRequests, requestDisplayStatus, requestRecurrence, requestSeriesCancellation,
 } from "../../../src/features/recurrence/requests-api";
 import type { RecurrenceRequest } from "../../../src/features/recurrence/requests-api";
-import { nextDateForWeekday } from "../../../src/features/recurrence/weekday";
 import { listPublicShops } from "../../../src/features/shops/api";
 import { errorMessage } from "../../../src/i18n/errors";
 import { useLanguage } from "../../../src/i18n/use-language";
@@ -44,7 +43,6 @@ import { useSupabaseSession } from "../../../src/providers/AppProviders";
 
 type Step = "barber" | "list" | "plan" | "review" | "time" | "weekday";
 const FLOW = ["plan", "barber", "weekday", "time", "review", "send"] as const;
-const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const;
 const WEEKDAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
 const CURRENT = ["pending", "active", "cancel_requested"];
 
@@ -87,14 +85,7 @@ export default function CustomerRecurrenceScreen() {
   );
 
   // The first date of a weekday is its next occurrence; weekdays without any free time are disabled.
-  const dates = Object.fromEntries(WEEKDAYS.map((day) => [day, nextDateForWeekday(today, day)])) as Record<number, string>;
-  const weekdaySlots = useQueries({
-    queries: WEEKDAYS.map((day) => ({
-      ...getAvailableSlotsQueryOptions(supabase, { barberId: barber?.barberId ?? "", barberServiceId: barber?.barberServiceId ?? "", localDate: dates[day] }),
-      enabled: step === "weekday" && Boolean(barber),
-    })),
-  });
-  const disabledDays = WEEKDAYS.filter((day) => weekdaySlots[day - 1].isSuccess && (weekdaySlots[day - 1].data ?? []).length === 0);
+  const { dates, disabledDays, queries: weekdaySlots } = useWeekdaySlots({ barberId: barber?.barberId ?? "", barberServiceId: barber?.barberServiceId ?? "", enabled: step === "weekday" && Boolean(barber), today });
   const slots = weekday ? weekdaySlots[weekday - 1].data ?? [] : [];
   const slotRows: TimeSlot[] = slots.map((slot: AvailableSlot) => ({ status: slot.startsAt === startsAt ? "selected" : "free", time: slot.localTime }));
   const chosen = startsAt ? formatInstantInShopTime(new Date(startsAt)) : null;

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
@@ -10,9 +11,7 @@ import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
 import { Toast } from "../../../src/components/domain/Toast";
 import { Button } from "../../../src/components/ui/Button";
 import { Screen } from "../../../src/components/ui/Screen";
-import { searchMyCustomers } from "../../../src/features/appointments/barber-booking";
-import { getMyBarberProfile, listMyBarberServices } from "../../../src/features/barbers/api";
-import { ManualRecurrenceForm } from "../../../src/features/recurrence/ManualRecurrenceForm";
+import { getMyBarberProfile } from "../../../src/features/barbers/api";
 import { CancellationCard } from "../../../src/features/recurrence/CancellationCard";
 import { RequestCard } from "../../../src/features/recurrence/RequestCard";
 import { decideRecurrenceRequest, decideSeriesCancellation, listCancellationRequests, listRecurrenceRequests } from "../../../src/features/recurrence/requests-api";
@@ -27,9 +26,15 @@ export default function BarberRecurrenceScreen() {
   const back = useBack();
   const queryClient = useQueryClient();
   const { profile, supabase } = useSupabaseSession();
-  const [manualOpen, setManualOpen] = useState(false);
-  const [term, setTerm] = useState("");
+  const router = useRouter();
+  const { created } = useLocalSearchParams<{ created?: string }>();
   const [feedback, setFeedback] = useState<{ message: string; variant: "error" | "success" } | null>(null);
+  // Coming back from the manual recurrence steps after creating the plan: confirm it here, once.
+  useEffect(() => {
+    if (!created) return;
+    setFeedback({ message: t("owner.recurring.saved"), variant: "success" });
+    router.setParams({ created: undefined });
+  }, [created]);
 
   const barber = useQuery({ queryFn: () => getMyBarberProfile(supabase), queryKey: ["my-barber-profile", profile?.userId] });
   const requests = useQuery({
@@ -42,8 +47,6 @@ export default function BarberRecurrenceScreen() {
     queryFn: () => listCancellationRequests(supabase, barber.data?.shopId ?? ""),
     queryKey: ["barber-recurrence-cancellations", barber.data?.shopId],
   });
-  const services = useQuery({ queryFn: () => listMyBarberServices(supabase), queryKey: ["my-barber-services"] });
-  const customers = useQuery({ enabled: manualOpen, queryFn: () => searchMyCustomers(supabase, term), queryKey: ["barber-customers", term] });
 
   const decide = useMutation({
     mutationFn: (input: { accept: boolean; id: string }) => decideRecurrenceRequest(supabase, input.id, input.accept),
@@ -85,18 +88,7 @@ export default function BarberRecurrenceScreen() {
               </View>
             ) : null}
 
-            <Button label={t("recurrence.addManual")} onPress={() => setManualOpen((open) => !open)} size="sm" testID="recurring-manual" variant="outline" />
-            {manualOpen ? (
-              <ManualRecurrenceForm
-                customers={(customers.data ?? []).map((customer) => ({ id: customer.id, name: customer.fullName }))}
-                onCreated={() => {
-                  setManualOpen(false);
-                  setFeedback({ message: t("owner.recurring.saved"), variant: "success" });
-                }}
-                onSearch={setTerm}
-                services={(services.data ?? []).filter((service) => service.active).map((service) => ({ barberId: barber.data?.id ?? "", barberServiceId: service.barberServiceId, label: service.serviceName }))}
-              />
-            ) : null}
+            <Button label={t("recurrence.addManual")} onPress={() => router.push("/my-profile/recurrence-manual")} size="sm" testID="recurring-manual" variant="outline" />
             <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
           </View>
         </View>

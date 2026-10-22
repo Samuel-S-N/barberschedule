@@ -134,30 +134,6 @@ test("active series show frequency, service and price", async ({ page }) => {
   await expect(page.getByTestId(`series-${R2}`)).toContainText("catalog price");
 });
 
-test("the owner creates a recurrence for a customer without an account", async ({ page }) => {
-  const calls: Record<string, unknown> = {};
-
-  await signInAsOwner(page);
-  await mockOwnerRest(page, calls);
-
-  await page.goto("/monthly-customers");
-  await page.getByTestId("recurring-tab-active").click();
-  await page.getByTestId("recurring-manual").click();
-  await page.getByTestId(`option-customer-${C1}`).click();
-  await page.getByTestId(`option-service-${BS1}`).click();
-  await page.getByTestId("option-plan-plan-w1").click();
-  await expect(page.getByTestId("manual-recurrence-price")).toContainText("R$ 30,00 per session");
-  await page.getByTestId("manual-recurrence-date").fill("");
-  await page.getByTestId("manual-recurrence-date").pressSequentially("20261102");
-  await page.getByTestId("manual-recurrence-time").fill("");
-  await page.getByTestId("manual-recurrence-time").pressSequentially("1100");
-  await page.getByTestId("manual-recurrence-save").click();
-
-  await expect.poll(() => calls.manual).toEqual({
-    target_barber_service_id: BS1, target_customer_id: C1, target_interval_weeks: 1, target_start_date: "2026-11-02", target_start_time: "11:00",
-  });
-});
-
 test("the owner cancels one occurrence and ends a series", async ({ page }) => {
   const calls: Record<string, unknown> = {};
 
@@ -188,26 +164,6 @@ test("conflicts list the affected customers and open WhatsApp only when there is
 
   await page.getByTestId("conflict-whatsapp-f2").click();
   await expect(page.getByText("This customer has no phone number for WhatsApp.")).toBeVisible();
-});
-
-test.describe("Portuguese on a narrow phone", () => {
-  test.use({ locale: "pt-BR", viewport: { height: 700, width: 320 } });
-
-  test("the start date and time fields of the manual form line up", async ({ page }) => {
-    await signInAsOwner(page);
-    await mockOwnerRest(page, {});
-
-    await page.goto("/monthly-customers");
-    await page.getByTestId("recurring-tab-active").click();
-    await page.getByTestId("recurring-manual").click();
-
-    const date = await page.getByTestId("manual-recurrence-date").boundingBox();
-    const time = await page.getByTestId("manual-recurrence-time").boundingBox();
-
-    expect(date && time).toBeTruthy();
-    expect(Math.abs(date!.y - time!.y)).toBeLessThan(1);
-    expect(Math.abs(date!.height - time!.height)).toBeLessThan(1);
-  });
 });
 
 test("ended plans are listed apart from the active ones and can be reactivated", async ({ page }) => {

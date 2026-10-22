@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
@@ -19,7 +19,6 @@ import type { OwnerBarber } from "../../src/features/barbers/types";
 import { listOwnerCustomers } from "../../src/features/customers/api";
 import { listMonthlyCustomers } from "../../src/features/customers/monthly-api";
 import { cancelRecurrenceOccurrence, endRecurrenceSeries, reactivateRecurrenceSeries, setRecurrenceSeriesActive } from "../../src/features/recurrence/api";
-import { ManualRecurrenceForm } from "../../src/features/recurrence/ManualRecurrenceForm";
 import { recurrenceLabel } from "../../src/features/recurrence/pricing";
 import { CancellationCard } from "../../src/features/recurrence/CancellationCard";
 import { RequestCard } from "../../src/features/recurrence/RequestCard";
@@ -49,8 +48,15 @@ export default function MonthlyCustomersScreen() {
   const shopId = shop.data ?? null;
   const today = formatInstantInShopTime(new Date()).localDate;
   const [tab, setTab] = useState<Tab>("requests");
-  const [manualOpen, setManualOpen] = useState(false);
+  const { created } = useLocalSearchParams<{ created?: string }>();
   const [feedback, setFeedback] = useState<{ message: string; variant: "error" | "success" } | null>(null);
+  // Coming back from the manual recurrence steps after creating the plan: confirm it here, once.
+  useEffect(() => {
+    if (!created) return;
+    setTab("active");
+    setFeedback({ message: t("owner.recurring.saved"), variant: "success" });
+    router.setParams({ created: undefined });
+  }, [created]);
   const [occurrenceDate, setOccurrenceDate] = useState(today);
 
   const data = useQuery({
@@ -155,17 +161,7 @@ export default function MonthlyCustomersScreen() {
 
             {tab === "active" ? (
               <>
-                <Button label={t("recurrence.addManual")} onPress={() => setManualOpen((open) => !open)} size="sm" testID="recurring-manual" variant="outline" />
-                {manualOpen ? (
-                  <ManualRecurrenceForm
-                    customers={(data.data?.customers ?? []).map((customer) => ({ id: customer.id, name: customer.fullName }))}
-                    onCreated={() => {
-                      setManualOpen(false);
-                      setFeedback({ message: t("owner.recurring.saved"), variant: "success" });
-                    }}
-                    services={[...labels.entries()].map(([barberServiceId, item]) => ({ barberId: item.barberId, barberServiceId, label: item.label }))}
-                  />
-                ) : null}
+                <Button label={t("recurrence.addManual")} onPress={() => router.push("/recurrence-manual")} size="sm" testID="recurring-manual" variant="outline" />
                 <DateInput label={t("owner.recurring.occurrenceLabel")} onChangeValue={setOccurrenceDate} testID="recurrence-occurrence-date" value={occurrenceDate} />
                 {[
                   { items: activeSeries, key: "active", title: t("owner.recurring.activeSection") },
