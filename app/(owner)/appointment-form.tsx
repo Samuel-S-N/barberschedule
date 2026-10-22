@@ -30,7 +30,6 @@ import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 type Step = "customer" | "date" | "review" | "service" | "time";
 const FLOW = ["customer", "service", "date", "time", "review", "confirm"] as const;
-const OWNER_BOOKING_DAYS = 90;
 
 // The owner books for a customer with the same steps as every booking: customer › service › date › time › review › create.
 export default function OwnerAppointmentFormScreen() {
@@ -161,7 +160,7 @@ export default function OwnerAppointmentFormScreen() {
             ) : null}
 
             {step === "date" ? (
-              <DateStep localDate={localDate} maxDaysAhead={OWNER_BOOKING_DAYS} onChange={(date) => { setLocalDate(date); setSelectedStartsAt(null); }} onContinue={() => go("time")} testID="owner-continue" today={today} />
+              <DateStep localDate={localDate} onChange={(date) => { setLocalDate(date); setSelectedStartsAt(null); }} onContinue={() => go("time")} testID="owner-continue" today={today} />
             ) : null}
 
             {step === "time" && choice ? (
