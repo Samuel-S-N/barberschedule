@@ -1,46 +1,59 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { RadioBlock } from "../../src/components/domain/RadioBlock";
 import { ScreenHeader } from "../../src/components/domain/ScreenHeader";
 import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
+import { StepBar } from "../../src/components/domain/StepBar";
 import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Input } from "../../src/components/ui/Input";
-import { DateInput } from "../../src/components/ui/MaskedInputs";
 import { Screen } from "../../src/components/ui/Screen";
 import { bookOwnerAppointment } from "../../src/features/appointments/owner-api";
-import { getAvailableSlots } from "../../src/features/availability/api";
-import type { AvailableSlot } from "../../src/features/availability/types";
+import { DateStep, TimeStep } from "../../src/features/availability/steps";
 import { listOwnerBarbers } from "../../src/features/barbers/api";
 import type { OwnerBarber } from "../../src/features/barbers/types";
 import { listOwnerCustomers } from "../../src/features/customers/api";
 import { listOwnerBarberServices, listOwnerServices } from "../../src/features/services/api";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
 import { errorMessage } from "../../src/i18n/errors";
+import { useLanguage } from "../../src/i18n/use-language";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
+import { formatDateNumeric } from "../../src/lib/i18n/format";
 import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
-import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
+
+type Step = "customer" | "date" | "review" | "service" | "time";
+const FLOW = ["customer", "service", "date", "time", "review", "confirm"] as const;
+const OWNER_BOOKING_DAYS = 90;
+
+// The owner books for a customer with the same steps as every booking: customer › service › date › time › review › create.
 export default function OwnerAppointmentFormScreen() {
   const { t } = useTranslation();
-  const pull = useRefreshAll();
+  const language = useLanguage();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const back = useBack();
   const { supabase } = useSupabaseSession();
   const shop = useOwnerShopId();
   const shopId = shop.data ?? null;
+  const today = formatInstantInShopTime(new Date()).localDate;
+  const [trail, setTrail] = useState<Step[]>(["customer"]);
+  const step = trail[trail.length - 1];
   const [feedback, setFeedback] = useState<{ message: string; variant: "error" | "success" } | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [localDate, setLocalDate] = useState(formatInstantInShopTime(new Date()).localDate);
+  const [localDate, setLocalDate] = useState(today);
   const [notes, setNotes] = useState("");
   const [search, setSearch] = useState("");
   const [selectedBarberServiceId, setSelectedBarberServiceId] = useState<string | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedStartsAt, setSelectedStartsAt] = useState<string | null>(null);
-  const [slots, setSlots] = useState<AvailableSlot[]>([]);
+  const go = (next: Step) => setTrail((existing) => [...existing, next]);
+  const goBack = () => (trail.length > 1 ? setTrail((existing) => existing.slice(0, -1)) : back());
 
   const catalog = useQuery({
     enabled: shopId !== null,
@@ -78,94 +91,103 @@ export default function OwnerAppointmentFormScreen() {
 
   const term = search.trim().toLowerCase();
   const customers = (catalog.data?.customers ?? []).filter((customer) => !term || customer.fullName.toLowerCase().includes(term) || (customer.email ?? "").toLowerCase().includes(term));
-  const selectedBarberService = choices.find((choice) => choice.barberService.id === selectedBarberServiceId)?.barberService ?? null;
-  const fail = (error: unknown, fallback: string) => setFeedback({ message: errorMessage(error, t, fallback), variant: "error" });
+  const customer = catalog.data?.customers.find((candidate) => candidate.id === selectedCustomerId) ?? null;
+  const choice = choices.find((candidate) => candidate.barberService.id === selectedBarberServiceId) ?? null;
+  const chosen = selectedStartsAt ? formatInstantInShopTime(new Date(selectedStartsAt)) : null;
 
-  const loadSlots = async () => {
-    if (!selectedBarberService) return;
-    setFeedback(null);
-    setIsSaving(true);
-    try {
-      setSlots(await getAvailableSlots(supabase, { barberId: selectedBarberService.barberId, barberServiceId: selectedBarberService.id, localDate }));
+  const create = useMutation({
+    mutationFn: () => {
+      if (!selectedBarberServiceId || !selectedCustomerId || !selectedStartsAt) throw new Error("INCOMPLETE");
+
+      return bookOwnerAppointment(supabase, { barberServiceId: selectedBarberServiceId, customerId: selectedCustomerId, notes: notes.trim() || null, startsAt: selectedStartsAt });
+    },
+    onError: (error) => {
+      // The time may have been taken: go back to the times so the next pick is valid, then show why it failed.
       setSelectedStartsAt(null);
-    } catch (error) {
-      fail(error, t("owner.appointmentForm.timesError"));
-    } finally {
-      setIsSaving(false);
-    }
-  };
+      setTrail((existing) => existing.slice(0, existing.indexOf("time") + 1));
+      void queryClient.invalidateQueries({ queryKey: ["available-slots"] });
+      setFeedback({ message: errorMessage(error, t, t("owner.appointmentForm.createError")), variant: "error" });
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["available-slots"] });
+      void queryClient.invalidateQueries({ queryKey: ["owner-agenda"] });
+      router.navigate({ params: { created: "1" }, pathname: "/agenda" });
+    },
+  });
 
-  const createAppointment = async () => {
-    if (!selectedBarberServiceId || !selectedCustomerId || !selectedStartsAt) return;
-    setFeedback(null);
-    setIsSaving(true);
-    try {
-      await bookOwnerAppointment(supabase, { barberServiceId: selectedBarberServiceId, customerId: selectedCustomerId, notes: notes.trim() || null, startsAt: selectedStartsAt });
-      setFeedback({ message: t("owner.appointmentForm.created"), variant: "success" });
-      setSlots([]);
-      setSelectedStartsAt(null);
-    } catch (error) {
-      // The slot may have been taken: refresh the times so the next pick is valid, then show why it failed.
-      await loadSlots();
-      fail(error, t("owner.appointmentForm.createError"));
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const back = useBack();
+  const title = t(`owner.appointmentForm.${step}Title`);
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
-      <KeyboardAwareScrollView refreshControl={pullToRefresh(pull)} bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
+      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
-            <ScreenHeader backLabel={t("owner.appointmentForm.backToAgenda")} onBack={back} title={t("owner.appointmentForm.title")} />
+            <ScreenHeader backLabel={t("common.back")} onBack={goBack} title={title} />
+            <StepBar
+              canSelect={(key) => trail.includes(key as Step)}
+              currentKey={step}
+              label={t("book.stepOf", { current: FLOW.indexOf(step) + 1, name: t(`owner.appointmentForm.steps.${step}`), total: FLOW.length })}
+              onSelect={(key) => setTrail((existing) => existing.slice(0, existing.indexOf(key as Step) + 1))}
+              steps={FLOW.map((key) => ({ key, label: t(`owner.appointmentForm.steps.${key}`) }))}
+            />
             {shop.isLoading || catalog.isLoading ? <SkeletonBlock height={96} width={320} /> : null}
             {shop.error || catalog.error ? <Text className="text-sm font-sans text-danger-500">{errorMessage(shop.error ?? catalog.error, t, t("owner.appointmentForm.loadError"))}</Text> : null}
             {shop.data === null ? <Text className="text-sm font-sans text-neutral-600">{t("common.noShop")}</Text> : null}
 
-            <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{t("common.customer")}</Text>
-            <Input label={t("owner.appointmentForm.searchCustomer")} onChangeText={setSearch} placeholder={t("examples.search")} testID="owner-customer-search" value={search} />
-            <ScrollView className="max-h-[280px]" nestedScrollEnabled>
-              <RadioBlock
-                items={customers.map((customer) => ({ key: customer.id, label: customer.fullName, onPress: () => setSelectedCustomerId(customer.id), selected: customer.id === selectedCustomerId }))}
-                testID="owner-customer-list"
-              />
-            </ScrollView>
-
-            <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{t("common.service")}</Text>
-            <RadioBlock
-              items={choices.map(({ barber, barberService, service }) => ({
-                key: barberService.id,
-                label: `${barber?.name} · ${service?.name}`,
-                onPress: () => {
-                  setSelectedBarberServiceId(barberService.id);
-                  setSlots([]);
-                  setSelectedStartsAt(null);
-                },
-                selected: barberService.id === selectedBarberServiceId,
-              }))}
-              testID="owner-service-list"
-            />
-
-            <DateInput label={t("common.localDate")} onChangeValue={setLocalDate} testID="owner-appointment-date" value={localDate} />
-            <Button disabled={!selectedBarberService || isSaving} label={t("owner.appointmentForm.loadTimes")} onPress={() => void loadSlots()} testID="owner-form-load-times" variant="outline" />
-            {slots.length > 0 ? (
-              <View className="flex-row flex-wrap gap-2" testID="owner-form-slots">
-                {slots.map((slot) => (
-                  <Button key={slot.startsAt} label={slot.localTime.slice(0, 5)} onPress={() => setSelectedStartsAt(slot.startsAt)} size="sm" variant={slot.startsAt === selectedStartsAt ? "dark" : "outline"} />
-                ))}
-              </View>
+            {step === "customer" ? (
+              <>
+                <Input label={t("owner.appointmentForm.searchCustomer")} onChangeText={setSearch} placeholder={t("examples.search")} testID="owner-customer-search" value={search} />
+                <RadioBlock
+                  items={customers.map((candidate) => ({ key: candidate.id, label: candidate.fullName, onPress: () => { setSelectedCustomerId(candidate.id); go("service"); }, selected: candidate.id === selectedCustomerId }))}
+                  testID="owner-customer-list"
+                />
+              </>
             ) : null}
 
-            <Input label={t("book.notes")} onChangeText={setNotes} placeholder={t("examples.notes")} testID="owner-form-notes" value={notes} />
-            <Button
-              disabled={!selectedBarberServiceId || !selectedCustomerId || !selectedStartsAt || isSaving}
-              label={t("owner.appointmentForm.create")}
-              onPress={() => void createAppointment()}
-              testID="owner-form-create"
-            />
+            {step === "service" ? (
+              <RadioBlock
+                items={choices.map(({ barber, barberService, service }) => ({
+                  key: barberService.id,
+                  label: `${barber?.name} · ${service?.name}`,
+                  onPress: () => {
+                    setSelectedBarberServiceId(barberService.id);
+                    setSelectedStartsAt(null);
+                    go("date");
+                  },
+                  selected: barberService.id === selectedBarberServiceId,
+                }))}
+                testID="owner-service-list"
+              />
+            ) : null}
+
+            {step === "date" ? (
+              <DateStep localDate={localDate} maxDaysAhead={OWNER_BOOKING_DAYS} onChange={(date) => { setLocalDate(date); setSelectedStartsAt(null); }} onContinue={() => go("time")} testID="owner-continue" today={today} />
+            ) : null}
+
+            {step === "time" && choice ? (
+              <TimeStep barberId={choice.barberService.barberId} barberServiceId={choice.barberService.id} localDate={localDate} onContinue={() => go("review")} onSelect={setSelectedStartsAt} startsAt={selectedStartsAt} testID="owner-continue" />
+            ) : null}
+
+            {step === "review" ? (
+              <>
+                <View className="gap-2 rounded-[20px] bg-neutral-50 p-4" testID="owner-summary">
+                  {[
+                    [t("common.customer"), customer?.fullName ?? ""],
+                    [t("book.summary.barber"), choice?.barber?.name ?? ""],
+                    [t("book.summary.service"), choice?.service?.name ?? ""],
+                    [t("book.summary.date"), chosen ? formatDateNumeric(chosen.localDate, language) : ""],
+                    [t("book.summary.time"), chosen?.localTime ?? ""],
+                  ].map(([label, value]) => (
+                    <View className="flex-row justify-between gap-3" key={label}>
+                      <Text className="text-sm font-sans text-neutral-600">{label}</Text>
+                      <Text className="flex-shrink text-right text-sm font-sans-semibold text-ink">{value}</Text>
+                    </View>
+                  ))}
+                </View>
+                <Input label={t("book.notes")} multiline onChangeText={setNotes} placeholder={t("examples.notes")} testID="owner-form-notes" value={notes} />
+                <Button disabled={!selectedStartsAt || create.isPending} label={t("owner.appointmentForm.create")} onPress={() => create.mutate()} size="lg" testID="owner-form-create" />
+              </>
+            ) : null}
             <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
           </View>
         </View>

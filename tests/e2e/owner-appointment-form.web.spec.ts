@@ -41,6 +41,7 @@ async function mockOwnerRest(page: Page, calls: Record<string, unknown>, bookFai
 
       return json(route, [{ ends_at: new Date(slotStart.getTime() + 30 * 60 * 1000).toISOString(), local_date: "2026-10-01", local_time: "10:30:00", starts_at: slotStart.toISOString() }]);
     }
+    if (path.endsWith("/rpc/list_owner_agenda") || path.endsWith("/rpc/list_owner_agenda_overrides")) return json(route, []);
     if (path.endsWith("/rpc/book_appointment")) {
       calls.book = route.request().postDataJSON();
       if (bookFails) return json(route, { code: "P0001", message: "SLOT_UNAVAILABLE" }, 400);
@@ -56,41 +57,84 @@ async function mockOwnerRest(page: Page, calls: Record<string, unknown>, bookFai
   });
 }
 
-test("the owner books an appointment: customer, service, time, then create", async ({ page }) => {
+test("the owner books with the booking steps: customer, service, date, time, review, create", async ({ page }) => {
   const calls: Record<string, unknown> = {};
 
   await signInAsOwner(page);
   await mockOwnerRest(page, calls);
 
   await page.goto("/appointment-form");
-  await expect(page.getByRole("heading", { name: "New owner appointment" })).toBeVisible();
-  await expect(page.getByTestId("owner-form-create")).toBeDisabled();
+  await expect(page.getByRole("heading", { name: "Choose the customer" })).toBeVisible();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 6 · Customer");
+  // The old form controls are gone.
+  await expect(page.getByTestId("owner-appointment-date")).toHaveCount(0);
+  await expect(page.getByTestId("owner-form-load-times")).toHaveCount(0);
 
-  // The customer list filters as the owner types.
+  // The customer list filters as the owner types; tapping a customer moves on.
   await page.getByTestId("owner-customer-search").fill("caio");
   await expect(page.getByTestId("option-c1")).toHaveCount(0);
   await page.getByTestId("owner-customer-search").fill("");
   await page.getByTestId("option-c1").click();
+
+  await expect(page.getByTestId("step-label")).toHaveText("Step 2 of 6 · Service");
+  await expect(page.getByTestId("option-bs1")).toContainText("Bruno Barber · Cut");
   await page.getByTestId("option-bs1").click();
-  await page.getByTestId("owner-form-load-times").click();
+
+  await expect(page.getByTestId("step-label")).toHaveText("Step 3 of 6 · Date");
+  await expect(page.getByTestId("month-calendar")).toBeVisible();
+  await page.getByTestId("owner-continue").click();
+
+  await expect(page.getByTestId("step-label")).toHaveText("Step 4 of 6 · Time");
+  await expect(page.getByTestId("owner-continue")).toBeDisabled();
   await page.getByRole("button", { name: "10:30" }).click();
+  await page.getByTestId("owner-continue").click();
+
+  await expect(page.getByTestId("step-label")).toHaveText("Step 5 of 6 · Review");
+  const summary = page.getByTestId("owner-summary");
+
+  await expect(summary).toContainText("Ana Customer");
+  await expect(summary).toContainText("Bruno Barber");
+  await expect(summary).toContainText("Cut");
   await page.getByTestId("owner-form-notes").fill("window seat");
   await page.getByTestId("owner-form-create").click();
 
+  await expect(page).toHaveURL(/\/agenda/);
   await expect(page.getByText("Appointment created.")).toBeVisible();
   expect(calls.book).toEqual({ barber_service_id: "bs1", customer_id: "c1", notes: "window seat", source: "owner", starts_at: slotStart.toISOString() });
 });
 
-test("a slot taken meanwhile shows the error", async ({ page }) => {
+test("back steps back, a finished step is tappable, and the first step leaves", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, {});
+  const back = () => page.locator('[data-testid="back"]:not([aria-hidden="true"] *)').click();
+
+  await page.goto("/agenda");
+  await page.getByTestId("owner-new-appointment").click();
+  await page.getByTestId("option-c1").click();
+  await page.getByTestId("option-bs1").click();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 3 of 6 · Date");
+
+  await back();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 2 of 6 · Service");
+  await page.getByTestId("step-customer").click();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 6 · Customer");
+  await back();
+  await expect(page).toHaveURL(/\/agenda/);
+});
+
+test("a time taken meanwhile returns to the time step with the error", async ({ page }) => {
   await signInAsOwner(page);
   await mockOwnerRest(page, {}, true);
 
   await page.goto("/appointment-form");
   await page.getByTestId("option-c1").click();
   await page.getByTestId("option-bs1").click();
-  await page.getByTestId("owner-form-load-times").click();
+  await page.getByTestId("owner-continue").click();
   await page.getByRole("button", { name: "10:30" }).click();
+  await page.getByTestId("owner-continue").click();
   await page.getByTestId("owner-form-create").click();
 
   await expect(page.getByText("That time is no longer available.")).toBeVisible();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 4 of 6 · Time");
+  await expect(page.getByTestId("owner-continue")).toBeDisabled();
 });
