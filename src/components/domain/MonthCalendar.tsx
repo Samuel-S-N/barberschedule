@@ -87,7 +87,8 @@ export function MonthCalendar({ maxDaysAhead = BOOKING_DAYS_AHEAD, onSelectDate,
   const lastMonth = addLocalDays(today, maxDaysAhead).slice(0, 7);
   const months = monthRange(firstMonth, lastMonth);
   const pages = months.length;
-  const [pickedMonth, setPickedMonth] = useState(firstMonth);
+  // Opens on the month of the selected date (a flow may start on a later day); it is clamped to the window below.
+  const [pickedMonth, setPickedMonth] = useState(selectedDate.slice(0, 7) || firstMonth);
   const index = pickedMonth <= firstMonth ? 0 : pickedMonth >= lastMonth ? pages - 1 : months.indexOf(pickedMonth);
   const canGoBack = index > 0;
   const canGoForward = index < pages - 1;

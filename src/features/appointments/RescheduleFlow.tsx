@@ -28,6 +28,10 @@ export type RescheduleFlowProps = {
   currentTitle?: string;
   // The day the calendar starts on (never before today).
   initialDate?: string;
+  // Label of the "keep" button (default: keep the current time).
+  keepLabel?: string;
+  // How far ahead the calendar goes (default: the booking window, 30 days).
+  maxDaysAhead?: number;
   // Back on the first step and "keep the current time".
   onExit: () => void;
   // After a successful move: refresh the lists and leave.
@@ -36,7 +40,7 @@ export type RescheduleFlowProps = {
   submit: (startsAt: string) => Promise<unknown>;
   // Service / barber (or customer) rows of the review.
   summaryRows: Array<[label: string, value: string]>;
-  testPrefix: "move" | "reschedule";
+  testPrefix: "conflict" | "move" | "owner" | "reschedule";
 };
 
 type Step = "date" | "review" | "time";
@@ -44,7 +48,7 @@ const FLOW = ["date", "time", "review", "confirm"] as const;
 
 // Reschedule like the booking wizard: date › time › review › confirm, with the step bar on top.
 // "Confirm" is the button of the review step, as in booking, so it has no screen of its own.
-export function RescheduleFlow({ barberId, barberServiceId, current, currentCard, currentLabel, currentTitle, initialDate, onExit, onMoved, submit, summaryRows, testPrefix }: RescheduleFlowProps) {
+export function RescheduleFlow({ barberId, barberServiceId, current, currentCard, currentLabel, currentTitle, initialDate, keepLabel, maxDaysAhead, onExit, onMoved, submit, summaryRows, testPrefix }: RescheduleFlowProps) {
   const { t } = useTranslation();
   const language = useLanguage();
   const queryClient = useQueryClient();
@@ -97,7 +101,7 @@ export function RescheduleFlow({ barberId, barberServiceId, current, currentCard
           />
 
           {step === "date" ? (
-            <DateStep localDate={localDate} onChange={(date) => { setLocalDate(date); setStartsAt(null); }} onContinue={() => go("time")} testID={`${testPrefix}-continue`} today={today}>
+            <DateStep localDate={localDate} maxDaysAhead={maxDaysAhead} onChange={(date) => { setLocalDate(date); setStartsAt(null); }} onContinue={() => go("time")} testID={`${testPrefix}-continue`} today={today}>
               {currentCard ? (
                 <View className="w-full max-w-[420px] gap-2">
                   <Text className="text-sm font-sans-medium text-neutral-600">{currentTitle ?? t("reschedule.current")}</Text>
@@ -123,7 +127,7 @@ export function RescheduleFlow({ barberId, barberServiceId, current, currentCard
               </View>
               <View className="gap-2">
                 <Button disabled={!startsAt || move.isPending} label={t("reschedule.confirm")} onPress={() => startsAt && move.mutate(startsAt)} size="lg" testID={`${testPrefix}-confirm`} />
-                <Button label={t("reschedule.keep")} onPress={onExit} testID={`${testPrefix}-keep`} variant="ghost" />
+                <Button label={keepLabel ?? t("reschedule.keep")} onPress={onExit} testID={`${testPrefix}-keep`} variant="ghost" />
               </View>
             </View>
           ) : null}

@@ -18,13 +18,13 @@ import type { AvailableSlot } from "./types";
 // The two steps every date-and-time scheduling flow shares (reschedule, move, conflict, owner booking):
 // pick the day on the month calendar, then one of that day's free times.
 
-export function DateStep({ children, localDate, onChange, onContinue, testID, today }: { children?: ReactNode; localDate: string; onChange: (date: string) => void; onContinue: () => void; testID: string; today: string }) {
+export function DateStep({ children, localDate, maxDaysAhead, onChange, onContinue, testID, today }: { children?: ReactNode; localDate: string; maxDaysAhead?: number; onChange: (date: string) => void; onContinue: () => void; testID: string; today: string }) {
   const { t } = useTranslation();
 
   return (
     <>
       {children}
-      <MonthCalendar onSelectDate={onChange} selectedDate={localDate} today={today} />
+      <MonthCalendar maxDaysAhead={maxDaysAhead} onSelectDate={onChange} selectedDate={localDate} today={today} />
       <View className="w-full max-w-[420px]">
         <Button label={t("book.continue")} onPress={onContinue} size="lg" testID={testID} />
       </View>

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Linking, ScrollView, Text, View } from "react-native";
 
@@ -11,7 +12,6 @@ import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Screen } from "../../src/components/ui/Screen";
 import { buildWhatsAppRecurrenceConflictUrl, listOwnerRecurrenceConflicts, resolveRecurrenceConflict } from "../../src/features/recurrence/api";
-import { ConflictRescheduleSheet } from "../../src/features/recurrence/ConflictRescheduleSheet";
 import type { RecurrenceConflict } from "../../src/features/recurrence/types";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
 import { errorMessage } from "../../src/i18n/errors";
@@ -30,19 +30,26 @@ export default function RecurrenceConflictsScreen() {
   const shopId = shop.data ?? null;
   const queryClient = useQueryClient();
   const [feedback, setFeedback] = useState<{ message: string; variant: "error" | "success" } | null>(null);
-  const [rescheduling, setRescheduling] = useState<RecurrenceConflict | null>(null);
+  const router = useRouter();
+  const { done } = useLocalSearchParams<{ done?: string }>();
   const conflicts = useQuery({
     enabled: shopId !== null,
     queryFn: () => listOwnerRecurrenceConflicts(supabase, shopId ?? ""),
     queryKey: ["owner-recurrence-conflicts", shopId],
   });
 
+  // Coming back from the reschedule steps after a successful move: confirm it here, once.
+  useEffect(() => {
+    if (done !== "rescheduled") return;
+    setFeedback({ message: t("owner.conflicts.rescheduled"), variant: "success" });
+    router.setParams({ done: undefined });
+  }, [done]);
+
   const resolve = useMutation({
-    mutationFn: (input: { id: string; startsAt: string | null }) => resolveRecurrenceConflict(supabase, input),
+    mutationFn: (input: { id: string }) => resolveRecurrenceConflict(supabase, { id: input.id, startsAt: null }),
     onError: (error) => setFeedback({ message: errorMessage(error, t, t("owner.conflicts.resolveError")), variant: "error" }),
-    onSuccess: (_data, input) => {
-      setRescheduling(null);
-      setFeedback({ message: t(input.startsAt ? "owner.conflicts.rescheduled" : "owner.conflicts.dismissed"), variant: "success" });
+    onSuccess: () => {
+      setFeedback({ message: t("owner.conflicts.dismissed"), variant: "success" });
       void queryClient.invalidateQueries({ queryKey: ["owner-recurrence-conflicts"] });
       void queryClient.invalidateQueries({ queryKey: ["owner-agenda"] });
     },
@@ -83,8 +90,11 @@ export default function RecurrenceConflictsScreen() {
                     </Text>
                     {open ? (
                       <View className="flex-row flex-wrap gap-2">
-                        <Button label={t("owner.conflicts.reschedule")} onPress={() => setRescheduling(conflict)} size="sm" testID={`conflict-reschedule-${conflict.id}`} />
-                        <Button disabled={resolve.isPending} label={t("owner.conflicts.dismiss")} onPress={() => resolve.mutate({ id: conflict.id, startsAt: null })} size="sm" testID={`conflict-dismiss-${conflict.id}`} variant="outline" />
+                        <Button label={t("owner.conflicts.reschedule")} onPress={() => router.push({
+                          params: { barberId: conflict.barberId, barberServiceId: conflict.barberServiceId, conflictId: conflict.id, customerName: conflict.customerName, localStartTime: conflict.localStartTime, occurrenceDate: conflict.occurrenceDate, serviceName: conflict.serviceName },
+                          pathname: "/conflict-reschedule",
+                        })} size="sm" testID={`conflict-reschedule-${conflict.id}`} />
+                        <Button disabled={resolve.isPending} label={t("owner.conflicts.dismiss")} onPress={() => resolve.mutate({ id: conflict.id })} size="sm" testID={`conflict-dismiss-${conflict.id}`} variant="outline" />
                         <Button label={t("owner.conflicts.openWhatsApp")} onPress={() => void openWhatsApp(conflict)} size="sm" testID={`conflict-whatsapp-${conflict.id}`} variant="outline" />
                       </View>
                     ) : (
@@ -94,15 +104,6 @@ export default function RecurrenceConflictsScreen() {
                 </Card>
               );
             })}
-            <ConflictRescheduleSheet
-              barberId={rescheduling?.barberId ?? ""}
-              barberServiceId={rescheduling?.barberServiceId ?? ""}
-              busy={resolve.isPending}
-              date={rescheduling?.occurrenceDate ?? ""}
-              onClose={() => setRescheduling(null)}
-              onConfirm={(startsAt) => rescheduling && resolve.mutate({ id: rescheduling.id, startsAt })}
-              visible={rescheduling !== null}
-            />
             <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
           </View>
         </View>
