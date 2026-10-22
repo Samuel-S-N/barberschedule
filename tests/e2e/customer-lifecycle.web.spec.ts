@@ -144,8 +144,12 @@ test("a customer can reschedule by picking a new date and time", async ({ page }
   await page.getByTestId("appointment-card-appointment-upcoming").click();
   await page.getByTestId("appointment-reschedule-appointment-upcoming").click();
 
-  await expect(page.getByRole("heading", { name: "Reschedule" })).toBeVisible();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 4 · Date");
+  await page.getByTestId("reschedule-continue").click();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 2 of 4 · Time");
   await page.getByRole("button", { name: "10:00" }).click();
+  await page.getByTestId("reschedule-continue").click();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 3 of 4 · Review");
   await page.getByTestId("reschedule-confirm").click();
 
   await expect(page).toHaveURL(/\/appointments$/);

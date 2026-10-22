@@ -16,7 +16,7 @@ const invalidates = /invalidateQueries\(\{ queryKey: \["available-slots"\] \}\)/
 
 describe("stale slot recovery", () => {
   const book = read("app/(customer)/(tabs)/book/review.tsx");
-  const reschedule = read("app/(customer)/reschedule.tsx");
+  const reschedule = read("src/features/appointments/RescheduleFlow.tsx");
 
   const time = read("app/(customer)/(tabs)/book/time.tsx");
 
