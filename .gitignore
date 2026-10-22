@@ -50,3 +50,4 @@ test-results/
 
 # generated analysis
 graphify-out/
+.e2e-dist/
