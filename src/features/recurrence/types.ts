@@ -3,7 +3,6 @@ export type RecurrenceSeriesRow = {
   barber_service_id: string;
   customer_id: string;
   customer_name?: string;
-  ends_on: string | null;
   ended_at: string | null;
   id: string;
   interval_weeks: number;
@@ -17,7 +16,6 @@ export type RecurrenceSeries = {
   barberServiceId: string;
   customerId: string;
   customerName: string;
-  endsOn: string | null;
   endedAt: string | null;
   id: string;
   intervalWeeks: number;

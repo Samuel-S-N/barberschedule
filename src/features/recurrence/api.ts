@@ -34,7 +34,6 @@ function toRecurrenceSeries(row: RecurrenceSeriesRow): RecurrenceSeries {
     customerId: row.customer_id,
     customerName: row.customer_name ?? "",
     endedAt: row.ended_at,
-    endsOn: row.ends_on,
     id: row.id,
     intervalWeeks: row.interval_weeks,
     localStartDate: row.local_start_date,
@@ -60,10 +59,48 @@ export async function createRecurrenceSeries(
   return toRecurrenceSeries(singleRow(data as RecurrenceSeriesRow[] | null, error));
 }
 
+export type MyRecurrenceSeries = {
+  active: boolean;
+  barberServiceId: string;
+  cancelRequested: boolean;
+  customerId: string;
+  customerName: string;
+  customerPhone: string | null;
+  endedAt: string | null;
+  id: string;
+  intervalWeeks: number;
+  localStartDate: string;
+  localStartTime: string;
+  serviceName: string;
+  specialPriceCents: number | null;
+};
+
+// The plans of the signed-in barber's own customers (active ones first).
+export async function listMyRecurrenceSeries(supabase: RecurrenceSupabaseClient): Promise<MyRecurrenceSeries[]> {
+  const { data, error } = await supabase.rpc("list_my_recurrence_series");
+  if (error) throw toRecurrenceError(error);
+
+  return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
+    active: Boolean(row.active),
+    barberServiceId: String(row.barber_service_id),
+    cancelRequested: row.cancel_requested_at !== null && row.cancel_requested_at !== undefined,
+    customerId: String(row.customer_id),
+    customerName: String(row.customer_name ?? ""),
+    customerPhone: (row.customer_phone as string | null) ?? null,
+    endedAt: (row.ended_at as string | null) ?? null,
+    id: String(row.id),
+    intervalWeeks: Number(row.interval_weeks),
+    localStartDate: String(row.local_start_date),
+    localStartTime: String(row.local_start_time).slice(0, 5),
+    serviceName: String(row.service_name),
+    specialPriceCents: row.special_price_cents === null || row.special_price_cents === undefined ? null : Number(row.special_price_cents),
+  }));
+}
+
 export async function editRecurrenceSeries(
   supabase: RecurrenceSupabaseClient,
   seriesId: string,
-  input: Omit<RecurrenceSeriesInput, "barberServiceId" | "customerId" | "localStartDate"> & { endsOn?: string | null },
+  input: Omit<RecurrenceSeriesInput, "barberServiceId" | "customerId" | "localStartDate">,
 ) {
   const parsed = parseRecurrenceSeriesInput({
     ...input,
@@ -72,7 +109,6 @@ export async function editRecurrenceSeries(
     localStartDate: "2000-01-01",
   });
   const { data, error } = await supabase.rpc("edit_recurrence_series", {
-    target_ends_on: input.endsOn ?? null,
     target_interval_weeks: parsed.intervalWeeks,
     target_local_start_time: parsed.localStartTime,
     target_series_id: seriesId,

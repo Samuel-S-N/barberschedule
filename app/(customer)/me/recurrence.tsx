@@ -163,6 +163,7 @@ export default function CustomerRecurrenceScreen() {
             {recurrenceLabel(t, request.weeks)} · {formatDateNumeric(request.startDate, language)} {request.startTime}
           </Text>
           <Text className="text-sm font-sans-medium text-ink" testID={`my-request-status-${request.id}`}>{t(`recurrence.status.${status}`)}</Text>
+          {status === "active" || status === "cancel_requested" ? <Text className="text-xs font-sans text-neutral-600">{t("recurrence.noEnd")}</Text> : null}
           {status === "pending" ? (
             <View className="flex-row">
               <Button disabled={cancel.isPending} label={t("recurrence.cancelRequest")} onPress={() => cancel.mutate(request.id)} size="sm" testID={`my-request-cancel-${request.id}`} variant="outline" />
