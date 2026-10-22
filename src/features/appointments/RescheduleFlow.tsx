@@ -12,6 +12,8 @@ import { Screen } from "../../components/ui/Screen";
 import { errorMessage } from "../../i18n/errors";
 import { useLanguage } from "../../i18n/use-language";
 import { formatInstantInShopTime } from "../../lib/dates/shop-time";
+import { addLocalDays } from "../../lib/dates/calendar-strip-days";
+import { BOOKING_DAYS_AHEAD } from "../../lib/dates/month-calendar";
 import { formatDateNumeric } from "../../lib/i18n/format";
 import { DateStep, TimeStep } from "../availability/steps";
 
@@ -26,12 +28,10 @@ export type RescheduleFlowProps = {
   currentCard: ReactNode;
   // Title of that block (default: the current appointment).
   currentTitle?: string;
-  // The day the calendar starts on (never before today).
+  // The day the calendar starts on, if it is inside the booking window (today..30 days); otherwise today.
   initialDate?: string;
   // Label of the "keep" button (default: keep the current time).
   keepLabel?: string;
-  // How far ahead the calendar goes (default: the booking window, 30 days).
-  maxDaysAhead?: number;
   // Back on the first step and "keep the current time".
   onExit: () => void;
   // After a successful move: refresh the lists and leave.
@@ -48,14 +48,14 @@ const FLOW = ["date", "time", "review", "confirm"] as const;
 
 // Reschedule like the booking wizard: date › time › review › confirm, with the step bar on top.
 // "Confirm" is the button of the review step, as in booking, so it has no screen of its own.
-export function RescheduleFlow({ barberId, barberServiceId, current, currentCard, currentLabel, currentTitle, initialDate, keepLabel, maxDaysAhead, onExit, onMoved, submit, summaryRows, testPrefix }: RescheduleFlowProps) {
+export function RescheduleFlow({ barberId, barberServiceId, current, currentCard, currentLabel, currentTitle, initialDate, keepLabel, onExit, onMoved, submit, summaryRows, testPrefix }: RescheduleFlowProps) {
   const { t } = useTranslation();
   const language = useLanguage();
   const queryClient = useQueryClient();
   const today = formatInstantInShopTime(new Date()).localDate;
   const [trail, setTrail] = useState<Step[]>(["date"]);
   const step = trail[trail.length - 1];
-  const [localDate, setLocalDate] = useState(initialDate && initialDate > today ? initialDate : today);
+  const [localDate, setLocalDate] = useState(initialDate && initialDate > today && initialDate <= addLocalDays(today, BOOKING_DAYS_AHEAD) ? initialDate : today);
   const [startsAt, setStartsAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const go = (next: Step) => setTrail((existing) => [...existing, next]);
@@ -101,7 +101,7 @@ export function RescheduleFlow({ barberId, barberServiceId, current, currentCard
           />
 
           {step === "date" ? (
-            <DateStep localDate={localDate} maxDaysAhead={maxDaysAhead} onChange={(date) => { setLocalDate(date); setStartsAt(null); }} onContinue={() => go("time")} testID={`${testPrefix}-continue`} today={today}>
+            <DateStep localDate={localDate} onChange={(date) => { setLocalDate(date); setStartsAt(null); }} onContinue={() => go("time")} testID={`${testPrefix}-continue`} today={today}>
               {currentCard ? (
                 <View className="w-full max-w-[420px] gap-2">
                   <Text className="text-sm font-sans-medium text-neutral-600">{currentTitle ?? t("reschedule.current")}</Text>
