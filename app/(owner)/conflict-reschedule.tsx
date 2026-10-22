@@ -44,7 +44,6 @@ export default function ConflictRescheduleScreen() {
       currentTitle={t("owner.conflicts.flowTitle")}
       initialDate={occurrenceDate}
       keepLabel={t("owner.conflicts.flowKeep")}
-      maxDaysAhead={90}
       onExit={() => router.navigate("/recurrence-conflicts")}
       onMoved={async () => {
         void queryClient.invalidateQueries({ queryKey: ["owner-agenda"] });
