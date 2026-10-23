@@ -420,7 +420,7 @@ export const es: DeepStringRecord<typeof en> = {
       paymentRemoved: "Pago eliminado.",
       invalidAmount: "Ingresa un monto válido.",
       invalidDate: "Ingresa la fecha como AAAA-MM-DD.",
-      rentNote: "El alquiler de silla es una estimación: semanal × días ÷ 7, mensual × días ÷ 30. Registra lo que se pagó realmente para comparar.",
+      rentNote: "El alquiler de silla es una estimación: semanal × días ÷ 7, mensual × días ÷ 30. Registra lo que se pagó realmente para comparar. Solo el alquiler registrado como pagado cuenta en el ingreso de la barbería.",
       revenue: "Facturación",
       shopIncome: "Ingreso de la barbería",
       shopIncomeHint: "Tras el pago a colaboradores",

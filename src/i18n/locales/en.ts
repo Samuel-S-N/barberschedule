@@ -421,7 +421,7 @@ export const en = {
       paymentRemoved: "Payment removed.",
       invalidAmount: "Enter a valid amount.",
       invalidDate: "Enter the date as YYYY-MM-DD.",
-      rentNote: "Chair rent is estimated: weekly × days ÷ 7, monthly × days ÷ 30. Record what was actually paid to compare.",
+      rentNote: "Chair rent is estimated: weekly × days ÷ 7, monthly × days ÷ 30. Record what was actually paid to compare. Only the rent you record as paid counts in shop income.",
       revenue: "Revenue",
       shopIncome: "Shop income",
       shopIncomeHint: "After payouts to collaborators",

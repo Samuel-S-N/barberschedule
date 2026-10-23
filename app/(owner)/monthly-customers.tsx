@@ -174,15 +174,15 @@ export default function MonthlyCustomersScreen() {
                       {group.items.map((item: RecurrenceSeries) => (
                       <Card key={item.id} testID={`series-${item.id}`} variant="outlined">
                         <View className={`gap-2 ${item.endedAt !== null ? "opacity-70" : ""}`}>
-                          <PlanSummary periodicity={recurrenceLabel(t, item.intervalWeeks)} title={labels.get(item.barberServiceId)?.serviceName ?? "—"} />
+                          <PlanSummary periodicity={recurrenceLabel(t, item.intervalWeeks)} title={labels.get(item.barberServiceId)?.serviceName ?? (item.customerName || item.customerId)} />
                           <Text className="text-sm font-sans text-neutral-700">
                             {t("owner.recurring.priceState", {
                               price: item.specialPriceCents === null ? t("owner.recurring.catalogPrice") : formatPriceBRL(item.specialPriceCents),
                               state: item.endedAt !== null ? t("owner.recurring.endedBadge") : item.active ? t("owner.recurring.active") : t("owner.recurring.inactive"),
                             })}
                           </Text>
-                          <Text className="text-sm font-sans text-neutral-700">{item.customerName || item.customerId}</Text>
-                          {labels.get(item.barberServiceId) ? <Text className="text-sm font-sans text-neutral-700">{labels.get(item.barberServiceId)?.barberName}</Text> : null}
+                          {labels.has(item.barberServiceId) ? <Text className="text-sm font-sans text-neutral-700">{item.customerName || item.customerId}</Text> : null}
+                          {labels.has(item.barberServiceId) ? <Text className="text-sm font-sans text-neutral-700">{labels.get(item.barberServiceId)?.barberName}</Text> : null}
                           <Text className="text-sm font-sans text-neutral-700" style={{ fontVariant: ["tabular-nums"] }}>
                             {t("owner.recurring.when", { date: formatDateNumeric(item.localStartDate, language), time: item.localStartTime })}
                           </Text>

@@ -7,7 +7,7 @@ export function PlanSummary({ amountText, caption, normalText, periodicity, titl
   return (
     <View className="gap-1">
       <View className="flex-row items-baseline justify-between gap-3">
-        <Text className="flex-1 text-base font-sans-semibold text-ink">{title}{periodicity ? " " : null}{periodicity ? <Text className="font-sans text-neutral-600">{periodicity}</Text> : null}</Text>
+        <Text className="flex-1 text-base font-sans-semibold text-ink">{title}{periodicity ? <> <Text className="font-sans text-neutral-600">{periodicity}</Text></> : null}</Text>
         {amountText ? <Text className="text-xl font-display-bold text-ink" style={{ fontVariant: ["tabular-nums"] }} testID="plan-amount">{amountText}</Text> : null}
       </View>
       {caption ? <Text className="text-sm font-sans text-neutral-700">{caption}</Text> : null}
