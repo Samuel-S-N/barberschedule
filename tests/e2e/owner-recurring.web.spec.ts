@@ -129,9 +129,10 @@ test("active series show frequency, service and price", async ({ page }) => {
   await page.goto("/monthly-customers");
   await page.getByTestId("recurring-tab-active").click();
   await expect(page.getByTestId(`series-${R1}`)).toContainText("Ana Souza");
-  await expect(page.getByTestId(`series-${R1}`)).toContainText("Bruno Barber · Cut");
+  await expect(page.getByTestId(`series-${R1}`)).toContainText("Cut");
+  await expect(page.getByTestId(`series-${R1}`)).toContainText("Bruno Barber");
   await expect(page.getByTestId(`series-${R1}`)).toContainText("R$ 30,00");
-  await expect(page.getByTestId(`series-${R2}`)).toContainText("catalog price");
+  await expect(page.getByTestId(`series-${R2}`)).toContainText("Catalog price");
 });
 
 test("the owner cancels one occurrence and ends a series", async ({ page }) => {
