@@ -58,6 +58,7 @@ test("the barber sees the active plans of their customers, with no end date, and
   await expect(page.getByText("No end date: it stays active until cancelled.").first()).toBeVisible();
   await expect(page.getByTestId("my-series-s1")).toContainText("Ana Souza");
   await expect(page.getByTestId("my-series-s1")).toContainText("Browser Cut");
+  await expect(page.getByTestId("my-series-s1")).toContainText("Starts on");
   await expect(page.getByTestId("my-series-s2")).toContainText("Every 2 weeks");
   // Ended plans are not listed here.
   await expect(page.getByTestId("my-series-s3")).toHaveCount(0);
