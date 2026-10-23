@@ -424,7 +424,7 @@ export const en = {
       rentNote: "Chair rent is estimated: weekly × days ÷ 7, monthly × days ÷ 30. Record what was actually paid to compare.",
       revenue: "Revenue",
       shopIncome: "Shop income",
-      shopIncomeHint: "After barber payouts, plus estimated chair rent",
+      shopIncomeHint: "After payouts to collaborators",
       title: "Revenue",
     },
     manage: { plans: "Recurrence plans", recurring: "Recurring customers", conflicts: "Recurrence conflicts", title: "Manage" },

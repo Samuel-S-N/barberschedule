@@ -423,7 +423,7 @@ export const pt: DeepStringRecord<typeof en> = {
       rentNote: "O aluguel de cadeira é uma estimativa: semanal × dias ÷ 7, mensal × dias ÷ 30. Registre o que foi realmente pago para comparar.",
       revenue: "Faturamento",
       shopIncome: "Receita da barbearia",
-      shopIncomeHint: "Após o repasse aos barbeiros, mais o aluguel de cadeira estimado",
+      shopIncomeHint: "Após repasse a colaboradores",
       title: "Faturamento",
     },
     manage: { plans: "Planos de recorrência", recurring: "Clientes recorrentes", conflicts: "Conflitos de recorrência", title: "Gerenciar" },

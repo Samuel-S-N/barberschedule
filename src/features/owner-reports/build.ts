@@ -28,12 +28,12 @@ export function sumShopReport(report: ShopReport): ShopTotals {
     cancellationRate: closed === 0 ? null : (days.cancelled + days.noShow) / closed,
     rentEstimateCents,
     rentPaidCents,
-    shopIncomeCents: days.grossCents - barberShareCents + rentEstimateCents,
+    shopIncomeCents: days.grossCents - barberShareCents + rentPaidCents,
   };
 }
 
 export function barberRows(report: ShopReport) {
-  return report.barbers.map((b) => ({ ...b, shopShareCents: b.grossCents - b.barberShareCents + b.rentEstimateCents }));
+  return report.barbers.map((b) => ({ ...b, shopShareCents: b.grossCents - b.barberShareCents + b.rentPaidCents }));
 }
 
 export function topByValue(items: Array<{ key: string; name: string; value: number }>, max = 4): DonutItem[] {

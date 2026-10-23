@@ -423,7 +423,7 @@ export const es: DeepStringRecord<typeof en> = {
       rentNote: "El alquiler de silla es una estimación: semanal × días ÷ 7, mensual × días ÷ 30. Registra lo que se pagó realmente para comparar.",
       revenue: "Facturación",
       shopIncome: "Ingreso de la barbería",
-      shopIncomeHint: "Tras los pagos a los barberos, más el alquiler de silla estimado",
+      shopIncomeHint: "Tras el pago a colaboradores",
       title: "Facturación",
     },
     manage: { plans: "Planes de recurrencia", recurring: "Clientes recurrentes", conflicts: "Conflictos de recurrencia", title: "Gestionar" },
