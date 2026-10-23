@@ -14,10 +14,10 @@ const report: ShopReport = {
 };
 
 describe("sumShopReport", () => {
-  it("adds up revenue, shares, rent and shop income", () => {
+  it("adds up revenue, shares, rent and shop income (paid rent only)", () => {
     expect(sumShopReport(report)).toEqual({
       barberShareCents: 9400, cancelled: 1, cancellationRate: 0.333_333_333_333_333_3, completed: 4,
-      grossCents: 16000, noShow: 1, rentEstimateCents: 14000, rentPaidCents: 5000, shopIncomeCents: 20600,
+      grossCents: 16000, noShow: 1, rentEstimateCents: 14000, rentPaidCents: 5000, shopIncomeCents: 11600,
     });
   });
 
@@ -27,8 +27,8 @@ describe("sumShopReport", () => {
 });
 
 describe("barberRows", () => {
-  it("adds each barber's shop share: revenue minus their share plus rent", () => {
-    expect(barberRows(report).map((r) => [r.name, r.shopShareCents])).toEqual([["Ana", 6600], ["Bruno", 7000], ["Davi", 7000]]);
+  it("adds each barber's shop share: revenue minus their share plus the rent already paid", () => {
+    expect(barberRows(report).map((r) => [r.name, r.shopShareCents])).toEqual([["Ana", 6600], ["Bruno", 5000], ["Davi", 0]]);
   });
 });
 

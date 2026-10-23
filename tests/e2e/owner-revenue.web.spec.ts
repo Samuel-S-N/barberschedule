@@ -49,8 +49,8 @@ test("the owner reaches Revenue from the tab bar and sees totals, charts and the
   await expect(page).toHaveURL(/\/revenue/);
 
   await expect(page.getByTestId("stat-revenue")).toContainText("R$ 160,00");
-  // 16000 - (4400 + 5000) + 7000 = 13600
-  await expect(page.getByTestId("stat-shop-income")).toContainText("R$ 136,00");
+  // 16000 - (4400 + 5000) + 0 paid = 6600 (the fixture has no rent payments)
+  await expect(page.getByTestId("stat-shop-income")).toContainText("R$ 66,00");
   await expect(page.getByTestId("stat-completed")).toContainText("4");
   await expect(page.getByTestId("chart-revenue")).toBeVisible();
   await expect(page.getByTestId("donut-barbers")).toContainText("Ana Barber");

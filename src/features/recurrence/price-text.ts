@@ -19,3 +19,9 @@ export function planValue(t: TFunction, priceCents: number, weeks: number) {
     ? { amountCents: priceCents, caption: t("recurrence.perSessionCaption") }
     : { amountCents: total, caption: t("recurrence.sessionsPerMonth", { count: sessionsPer4Weeks(weeks) }) };
 }
+
+// What the staff cards show beside a plan's title: the 4-week total (the per-session price when there is none) and the
+// "per session · N sessions in 4 weeks" caption under it.
+export function staffPlanPrice(t: TFunction, priceCents: number, weeks: number) {
+  return { amountText: formatPriceBRL(planValue(t, priceCents, weeks).amountCents), caption: recurrencePriceText(t, priceCents, weeks) };
+}
