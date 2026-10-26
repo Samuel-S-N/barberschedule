@@ -43,8 +43,10 @@ export default function OwnerLayout() {
       <Tabs.Screen name="revenue" />
       <Tabs.Screen name="manage" />
       <Tabs.Screen name="settings" />
+      {/* Declared WITHOUT `href: null`: since SDK 58 a hidden or undeclared route is not navigable (the navigator redirects to the
+          first tab), and the custom tab bar already shows only the four items above. */}
       {[...MANAGE_SCREENS, ...ACCOUNT_SCREENS, ...AGENDA_SCREENS].map((name) => (
-        <Tabs.Screen key={name} name={name} options={{ href: null }} />
+        <Tabs.Screen key={name} name={name} />
       ))}
     </Tabs>
   );

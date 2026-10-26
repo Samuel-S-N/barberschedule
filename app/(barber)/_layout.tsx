@@ -70,8 +70,10 @@ export default function BarberLayout() {
       <Tabs.Screen name="clients" />
       <Tabs.Screen name="earnings" />
       <Tabs.Screen name="my-profile" />
-      <Tabs.Screen name="move-appointment" options={{ href: null }} />
-      <Tabs.Screen name="barber-notifications" options={{ href: null }} />
+      {/* Declared WITHOUT `href: null`: since SDK 58 a hidden or undeclared route is not navigable (the navigator redirects to the
+          first tab), and the custom tab bar already shows only the four items above. */}
+      <Tabs.Screen name="move-appointment" />
+      <Tabs.Screen name="barber-notifications" />
     </Tabs>
   );
 }
