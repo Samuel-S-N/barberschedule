@@ -60,6 +60,7 @@ test("Manage has a Recurrence plans entry; the list shows price, periodicity and
   await expect(page.getByTestId(`plan-${P1}`)).toContainText("Corte mensal");
   await expect(page.getByTestId(`plan-${P1}`)).toContainText("R$ 25,00 per session");
   await expect(page.getByTestId(`plan-${P1}`)).toContainText("R$ 100,00");
+  await expect(page.getByTestId(`plan-${P1}`)).toContainText("Regular price");
   await expect(page.getByTestId("plan-99999999-9999-4999-8999-999999999992")).toContainText("Trimestral");
   await expect(page.getByTestId("plan-99999999-9999-4999-8999-999999999992")).toContainText("(inactive)");
   await expect(page.getByTestId("fab-add")).toBeVisible();

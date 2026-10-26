@@ -1,5 +1,5 @@
 import { fourWeekTotalCents, recurrenceLabel, sessionsPer4Weeks } from "../../src/features/recurrence/pricing";
-import { planValue, recurrencePriceText } from "../../src/features/recurrence/price-text";
+import { planValue, recurrencePriceText, staffPlanPrice } from "../../src/features/recurrence/price-text";
 
 const t = ((key: string, options?: Record<string, unknown>) => `${key}${options ? JSON.stringify(options) : ""}`) as never;
 
@@ -38,5 +38,18 @@ describe("planValue", () => {
 
   it("falls back to the price per session when 4 weeks is not a whole number of sessions", () => {
     expect(planValue(t, 3000, 3)).toEqual({ amountCents: 3000, caption: "recurrence.perSessionCaption" });
+  });
+});
+
+describe("staffPlanPrice", () => {
+  it("puts the 4-week total beside the title and the per-session caption under it", () => {
+    expect(staffPlanPrice(t, 2500, 1)).toEqual({ amountText: "R$ 100,00", caption: recurrencePriceText(t, 2500, 1) });
+  });
+
+  it("falls back to the per-session price when 4 weeks is not a whole number of sessions", () => {
+    const price = staffPlanPrice(t, 2500, 3);
+
+    expect(price.amountText).toBe("R$ 25,00");
+    expect(price.caption).not.toContain("recurrence.fourWeeks");
   });
 });

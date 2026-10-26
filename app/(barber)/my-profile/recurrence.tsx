@@ -17,6 +17,7 @@ import { getMyBarberProfile } from "../../../src/features/barbers/api";
 import { endRecurrenceSeries, listMyRecurrenceSeries } from "../../../src/features/recurrence/api";
 import type { MyRecurrenceSeries } from "../../../src/features/recurrence/api";
 import { CancellationCard } from "../../../src/features/recurrence/CancellationCard";
+import { PlanSummary } from "../../../src/features/recurrence/PlanSummary";
 import { recurrenceLabel } from "../../../src/features/recurrence/pricing";
 import { RequestCard } from "../../../src/features/recurrence/RequestCard";
 import { decideRecurrenceRequest, decideSeriesCancellation, listCancellationRequests, listRecurrenceRequests } from "../../../src/features/recurrence/requests-api";
@@ -119,9 +120,9 @@ export default function BarberRecurrenceScreen() {
                 {activePlans.map((plan) => (
                   <Card key={plan.id} testID={`my-series-${plan.id}`} variant="outlined">
                     <View className="gap-2">
-                      <Text className="text-base font-sans-semibold text-ink">{plan.customerName}</Text>
-                      <Text className="text-sm font-sans text-neutral-600">{plan.serviceName} · {recurrenceLabel(t, plan.intervalWeeks)}</Text>
-                      <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>{t("recurrence.startsOn", { date: formatDateNumeric(plan.localStartDate, language) })} · {plan.localStartTime}</Text>
+                      <PlanSummary periodicity={recurrenceLabel(t, plan.intervalWeeks)} title={plan.serviceName} />
+                      <Text className="text-sm font-sans text-neutral-700">{plan.customerName}</Text>
+                      <Text className="text-sm font-sans text-neutral-700" style={{ fontVariant: ["tabular-nums"] }}>{t("recurrence.startsOn", { date: formatDateNumeric(plan.localStartDate, language) })} · {plan.localStartTime}</Text>
                       <View className="flex-row">
                         <Button disabled={endPlan.isPending} label={t("recurrence.endPlan")} onPress={() => setEnding(plan)} size="sm" testID={`my-series-end-${plan.id}`} variant="outline" />
                       </View>
