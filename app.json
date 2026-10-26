@@ -26,16 +26,19 @@
       "output": "static"
     },
     "plugins": [
-      "expo-router",
+      ["expo-router", { "asyncRoutes": { "web": false } }],
       "expo-secure-store",
       "expo-font",
       "expo-localization",
       [
         "expo-image-picker",
-        { "photosPermission": "Allow Barberschedule to access your photos to set your profile picture." }
+        {
+          "photosPermission": "Allow Barberschedule to access your photos to set your profile picture."
+        }
       ],
       "expo-notifications",
-      "expo-sharing"
+      "expo-sharing",
+      "expo-status-bar"
     ]
   }
 }
