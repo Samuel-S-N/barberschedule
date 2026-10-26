@@ -6,10 +6,8 @@ import { useTranslation } from "react-i18next";
 import { BottomTabBar } from "../../../src/components/domain/BottomTabBar";
 import { Screen } from "../../../src/components/ui/Screen";
 import { colors } from "../../../src/lib/design/colors";
+import { selectTab } from "../../../src/lib/navigation/select-tab";
 import { isTabSwipeEnabled } from "../../../src/lib/navigation/tab-swipe";
-
-// expo-router types the TopTabs callbacks as `any`; these are the only fields used.
-type TabBarProps = { navigation: { navigate: (key: string) => void }; state: { index: number; routes: { name: string }[] } };
 
 export default function TabsLayout() {
   const { t } = useTranslation();
@@ -29,13 +27,13 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: colors.canvas },
         swipeEnabled: isTabSwipeEnabled(pathname),
       }}
-      tabBar={({ navigation, state }: TabBarProps) => (
+      tabBar={({ navigateToTab, state }) => (
         // Tab screens skip the bottom edge; the bar owns it so the system navigation area isn't padded twice.
         <Screen className="bg-surface" edges={["bottom", "left", "right"]}>
           <BottomTabBar
             activeKey={state.routes[state.index].name}
             items={items}
-            onSelect={(key) => navigation.navigate(key)}
+            onSelect={(key) => selectTab(state, navigateToTab, key)}
           />
         </Screen>
       )}

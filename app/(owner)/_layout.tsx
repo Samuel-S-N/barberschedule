@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { BottomTabBar } from "../../src/components/domain/BottomTabBar";
 import { Screen } from "../../src/components/ui/Screen";
+import { selectTab } from "../../src/lib/navigation/select-tab";
 import { usePushRegistration } from "../../src/features/notifications/use-push-registration";
 import { useHardwareBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
@@ -32,9 +33,9 @@ export default function OwnerLayout() {
     <Tabs
       backBehavior="history"
       screenOptions={{ headerShown: false }}
-      tabBar={({ navigation, state }) => (
+      tabBar={({ navigateToTab, state }) => (
         <Screen className="bg-surface" edges={["bottom", "left", "right"]}>
-          <BottomTabBar activeKey={highlight(state.routes[state.index].name)} items={items} onSelect={(key) => navigation.navigate(key)} />
+          <BottomTabBar activeKey={highlight(state.routes[state.index].name)} items={items} onSelect={(key) => selectTab(state, navigateToTab, key)} />
         </Screen>
       )}
     >

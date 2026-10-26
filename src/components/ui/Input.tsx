@@ -1,5 +1,5 @@
 import { createRef, useRef, useState } from "react";
-import type { Ref, RefObject } from "react";
+import type { ComponentRef, Ref, RefObject } from "react";
 import { Text, TextInput, View } from "react-native";
 import type { TextInputProps } from "react-native";
 
@@ -8,9 +8,12 @@ type PassThroughProps = Pick<
   "autoCapitalize" | "autoComplete" | "autoCorrect" | "keyboardType" | "onSubmitEditing" | "returnKeyType" | "textContentType"
 >;
 
+// What a TextInput ref points to (the strict React Native types no longer let the component be used as its own instance type).
+type TextInputRef = ComponentRef<typeof TextInput>;
+
 export type InputProps = PassThroughProps & {
-  inputRef?: Ref<TextInput>;
-  next?: RefObject<TextInput | null>;
+  inputRef?: Ref<TextInputRef>;
+  next?: RefObject<TextInputRef | null>;
   label: string;
   value: string;
   onChangeText: (text: string) => void;
@@ -73,9 +76,9 @@ export function Input({
 
 // Chains single-line fields so the keyboard's next key walks down the form: spread field(i) on the i-th Input.
 export function useFieldChain(count: number) {
-  const refs = useRef<RefObject<TextInput | null>[]>([]);
+  const refs = useRef<RefObject<TextInputRef | null>[]>([]);
 
-  while (refs.current.length < count) refs.current.push(createRef<TextInput>());
+  while (refs.current.length < count) refs.current.push(createRef<TextInputRef>());
 
   return (index: number) => ({ inputRef: refs.current[index], next: refs.current[index + 1] });
 }
