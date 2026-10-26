@@ -44,7 +44,7 @@ from generate_series(1, 7) as weekday;
 
 select set_config(
   'task8.first_start',
-  (date_trunc('hour', clock_timestamp()) + interval '4 hours')::text,
+  ((date_trunc('day', now() at time zone 'America/Sao_Paulo') + interval '1 day 10 hours') at time zone 'America/Sao_Paulo')::text,
   false
 );
 
