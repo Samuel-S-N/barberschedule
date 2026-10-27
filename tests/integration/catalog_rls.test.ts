@@ -92,6 +92,7 @@ describe("task 3 catalog and customer helpers", () => {
         id: "barber-1",
         invitedAt: null,
         name: "Alice Barber",
+        payout: { config: { day1: null, day2: null, schedule: "none" }, trackingStart: null },
         shopId: "shop-1",
         userId: "user-1",
       },

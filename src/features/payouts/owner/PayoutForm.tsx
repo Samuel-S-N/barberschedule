@@ -4,6 +4,7 @@ import { Text, View } from "react-native";
 
 import { Button } from "../../../components/ui/Button";
 import { Input } from "../../../components/ui/Input";
+import { DateInput } from "../../../components/ui/MaskedInputs";
 import { centsToReaisInput, parseReaisToCents } from "../../../lib/money";
 
 type Props = { balanceCents: number; busy: boolean; onCancel: () => void; onSubmit: (input: { amountCents: number; note: string; paidOn: string }) => void; today: string };
@@ -26,9 +27,9 @@ export function PayoutForm({ balanceCents, busy, onCancel, onSubmit, today }: Pr
 
   return (
     <View className="gap-2">
-      <Input keyboardType="numeric" label={t("payouts.form.amount")} onChangeText={setAmount} testID="payout-amount" value={amount} />
-      <Input label={t("payouts.form.date")} onChangeText={setPaidOn} placeholder={t("examples.date")} testID="payout-date" value={paidOn} />
-      <Input label={t("payouts.form.note")} onChangeText={setNote} testID="payout-note" value={note} />
+      <Input keyboardType="numeric" label={t("payouts.form.amount")} onChangeText={setAmount} placeholder={t("examples.money")} testID="payout-amount" value={amount} />
+      <DateInput label={t("payouts.form.date")} onChangeValue={setPaidOn} testID="payout-date" value={paidOn} />
+      <Input label={t("payouts.form.note")} onChangeText={setNote} placeholder={t("examples.note")} testID="payout-note" value={note} />
       {error ? <Text className="text-sm font-sans text-danger-500">{error}</Text> : null}
       <View className="flex-row gap-2">
         <Button disabled={busy} label={t("payouts.form.save")} onPress={submit} size="sm" testID="payout-submit" />
