@@ -142,7 +142,7 @@ select pg_temp.appt(5, 'confirmed');
 select pg_temp.appt(-3, 'scheduled');
 
 -- Weekly schedule whose last due date was exactly 3 days ago.
-update public.barbers set payout_schedule = 'weekly', payout_day_1 = extract(dow from current_date - 3)::smallint
+update public.barbers set payout_schedule = 'weekly', payout_day_1 = extract(dow from pg_temp.today() - 3)::smallint
 where id = 'b0200000-0000-0000-0000-000000000001';
 
 create function pg_temp.row_a() returns public.barbers language sql as $$
