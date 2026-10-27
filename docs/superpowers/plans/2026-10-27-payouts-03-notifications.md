@@ -565,3 +565,13 @@ git push -u origin feat-payouts-03-notifications
 ```
 
 Abrir PR com base `feat-payouts-02-payouts` (REST via `gh api` se `gh pr create` falhar), `bind_pr`, `set_monitor` (Auto-fix). Sem merge.
+
+---
+
+## Desvios registrados na execução
+
+- O teste SQL tem 11 asserções (o rascunho dizia 12).
+- `tests/unit/inbox.test.ts` precisou dos três campos novos de `params` (`amountCents`, `barberNames`, `paidOn`).
+- O corpo de `payout_due` mostra os nomes ("Ana, Caio +2"); o título é "Hoje é dia de repasse" (pt), "Payout day" (en), "Hoy toca pagar a barberos" (es).
+- Verificado no app real (Metro web + Supabase local): tocar no lembrete abre `/payouts` com a etiqueta "Due today"; o aviso `payout_paid` aparece no sino do barbeiro e abre a remuneração. A função do job foi executada à mão com um instante às 12:00 (o `pg_cron` não roda no ambiente local). O push em si (edge function `dispatch-notifications`) não foi exercitado localmente; só os textos têm teste.
+- Os dados de teste criados no banco local durante a verificação foram removidos.
