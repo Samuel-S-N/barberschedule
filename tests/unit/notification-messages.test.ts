@@ -122,3 +122,24 @@ describe("staff and recurrence push messages", () => {
     expect(buildMessage("recurrence.requested", "es", { ...staff, interval_weeks: 4 }).body).toContain("cada 4 semanas");
   });
 });
+
+describe("payout push messages", () => {
+  it("tells the owner who is due today, in the owner's language", () => {
+    expect(buildMessage("payout.due", "pt", { barber_names: ["Ana", "Caio"], count: 2, date: "2026-10-27" })).toEqual({
+      body: "Ana, Caio",
+      title: "Hoje é dia de repasse",
+    });
+    expect(buildMessage("payout.due", "en", { barber_names: ["Ana"], count: 1, date: "2026-10-27" }).title).toBe("Payout day");
+  });
+
+  it("marks that more barbers are due than the names listed", () => {
+    expect(buildMessage("payout.due", "es", { barber_names: ["Ana", "Beto", "Caio"], count: 5, date: "2026-10-27" }).body).toBe("Ana, Beto, Caio +2");
+  });
+
+  it("tells the barber how much arrived", () => {
+    const message = buildMessage("payout.paid", "pt", { amount_cents: 7050, paid_on: "2026-10-27" });
+
+    expect(message.title).toBe("Repasse recebido");
+    expect(message.body).toContain("70,50");
+  });
+});

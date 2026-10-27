@@ -124,6 +124,17 @@ const EXTENDED: Record<string, Record<Locale, ExtendedTemplate>> = {
   },
 };
 
+const MONEY_LOCALE_TAG = LOCALE_TAG;
+
+function formatMoney(cents: unknown, locale: Locale) {
+  return new Intl.NumberFormat(MONEY_LOCALE_TAG[locale], { currency: "BRL", style: "currency" }).format(Number(cents) / 100);
+}
+
+const PAYOUT_TITLES: Record<string, Record<Locale, string>> = {
+  "payout.due": { en: "Payout day", es: "Hoy toca pagar a barberos", pt: "Hoje é dia de repasse" },
+  "payout.paid": { en: "Payout received", es: "Pago recibido", pt: "Repasse recebido" },
+};
+
 function formatWhen(startsAt: unknown, locale: Locale, timeZone: string) {
   const date = new Date(String(startsAt));
 
@@ -160,6 +171,17 @@ export function buildMessage(
     const template = CONFLICT[language];
 
     return { body: template.body("", formatDate(payload.occurrence_date, language)), title: template.title };
+  }
+
+  if (eventType === "payout.due") {
+    const names = Array.isArray(payload.barber_names) ? payload.barber_names.map(String) : [];
+    const extra = Number(payload.count) - names.length;
+
+    return { body: `${names.join(", ")}${extra > 0 ? ` +${extra}` : ""}`, title: PAYOUT_TITLES[eventType][language] };
+  }
+
+  if (eventType === "payout.paid") {
+    return { body: `${formatMoney(payload.amount_cents, language)} · ${formatDate(payload.paid_on, language)}`, title: PAYOUT_TITLES[eventType][language] };
   }
 
   const extended = EXTENDED[eventType];
