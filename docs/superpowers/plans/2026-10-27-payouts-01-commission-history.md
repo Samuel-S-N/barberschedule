@@ -122,7 +122,7 @@ select lives_ok(
 );
 select is(pg_temp.share_a(), 8000, 'past appointments keep the old 40%');
 select is(
-  (select commission_percent from public.list_owner_barbers() where id = 'af200000-0000-0000-0000-000000000001'),
+  (select commission_percent from public.list_owner_barbers('af100000-0000-0000-0000-000000000001') where id = 'af200000-0000-0000-0000-000000000001'),
   50::numeric, 'the barber row mirrors the current percent'
 );
 
