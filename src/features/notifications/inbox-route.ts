@@ -5,7 +5,11 @@ type Role = "barber" | "customer" | "owner";
 const AGENDA: Record<Role, string> = { barber: "/my-agenda", customer: "/appointments", owner: "/agenda" };
 const REQUESTS: Record<Role, string> = { barber: "/my-profile/recurrence", customer: "/me/recurrence", owner: "/monthly-customers" };
 
+const PAYOUTS: Record<Role, string> = { barber: "/my-profile/compensation", customer: "/appointments", owner: "/payouts" };
+
 export function inboxRoute(kind: InboxKind, role: Role) {
+  if (kind.startsWith("payout_")) return PAYOUTS[role];
+
   return kind.startsWith("recurrence_") ? REQUESTS[role] : AGENDA[role];
 }
 

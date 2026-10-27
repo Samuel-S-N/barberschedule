@@ -292,6 +292,8 @@ export const en = {
     appointment_cancelled: { body: "{{serviceName}} · {{date}}", title: "Appointment cancelled" },
     appointment_confirmed: { body: "{{serviceName}} with {{barberName}} · {{date}}", title: "Appointment confirmed" },
     appointment_rescheduled: { body: "{{serviceName}} · now {{date}}", title: "Appointment rescheduled" },
+    payout_due: { body: "{{names}}", title: "Payout day" },
+    payout_paid: { body: "{{amount}} · {{date}}", title: "Payout received" },
     recurrence_cancel_accepted: { body: "{{serviceName}} · {{label}}", title: "Plan cancelled" },
     recurrence_cancel_declined: { body: "{{serviceName}} · {{label}}", title: "Cancellation declined" },
     recurrence_cancel_requested: { body: "{{customerName}} · {{serviceName}} · {{label}}", title: "Plan cancellation requested" },

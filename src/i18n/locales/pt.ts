@@ -291,6 +291,8 @@ export const pt: DeepStringRecord<typeof en> = {
     appointment_cancelled: { body: "{{serviceName}} · {{date}}", title: "Agendamento cancelado" },
     appointment_confirmed: { body: "{{serviceName}} com {{barberName}} · {{date}}", title: "Agendamento confirmado" },
     appointment_rescheduled: { body: "{{serviceName}} · agora {{date}}", title: "Agendamento remarcado" },
+    payout_due: { body: "{{names}}", title: "Hoje é dia de repasse" },
+    payout_paid: { body: "{{amount}} · {{date}}", title: "Repasse recebido" },
     recurrence_cancel_accepted: { body: "{{serviceName}} · {{label}}", title: "Plano cancelado" },
     recurrence_cancel_declined: { body: "{{serviceName}} · {{label}}", title: "Cancelamento recusado" },
     recurrence_cancel_requested: { body: "{{customerName}} · {{serviceName}} · {{label}}", title: "Cancelamento de plano solicitado" },
