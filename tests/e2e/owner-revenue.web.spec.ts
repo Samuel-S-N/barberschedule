@@ -232,3 +232,33 @@ test("a commission barber's card shows what was paid out and the running balance
   await page.getByTestId("revenue-payouts-link-b1").click();
   await expect(page).toHaveURL(/\/payouts/);
 });
+
+test("an overpaid balance stays inside the card and says the balance only counts from the tracking start", async ({ page }) => {
+  await signInAsOwner(page);
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.route("**/rest/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    const json = (body: unknown) => route.fulfill({ body: JSON.stringify(body), contentType: "application/json", status: 200 });
+
+    if (path.endsWith("/rpc/get_current_profile")) return json([{ full_name: "Owner", role: "owner", user_id: ownerId }]);
+    if (path.endsWith("/rpc/get_shop_report")) return json(report);
+    if (path.endsWith("/rpc/list_rent_payments")) return json([]);
+    if (path.endsWith("/rpc/list_barber_payouts")) return json([{ amount_cents: 2500, barber_id: "b1", barber_name: "Ana Barber", id: "p1", note: null, paid_on: "2026-10-27" }]);
+    if (path.endsWith("/rpc/get_payout_overview")) {
+      return json([{ balance_cents: -2500, barber_id: "b1", barber_name: "Ana Barber", earned_cents: 0, last_due_date: null, next_due_date: null, paid_cents: 2500, payout_day_1: 1, payout_day_2: null, payout_schedule: "weekly", status: "ok", tracking_start: "2026-10-27" }]);
+    }
+    await route.abort();
+  });
+
+  await page.goto("/revenue");
+  const card = page.getByTestId("barber-row-b1");
+  const balance = page.getByTestId("revenue-payouts-balance-b1");
+
+  await expect(balance).toContainText("R$ 25,00");
+  await expect(card).toContainText("Overpaid");
+  // The month's R$ 44,00 share is before the tracking start, so the card must say why the balance ignores it.
+  await expect(page.getByTestId("revenue-payouts-since-b1")).toContainText("27/10");
+  const box = (await balance.boundingBox())!;
+  const cardBox = (await card.boundingBox())!;
+  expect(box.x + box.width).toBeLessThanOrEqual(cardBox.x + cardBox.width);
+});

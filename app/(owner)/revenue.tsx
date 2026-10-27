@@ -22,6 +22,7 @@ import { Card } from "../../src/components/ui/Card";
 import { Screen } from "../../src/components/ui/Screen";
 import { barberRows, payoutsPaidByBarber, sumShopReport, topByValue } from "../../src/features/owner-reports/build";
 import { getPayoutOverview, listBarberPayouts } from "../../src/features/payouts/api";
+import { formatDayMonth } from "../../src/features/payouts/format";
 import { getShopReport } from "../../src/features/owner-reports/api";
 import { ownerReportCsv } from "../../src/features/reports/csv";
 import { useCsvLabels } from "../../src/features/reports/use-csv-labels";
@@ -153,14 +154,16 @@ export default function OwnerRevenueScreen() {
 
     if (!item) return null;
 
+    const overpaid = item.balanceCents < 0;
+
     return (
       <>
-        <View className="flex-row justify-between">
-          <Text className="text-sm font-sans-semibold text-ink">{t("owner.revenue.payoutBalance")}</Text>
-          <Text className={`text-sm font-sans-semibold ${item.balanceCents < 0 ? "text-warning-500" : "text-ink"}`} testID={`revenue-payouts-balance-${barberId}`}>
-            {item.balanceCents < 0 ? `${t("payouts.balanceOverpaid")} · ${money(-item.balanceCents)}` : money(item.balanceCents)}
-          </Text>
+        <View className="flex-row justify-between gap-2">
+          <Text className="flex-1 text-sm font-sans-semibold text-ink">{t(overpaid ? "payouts.balanceOverpaid" : "owner.revenue.payoutBalance")}</Text>
+          <Text className={`text-sm font-sans-semibold ${overpaid ? "text-warning-500" : "text-ink"}`} testID={`revenue-payouts-balance-${barberId}`}>{money(Math.abs(item.balanceCents))}</Text>
         </View>
+        {/* The balance ignores appointments before this date, so it can differ from the period's barber share above. */}
+        <Text className="text-xs font-sans text-neutral-500" testID={`revenue-payouts-since-${barberId}`}>{t("payouts.barber.since", { date: formatDayMonth(item.trackingStart) })}</Text>
         <Button label={t("owner.revenue.viewPayouts")} onPress={() => router.push("/payouts" as never)} size="sm" testID={`revenue-payouts-link-${barberId}`} variant="outline" />
       </>
     );
@@ -298,7 +301,7 @@ export default function OwnerRevenueScreen() {
                       ) : null}
                       {row.compensationType === "commission" && payouts.data ? (
                         <View className="flex-row justify-between">
-                          <Text className="text-sm font-sans text-neutral-600">{t("owner.revenue.payoutsPaid")}</Text>
+                          <Text className="flex-1 text-sm font-sans text-neutral-600">{t("owner.revenue.payoutsPaid")}</Text>
                           <Text className="text-sm font-sans-medium text-ink" testID={`revenue-payouts-paid-${row.barberId}`}>{money(paidOut[row.barberId] ?? 0)}</Text>
                         </View>
                       ) : null}
