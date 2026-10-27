@@ -196,3 +196,39 @@ test("each barber and service shows the change versus the previous period", asyn
   await page.getByTestId("section-services-toggle").click();
   await expect(page.getByTestId("section-services")).toContainText("+100%");
 });
+
+test("a commission barber's card shows what was paid out and the running balance, linked to Repasses", async ({ page }) => {
+  await signInAsOwner(page);
+  await page.route("**/rest/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    const json = (body: unknown) => route.fulfill({ body: JSON.stringify(body), contentType: "application/json", status: 200 });
+
+    if (path.endsWith("/rpc/get_current_profile")) return json([{ full_name: "Owner", role: "owner", user_id: ownerId }]);
+    if (path.endsWith("/rpc/get_shop_report")) return json(report);
+    if (path.endsWith("/rpc/list_rent_payments")) return json([]);
+    if (path.endsWith("/rpc/list_barber_payouts")) {
+      return json([
+        { amount_cents: 3000, barber_id: "b1", barber_name: "Ana Barber", id: "p1", note: null, paid_on: "2026-10-20" },
+        { amount_cents: 1000, barber_id: "b1", barber_name: "Ana Barber", id: "p2", note: null, paid_on: "2026-10-25" },
+      ]);
+    }
+    if (path.endsWith("/rpc/get_payout_overview")) {
+      return json([{ balance_cents: 7000, barber_id: "b1", barber_name: "Ana Barber", earned_cents: 11000, last_due_date: null, next_due_date: null, paid_cents: 4000, payout_day_1: null, payout_day_2: null, payout_schedule: "none", status: "no_schedule", tracking_start: "2026-10-01" }]);
+    }
+    await route.abort();
+  });
+
+  await page.goto("/revenue");
+  const ana = page.getByTestId("barber-row-b1");
+
+  // The "Repasse" line was the barber's share of the period, not a payment: it now says so.
+  await expect(ana).toContainText("Barber share");
+  await expect(page.getByTestId("revenue-payouts-paid-b1")).toContainText("R$ 40,00");
+  await expect(page.getByTestId("revenue-payouts-balance-b1")).toContainText("R$ 70,00");
+  // Chair-rental barbers are paid by the barber, so they get no payout lines.
+  await expect(page.getByTestId("barber-row-b2")).not.toContainText("Payouts paid");
+  await expect(page.getByTestId("revenue-payouts-paid-b2")).toHaveCount(0);
+
+  await page.getByTestId("revenue-payouts-link-b1").click();
+  await expect(page).toHaveURL(/\/payouts/);
+});
