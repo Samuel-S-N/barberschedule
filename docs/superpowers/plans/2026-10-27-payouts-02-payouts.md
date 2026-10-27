@@ -60,6 +60,9 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(27);
 
+-- Dates follow the shop's local calendar (America/Sao_Paulo), not the UTC session date, so the test does not depend on the hour it runs.
+create function pg_temp.today() returns date language sql as $$ select (now() at time zone 'America/Sao_Paulo')::date $$;
+
 -- Pure date rules (run as the table owner, before switching roles).
 select is(
   array(select d from public.payout_due_dates('weekly', 1::smallint, null, '2026-10-26', '2026-11-08') d),
@@ -104,8 +107,8 @@ values ('b0100000-0000-0000-0000-000000000001', 'T43 Shop', 'b0000000-0000-0000-
 -- A: commission 50, tracking since 20 days ago. C: commission 40 without a schedule. R: chair rental.
 insert into public.barbers (id, shop_id, user_id, name, compensation_type, commission_percent, chair_rental_amount_cents, chair_rental_frequency, payout_tracking_start)
 values
-  ('b0200000-0000-0000-0000-000000000001', 'b0100000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000002', 'Barber A', 'commission', 50, null, null, current_date - 20),
-  ('b0200000-0000-0000-0000-000000000002', 'b0100000-0000-0000-0000-000000000001', null, 'Barber C', 'commission', 40, null, null, current_date - 20),
+  ('b0200000-0000-0000-0000-000000000001', 'b0100000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000002', 'Barber A', 'commission', 50, null, null, pg_temp.today() - 20),
+  ('b0200000-0000-0000-0000-000000000002', 'b0100000-0000-0000-0000-000000000001', null, 'Barber C', 'commission', 40, null, null, pg_temp.today() - 20),
   ('b0200000-0000-0000-0000-000000000003', 'b0100000-0000-0000-0000-000000000001', null, 'Barber R', 'chair_rental', 0, 30000, 'monthly', null);
 
 insert into public.customers (id, shop_id, full_name, email)
@@ -156,32 +159,32 @@ select is((select status from public.get_payout_overview() where barber_id = 'b0
 select is((select count(*)::int from public.get_payout_overview() where barber_id = 'b0200000-0000-0000-0000-000000000003'), 0, 'chair-rental barbers are not part of payouts');
 
 select is(
-  (select amount_cents from public.record_barber_payout('b0200000-0000-0000-0000-000000000001', 3000, current_date - 1, 'first part')),
+  (select amount_cents from public.record_barber_payout('b0200000-0000-0000-0000-000000000001', 3000, pg_temp.today() - 1, 'first part')),
   3000, 'the owner records a partial payout'
 );
 select is((select balance_cents from public.get_payout_overview() where barber_id = 'b0200000-0000-0000-0000-000000000001'), 7000, 'the balance drops by what was paid');
 select is((select status from public.get_payout_overview() where barber_id = 'b0200000-0000-0000-0000-000000000001'), 'ok', 'a payout after the last due date clears the pending flag');
 
 select is(
-  (select amount_cents from public.record_barber_payout('b0200000-0000-0000-0000-000000000002', 1500, current_date, null)),
+  (select amount_cents from public.record_barber_payout('b0200000-0000-0000-0000-000000000002', 1500, pg_temp.today(), null)),
   1500, 'a one-off payout works for a barber without a schedule'
 );
-select throws_ok($$ select * from public.record_barber_payout('b0200000-0000-0000-0000-000000000003', 1000, current_date) $$, 'P0040', null, 'a chair-rental barber has no payout');
-select throws_ok($$ select * from public.record_barber_payout('b0200000-0000-0000-0000-000000000001', 0, current_date) $$, 'P0040', null, 'the amount must be positive');
+select throws_ok($$ select * from public.record_barber_payout('b0200000-0000-0000-0000-000000000003', 1000, pg_temp.today()) $$, 'P0040', null, 'a chair-rental barber has no payout');
+select throws_ok($$ select * from public.record_barber_payout('b0200000-0000-0000-0000-000000000001', 0, pg_temp.today()) $$, 'P0040', null, 'the amount must be positive');
 select is(
-  (select count(*)::int from public.list_barber_payouts(current_date - 30, current_date + 1)),
+  (select count(*)::int from public.list_barber_payouts(pg_temp.today() - 30, pg_temp.today() + 1)),
   2, 'both payouts are listed with the barber names'
 );
 
 -- Today becomes the due date: nothing paid since today yet.
 reset role;
-update public.barbers set payout_day_1 = extract(dow from current_date)::smallint where id = 'b0200000-0000-0000-0000-000000000001';
+update public.barbers set payout_day_1 = extract(dow from pg_temp.today())::smallint where id = 'b0200000-0000-0000-0000-000000000001';
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'b0000000-0000-0000-0000-000000000001', true);
 select is((select status from public.get_payout_overview() where barber_id = 'b0200000-0000-0000-0000-000000000001'), 'due_today', 'due today while there is a balance and no payout dated today');
 
 select lives_ok(
-  $$ select * from public.record_barber_payout('b0200000-0000-0000-0000-000000000001', 9000, current_date) $$,
+  $$ select * from public.record_barber_payout('b0200000-0000-0000-0000-000000000001', 9000, pg_temp.today()) $$,
   'paying more than the balance is allowed'
 );
 select is((select balance_cents from public.get_payout_overview() where barber_id = 'b0200000-0000-0000-0000-000000000001'), -2000, 'the surplus shows as a negative balance');
@@ -200,7 +203,7 @@ select throws_ok(
 );
 
 select lives_ok(
-  $$ select public.delete_barber_payout((select id from public.list_barber_payouts(current_date - 30, current_date + 1) where amount_cents = 9000)) $$,
+  $$ select public.delete_barber_payout((select id from public.list_barber_payouts(pg_temp.today() - 30, pg_temp.today() + 1) where amount_cents = 9000)) $$,
   'the owner removes a mistaken payout'
 );
 
@@ -214,7 +217,7 @@ select is(
   (select (public.get_my_payout_summary() ->> 'past_unmarked_count')::int),
   1, 'and how many past appointments still lack a close-out'
 );
-select throws_ok($$ select * from public.record_barber_payout('b0200000-0000-0000-0000-000000000001', 1000, current_date) $$, 'P0029', null, 'a barber cannot record payouts');
+select throws_ok($$ select * from public.record_barber_payout('b0200000-0000-0000-0000-000000000001', 1000, pg_temp.today()) $$, 'P0029', null, 'a barber cannot record payouts');
 
 select * from finish();
 rollback;
