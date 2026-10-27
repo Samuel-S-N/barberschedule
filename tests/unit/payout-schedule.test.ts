@@ -22,7 +22,7 @@ describe("isValidSchedule", () => {
 
 describe("describeSchedule", () => {
   it("returns a translation key and params", () => {
-    expect(describeSchedule({ day1: 1, day2: null, schedule: "weekly" })).toEqual({ key: "payouts.schedule.weekly", params: { weekdayKey: "payouts.everyWeekday.1" } });
+    expect(describeSchedule({ day1: 1, day2: null, schedule: "weekly" })).toEqual({ key: "payouts.schedule.weekly", params: { weekdayKey: "payouts.everyWeekday.d1" } });
     expect(describeSchedule({ day1: 5, day2: 20, schedule: "biweekly" })).toEqual({ key: "payouts.schedule.biweekly", params: { day1: 5, day2: 20 } });
     expect(describeSchedule({ day1: 15, day2: null, schedule: "monthly" })).toEqual({ key: "payouts.schedule.monthly", params: { day: 15 } });
     expect(describeSchedule({ day1: null, day2: null, schedule: "none" })).toEqual({ key: "payouts.schedule.none", params: {} });
@@ -33,7 +33,7 @@ describe("scheduleText", () => {
   const t = (key: string, options?: Record<string, unknown>) => `${key}|${JSON.stringify(options ?? {})}`;
 
   it("resolves the weekday phrase before building the weekly sentence", () => {
-    expect(scheduleText(t as never, { day1: 1, day2: null, schedule: "weekly" })).toBe('payouts.schedule.weekly|{"weekdayKey":"payouts.everyWeekday.1|{}"}');
+    expect(scheduleText(t as never, { day1: 1, day2: null, schedule: "weekly" })).toBe('payouts.schedule.weekly|{"weekdayKey":"payouts.everyWeekday.d1|{}"}');
   });
 
   it("passes plain params for the other schedules", () => {

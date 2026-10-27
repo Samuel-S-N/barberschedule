@@ -253,7 +253,7 @@ export const pt: DeepStringRecord<typeof en> = {
     confirmDelete: "Toque de novo para apagar",
     delete: "Apagar",
     empty: "Nenhum barbeiro de comissão.",
-    everyWeekday: { 0: "todo domingo", 1: "toda segunda", 2: "toda terça", 3: "toda quarta", 4: "toda quinta", 5: "toda sexta", 6: "todo sábado" },
+    everyWeekday: { d0: "todo domingo", d1: "toda segunda", d2: "toda terça", d3: "toda quarta", d4: "toda quinta", d5: "toda sexta", d6: "todo sábado" },
     form: { amount: "Valor pago", date: "Data do pagamento", dateInvalid: "Use a data no formato AAAA-MM-DD.", note: "Observação (opcional)", save: "Registrar repasse" },
     history: "Repasses pagos",
     historyEmpty: "Nenhum repasse nos últimos 90 dias.",
@@ -273,7 +273,7 @@ export const pt: DeepStringRecord<typeof en> = {
       weekly: "Semanal · {{weekdayKey}}",
     },
     title: "Repasses",
-    weekdayShort: { 0: "Dom", 1: "Seg", 2: "Ter", 3: "Qua", 4: "Qui", 5: "Sex", 6: "Sáb" },
+    weekdayShort: { d0: "Dom", d1: "Seg", d2: "Ter", d3: "Qua", d4: "Qui", d5: "Sex", d6: "Sáb" },
     barber: {
       pastUnmarked: "{{count}} atendimentos passados sem baixa ainda não entram no cálculo.",
       receivable: "A receber até o momento",

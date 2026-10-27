@@ -254,7 +254,7 @@ export const en = {
     confirmDelete: "Tap again to delete",
     delete: "Delete",
     empty: "No commission barbers.",
-    everyWeekday: { 0: "every Sunday", 1: "every Monday", 2: "every Tuesday", 3: "every Wednesday", 4: "every Thursday", 5: "every Friday", 6: "every Saturday" },
+    everyWeekday: { d0: "every Sunday", d1: "every Monday", d2: "every Tuesday", d3: "every Wednesday", d4: "every Thursday", d5: "every Friday", d6: "every Saturday" },
     form: { amount: "Amount paid", date: "Payment date", dateInvalid: "Use the date as YYYY-MM-DD.", note: "Note (optional)", save: "Record payout" },
     history: "Payouts made",
     historyEmpty: "No payouts in the last 90 days.",
@@ -274,7 +274,7 @@ export const en = {
       weekly: "Weekly · {{weekdayKey}}",
     },
     title: "Payouts",
-    weekdayShort: { 0: "Sun", 1: "Mon", 2: "Tue", 3: "Wed", 4: "Thu", 5: "Fri", 6: "Sat" },
+    weekdayShort: { d0: "Sun", d1: "Mon", d2: "Tue", d3: "Wed", d4: "Thu", d5: "Fri", d6: "Sat" },
     barber: {
       pastUnmarked: "{{count}} past appointments not closed out yet are not counted.",
       receivable: "Owed to you so far",

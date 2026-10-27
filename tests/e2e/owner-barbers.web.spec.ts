@@ -37,6 +37,11 @@ async function mockOwnerRest(page: Page, calls: Record<string, unknown>) {
 
       return json(route, { active: true, archived_at: null, id: "b3", name: "Caio New", shop_id: shop });
     }
+    if (path.endsWith("/rpc/set_barber_payout_schedule")) {
+      calls.schedule = route.request().postDataJSON();
+
+      return json(route, null);
+    }
     if (path.endsWith("/rpc/set_barber_compensation")) {
       calls.compensation = route.request().postDataJSON();
 
@@ -165,4 +170,47 @@ test("an unchanged percent saves without asking", async ({ page }) => {
 
   await expect(page.getByTestId("confirm-dialog")).toHaveCount(0);
   await expect.poll(() => calls.compensation).toMatchObject({ apply_retroactively: false, new_commission_percent: 40 });
+});
+
+test("the owner sets a weekly payout day for a commission barber", async ({ page }) => {
+  const calls: Record<string, unknown> = {};
+
+  await signInAsOwner(page);
+  await mockOwnerRest(page, calls);
+  await page.goto("/barber-profile?id=b1");
+
+  await expect(page.getByTestId("payout-schedule-summary")).toContainText("No fixed schedule");
+  await page.getByTestId("payout-schedule-weekly").click();
+  await page.getByTestId("payout-weekday-1").click();
+  await page.getByTestId("payout-schedule-save").click();
+
+  await expect.poll(() => calls.schedule).toMatchObject({ new_day_1: 1, new_day_2: null, new_schedule: "weekly", target_barber_id: "b1" });
+});
+
+test("the twice-a-month schedule needs two ascending days", async ({ page }) => {
+  const calls: Record<string, unknown> = {};
+
+  await signInAsOwner(page);
+  await mockOwnerRest(page, calls);
+  await page.goto("/barber-profile?id=b1");
+
+  await page.getByTestId("payout-schedule-biweekly").click();
+  await page.getByTestId("payout-day-1").fill("20");
+  await page.getByTestId("payout-day-2").fill("5");
+  await expect(page.getByTestId("payout-schedule-save")).toBeDisabled();
+
+  await page.getByTestId("payout-day-1").fill("5");
+  await page.getByTestId("payout-day-2").fill("20");
+  await page.getByTestId("payout-schedule-save").click();
+
+  await expect.poll(() => calls.schedule).toMatchObject({ new_day_1: 5, new_day_2: 20, new_schedule: "biweekly" });
+});
+
+test("a chair-rental barber has no payout schedule", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, {});
+  await page.goto("/barber-profile?id=b2");
+
+  await expect(page.getByTestId("barber-comp-edit")).toBeVisible();
+  await expect(page.getByTestId("payout-schedule-weekly")).toHaveCount(0);
 });

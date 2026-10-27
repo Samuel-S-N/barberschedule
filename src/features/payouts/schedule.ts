@@ -12,7 +12,7 @@ export function isValidSchedule({ day1, day2, schedule }: PayoutScheduleConfig):
 
 // Resolved by the caller with `t(key, params)`; the weekly case carries the key of the weekday phrase ("toda segunda").
 export function describeSchedule({ day1, day2, schedule }: PayoutScheduleConfig): { key: string; params: Record<string, number | string> } {
-  if (schedule === "weekly") return { key: "payouts.schedule.weekly", params: { weekdayKey: `payouts.everyWeekday.${day1}` } };
+  if (schedule === "weekly") return { key: "payouts.schedule.weekly", params: { weekdayKey: `payouts.everyWeekday.d${day1}` } };
   if (schedule === "biweekly") return { key: "payouts.schedule.biweekly", params: { day1: day1 as number, day2: day2 as number } };
   if (schedule === "monthly") return { key: "payouts.schedule.monthly", params: { day: day1 as number } };
 

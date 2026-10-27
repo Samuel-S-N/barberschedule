@@ -253,7 +253,7 @@ export const es: DeepStringRecord<typeof en> = {
     confirmDelete: "Toca otra vez para borrar",
     delete: "Borrar",
     empty: "No hay barberos por comisión.",
-    everyWeekday: { 0: "cada domingo", 1: "cada lunes", 2: "cada martes", 3: "cada miércoles", 4: "cada jueves", 5: "cada viernes", 6: "cada sábado" },
+    everyWeekday: { d0: "cada domingo", d1: "cada lunes", d2: "cada martes", d3: "cada miércoles", d4: "cada jueves", d5: "cada viernes", d6: "cada sábado" },
     form: { amount: "Monto pagado", date: "Fecha del pago", dateInvalid: "Usa la fecha con el formato AAAA-MM-DD.", note: "Nota (opcional)", save: "Registrar pago" },
     history: "Pagos realizados",
     historyEmpty: "Ningún pago en los últimos 90 días.",
@@ -273,7 +273,7 @@ export const es: DeepStringRecord<typeof en> = {
       weekly: "Semanal · {{weekdayKey}}",
     },
     title: "Pagos a barberos",
-    weekdayShort: { 0: "Dom", 1: "Lun", 2: "Mar", 3: "Mié", 4: "Jue", 5: "Vie", 6: "Sáb" },
+    weekdayShort: { d0: "Dom", d1: "Lun", d2: "Mar", d3: "Mié", d4: "Jue", d5: "Vie", d6: "Sáb" },
     barber: {
       pastUnmarked: "{{count}} citas pasadas sin cerrar aún no entran en el cálculo.",
       receivable: "Por cobrar hasta ahora",
