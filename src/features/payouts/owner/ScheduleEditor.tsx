@@ -74,7 +74,7 @@ export function ScheduleEditor({ barberId, current, onFeedback }: Props) {
       {schedule === "monthly" ? <Input keyboardType="numeric" label={t("payouts.schedule.dayOfMonth")} onChangeText={setDay1} placeholder={t("examples.day")} testID="payout-day-1" value={day1} /> : null}
       {schedule === "biweekly" || schedule === "monthly" ? <Text className="text-xs font-sans text-neutral-600">{t("payouts.schedule.shortMonthHint")}</Text> : null}
       <DateInput label={t("payouts.schedule.trackingStart")} onChangeValue={setTrackingStart} testID="payout-tracking-start" value={trackingStart} />
-      <Button disabled={!valid || save.isPending} label={t("owner.barbers.saveCompensation")} onPress={() => save.mutate()} size="sm" testID="payout-schedule-save" />
+      <Button disabled={!valid || save.isPending} label={t("payouts.schedule.save")} onPress={() => save.mutate()} size="sm" testID="payout-schedule-save" />
     </View>
   );
 }

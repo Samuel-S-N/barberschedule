@@ -9,7 +9,7 @@ import { formatDayMonth } from "../format";
 import { scheduleText } from "../schedule";
 import type { PayoutOverviewItem } from "../types";
 
-const TONE_CLASS = { danger: "text-danger-500", neutral: "text-neutral-600", success: "text-success-600", warning: "text-warning-600" } as const;
+const TONE_CLASS = { danger: "text-danger-500", neutral: "text-neutral-600", success: "text-success-500", warning: "text-warning-500" } as const;
 
 export function PayoutCard({ item, onPay }: { item: PayoutOverviewItem; onPay: () => void }) {
   const { t } = useTranslation();
