@@ -60,7 +60,7 @@ export default function OwnerPayoutsScreen() {
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("payouts.title")} />
-            {feedback ? <Text className={`text-sm font-sans ${feedback.variant === "error" ? "text-danger-500" : "text-success-600"}`} testID="payouts-feedback">{feedback.message}</Text> : null}
+            {feedback ? <Text className={`text-sm font-sans ${feedback.variant === "error" ? "text-danger-500" : "text-success-500"}`} testID="payouts-feedback">{feedback.message}</Text> : null}
             {overview.isLoading ? <SkeletonBlock height={120} width={320} /> : null}
             {overview.error ? <Text className="text-sm font-sans text-danger-500">{errorMessage(overview.error, t, t("payouts.empty"))}</Text> : null}
             {overview.data?.length === 0 ? <Text className="text-sm font-sans text-neutral-600">{t("payouts.empty")}</Text> : null}

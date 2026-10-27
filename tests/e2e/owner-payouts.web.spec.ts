@@ -46,6 +46,8 @@ test("each commission barber shows schedule, balance and status", async ({ page 
   await expect(page.getByTestId("payout-card-b1")).toContainText("every Monday");
   await expect(page.getByTestId("payout-card-b1")).toContainText("R$ 70,00");
   await expect(page.getByTestId("payout-card-b1")).toContainText("Pending");
+  // The pending state uses the app's danger colour (danger-500 #DC3B30), not an unstyled default.
+  await expect(page.getByTestId("payout-card-b1").getByText("Pending")).toHaveCSS("color", "rgb(220, 59, 48)");
   await expect(page.getByTestId("payout-card-b2")).toContainText("No schedule");
 });
 

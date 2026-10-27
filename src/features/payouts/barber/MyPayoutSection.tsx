@@ -28,7 +28,7 @@ export function MyPayoutSection() {
         <Text className="text-xs font-sans text-neutral-600">{t("payouts.barber.since", { date: formatDayMonth(data.trackingStart) })}</Text>
         <Text className="text-sm font-sans text-ink">{scheduleText(t, data.config)}</Text>
         {data.nextDueDate ? <Text className="text-sm font-sans text-ink" testID="my-payout-next">{t("payouts.next", { date: formatDayMonth(data.nextDueDate) })}</Text> : null}
-        {data.pastUnmarkedCount > 0 ? <Text className="text-sm font-sans text-warning-600" testID="my-payout-unmarked">{t("payouts.barber.pastUnmarked", { count: data.pastUnmarkedCount })}</Text> : null}
+        {data.pastUnmarkedCount > 0 ? <Text className="text-sm font-sans text-warning-500" testID="my-payout-unmarked">{t("payouts.barber.pastUnmarked", { count: data.pastUnmarkedCount })}</Text> : null}
         <Text accessibilityRole="header" className="pt-2 text-base font-display-semibold text-ink">{t("payouts.history")}</Text>
         {data.payouts.length === 0 ? <Text className="text-sm font-sans text-neutral-600">{t("payouts.historyEmpty")}</Text> : null}
         {data.payouts.map((p) => (
