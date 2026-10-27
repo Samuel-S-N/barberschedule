@@ -1773,3 +1773,15 @@ git commit -m "feat: barber payout summary - balance, next date, history"
 - [ ] **Step 1:** `rtk npm run verify`. Corrigir o que falhar.
 - [ ] **Step 2:** Verificação visual no navegador, com a pilha local (`running-barberschedule-locally`): criar um barbeiro de comissão com agenda semanal, completar atendimentos, abrir `/payouts`, capturar tela e checar o CSS computado da etiqueta (cor por tom), dos botões e que os cartões ficam com a mesma largura. Abrir `/my-profile/compensation` como o barbeiro e conferir o saldo.
 - [ ] **Step 3:** `git push -u origin feat-payouts-02-payouts` (branch criada a partir de `feat-payouts-01-commission-history`) e abrir PR com base `feat-payouts-01-commission-history`; `bind_pr` + `set_monitor` (Auto-fix). Sem merge.
+
+---
+
+## Desvios registrados na execução
+
+- Chaves de i18n `everyWeekday` e `weekdayShort` usam `d0`…`d6` (chaves numéricas não entram nos tipos de `t`).
+- Campos de data usam `DateInput` (máscara por idioma, valor ISO), não `Input` com `AAAA-MM-DD`; a regra `field-labels` proíbe dica de formato no rótulo.
+- Todo `<Input>` tem `placeholder` (regra `input-placeholders`): chaves novas `examples.day` e rótulos `payouts.schedule.{firstDay,secondDay,dayOfMonth}`.
+- `/payouts` entrou em `src/lib/navigation/parents.ts` (pai: `/manage`), exigido por `route-parents-coverage`.
+- `OwnerBarber` ganhou `payout`; `catalog_rls.test.ts` e o payload de `barber-side.web.spec.ts` foram atualizados.
+- A migração `0061` também recria `list_owner_barbers` com as colunas de agenda.
+- No ambiente local, `010_full_rls`, `012_notification_locale`, `031_recurrence_requests` (SQL) e, no e2e, `booking.web` e `back-navigation.web` (customer) já falham na `main`.
