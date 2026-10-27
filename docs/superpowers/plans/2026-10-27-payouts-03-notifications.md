@@ -52,7 +52,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(12);
+select plan(11);
 
 create function pg_temp.today() returns date language sql as $$ select (now() at time zone 'America/Sao_Paulo')::date $$;
 create function pg_temp.at_local(h integer, m integer) returns timestamptz language sql as $$
@@ -141,7 +141,7 @@ select * from finish();
 rollback;
 ```
 
-> São 12 asserções, confirme com `plan(12)`. O `current_date - 2` das consultas de atendimento é só "dois dias atrás"; qualquer data passada serve.
+> São 11 asserções, confirme com `plan(11)`. O `current_date - 2` das consultas de atendimento é só "dois dias atrás"; qualquer data passada serve.
 
 - [ ] **Step 2: Rodar e ver falhar**
 
@@ -298,7 +298,7 @@ Repita ao final `revoke all on function public.record_barber_payout(uuid, intege
 - [ ] **Step 5: Aplicar e rodar**
 
 Run: `rtk npx supabase migration up && rtk npx supabase test db`
-Expected: `044_payout_notifications.sql` passa (12 asserções); `043_barber_payouts.sql` continua passando (a redefinição de `record_barber_payout` não pode regredir o PR2).
+Expected: `044_payout_notifications.sql` passa (11 asserções); `043_barber_payouts.sql` continua passando (a redefinição de `record_barber_payout` não pode regredir o PR2).
 
 - [ ] **Step 6: Commit**
 
