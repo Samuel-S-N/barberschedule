@@ -1,14 +1,19 @@
 import React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { StyleSheet } from "react-native";
-import { State } from "react-native-gesture-handler";
+import { GestureHandlerRootView, State } from "react-native-gesture-handler";
 import { fireGestureHandler, getByGestureTestId } from "react-native-gesture-handler/jest-utils";
 
 import { MonthCalendar } from "../../src/components/domain/MonthCalendar";
 
 // today = Mon 2026-09-28, so the bookable window ends on 2026-10-28.
+// Gesture Handler 3 requires the detector to sit under the root view, as it does in the app (app/_layout.tsx).
+function calendar(props: { onSelectDate: () => void; selectedDate: string; today: string }) {
+  return React.createElement(GestureHandlerRootView, { style: { flex: 1 } }, React.createElement(MonthCalendar, props));
+}
+
 function renderCalendar(onSelectDate = jest.fn(), selectedDate = "2026-09-28") {
-  return render(React.createElement(MonthCalendar, { onSelectDate, selectedDate, today: "2026-09-28" }));
+  return render(calendar({ onSelectDate, selectedDate, today: "2026-09-28" }));
 }
 
 describe("MonthCalendar", () => {
@@ -64,7 +69,7 @@ describe("MonthCalendar", () => {
   it("moves off a month that became past when today rolls over", async () => {
     const view = await renderCalendar();
 
-    await view.rerender(React.createElement(MonthCalendar, { onSelectDate: jest.fn(), selectedDate: "2026-10-01", today: "2026-10-01" }));
+    await view.rerender(calendar({ onSelectDate: jest.fn(), selectedDate: "2026-10-01", today: "2026-10-01" }));
 
     expect(view.getByTestId("month-calendar-title")).toHaveTextContent("October 2026");
     expect(view.getByTestId("month-calendar-prev")).toBeDisabled();

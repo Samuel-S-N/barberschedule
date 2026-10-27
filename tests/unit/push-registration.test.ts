@@ -48,6 +48,16 @@ describe("registerPushToken", () => {
     expect(Notifications.getPermissionsAsync).not.toHaveBeenCalled();
   });
 
+  it("skips Android when the notifications native module is missing, because importing expo-notifications would throw", async () => {
+    setOs("android");
+    jest.replaceProperty(Constants as { executionEnvironment: string }, "executionEnvironment", "bare");
+    const probe = jest.spyOn(jest.requireMock("expo-modules-core"), "requireOptionalNativeModule").mockReturnValue(null);
+
+    expect(await registerPushToken(supabase)).toBeNull();
+    expect(probe).toHaveBeenCalledWith("ExpoTopicSubscriptionModule");
+    expect(Notifications.getPermissionsAsync).not.toHaveBeenCalled();
+  });
+
   it("asks for permission, then saves the Expo token", async () => {
     setOs("ios");
     jest.mocked(Notifications.getPermissionsAsync).mockResolvedValue({ status: "undetermined" } as never);

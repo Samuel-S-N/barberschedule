@@ -1,4 +1,5 @@
 import Constants, { ExecutionEnvironment } from "expo-constants";
+import { requireOptionalNativeModule } from "expo-modules-core";
 import { useEffect } from "react";
 import { Platform } from "react-native";
 
@@ -9,6 +10,9 @@ export async function registerPushToken(supabase: Parameters<typeof saveExpoPush
   if (Platform.OS === "web") return null;
   // Expo Go (SDK 53+) removed remote push: the module logs an error and throws as soon as it is loaded.
   if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) return null;
+  // On Android expo-notifications requires this native module as soon as it is imported, and Expo Go and older development builds
+  // do not ship it: the import then throws a red screen that no try/catch can stop (Metro reports module-init errors itself).
+  if (Platform.OS === "android" && !requireOptionalNativeModule("ExpoTopicSubscriptionModule")) return null;
   // Loaded lazily: on web the module only logs a "not supported" warning at import time.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const Notifications = require("expo-notifications") as typeof import("expo-notifications");

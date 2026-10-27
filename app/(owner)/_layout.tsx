@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { BottomTabBar } from "../../src/components/domain/BottomTabBar";
 import { Screen } from "../../src/components/ui/Screen";
+import { selectTab } from "../../src/lib/navigation/select-tab";
 import { usePushRegistration } from "../../src/features/notifications/use-push-registration";
 import { useHardwareBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
@@ -32,9 +33,9 @@ export default function OwnerLayout() {
     <Tabs
       backBehavior="history"
       screenOptions={{ headerShown: false }}
-      tabBar={({ navigation, state }) => (
+      tabBar={({ navigateToTab, state }) => (
         <Screen className="bg-surface" edges={["bottom", "left", "right"]}>
-          <BottomTabBar activeKey={highlight(state.routes[state.index].name)} items={items} onSelect={(key) => navigation.navigate(key)} />
+          <BottomTabBar activeKey={highlight(state.routes[state.index].name)} items={items} onSelect={(key) => selectTab(state, navigateToTab, key)} />
         </Screen>
       )}
     >
@@ -42,8 +43,10 @@ export default function OwnerLayout() {
       <Tabs.Screen name="revenue" />
       <Tabs.Screen name="manage" />
       <Tabs.Screen name="settings" />
+      {/* Declared WITHOUT `href: null`: since SDK 58 a hidden or undeclared route is not navigable (the navigator redirects to the
+          first tab), and the custom tab bar already shows only the four items above. */}
       {[...MANAGE_SCREENS, ...ACCOUNT_SCREENS, ...AGENDA_SCREENS].map((name) => (
-        <Tabs.Screen key={name} name={name} options={{ href: null }} />
+        <Tabs.Screen key={name} name={name} />
       ))}
     </Tabs>
   );

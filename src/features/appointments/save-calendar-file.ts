@@ -12,6 +12,6 @@ export async function saveCalendarFile(filename: string, content: string) {
   const Sharing = await import("expo-sharing");
   const file = new File(Paths.cache, filename);
   file.create({ overwrite: true });
-  file.write(content);
+  await file.write(content);
   await Sharing.shareAsync(file.uri, { UTI: "public.calendar-event", mimeType: "text/calendar" });
 }

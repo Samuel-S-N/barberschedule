@@ -23,7 +23,7 @@ describe("ShopInfoCard", () => {
   });
 
   it("opens tel: and wa.me links", async () => {
-    const open = jest.spyOn(Linking, "openURL").mockResolvedValue(true);
+    const open = jest.spyOn(Linking, "openURL").mockResolvedValue(undefined);
     const view = await render(React.createElement(ShopContactButtons, { phone: shop.phone, whatsapp: shop.whatsapp }));
 
     await fireEvent.press(view.getByText("Call"));

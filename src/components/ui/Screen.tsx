@@ -27,12 +27,12 @@ function basePadding(style: ViewStyle, side: "Top" | "Bottom" | "Left" | "Right"
 export function Screen({ edges = ALL_EDGES, className, style, children, testID }: ScreenProps) {
   const insets = useSafeAreaInsets();
   const flat = StyleSheet.flatten(style) ?? {};
-  const inset: ViewStyle = {};
-
-  if (edges.includes("top")) inset.paddingTop = basePadding(flat, "Top") + insets.top;
-  if (edges.includes("bottom")) inset.paddingBottom = basePadding(flat, "Bottom") + insets.bottom;
-  if (edges.includes("left")) inset.paddingLeft = basePadding(flat, "Left") + insets.left;
-  if (edges.includes("right")) inset.paddingRight = basePadding(flat, "Right") + insets.right;
+  const inset: ViewStyle = {
+    ...(edges.includes("top") ? { paddingTop: basePadding(flat, "Top") + insets.top } : {}),
+    ...(edges.includes("bottom") ? { paddingBottom: basePadding(flat, "Bottom") + insets.bottom } : {}),
+    ...(edges.includes("left") ? { paddingLeft: basePadding(flat, "Left") + insets.left } : {}),
+    ...(edges.includes("right") ? { paddingRight: basePadding(flat, "Right") + insets.right } : {}),
+  };
 
   return (
     <View className={className} style={[style, inset]} testID={testID}>

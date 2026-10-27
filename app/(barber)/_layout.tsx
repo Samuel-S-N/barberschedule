@@ -8,6 +8,7 @@ import { BottomTabBar } from "../../src/components/domain/BottomTabBar";
 import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
 import { Button } from "../../src/components/ui/Button";
 import { Screen } from "../../src/components/ui/Screen";
+import { selectTab } from "../../src/lib/navigation/select-tab";
 import { getMyBarberProfile } from "../../src/features/barbers/api";
 import { usePushRegistration } from "../../src/features/notifications/use-push-registration";
 import { errorMessage } from "../../src/i18n/errors";
@@ -59,9 +60,9 @@ export default function BarberLayout() {
     <Tabs
       backBehavior="history"
       screenOptions={{ headerShown: false }}
-      tabBar={({ navigation, state }) => (
+      tabBar={({ navigateToTab, state }) => (
         <Screen className="bg-surface" edges={["bottom", "left", "right"]}>
-          <BottomTabBar activeKey={state.routes[state.index].name} items={items} onSelect={(key) => navigation.navigate(key)} />
+          <BottomTabBar activeKey={state.routes[state.index].name} items={items} onSelect={(key) => selectTab(state, navigateToTab, key)} />
         </Screen>
       )}
     >
@@ -69,8 +70,10 @@ export default function BarberLayout() {
       <Tabs.Screen name="clients" />
       <Tabs.Screen name="earnings" />
       <Tabs.Screen name="my-profile" />
-      <Tabs.Screen name="move-appointment" options={{ href: null }} />
-      <Tabs.Screen name="barber-notifications" options={{ href: null }} />
+      {/* Declared WITHOUT `href: null`: since SDK 58 a hidden or undeclared route is not navigable (the navigator redirects to the
+          first tab), and the custom tab bar already shows only the four items above. */}
+      <Tabs.Screen name="move-appointment" />
+      <Tabs.Screen name="barber-notifications" />
     </Tabs>
   );
 }
