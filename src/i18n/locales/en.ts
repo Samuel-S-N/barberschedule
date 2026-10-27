@@ -489,6 +489,13 @@ export const en = {
       noServices: "No services yet.",
       empty: "No active barbers.",
       chairRentalTab: "Chair rental",
+      commissionChange: {
+        body: "This changes the balance of payouts already made and cannot be undone. Apply {{percent}}% to earlier appointments as well?",
+        cancel: "Cancel",
+        forward: "From now on only",
+        retroactive: "Earlier ones too",
+        title: "Change commission",
+      },
       commissionPercentLabel: "Commission (%)",
       commissionTab: "Commission",
       compensation: "Compensation",
