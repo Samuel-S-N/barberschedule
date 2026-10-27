@@ -60,7 +60,7 @@ Constraint (mesmo estilo de `barbers_compensation_matches_type`):
 - `monthly`: `day_1` 1–31, `day_2` nulo.
 - `payout_schedule <> 'none'` exige `compensation_type = 'commission'` e `payout_tracking_start` não nulo.
 
-`set_barber_payout_schedule(target_barber_id, new_schedule, day_1, day_2, tracking_start)`: só o dono. Erro `P0031 PAYOUT_SCHEDULE_INVALID`. `tracking_start` nulo na primeira configuração vale a data de hoje no fuso da barbearia; nulo depois mantém o valor atual.
+`set_barber_payout_schedule(target_barber_id, new_schedule, day_1, day_2, tracking_start)`: só o dono. Erro `P0039 PAYOUT_SCHEDULE_INVALID`. `tracking_start` nulo na primeira configuração vale a data de hoje no fuso da barbearia; nulo depois mantém o valor atual.
 
 ### Pagamentos
 
@@ -68,7 +68,7 @@ Constraint (mesmo estilo de `barbers_compensation_matches_type`):
 
 RPCs do dono (padrão de `0044`, erro de permissão `P0029 REPORT_FORBIDDEN`):
 
-- `record_barber_payout(target_barber_id, amount_cents, paid_on, note)`. Barbeiro que não é de comissão ou valor inválido: `P0032 PAYOUT_INVALID`.
+- `record_barber_payout(target_barber_id, amount_cents, paid_on, note)`. Barbeiro que não é de comissão ou valor inválido: `P0040 PAYOUT_INVALID`.
 - `list_barber_payouts(period_start, period_end)`, janela de até 91 dias.
 - `delete_barber_payout(payout_id)`.
 
@@ -89,7 +89,7 @@ RPCs do dono (padrão de `0044`, erro de permissão `P0029 REPORT_FORBIDDEN`):
 - `ScheduleEditor` dentro de `CompensationEditor`, visível para comissão: opções Sem agenda fixa / Semanal / Quinzenal / Mensal; chips de dia da semana; seletor de dia do mês com a dica "em meses curtos, vale o último dia"; campo "Controlar a partir de".
 - Tela `app/(owner)/payouts.tsx`, aberta pelo hub Gerenciar (`manage.tsx`) e declarada em `MANAGE_SCREENS` de `app/(owner)/_layout.tsx`. Cartões de mesma altura, um por barbeiro: nome, resumo da agenda, saldo, etiqueta (Em dia, Vence hoje, Pendente, Pago a mais, Sem agenda) e botão "Pagar" que abre formulário com valor preenchido pelo saldo, data de hoje e observação. Abaixo, histórico com apagar em dois toques.
 - Barbeiro: `app/(barber)/my-profile/compensation.tsx` mostra "A receber até o momento", próxima data e agenda, "contando desde dd/mm", aviso de atendimentos sem baixa e histórico recebido.
-- Textos em pt, es e en; códigos `P0031` e `P0032` em `domain-errors.ts`.
+- Textos em pt, es e en; códigos `P0039` e `P0040` em `domain-errors.ts`.
 
 ## PR3 — notificações (`0062_payout_notifications.sql`)
 
