@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(26);
+select plan(33);
 
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at)
 values
@@ -162,6 +162,47 @@ reset role;
 select lives_ok(
   $$ update public.barbers set user_id = 'b4600000-0000-0000-0000-000000000004' where id = 'b4620000-0000-0000-0000-000000000002' $$,
   'roles other than authenticated (invite-barber, migrations) still link accounts'
+);
+reset role;
+
+-- B3: push tokens must look like Expo tokens; unknown platforms are not stored.
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b4600000-0000-0000-0000-000000000003","role":"authenticated"}', true);
+
+select throws_ok(
+  $$ select * from public.register_notification_token(repeat('x', 100)) $$,
+  'P0016', 'NOTIFICATION_TOKEN_INVALID', 'a token that is not an Expo push token is refused'
+);
+select throws_ok(
+  $$ select * from public.register_notification_token('ExponentPushToken[' || repeat('a', 181) || ']') $$,
+  'P0016', 'NOTIFICATION_TOKEN_INVALID', 'an oversized Expo token is refused'
+);
+select is(
+  (select platform from public.register_notification_token('ExponentPushToken[t46-ok_1]', 'evil')),
+  null,
+  'an unknown platform is stored as null'
+);
+select is(
+  (select platform from public.register_notification_token('ExpoPushToken[t46-ok_2]', 'android')),
+  'android',
+  'a known platform is kept'
+);
+
+-- B5: the barber photo must be the barber's own file in the avatars bucket.
+select set_config('request.jwt.claims', '{"sub":"b4600000-0000-0000-0000-000000000002","role":"authenticated"}', true);
+
+select throws_ok(
+  $$ select * from public.update_my_barber_profile('bio', 'http://evil.example/t.gif') $$,
+  'P0017', 'PROFILE_INVALID', 'an external image URL is refused'
+);
+select throws_ok(
+  $$ select * from public.update_my_barber_profile('bio', 'http://127.0.0.1:55421/storage/v1/object/public/avatars/b4600000-0000-0000-0000-000000000003/avatar-1.jpg') $$,
+  'P0017', 'PROFILE_INVALID', 'another user''s avatar file is refused'
+);
+select is(
+  (select avatar_url from public.update_my_barber_profile('bio', 'https://ref.supabase.co/storage/v1/object/public/avatars/b4600000-0000-0000-0000-000000000002/avatar-17.jpg')),
+  'https://ref.supabase.co/storage/v1/object/public/avatars/b4600000-0000-0000-0000-000000000002/avatar-17.jpg',
+  'the barber''s own avatar file is stored'
 );
 reset role;
 

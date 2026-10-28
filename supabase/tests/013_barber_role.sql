@@ -170,7 +170,7 @@ select is(
 
 select is((select name from public.get_my_barber_profile()), 'Barber A', 'own profile is returned');
 select is(
-  (select bio from public.update_my_barber_profile('  Fade specialist ', 'https://example.com/a.png')),
+  (select bio from public.update_my_barber_profile('  Fade specialist ', 'https://ref.supabase.co/storage/v1/object/public/avatars/80000000-0000-0000-0000-000000000002/avatar-1.jpg')),
   'Fade specialist',
   'barber updates bio and avatar'
 );
