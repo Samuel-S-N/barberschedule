@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(16);
+select plan(26);
 
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at)
 values
@@ -105,6 +105,65 @@ select throws_ok(
        ('b4610000-0000-0000-0000-000000000001', repeat('z', 101), 'z@example.com') $$,
   '23514', null, 'barber-created and owner-created customers share the cap'
 );
+
+-- B2: direct table writes cannot link someone else's account to a barber or customer row.
+insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at)
+values ('00000000-0000-0000-0000-000000000000', 'b4600000-0000-0000-0000-000000000004', 'authenticated', 'authenticated', 't46-walkin@example.com', 'x', now());
+insert into public.barbers (id, shop_id, name) values ('b4620000-0000-0000-0000-000000000002', 'b4610000-0000-0000-0000-000000000001', 'T46 Unlinked');
+
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"b4600000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+
+select lives_ok(
+  $$ insert into public.barbers (shop_id, user_id, name) values ('b4610000-0000-0000-0000-000000000001', 'b4600000-0000-0000-0000-000000000001', 'Owner as barber') $$,
+  'the owner may link their own account (serve as a barber)'
+);
+select throws_ok(
+  $$ insert into public.barbers (shop_id, user_id, name) values ('b4610000-0000-0000-0000-000000000001', 'b4600000-0000-0000-0000-000000000004', 'Hijack') $$,
+  '42501', 'ACCOUNT_LINK_FORBIDDEN', 'the owner cannot insert a barber linked to another account'
+);
+select throws_ok(
+  $$ update public.barbers set user_id = 'b4600000-0000-0000-0000-000000000004' where id = 'b4620000-0000-0000-0000-000000000002' $$,
+  '42501', 'ACCOUNT_LINK_FORBIDDEN', 'the owner cannot link another account to an existing barber'
+);
+select lives_ok(
+  $$ update public.barbers set name = 'Renamed' where id = 'b4620000-0000-0000-0000-000000000001' $$,
+  'the owner still renames a barber linked to another account'
+);
+select lives_ok(
+  $$ update public.barbers set user_id = null where id = 'b4620000-0000-0000-0000-000000000001' $$,
+  'the owner may unlink a barber account'
+);
+select throws_ok(
+  $$ insert into public.customers (shop_id, user_id, full_name) values ('b4610000-0000-0000-0000-000000000001', 'b4600000-0000-0000-0000-000000000004', 'Hijack') $$,
+  '42501', 'ACCOUNT_LINK_FORBIDDEN', 'the owner cannot insert a customer linked to an account'
+);
+select throws_ok(
+  $$ update public.customers set user_id = 'b4600000-0000-0000-0000-000000000004' where id = 'b4650000-0000-0000-0000-000000000001' $$,
+  '42501', 'ACCOUNT_LINK_FORBIDDEN', 'the owner cannot relink a customer row to another account'
+);
+select lives_ok(
+  $$ insert into public.customers (shop_id, full_name, phone) values ('b4610000-0000-0000-0000-000000000001', 'Walk-in', '11 98888-0000') $$,
+  'the owner still creates customers without an account'
+);
+
+-- The RPCs that link accounts on purpose keep working.
+select set_config('request.jwt.claims', '{"sub":"b4600000-0000-0000-0000-000000000002","role":"authenticated"}', true);
+reset role;
+update public.barbers set user_id = 'b4600000-0000-0000-0000-000000000002' where id = 'b4620000-0000-0000-0000-000000000001';
+set local role authenticated;
+select is(
+  (select has_account from public.barber_find_or_create_customer('Walk In', 't46-walkin@example.com')),
+  true,
+  'barber_find_or_create_customer still links a confirmed account'
+);
+
+reset role;
+select lives_ok(
+  $$ update public.barbers set user_id = 'b4600000-0000-0000-0000-000000000004' where id = 'b4620000-0000-0000-0000-000000000002' $$,
+  'roles other than authenticated (invite-barber, migrations) still link accounts'
+);
+reset role;
 
 select * from finish();
 rollback;
