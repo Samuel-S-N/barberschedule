@@ -267,9 +267,11 @@ export async function setBarberCompensation(
   supabase: Pick<SupabaseClient, "rpc">,
   barberId: string,
   input: BarberCompensation,
+  options: { applyRetroactively?: boolean } = {},
 ) {
   const parsed = parseCompensationInput(input);
   const { data, error } = await supabase.rpc("set_barber_compensation", {
+    apply_retroactively: options.applyRetroactively ?? false,
     new_commission_percent: parsed.type === "commission" ? parsed.commissionPercent : null,
     new_rental_amount_cents: parsed.type === "chair_rental" ? parsed.amountCents : null,
     new_rental_frequency: parsed.type === "chair_rental" ? parsed.frequency : null,

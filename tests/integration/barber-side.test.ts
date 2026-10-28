@@ -174,6 +174,7 @@ describe("barber profile and compensation", () => {
 
     await setBarberCompensation({ rpc } as never, "b1", { amountCents: 30000, frequency: "weekly", type: "chair_rental" });
     expect(rpc).toHaveBeenCalledWith("set_barber_compensation", {
+      apply_retroactively: false,
       new_commission_percent: null,
       new_rental_amount_cents: 30000,
       new_rental_frequency: "weekly",
@@ -182,6 +183,14 @@ describe("barber profile and compensation", () => {
     });
 
     await expect(setBarberCompensation({ rpc } as never, "b1", { commissionPercent: 150, type: "commission" })).rejects.toThrow();
+  });
+
+  it("sends the retroactive flag when the owner asks for it", async () => {
+    const rpc = jest.fn().mockResolvedValue({ data: [{ commission_percent: "50.00", compensation_type: "commission", id: "b1" }], error: null });
+
+    await setBarberCompensation({ rpc } as never, "b1", { commissionPercent: 50, type: "commission" }, { applyRetroactively: true });
+
+    expect(rpc).toHaveBeenCalledWith("set_barber_compensation", expect.objectContaining({ apply_retroactively: true, new_commission_percent: 50, target_barber_id: "b1" }));
   });
 
   it("maps invalid compensation from the database", () => {

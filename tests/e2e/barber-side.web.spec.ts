@@ -173,7 +173,7 @@ test("an owner invites a barber and sets a chair-rental compensation", async ({ 
   await page.getByRole("button", { name: "Save compensation" }).click();
   await expect(page.getByText("Compensation saved.")).toBeVisible();
   expect(compensationPayload).toEqual({
-    new_commission_percent: null, new_rental_amount_cents: 30000, new_rental_frequency: "weekly",
+    apply_retroactively: false, new_commission_percent: null, new_rental_amount_cents: 30000, new_rental_frequency: "weekly",
     new_type: "chair_rental", target_barber_id: barberId,
   });
 });

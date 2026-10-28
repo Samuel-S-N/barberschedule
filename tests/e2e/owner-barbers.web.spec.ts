@@ -110,11 +110,59 @@ test("Edit opens the barber profile: rename, compensation and a red Deactivate",
   await page.getByTestId("barber-comp-edit").click();
   await page.getByTestId("comp-percent").fill("55");
   await page.getByTestId("comp-save").click();
-  await expect.poll(() => calls.compensation).toMatchObject({ new_commission_percent: 55 });
+  await page.getByTestId("confirm-dialog-confirm").click();
+  await expect.poll(() => calls.compensation).toMatchObject({ apply_retroactively: false, new_commission_percent: 55 });
 
   // Deactivate uses the app's danger colour (danger-500 #DC3B30).
   await expect(page.getByTestId("barber-toggle")).toContainText("Deactivate");
   await expect(page.getByTestId("barber-toggle")).toHaveCSS("background-color", "rgb(220, 59, 48)");
   await page.getByTestId("barber-toggle").click();
   await expect.poll(() => (calls.patch as { active?: boolean } | undefined)?.active).toBe(false);
+});
+
+test("changing an existing commission asks whether it also applies to earlier appointments", async ({ page }) => {
+  const calls: Record<string, unknown> = {};
+
+  await signInAsOwner(page);
+  await mockOwnerRest(page, calls);
+  await page.goto("/barber-profile?id=b1");
+  await page.getByTestId("barber-comp-edit").click();
+  await page.getByTestId("comp-percent").fill("55");
+  await page.getByTestId("comp-save").click();
+
+  await expect(page.getByTestId("confirm-dialog")).toContainText("Change commission");
+  await page.getByTestId("confirm-dialog-alternate").click();
+
+  await expect.poll(() => calls.compensation).toMatchObject({ apply_retroactively: true, new_commission_percent: 55 });
+});
+
+test("cancelling the commission prompt saves nothing and keeping the past is the highlighted choice", async ({ page }) => {
+  const calls: Record<string, unknown> = {};
+
+  await signInAsOwner(page);
+  await mockOwnerRest(page, calls);
+  await page.goto("/barber-profile?id=b1");
+  await page.getByTestId("barber-comp-edit").click();
+  await page.getByTestId("comp-percent").fill("55");
+  await page.getByTestId("comp-save").click();
+  await expect(page.getByTestId("confirm-dialog-confirm")).not.toHaveCSS("background-color", "rgb(220, 59, 48)");
+  await page.getByTestId("confirm-dialog-cancel").click();
+  expect(calls.compensation).toBeUndefined();
+
+  await page.getByTestId("comp-save").click();
+  await page.getByTestId("confirm-dialog-confirm").click();
+  await expect.poll(() => calls.compensation).toMatchObject({ apply_retroactively: false, new_commission_percent: 55 });
+});
+
+test("an unchanged percent saves without asking", async ({ page }) => {
+  const calls: Record<string, unknown> = {};
+
+  await signInAsOwner(page);
+  await mockOwnerRest(page, calls);
+  await page.goto("/barber-profile?id=b1");
+  await page.getByTestId("barber-comp-edit").click();
+  await page.getByTestId("comp-save").click();
+
+  await expect(page.getByTestId("confirm-dialog")).toHaveCount(0);
+  await expect.poll(() => calls.compensation).toMatchObject({ apply_retroactively: false, new_commission_percent: 40 });
 });

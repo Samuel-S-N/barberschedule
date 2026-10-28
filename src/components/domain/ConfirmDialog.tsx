@@ -3,18 +3,21 @@ import { Modal, Pressable, Text, View } from "react-native";
 import { Button } from "../ui/Button";
 
 export type ConfirmDialogProps = {
+  alternateLabel?: string;
   body: string;
   busy?: boolean;
   cancelLabel: string;
   confirmLabel: string;
+  confirmVariant?: "danger" | "dark";
+  onAlternate?: () => void;
   onCancel: () => void;
   onConfirm: () => void;
   title: string;
   visible: boolean;
 };
 
-// A small centred confirmation pop-up for destructive actions.
-export function ConfirmDialog({ body, busy = false, cancelLabel, confirmLabel, onCancel, onConfirm, title, visible }: ConfirmDialogProps) {
+// A small centred confirmation pop-up. Destructive by default; an optional second action covers "choose between two ways" prompts.
+export function ConfirmDialog({ alternateLabel, body, busy = false, cancelLabel, confirmLabel, confirmVariant = "danger", onAlternate, onCancel, onConfirm, title, visible }: ConfirmDialogProps) {
   if (!visible) return null;
 
   return (
@@ -24,7 +27,10 @@ export function ConfirmDialog({ body, busy = false, cancelLabel, confirmLabel, o
           <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{title}</Text>
           <Text className="text-base font-sans text-neutral-700">{body}</Text>
           <View className="gap-2">
-            <Button disabled={busy} label={confirmLabel} onPress={onConfirm} testID="confirm-dialog-confirm" variant="danger" />
+            <Button disabled={busy} label={confirmLabel} onPress={onConfirm} testID="confirm-dialog-confirm" variant={confirmVariant} />
+            {alternateLabel && onAlternate ? (
+              <Button disabled={busy} label={alternateLabel} onPress={onAlternate} testID="confirm-dialog-alternate" variant="outline" />
+            ) : null}
             <Button label={cancelLabel} onPress={onCancel} testID="confirm-dialog-cancel" variant="ghost" />
           </View>
         </Pressable>

@@ -488,6 +488,13 @@ export const es: DeepStringRecord<typeof en> = {
       noServices: "Aún no hay servicios.",
       empty: "No hay barberos activos.",
       chairRentalTab: "Alquiler de silla",
+      commissionChange: {
+        body: "Esto cambia el saldo de pagos ya realizados y no se puede deshacer. ¿Aplicar {{percent}}% también a las citas anteriores?",
+        cancel: "Cancelar",
+        forward: "Solo de ahora en adelante",
+        retroactive: "También a las anteriores",
+        title: "Cambiar comisión",
+      },
       commissionPercentLabel: "Comisión (%)",
       commissionTab: "Comisión",
       compensation: "Remuneración",
