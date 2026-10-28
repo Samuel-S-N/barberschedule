@@ -1,3 +1,4 @@
+import { isServiceRequest } from "./auth.ts";
 import { buildMessage } from "./messages.ts";
 
 declare const Deno: {
@@ -90,6 +91,9 @@ async function dispatchOne(notification: ClaimedNotification) {
 
 async function dispatch(request: Request) {
   if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+  if (!isServiceRequest(request.headers.get("Authorization"), requiredEnv("SUPABASE_SERVICE_ROLE_KEY"))) {
+    return new Response("Unauthorized", { status: 401 });
+  }
 
   const claimed = (await supabaseRpc("claim_notification_batch", { target_limit: 50 })) as ClaimedNotification[];
   const results = { failed: 0, sent: 0, skipped: 0 };

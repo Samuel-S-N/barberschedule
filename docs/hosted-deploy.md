@@ -62,6 +62,8 @@ row is merged into the account's own row if one exists). Turn it off again if co
   (`npx supabase secrets set ...`).
 - `pg_cron` registers the jobs in migration `0022` when the extension is available; otherwise schedule
   `enqueue_notification_reminders()` every 15 minutes and `materialize_recurrence_job()` hourly.
+- Whatever schedules `dispatch-notifications` must send `Authorization: Bearer <service role key>`; any other caller
+  gets 401 (the anon key ships inside the app).
 
 ## 6. Smoke test on hosted
 
