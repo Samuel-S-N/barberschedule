@@ -197,7 +197,12 @@ test("each barber and service shows the change versus the previous period", asyn
   await expect(page.getByTestId("section-services")).toContainText("+100%");
 });
 
-test("a commission barber's card shows what was paid out and the running balance, linked to Repasses", async ({ page }) => {
+const overviewRow = (patch: Record<string, unknown>) => ({
+  balance_cents: 0, barber_id: "b1", barber_name: "Ana Barber", current_open_cents: 0, earned_cents: 0, last_due_date: null, next_due_date: null,
+  paid_cents: 0, payout_day_1: 5, payout_day_2: null, payout_schedule: "weekly", period_start: "2026-10-30", prior_open_cents: 0, status: "ok", tracking_start: "2026-10-01", ...patch,
+});
+
+async function mockRevenueWithPayouts(page: Page, payouts: unknown[], overview: unknown[]) {
   await signInAsOwner(page);
   await page.route("**/rest/v1/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
@@ -206,59 +211,57 @@ test("a commission barber's card shows what was paid out and the running balance
     if (path.endsWith("/rpc/get_current_profile")) return json([{ full_name: "Owner", role: "owner", user_id: ownerId }]);
     if (path.endsWith("/rpc/get_shop_report")) return json(report);
     if (path.endsWith("/rpc/list_rent_payments")) return json([]);
-    if (path.endsWith("/rpc/list_barber_payouts")) {
-      return json([
-        { amount_cents: 3000, barber_id: "b1", barber_name: "Ana Barber", id: "p1", note: null, paid_on: "2026-10-20" },
-        { amount_cents: 1000, barber_id: "b1", barber_name: "Ana Barber", id: "p2", note: null, paid_on: "2026-10-25" },
-      ]);
-    }
-    if (path.endsWith("/rpc/get_payout_overview")) {
-      return json([{ balance_cents: 7000, barber_id: "b1", barber_name: "Ana Barber", earned_cents: 11000, last_due_date: null, next_due_date: null, paid_cents: 4000, payout_day_1: null, payout_day_2: null, payout_schedule: "none", status: "no_schedule", tracking_start: "2026-10-01" }]);
-    }
+    if (path.endsWith("/rpc/list_barber_payouts")) return json(payouts);
+    if (path.endsWith("/rpc/get_payout_overview")) return json(overview);
     await route.abort();
   });
+}
+
+test("a barber with an unpaid previous period shows the total, the leftover and the current period, linked to Repasses", async ({ page }) => {
+  await mockRevenueWithPayouts(
+    page,
+    [{ amount_cents: 3000, barber_id: "b1", barber_name: "Ana Barber", id: "p1", note: null, paid_on: "2026-10-20" }, { amount_cents: 1000, barber_id: "b1", barber_name: "Ana Barber", id: "p2", note: null, paid_on: "2026-10-25" }],
+    [overviewRow({ balance_cents: 7000, current_open_cents: 5000, next_due_date: "2026-11-06", prior_open_cents: 2000 })],
+  );
 
   await page.goto("/revenue");
   const ana = page.getByTestId("barber-row-b1");
 
-  // The "Repasse" line was the barber's share of the period, not a payment: it now says so.
   await expect(ana).toContainText("Barber share");
   await expect(page.getByTestId("revenue-payouts-paid-b1")).toContainText("R$ 40,00");
-  await expect(page.getByTestId("revenue-payouts-balance-b1")).toContainText("R$ 70,00");
+  await expect(page.getByTestId("revenue-period-b1-total")).toContainText("R$ 70,00");
+  await expect(page.getByTestId("revenue-period-b1-prior")).toContainText("R$ 20,00");
+  await expect(ana).toContainText("Left from the previous period");
+  await expect(page.getByTestId("revenue-period-b1-current")).toContainText("R$ 50,00");
+  await expect(ana).toContainText("Current period · until 05/11");
+  await expect(ana).not.toContainText("Counting since");
   // Chair-rental barbers are paid by the barber, so they get no payout lines.
-  await expect(page.getByTestId("barber-row-b2")).not.toContainText("Payouts paid");
   await expect(page.getByTestId("revenue-payouts-paid-b2")).toHaveCount(0);
 
   await page.getByTestId("revenue-payouts-link-b1").click();
   await expect(page).toHaveURL(/\/payouts/);
 });
 
-test("an overpaid balance stays inside the card and says the balance only counts from the tracking start", async ({ page }) => {
-  await signInAsOwner(page);
-  await page.setViewportSize({ width: 390, height: 900 });
-  await page.route("**/rest/v1/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    const json = (body: unknown) => route.fulfill({ body: JSON.stringify(body), contentType: "application/json", status: 200 });
+test("with nothing left from before, only the current period shows", async ({ page }) => {
+  await mockRevenueWithPayouts(page, [], [overviewRow({ balance_cents: 4400, current_open_cents: 4400, next_due_date: "2026-11-06" })]);
 
-    if (path.endsWith("/rpc/get_current_profile")) return json([{ full_name: "Owner", role: "owner", user_id: ownerId }]);
-    if (path.endsWith("/rpc/get_shop_report")) return json(report);
-    if (path.endsWith("/rpc/list_rent_payments")) return json([]);
-    if (path.endsWith("/rpc/list_barber_payouts")) return json([{ amount_cents: 2500, barber_id: "b1", barber_name: "Ana Barber", id: "p1", note: null, paid_on: "2026-10-27" }]);
-    if (path.endsWith("/rpc/get_payout_overview")) {
-      return json([{ balance_cents: -2500, barber_id: "b1", barber_name: "Ana Barber", earned_cents: 0, last_due_date: null, next_due_date: null, paid_cents: 2500, payout_day_1: 1, payout_day_2: null, payout_schedule: "weekly", status: "ok", tracking_start: "2026-10-27" }]);
-    }
-    await route.abort();
-  });
+  await page.goto("/revenue");
+  await expect(page.getByTestId("revenue-period-b1-current")).toContainText("R$ 44,00");
+  await expect(page.getByTestId("revenue-period-b1-prior")).toHaveCount(0);
+  await expect(page.getByTestId("revenue-period-b1-total")).toHaveCount(0);
+});
+
+test("an overpaid balance stays inside the card", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await mockRevenueWithPayouts(page, [{ amount_cents: 2500, barber_id: "b1", barber_name: "Ana Barber", id: "p1", note: null, paid_on: "2026-10-27" }], [overviewRow({ balance_cents: -2500, current_open_cents: -2500, paid_cents: 2500, tracking_start: "2026-10-27" })]);
 
   await page.goto("/revenue");
   const card = page.getByTestId("barber-row-b1");
-  const balance = page.getByTestId("revenue-payouts-balance-b1");
+  const overpaid = page.getByTestId("revenue-period-b1-overpaid");
 
-  await expect(balance).toContainText("R$ 25,00");
+  await expect(overpaid).toContainText("R$ 25,00");
   await expect(card).toContainText("Overpaid");
-  // The month's R$ 44,00 share is before the tracking start, so the card must say why the balance ignores it.
-  await expect(page.getByTestId("revenue-payouts-since-b1")).toContainText("27/10");
-  const box = (await balance.boundingBox())!;
+  const box = (await overpaid.boundingBox())!;
   const cardBox = (await card.boundingBox())!;
   expect(box.x + box.width).toBeLessThanOrEqual(cardBox.x + cardBox.width);
 });

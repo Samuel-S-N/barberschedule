@@ -22,7 +22,7 @@ import { Card } from "../../src/components/ui/Card";
 import { Screen } from "../../src/components/ui/Screen";
 import { barberRows, payoutsPaidByBarber, sumShopReport, topByValue } from "../../src/features/owner-reports/build";
 import { getPayoutOverview, listBarberPayouts } from "../../src/features/payouts/api";
-import { formatDayMonth } from "../../src/features/payouts/format";
+import { PeriodBreakdown } from "../../src/features/payouts/owner/PeriodBreakdown";
 import { getShopReport } from "../../src/features/owner-reports/api";
 import { ownerReportCsv } from "../../src/features/reports/csv";
 import { useCsvLabels } from "../../src/features/reports/use-csv-labels";
@@ -149,21 +149,14 @@ export default function OwnerRevenueScreen() {
     value: p.value,
   }));
   const rows = report ? barberRows(report) : [];
-  const payoutBalanceLine = (barberId: string) => {
+  const payoutLines = (barberId: string) => {
     const item = payoutOverview.data?.find((o) => o.barberId === barberId);
 
     if (!item) return null;
 
-    const overpaid = item.balanceCents < 0;
-
     return (
       <>
-        <View className="flex-row justify-between gap-2">
-          <Text className="flex-1 text-sm font-sans-semibold text-ink">{t(overpaid ? "payouts.balanceOverpaid" : "owner.revenue.payoutBalance")}</Text>
-          <Text className={`text-sm font-sans-semibold ${overpaid ? "text-warning-500" : "text-ink"}`} testID={`revenue-payouts-balance-${barberId}`}>{money(Math.abs(item.balanceCents))}</Text>
-        </View>
-        {/* The balance ignores appointments before this date, so it can differ from the period's barber share above. */}
-        <Text className="text-xs font-sans text-neutral-500" testID={`revenue-payouts-since-${barberId}`}>{t("payouts.barber.since", { date: formatDayMonth(item.trackingStart) })}</Text>
+        <PeriodBreakdown item={item} showTotal testIdPrefix={`revenue-period-${barberId}`} />
         <Button label={t("owner.revenue.viewPayouts")} onPress={() => router.push("/payouts" as never)} size="sm" testID={`revenue-payouts-link-${barberId}`} variant="outline" />
       </>
     );
@@ -305,7 +298,7 @@ export default function OwnerRevenueScreen() {
                           <Text className="text-sm font-sans-medium text-ink" testID={`revenue-payouts-paid-${row.barberId}`}>{money(paidOut[row.barberId] ?? 0)}</Text>
                         </View>
                       ) : null}
-                      {row.compensationType === "commission" ? payoutBalanceLine(row.barberId) : null}
+                      {row.compensationType === "commission" ? payoutLines(row.barberId) : null}
                       {payingFor === row.barberId ? (
                         <View className="gap-2">
                           <Input label={t("owner.revenue.paymentAmount")} onChangeText={setAmount} placeholder={t("examples.money")} testID="rent-amount" value={amount} />
