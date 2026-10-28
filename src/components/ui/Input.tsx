@@ -5,7 +5,7 @@ import type { TextInputProps } from "react-native";
 
 type PassThroughProps = Pick<
   TextInputProps,
-  "autoCapitalize" | "autoComplete" | "autoCorrect" | "keyboardType" | "onSubmitEditing" | "returnKeyType" | "textContentType"
+  "autoCapitalize" | "autoComplete" | "autoCorrect" | "keyboardType" | "maxLength" | "onSubmitEditing" | "returnKeyType" | "textContentType"
 >;
 
 // What a TextInput ref points to (the strict React Native types no longer let the component be used as its own instance type).

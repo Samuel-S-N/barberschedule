@@ -47,6 +47,7 @@ export const pt: DeepStringRecord<typeof en> = {
     startTime: "Horário inicial",
     email: "E-mail",
     fullName: "Nome completo",
+    fullNameTooLong: "Use até 100 caracteres.",
     password: "Senha",
     nicknameOptional: "Como quer ser chamado (opcional)",
     phoneOptional: "Telefone (opcional)",

@@ -48,6 +48,7 @@ export const en = {
     startTime: "Start time",
     email: "Email",
     fullName: "Full name",
+    fullNameTooLong: "Use up to 100 characters.",
     password: "Password",
     nicknameOptional: "What should we call you? (optional)",
     phoneOptional: "Phone (optional)",

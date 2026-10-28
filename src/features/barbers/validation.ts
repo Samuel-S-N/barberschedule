@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { BarberCompensation, BarberInput } from "./types";
 
 const barberSchema = z.object({
-  name: z.string().trim().min(1, "Name is required."),
+  name: z.string().trim().min(1, "Name is required.").max(80, "Name must be at most 80 characters."),
   shopId: z.string().guid("Shop id must be a UUID."),
   userId: z
     .string()

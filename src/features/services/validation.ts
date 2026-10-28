@@ -3,9 +3,9 @@ import { z } from "zod";
 import type { BarberServiceInput, ServiceInput } from "./types";
 
 const serviceSchema = z.object({
-  description: z.string().trim().min(1).nullable().optional(),
+  description: z.string().trim().min(1).max(500, "Description must be at most 500 characters.").nullable().optional(),
   durationMinutes: z.number().int().positive("Duration must be positive."),
-  name: z.string().trim().min(1, "Name is required."),
+  name: z.string().trim().min(1, "Name is required.").max(80, "Name must be at most 80 characters."),
   priceCents: z.number().int().min(0, "Price cannot be negative."),
   shopId: z.string().guid("Shop id must be a UUID."),
 });

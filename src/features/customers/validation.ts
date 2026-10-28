@@ -13,9 +13,9 @@ const customerFields = {
   email: optionalTrimmedText.refine(
     (value) => value === null || value === undefined || z.email().safeParse(value).success,
     "Email must be valid.",
-  ),
-  fullName: z.string().trim().min(1, "Full name is required."),
-  phone: optionalTrimmedText,
+  ).refine((value) => !value || value.length <= 254, "Email must be at most 254 characters."),
+  fullName: z.string().trim().min(1, "Full name is required.").max(100, "Full name must be at most 100 characters."),
+  phone: optionalTrimmedText.refine((value) => !value || value.length <= 30, "Phone must be at most 30 characters."),
   shopId: z.string().guid("Shop id must be a UUID."),
   userId: z
     .string()
