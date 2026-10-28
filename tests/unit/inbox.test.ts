@@ -14,7 +14,7 @@ it("maps rows", async () => {
 
   expect(item).toEqual({
     appointmentId: "a1", createdAt: "2026-10-20T10:00:00Z", id: "n1", kind: "appointment_cancelled",
-    params: { barberName: "Bia", customerName: "Ana", intervalWeeks: null, serviceName: "Cut", startsAt: "2026-10-21T13:00:00Z" }, readAt: null,
+    params: { amountCents: null, barberName: "Bia", barberNames: "", customerName: "Ana", intervalWeeks: null, paidOn: "", serviceName: "Cut", startsAt: "2026-10-21T13:00:00Z" }, readAt: null,
   });
   expect(supabase.from).toHaveBeenCalledWith("notifications");
 });

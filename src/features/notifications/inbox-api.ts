@@ -13,14 +13,16 @@ export type InboxKind =
   | "recurrence_rejected"
   | "recurrence_cancel_requested"
   | "recurrence_cancel_accepted"
-  | "recurrence_cancel_declined";
+  | "recurrence_cancel_declined"
+  | "payout_due"
+  | "payout_paid";
 
 export type InboxItem = {
   appointmentId: string | null;
   createdAt: string;
   id: string;
   kind: InboxKind;
-  params: { barberName: string; customerName: string; intervalWeeks: number | null; serviceName: string; startsAt: string };
+  params: { amountCents: number | null; barberName: string; barberNames: string; customerName: string; intervalWeeks: number | null; paidOn: string; serviceName: string; startsAt: string };
   readAt: string | null;
 };
 
@@ -29,9 +31,16 @@ type Row = {
   created_at: string;
   id: string;
   kind: InboxKind;
-  params: { barber_name?: string; customer_name?: string; interval_weeks?: number; service_name?: string; starts_at?: string };
+  params: { amount_cents?: number; barber_name?: string; barber_names?: string[]; count?: number; customer_name?: string; interval_weeks?: number; paid_on?: string; service_name?: string; starts_at?: string };
   read_at: string | null;
 };
+
+// "Ana, Caio +2": the first names plus how many more are due than were listed.
+function namesLabel(names: string[], count: number) {
+  const extra = count - names.length;
+
+  return `${names.join(", ")}${extra > 0 ? ` +${extra}` : ""}`;
+}
 
 export async function listNotifications(supabase: Client, limit = 50): Promise<InboxItem[]> {
   const { data, error } = await supabase
@@ -47,9 +56,12 @@ export async function listNotifications(supabase: Client, limit = 50): Promise<I
     id: row.id,
     kind: row.kind,
     params: {
+      amountCents: row.params.amount_cents ?? null,
       barberName: row.params.barber_name ?? "",
+      barberNames: namesLabel(row.params.barber_names ?? [], row.params.count ?? 0),
       customerName: row.params.customer_name ?? "",
       intervalWeeks: row.params.interval_weeks ?? null,
+      paidOn: row.params.paid_on ?? "",
       serviceName: row.params.service_name ?? "",
       startsAt: row.params.starts_at ?? "",
     },

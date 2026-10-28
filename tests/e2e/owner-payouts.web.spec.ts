@@ -77,3 +77,27 @@ test("a one-off payout works for a barber without a schedule", async ({ page }) 
 
   await expect.poll(() => calls.payout).toMatchObject({ payout_amount_cents: 1000, target_barber_id: "b2" });
 });
+
+test("tapping the payout reminder opens the payouts screen", async ({ page }) => {
+  await signInAsOwner(page);
+  await page.route("**/rest/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+
+    if (path.endsWith("/rpc/get_current_profile")) return json(route, [{ full_name: "Owner", role: "owner", user_id: ownerId }]);
+    if (path.endsWith("/notifications")) {
+      return json(route, [{ appointment_id: null, created_at: "2026-10-27T11:00:00Z", id: "n1", kind: "payout_due", params: { barber_names: ["Ana Barber", "Caio Avulso"], count: 2, date: "2026-10-27" }, read_at: null }]);
+    }
+    if (path.endsWith("/rpc/get_payout_overview")) return json(route, overview);
+    if (path.endsWith("/rpc/list_barber_payouts")) return json(route, []);
+    if (path.includes("/rpc/")) return json(route, null);
+    await route.abort();
+  });
+
+  await page.goto("/owner-notifications");
+  await expect(page.getByTestId("notification-n1")).toContainText("Payout day");
+  await expect(page.getByTestId("notification-n1")).toContainText("Ana Barber, Caio Avulso");
+  await page.getByTestId("notification-n1").click();
+
+  await expect(page).toHaveURL(/\/payouts/);
+  await expect(page.getByTestId("payout-card-b1")).toBeVisible();
+});

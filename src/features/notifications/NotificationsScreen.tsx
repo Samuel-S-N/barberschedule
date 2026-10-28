@@ -19,6 +19,8 @@ import { useLanguage } from "../../i18n/use-language";
 import { colors } from "../../lib/design/colors";
 import { formatInstantInShopTime } from "../../lib/dates/shop-time";
 import { formatDateNumeric } from "../../lib/i18n/format";
+import { formatPriceBRL } from "../../components/domain/ServiceCard";
+import { formatDayMonth } from "../payouts/format";
 import { useBack } from "../../lib/navigation/use-back";
 import { pullToRefresh, useRefreshAll } from "../../lib/use-refresh";
 import { useSupabaseSession } from "../../providers/AppProviders";
@@ -102,9 +104,11 @@ export default function NotificationsScreen() {
                         <Text className={`text-base text-ink ${item.readAt ? "font-sans-medium" : "font-sans-semibold"}`}>{t(text.titleKey)}</Text>
                         <Text className="text-sm font-sans text-neutral-600">
                           {t(text.bodyKey, {
+                            amount: item.params.amountCents === null ? "" : formatPriceBRL(item.params.amountCents),
                             barberName: item.params.barberName,
                             customerName: item.params.customerName,
-                            date: when(item.params.startsAt),
+                            date: item.kind === "payout_paid" ? formatDayMonth(item.params.paidOn) : when(item.params.startsAt),
+                            names: item.params.barberNames,
                             label: recurrenceLabel(t, item.params.intervalWeeks ?? 1),
                             serviceName: item.params.serviceName,
                           })}
