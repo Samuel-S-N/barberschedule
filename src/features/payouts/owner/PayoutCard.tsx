@@ -7,6 +7,7 @@ import { Card } from "../../../components/ui/Card";
 import { payoutBadge } from "../balance";
 import { formatDayMonth } from "../format";
 import { scheduleText } from "../schedule";
+import { PeriodBreakdown } from "./PeriodBreakdown";
 import type { PayoutOverviewItem } from "../types";
 
 const TONE_CLASS = { danger: "text-danger-500", neutral: "text-neutral-600", success: "text-success-500", warning: "text-warning-500" } as const;
@@ -23,9 +24,13 @@ export function PayoutCard({ item, onPay }: { item: PayoutOverviewItem; onPay: (
           <Text className={`text-sm font-sans-medium ${TONE_CLASS[badge.tone]}`}>{t(`payouts.badge.${badge.key}`)}</Text>
         </View>
         <Text className="text-sm font-sans text-neutral-600">{scheduleText(t, item.config)}</Text>
-        <Text className="text-2xl font-display-bold text-ink">
-          {item.balanceCents < 0 ? `${t("payouts.balanceOverpaid")} ${formatPriceBRL(-item.balanceCents)}` : formatPriceBRL(item.balanceCents)}
-        </Text>
+        <View>
+          <Text className="text-xs font-sans text-neutral-500">{t("payouts.period.total")}</Text>
+          <Text className="text-2xl font-display-bold text-ink" testID={`payout-total-${item.barberId}`}>
+            {item.balanceCents < 0 ? `${t("payouts.balanceOverpaid")} ${formatPriceBRL(-item.balanceCents)}` : formatPriceBRL(item.balanceCents)}
+          </Text>
+        </View>
+        <PeriodBreakdown item={item} showTotal={false} testIdPrefix={`payout-period-${item.barberId}`} />
         {item.nextDueDate ? <Text className="text-sm font-sans text-neutral-600">{t("payouts.next", { date: formatDayMonth(item.nextDueDate) })}</Text> : null}
         <Button label={t("payouts.pay")} onPress={onPay} size="sm" testID={`payout-pay-${item.barberId}`} />
       </View>

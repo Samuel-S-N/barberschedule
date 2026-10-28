@@ -7,10 +7,13 @@ export type PayoutOverviewItem = {
   barberId: string;
   barberName: string;
   config: PayoutScheduleConfig;
+  currentOpenCents: number;
   earnedCents: number;
   lastDueDate: string | null;
   nextDueDate: string | null;
   paidCents: number;
+  periodStart: string | null;
+  priorOpenCents: number;
   status: PayoutStatus;
   trackingStart: string;
 };
@@ -27,8 +30,8 @@ export type MyPayoutSummary = {
 };
 
 export type OverviewRow = {
-  balance_cents: number; barber_id: string; barber_name: string; earned_cents: number; last_due_date: string | null; next_due_date: string | null;
-  paid_cents: number; payout_day_1: number | null; payout_day_2: number | null; payout_schedule: PayoutSchedule; status: PayoutStatus; tracking_start: string;
+  balance_cents: number; barber_id: string; barber_name: string; current_open_cents: number; earned_cents: number; last_due_date: string | null; next_due_date: string | null;
+  paid_cents: number; payout_day_1: number | null; payout_day_2: number | null; payout_schedule: PayoutSchedule; period_start: string | null; prior_open_cents: number; status: PayoutStatus; tracking_start: string;
 };
 
 export type PayoutRow = { amount_cents: number; barber_id: string; barber_name?: string; id: string; note: string | null; paid_on: string };

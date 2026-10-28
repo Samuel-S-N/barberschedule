@@ -107,7 +107,7 @@ select is(
   3000, 'the owner records a partial payout'
 );
 select is((select balance_cents from public.get_payout_overview() where barber_id = 'b0200000-0000-0000-0000-000000000001'), 7000, 'the balance drops by what was paid');
-select is((select status from public.get_payout_overview() where barber_id = 'b0200000-0000-0000-0000-000000000001'), 'ok', 'a payout after the last due date clears the pending flag');
+select is((select status from public.get_payout_overview() where barber_id = 'b0200000-0000-0000-0000-000000000001'), 'pending', 'a partial payout leaves the remainder of the previous period pending');
 
 select is(
   (select amount_cents from public.record_barber_payout('b0200000-0000-0000-0000-000000000002', 1500, pg_temp.today(), null)),

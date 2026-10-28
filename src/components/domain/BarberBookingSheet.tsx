@@ -1,3 +1,4 @@
+import { X } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, Pressable, Text, View } from "react-native";
@@ -5,6 +6,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import type { BarberCustomer, BarberCustomerInput } from "../../features/appointments/barber-booking";
 import type { MyBarberService } from "../../features/barbers/types";
+import { colors } from "../../lib/design/colors";
 import { Button } from "../ui/Button";
 import { Input, useFieldChain } from "../ui/Input";
 import { formatPriceBRL } from "./ServiceCard";
@@ -79,14 +81,21 @@ export function BarberBookingSheet({ busy = false, fitsService, initialCustomer 
 
   return (
     <Modal animationType="fade" onRequestClose={onClose} transparent visible={visible}>
-      <View className="flex-1 justify-end bg-black/40">
-        <View className="max-h-[90%] w-full rounded-t-2xl bg-surface">
+      <View className="flex-1 items-center justify-center bg-black/40 p-5">
+        {/* Tapping the dimmed area outside the window closes it (a sibling layer, so the scrolling form is not wrapped in a Pressable). */}
+        <Pressable accessible={false} className="absolute bottom-0 left-0 right-0 top-0" focusable={false} onPress={onClose} testID="barber-book-dismiss" />
+        <View className="max-h-full w-full max-w-[420px] rounded-2xl bg-surface" testID="barber-book-sheet">
           <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled">
-            <View className="items-center gap-3 p-5">
-              <Text accessibilityRole="header" className="w-full max-w-[420px] text-2xl font-display-bold text-ink">
-                {t("barber.agenda.bookTitle", { time: slotLabel })}
-              </Text>
-              <View className="w-full max-w-[420px] gap-3">
+            <View className="gap-3 p-5">
+              <View className="flex-row items-start justify-between gap-2">
+                <Text accessibilityRole="header" className="flex-1 text-xl font-display-semibold text-ink">
+                  {t("barber.agenda.bookTitle", { time: slotLabel })}
+                </Text>
+                <Pressable accessibilityLabel={t("agendaCard.close")} accessibilityRole="button" className="h-11 w-11 items-center justify-center" hitSlop={8} onPress={onClose} testID="barber-book-close">
+                  <X color={colors.ink} size={22} />
+                </Pressable>
+              </View>
+              <View className="gap-3">
                 <Input
                   {...field(0)}
                   label={t("barber.agenda.bookCustomerName")}

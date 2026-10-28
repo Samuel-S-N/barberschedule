@@ -149,3 +149,14 @@ test("the owner pop-up has the customer's WhatsApp and phone and opens the custo
   await page.getByTestId("owner-appointment-customer-appt-1").click();
   await expect(page).toHaveURL(/\/customer-form\?id=/);
 });
+
+test("tapping outside the appointment pop-up closes it", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, { calls: {}, rows: [agendaRow()] });
+
+  await page.goto("/agenda");
+  await openOwnerCard(page);
+  await expect(page.getByTestId("owner-sheet")).toBeVisible();
+  await page.mouse.click(5, 5);
+  await expect(page.getByTestId("owner-sheet")).toHaveCount(0);
+});

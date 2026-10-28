@@ -90,6 +90,38 @@ test("a barber books a name-only customer from a free slot on the agenda", async
   });
 });
 
+test("the booking pop-up is a floating window that closes with the X or a tap outside", async ({ page }) => {
+  const slotStart = new Date(Date.now() + 3 * 60 * 60 * 1000);
+
+  await signIn(page, barberUserId);
+  await mockBarberRest(page, async (route, url) => {
+    const name = url.pathname.split("/rpc/")[1];
+    if (name === "get_available_slots") {
+      return json(route, [{ ends_at: slotStart.toISOString(), local_date: "2026-10-01", local_time: "09:30:00", starts_at: slotStart.toISOString() }]).then(() => true);
+    }
+    if (name === "barber_search_customers") return json(route, []).then(() => true);
+  });
+
+  await page.goto("/my-agenda");
+  await page.getByTestId("barber-free-slot").first().click();
+  await expect(page.getByTestId("barber-book-name")).toBeVisible();
+
+  // A floating window like the agenda pop-up (not glued to the bottom edge), with an X to close it.
+  const box = (await page.getByTestId("barber-book-sheet").boundingBox())!;
+  const viewport = page.viewportSize()!;
+  expect(box.x).toBeGreaterThan(0);
+  expect(box.x + box.width).toBeLessThan(viewport.width);
+  expect(box.y + box.height).toBeLessThan(viewport.height);
+  await expect(page.getByTestId("barber-book-sheet")).toHaveCSS("border-top-left-radius", "16px");
+  await page.getByTestId("barber-book-close").click();
+  await expect(page.getByTestId("barber-book-name")).toBeHidden();
+
+  await page.getByTestId("barber-free-slot").first().click();
+  await expect(page.getByTestId("barber-book-name")).toBeVisible();
+  await page.mouse.click(5, 5); // the dimmed area around the window
+  await expect(page.getByTestId("barber-book-name")).toBeHidden();
+});
+
 test("a slot conflict shows the error and keeps the agenda usable", async ({ page }) => {
   const slotStart = new Date(Date.now() + 3 * 60 * 60 * 1000);
 
