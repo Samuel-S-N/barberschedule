@@ -66,13 +66,13 @@ select is((select count(*)::int from public.payout_due_barbers('b1100000-0000-00
 set local role authenticated;
 select set_config('request.jwt.claim.role', 'authenticated', true);
 select set_config('request.jwt.claim.sub', 'b1000000-0000-0000-0000-000000000001', true);
-select is((select amount_cents from public.record_barber_payout('b1200000-0000-0000-0000-000000000001', 1000, pg_temp.today())), 1000, 'the owner pays A');
+select is((select amount_cents from public.record_barber_payout('b1200000-0000-0000-0000-000000000001', 5000, pg_temp.today())), 5000, 'the owner pays A in full');
 reset role;
 
-select is((select count(*)::int from public.payout_due_barbers('b1100000-0000-0000-0000-000000000001', pg_temp.today())), 0, 'a barber already paid today is no longer due');
+select is((select count(*)::int from public.payout_due_barbers('b1100000-0000-0000-0000-000000000001', pg_temp.today())), 0, 'a barber paid in full today is no longer due');
 select is(
   (select (params ->> 'amount_cents')::int from public.notifications where kind = 'payout_paid' and user_id = 'b1000000-0000-0000-0000-000000000002'),
-  1000, 'A is told about the payout'
+  5000, 'A is told about the payout'
 );
 select is(
   (select count(*)::int from public.notification_outbox where event_type = 'payout.paid' and recipient_user_id = 'b1000000-0000-0000-0000-000000000002'),
@@ -82,10 +82,10 @@ select is(
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'b1000000-0000-0000-0000-000000000001', true);
 select public.record_barber_payout('b1200000-0000-0000-0000-000000000002', 500, pg_temp.today());
-select public.delete_barber_payout((select id from public.list_barber_payouts(pg_temp.today() - 1, pg_temp.today() + 1) where amount_cents = 1000));
+select public.delete_barber_payout((select id from public.list_barber_payouts(pg_temp.today() - 1, pg_temp.today() + 1) where amount_cents = 5000));
 reset role;
 
-select is((select count(*)::int from public.notifications where kind = 'payout_paid'), 1, 'a barber without an account and a deleted payout produce no extra notification');
+select is((select count(*)::int from public.notifications where kind = 'payout_paid' and params ->> 'amount_cents' in ('500', '5000')), 1, 'a barber without an account and a deleted payout produce no extra notification');
 
 select * from finish();
 rollback;
