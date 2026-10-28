@@ -90,7 +90,7 @@ test("a barber books a name-only customer from a free slot on the agenda", async
   });
 });
 
-test("tapping outside the booking pop-up closes it", async ({ page }) => {
+test("the booking pop-up is a floating window that closes with the X or a tap outside", async ({ page }) => {
   const slotStart = new Date(Date.now() + 3 * 60 * 60 * 1000);
 
   await signIn(page, barberUserId);
@@ -105,7 +105,20 @@ test("tapping outside the booking pop-up closes it", async ({ page }) => {
   await page.goto("/my-agenda");
   await page.getByTestId("barber-free-slot").first().click();
   await expect(page.getByTestId("barber-book-name")).toBeVisible();
-  await page.mouse.click(195, 20); // the dimmed area above the sheet
+
+  // A floating window like the agenda pop-up (not glued to the bottom edge), with an X to close it.
+  const box = (await page.getByTestId("barber-book-sheet").boundingBox())!;
+  const viewport = page.viewportSize()!;
+  expect(box.x).toBeGreaterThan(0);
+  expect(box.x + box.width).toBeLessThan(viewport.width);
+  expect(box.y + box.height).toBeLessThan(viewport.height);
+  await expect(page.getByTestId("barber-book-sheet")).toHaveCSS("border-top-left-radius", "16px");
+  await page.getByTestId("barber-book-close").click();
+  await expect(page.getByTestId("barber-book-name")).toBeHidden();
+
+  await page.getByTestId("barber-free-slot").first().click();
+  await expect(page.getByTestId("barber-book-name")).toBeVisible();
+  await page.mouse.click(5, 5); // the dimmed area around the window
   await expect(page.getByTestId("barber-book-name")).toBeHidden();
 });
 
