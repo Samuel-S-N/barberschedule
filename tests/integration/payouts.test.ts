@@ -3,12 +3,12 @@ import { deleteBarberPayout, getMyPayoutSummary, getPayoutOverview, recordBarber
 describe("payouts api", () => {
   it("maps the overview rows", async () => {
     const rpc = jest.fn().mockResolvedValue({
-      data: [{ balance_cents: 7000, barber_id: "b1", barber_name: "Ana", earned_cents: 10000, last_due_date: "2026-10-26", next_due_date: "2026-11-02", paid_cents: 3000, payout_day_1: 1, payout_day_2: null, payout_schedule: "weekly", status: "pending", tracking_start: "2026-10-01" }],
+      data: [{ balance_cents: 7000, barber_id: "b1", barber_name: "Ana", current_open_cents: 5000, earned_cents: 10000, last_due_date: "2026-10-26", next_due_date: "2026-11-02", paid_cents: 3000, payout_day_1: 1, payout_day_2: null, payout_schedule: "weekly", period_start: "2026-10-26", prior_open_cents: 2000, status: "pending", tracking_start: "2026-10-01" }],
       error: null,
     });
 
     await expect(getPayoutOverview({ rpc } as never)).resolves.toEqual([
-      { balanceCents: 7000, barberId: "b1", barberName: "Ana", config: { day1: 1, day2: null, schedule: "weekly" }, earnedCents: 10000, lastDueDate: "2026-10-26", nextDueDate: "2026-11-02", paidCents: 3000, status: "pending", trackingStart: "2026-10-01" },
+      { balanceCents: 7000, barberId: "b1", barberName: "Ana", config: { day1: 1, day2: null, schedule: "weekly" }, currentOpenCents: 5000, earnedCents: 10000, lastDueDate: "2026-10-26", nextDueDate: "2026-11-02", paidCents: 3000, periodStart: "2026-10-26", priorOpenCents: 2000, status: "pending", trackingStart: "2026-10-01" },
     ]);
     expect(rpc).toHaveBeenCalledWith("get_payout_overview");
   });

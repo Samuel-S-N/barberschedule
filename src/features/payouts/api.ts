@@ -22,10 +22,13 @@ export async function getPayoutOverview(supabase: Rpc): Promise<PayoutOverviewIt
     barberId: row.barber_id,
     barberName: row.barber_name,
     config: { day1: row.payout_day_1, day2: row.payout_day_2, schedule: row.payout_schedule },
+    currentOpenCents: row.current_open_cents,
     earnedCents: row.earned_cents,
     lastDueDate: row.last_due_date,
     nextDueDate: row.next_due_date,
     paidCents: row.paid_cents,
+    periodStart: row.period_start,
+    priorOpenCents: row.prior_open_cents,
     status: row.status,
     trackingStart: row.tracking_start,
   }));
