@@ -36,6 +36,14 @@ export function barberRows(report: ShopReport) {
   return report.barbers.map((b) => ({ ...b, shopShareCents: b.grossCents - b.barberShareCents + b.rentPaidCents }));
 }
 
+export function payoutsPaidByBarber(payouts: Array<{ amountCents: number; barberId: string }>) {
+  const paid: Record<string, number> = {};
+
+  for (const p of payouts) paid[p.barberId] = (paid[p.barberId] ?? 0) + p.amountCents;
+
+  return paid;
+}
+
 export function topByValue(items: Array<{ key: string; name: string; value: number }>, max = 4): DonutItem[] {
   const sorted = items.filter((i) => i.value > 0).sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));
   const head = sorted.slice(0, max).map((i) => ({ key: i.key, name: i.name, value: i.value }));

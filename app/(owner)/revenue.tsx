@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 import { CheckCircle2, UserX, XCircle } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -19,7 +20,9 @@ import { StatTile } from "../../src/components/domain/StatTile";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Screen } from "../../src/components/ui/Screen";
-import { barberRows, sumShopReport, topByValue } from "../../src/features/owner-reports/build";
+import { barberRows, payoutsPaidByBarber, sumShopReport, topByValue } from "../../src/features/owner-reports/build";
+import { getPayoutOverview, listBarberPayouts } from "../../src/features/payouts/api";
+import { formatDayMonth } from "../../src/features/payouts/format";
 import { getShopReport } from "../../src/features/owner-reports/api";
 import { ownerReportCsv } from "../../src/features/reports/csv";
 import { useCsvLabels } from "../../src/features/reports/use-csv-labels";
@@ -58,7 +61,12 @@ export default function OwnerRevenueScreen() {
   const before = useQuery({ queryFn: () => getShopReport(supabase, previous.start, previous.end), queryKey: ["owner-report", previous.start, previous.end] });
 
   const queryClient = useQueryClient();
+  const router = useRouter();
   const payments = useQuery({ queryFn: () => listRentPayments(supabase, range.start, range.end), queryKey: ["rent-payments", range.start, range.end] });
+  // Money paid out to commission barbers in the period, and the running balance still owed (not period-bound). Failures just hide the lines.
+  const payouts = useQuery({ queryFn: () => listBarberPayouts(supabase, range.start, range.end), queryKey: ["payout-history", "revenue", range.start, range.end] });
+  const payoutOverview = useQuery({ queryFn: () => getPayoutOverview(supabase), queryKey: ["payout-overview"] });
+  const paidOut = useMemo(() => payoutsPaidByBarber(payouts.data ?? []), [payouts.data]);
   // Rent payment form: one barber at a time; remove needs a second tap on the same payment.
   const [payingFor, setPayingFor] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
@@ -141,6 +149,25 @@ export default function OwnerRevenueScreen() {
     value: p.value,
   }));
   const rows = report ? barberRows(report) : [];
+  const payoutBalanceLine = (barberId: string) => {
+    const item = payoutOverview.data?.find((o) => o.barberId === barberId);
+
+    if (!item) return null;
+
+    const overpaid = item.balanceCents < 0;
+
+    return (
+      <>
+        <View className="flex-row justify-between gap-2">
+          <Text className="flex-1 text-sm font-sans-semibold text-ink">{t(overpaid ? "payouts.balanceOverpaid" : "owner.revenue.payoutBalance")}</Text>
+          <Text className={`text-sm font-sans-semibold ${overpaid ? "text-warning-500" : "text-ink"}`} testID={`revenue-payouts-balance-${barberId}`}>{money(Math.abs(item.balanceCents))}</Text>
+        </View>
+        {/* The balance ignores appointments before this date, so it can differ from the period's barber share above. */}
+        <Text className="text-xs font-sans text-neutral-500" testID={`revenue-payouts-since-${barberId}`}>{t("payouts.barber.since", { date: formatDayMonth(item.trackingStart) })}</Text>
+        <Button label={t("owner.revenue.viewPayouts")} onPress={() => router.push("/payouts" as never)} size="sm" testID={`revenue-payouts-link-${barberId}`} variant="outline" />
+      </>
+    );
+  };
   const donutColor = (key: string, index: number) => (key === "other" ? colors.neutral[500] : SERVICE_SLICE_COLORS[index % SERVICE_SLICE_COLORS.length]);
   const barberItems = report ? topByValue(report.barbers.map((b) => ({ key: b.barberId, name: b.name, value: b.grossCents }))) : [];
   const serviceItems = report ? topByValue(report.services.map((s) => ({ key: s.serviceId, name: s.name, value: s.grossCents }))) : [];
@@ -272,6 +299,13 @@ export default function OwnerRevenueScreen() {
                       {row.compensationType === "chair_rental" && payingFor !== row.barberId ? (
                         <Button label={t("owner.revenue.recordPayment")} onPress={() => openPayment(row.barberId, row.rentEstimateCents - row.rentPaidCents)} size="sm" testID={`rent-pay-${row.barberId}`} variant="outline" />
                       ) : null}
+                      {row.compensationType === "commission" && payouts.data ? (
+                        <View className="flex-row justify-between">
+                          <Text className="flex-1 text-sm font-sans text-neutral-600">{t("owner.revenue.payoutsPaid")}</Text>
+                          <Text className="text-sm font-sans-medium text-ink" testID={`revenue-payouts-paid-${row.barberId}`}>{money(paidOut[row.barberId] ?? 0)}</Text>
+                        </View>
+                      ) : null}
+                      {row.compensationType === "commission" ? payoutBalanceLine(row.barberId) : null}
                       {payingFor === row.barberId ? (
                         <View className="gap-2">
                           <Input label={t("owner.revenue.paymentAmount")} onChangeText={setAmount} placeholder={t("examples.money")} testID="rent-amount" value={amount} />
