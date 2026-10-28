@@ -12,6 +12,7 @@ import { errorMessage } from "../../../i18n/errors";
 import { centsToReaisInput, parseReaisToCents } from "../../../lib/money";
 import { useSupabaseSession } from "../../../providers/AppProviders";
 import { setBarberCompensation } from "../api";
+import { ScheduleEditor } from "../../payouts/owner/ScheduleEditor";
 import { needsCommissionChoice } from "../commission-change";
 import type { BarberCompensation, OwnerBarber } from "../types";
 
@@ -88,6 +89,9 @@ export function CompensationEditor({ barber, onFeedback }: { barber: OwnerBarber
         ) : (
           <Button label={t("common.edit")} onPress={() => setEditing(true)} size="sm" testID="barber-comp-edit" variant="outline" />
         )}
+        {!editing && barber.compensation.type === "commission" ? (
+          <ScheduleEditor barberId={barber.id} current={barber.payout} key={`${barber.id}-${barber.payout.config.schedule}-${barber.payout.config.day1}-${barber.payout.config.day2}`} onFeedback={onFeedback} />
+        ) : null}
         <ConfirmDialog
           alternateLabel={t("owner.barbers.commissionChange.retroactive")}
           body={t("owner.barbers.commissionChange.body", { percent: Number(percent) })}

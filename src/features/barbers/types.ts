@@ -1,3 +1,5 @@
+import type { PayoutSchedule, PayoutScheduleConfig } from "../payouts/types";
+
 export type PublicBarber = {
   active: boolean;
   archivedAt: string | null;
@@ -17,6 +19,7 @@ export type OwnerBarber = PublicBarber & {
   bio: string | null;
   compensation: BarberCompensation;
   invitedAt: string | null;
+  payout: { config: PayoutScheduleConfig; trackingStart: string | null };
   userId: string | null;
 };
 
@@ -74,5 +77,9 @@ export type OwnerBarberRow = PublicBarberRow &
   CompensationRow & {
     bio?: string | null;
     invited_at?: string | null;
+    payout_day_1?: number | null;
+    payout_day_2?: number | null;
+    payout_schedule?: PayoutSchedule;
+    payout_tracking_start?: string | null;
     user_id: string | null;
   };

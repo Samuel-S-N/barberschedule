@@ -58,6 +58,10 @@ function toOwnerBarber(row: OwnerBarberRow): OwnerBarber {
     bio: row.bio ?? null,
     compensation: toCompensation(row),
     invitedAt: row.invited_at ?? null,
+    payout: {
+      config: { day1: row.payout_day_1 ?? null, day2: row.payout_day_2 ?? null, schedule: row.payout_schedule ?? "none" },
+      trackingStart: row.payout_tracking_start ?? null,
+    },
     userId: row.user_id,
   };
 }

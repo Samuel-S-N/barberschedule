@@ -40,6 +40,8 @@ export type DomainErrorCode =
   | "SERVICE_STANDARD_LOCKED"
   | "CUSTOMER_NOTE_INVALID"
   | "RENT_PAYMENT_INVALID"
+  | "PAYOUT_INVALID"
+  | "PAYOUT_SCHEDULE_INVALID"
   | "REPORT_FORBIDDEN";
 
 export class DomainError extends Error {
@@ -143,6 +145,10 @@ export function toDomainError(error: { code?: string; message?: string }): Domai
       return new DomainError("CUSTOMER_NOTE_INVALID", "The note must have up to 500 characters.");
     case "P0030":
       return new DomainError("RENT_PAYMENT_INVALID", "Enter a valid payment for a chair-rental barber.");
+    case "P0039":
+      return new DomainError("PAYOUT_SCHEDULE_INVALID", "Check the payout schedule and days.");
+    case "P0040":
+      return new DomainError("PAYOUT_INVALID", "Enter a valid payout for a commission barber.");
     case "P0029":
       return new DomainError("REPORT_FORBIDDEN", "Only the shop owner can see this report.");
     default:
