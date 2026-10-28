@@ -5,12 +5,12 @@ import { ScrollView, Text, View } from "react-native";
 
 import { ScreenHeader } from "../../src/components/domain/ScreenHeader";
 import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
-import { Card } from "../../src/components/ui/Card";
 import { Screen } from "../../src/components/ui/Screen";
 import { deleteBarberPayout, getPayoutOverview, listBarberPayouts, recordBarberPayout } from "../../src/features/payouts/api";
 import { PayoutCard } from "../../src/features/payouts/owner/PayoutCard";
-import { PayoutForm } from "../../src/features/payouts/owner/PayoutForm";
 import { PayoutHistory } from "../../src/features/payouts/owner/PayoutHistory";
+import { PayoutSheet } from "../../src/features/payouts/owner/PayoutSheet";
+import type { PayoutOverviewItem } from "../../src/features/payouts/types";
 import { errorMessage } from "../../src/i18n/errors";
 import { addLocalDays } from "../../src/lib/dates/calendar-strip-days";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
@@ -25,7 +25,7 @@ export default function OwnerPayoutsScreen() {
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
   const today = formatInstantInShopTime(new Date()).localDate;
-  const [payingId, setPayingId] = useState<string | null>(null);
+  const [paying, setPaying] = useState<PayoutOverviewItem | null>(null);
   const [feedback, setFeedback] = useState<{ message: string; variant: "error" | "success" } | null>(null);
 
   const overview = useQuery({ queryFn: () => getPayoutOverview(supabase), queryKey: ["payout-overview"] });
@@ -40,7 +40,7 @@ export default function OwnerPayoutsScreen() {
     mutationFn: (input: { amountCents: number; barberId: string; note: string; paidOn: string }) => recordBarberPayout(supabase, input),
     onError: (error) => setFeedback({ message: errorMessage(error, t, t("errors.codes.PAYOUT_INVALID")), variant: "error" }),
     onSuccess: () => {
-      setPayingId(null);
+      setPaying(null);
       setFeedback({ message: t("payouts.recorded"), variant: "success" });
       refresh();
     },
@@ -64,16 +64,8 @@ export default function OwnerPayoutsScreen() {
             {overview.isLoading ? <SkeletonBlock height={120} width={320} /> : null}
             {overview.error ? <Text className="text-sm font-sans text-danger-500">{errorMessage(overview.error, t, t("payouts.empty"))}</Text> : null}
             {overview.data?.length === 0 ? <Text className="text-sm font-sans text-neutral-600">{t("payouts.empty")}</Text> : null}
-            {overview.data?.map((item) => (
-              <View key={item.barberId} className="gap-2">
-                <PayoutCard item={item} onPay={() => setPayingId(item.barberId)} />
-                {payingId === item.barberId ? (
-                  <Card variant="outlined">
-                    <PayoutForm balanceCents={item.balanceCents} busy={record.isPending} onCancel={() => setPayingId(null)} onSubmit={(input) => record.mutate({ ...input, barberId: item.barberId })} today={today} />
-                  </Card>
-                ) : null}
-              </View>
-            ))}
+            {overview.data?.map((item) => <PayoutCard item={item} key={item.barberId} onPay={() => setPaying(item)} />)}
+            <PayoutSheet busy={record.isPending} item={paying} onClose={() => setPaying(null)} onSubmit={(input) => paying && record.mutate({ ...input, barberId: paying.barberId })} today={today} />
             <Text accessibilityRole="header" className="text-lg font-display-semibold text-ink">{t("payouts.history")}</Text>
             <PayoutHistory items={history.data ?? []} onDelete={(id) => remove.mutate(id)} />
           </View>
