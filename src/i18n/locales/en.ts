@@ -100,6 +100,7 @@ export const en = {
       acceptTerms: "Accept the terms and privacy policy to continue.",
       email: "Enter a valid email.",
       fullName: "Enter your full name.",
+      fullNameTooLong: "Use up to 100 characters.",
       password: "Use at least 8 characters.",
       nickname: "Use up to 30 characters.",
       phone: "Enter a valid phone number.",

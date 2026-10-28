@@ -38,7 +38,8 @@ without understanding which migration is missing.
 1. **Email confirmations ON** (Providers > Email > "Confirm email"). The customer email claim relies on it.
 2. **URL Configuration:** Site URL = the production web origin; Redirect URLs = the production origin with `/**`
    and `barberschedule://**`. Local-only `exp://` URLs do not belong here.
-3. Verify with the repo's check (it fails while confirmations are off):
+3. **Minimum password length 8** (Providers > Email), the same rule as the app and `supabase/config.toml`.
+4. Verify with the repo's check (it fails while confirmations are off):
 
    ```bash
    SUPABASE_URL=https://<ref>.supabase.co SUPABASE_ANON_KEY=<publishable key> node scripts/assert-hosted-auth.mjs
@@ -62,6 +63,8 @@ row is merged into the account's own row if one exists). Turn it off again if co
   (`npx supabase secrets set ...`).
 - `pg_cron` registers the jobs in migration `0022` when the extension is available; otherwise schedule
   `enqueue_notification_reminders()` every 15 minutes and `materialize_recurrence_job()` hourly.
+- Whatever schedules `dispatch-notifications` must send `Authorization: Bearer <service role key>`; any other caller
+  gets 401 (the anon key ships inside the app).
 
 ## 6. Smoke test on hosted
 

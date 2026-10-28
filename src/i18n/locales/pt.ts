@@ -99,6 +99,7 @@ export const pt: DeepStringRecord<typeof en> = {
       acceptTerms: "Aceite os termos e a política de privacidade para continuar.",
       email: "Informe um e-mail válido.",
       fullName: "Informe seu nome completo.",
+      fullNameTooLong: "Use até 100 caracteres.",
       password: "Use pelo menos 8 caracteres.",
       nickname: "Use até 30 caracteres.",
       phone: "Informe um telefone válido.",

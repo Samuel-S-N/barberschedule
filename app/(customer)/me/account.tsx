@@ -116,7 +116,7 @@ export default function AccountScreen() {
               <Button label={t("profile.account.changePhoto")} onPress={() => photo.mutate()} size="sm" variant="ghost" />
             </View>
 
-            <Input {...field(0)} autoCapitalize="words" autoComplete="name" label={t("common.fullName")} onChangeText={setFullName} placeholder={t("examples.fullName")} testID="profile-name" value={fullName} />
+            <Input {...field(0)} autoCapitalize="words" autoComplete="name" label={t("common.fullName")} maxLength={100} onChangeText={setFullName} placeholder={t("examples.fullName")} testID="profile-name" value={fullName} />
             <Input {...field(1)} autoCapitalize="words" label={t("common.nicknameOptional")} onChangeText={setNickname} placeholder={t("examples.nickname")} testID="profile-nickname" value={nickname} />
             <Input {...field(2)} autoComplete="tel" keyboardType="phone-pad" label={t("common.phoneOptional")} onChangeText={(value) => setPhone(formatPhone(value))} onSubmitEditing={() => !save.isPending && customer && save.mutate()} returnKeyType="done" placeholder={t("examples.phone")} testID="profile-phone" value={phone} />
             <Button disabled={save.isPending || !customer} label={t("profile.save")} onPress={() => save.mutate()} testID="profile-save" />

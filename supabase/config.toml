@@ -44,6 +44,8 @@ additional_redirect_urls = ["https://127.0.0.1:3000", "http://127.0.0.1:4173/**"
 jwt_expiry = 3600
 enable_signup = true
 enable_anonymous_sign_ins = false
+# Same minimum as the signup and password screens; without it the API accepts 6 characters.
+minimum_password_length = 8
 enable_manual_linking = false
 
 [auth.email]

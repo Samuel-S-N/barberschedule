@@ -14,7 +14,7 @@ const signupSchema = z
   .object({
   acceptedTerms: z.literal(true, { error: "auth.validation.acceptTerms" }),
   email: z.string().trim().toLowerCase().pipe(z.email("auth.validation.email")),
-  fullName: z.string().trim().min(2, "auth.validation.fullName"),
+  fullName: z.string().trim().min(2, "auth.validation.fullName").max(100, "auth.validation.fullNameTooLong"),
   nickname: z
     .string()
     .trim()
