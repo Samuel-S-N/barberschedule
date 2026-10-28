@@ -69,8 +69,14 @@ test("registering a payment opens a pop-up with what is open, filled with the to
   await expect(page.getByTestId("payout-sheet")).toContainText("The app does not send money");
   await expect(page.getByTestId("payout-sheet-period-total")).toContainText("R$ 70,00");
   await expect(page.getByTestId("payout-sheet-period-prior")).toContainText("R$ 20,00");
-  // The background is dimmed behind the sheet.
+  // The background is dimmed behind a floating window (not glued to the bottom edge, like the agenda pop-up).
   await expect(page.getByTestId("payout-sheet-backdrop")).toHaveCSS("background-color", "rgba(0, 0, 0, 0.4)");
+  const sheetBox = (await page.getByTestId("payout-sheet").boundingBox())!;
+  const viewport = page.viewportSize()!;
+  expect(sheetBox.x).toBeGreaterThan(0);
+  expect(sheetBox.x + sheetBox.width).toBeLessThan(viewport.width);
+  expect(sheetBox.y + sheetBox.height).toBeLessThan(viewport.height);
+  await expect(page.getByTestId("payout-sheet")).toHaveCSS("border-top-left-radius", "16px");
 
   await expect(page.getByTestId("payout-amount")).toHaveValue("70,00");
   await page.getByTestId("payout-amount").fill("20");
@@ -93,6 +99,24 @@ test("cancelling the pop-up records nothing", async ({ page }) => {
 
   await expect(page.getByTestId("payout-sheet")).toHaveCount(0);
   expect(calls.payout).toBeUndefined();
+});
+
+test("tapping outside the payment pop-up closes it without recording anything", async ({ page }) => {
+  const calls: Record<string, unknown> = {};
+
+  await signInAsOwner(page);
+  await mockOwnerRest(page, calls);
+  await page.goto("/payouts");
+  await page.getByTestId("payout-pay-b1").click();
+  await expect(page.getByTestId("payout-sheet")).toBeVisible();
+  await page.mouse.click(5, 5); // the dimmed area around the window
+  await expect(page.getByTestId("payout-sheet")).toHaveCount(0);
+  expect(calls.payout).toBeUndefined();
+
+  // Tapping inside the sheet must not close it.
+  await page.getByTestId("payout-pay-b1").click();
+  await page.getByTestId("payout-sheet").getByText("Outstanding").click();
+  await expect(page.getByTestId("payout-sheet")).toBeVisible();
 });
 
 test("a one-off payout works for a barber without a schedule", async ({ page }) => {

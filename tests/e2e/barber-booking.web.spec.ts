@@ -90,6 +90,25 @@ test("a barber books a name-only customer from a free slot on the agenda", async
   });
 });
 
+test("tapping outside the booking pop-up closes it", async ({ page }) => {
+  const slotStart = new Date(Date.now() + 3 * 60 * 60 * 1000);
+
+  await signIn(page, barberUserId);
+  await mockBarberRest(page, async (route, url) => {
+    const name = url.pathname.split("/rpc/")[1];
+    if (name === "get_available_slots") {
+      return json(route, [{ ends_at: slotStart.toISOString(), local_date: "2026-10-01", local_time: "09:30:00", starts_at: slotStart.toISOString() }]).then(() => true);
+    }
+    if (name === "barber_search_customers") return json(route, []).then(() => true);
+  });
+
+  await page.goto("/my-agenda");
+  await page.getByTestId("barber-free-slot").first().click();
+  await expect(page.getByTestId("barber-book-name")).toBeVisible();
+  await page.mouse.click(195, 20); // the dimmed area above the sheet
+  await expect(page.getByTestId("barber-book-name")).toBeHidden();
+});
+
 test("a slot conflict shows the error and keeps the agenda usable", async ({ page }) => {
   const slotStart = new Date(Date.now() + 3 * 60 * 60 * 1000);
 

@@ -79,3 +79,21 @@ test("holding a notification opens a pop-up to delete just that one", async ({ p
   await expect(page.getByTestId("notification-n1")).toHaveCount(0);
   await expect(page.getByTestId("notification-n2")).toBeVisible();
 });
+
+test("tapping outside the notification pop-up closes it and deletes nothing", async ({ page }) => {
+  const deletes = await openInbox(page, [notification("n1")]);
+  const card = page.getByTestId("notification-n1");
+
+  await card.waitFor();
+  const box = (await card.boundingBox())!;
+
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(800);
+  await page.mouse.up();
+  await expect(page.getByTestId("notification-sheet")).toBeVisible();
+  await page.mouse.click(5, 5);
+
+  await expect(page.getByTestId("notification-sheet")).toHaveCount(0);
+  expect(deletes).toEqual([]);
+});

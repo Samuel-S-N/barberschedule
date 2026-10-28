@@ -80,6 +80,8 @@ export function BarberBookingSheet({ busy = false, fitsService, initialCustomer 
   return (
     <Modal animationType="fade" onRequestClose={onClose} transparent visible={visible}>
       <View className="flex-1 justify-end bg-black/40">
+        {/* Tapping the dimmed area outside the sheet closes it (a sibling layer, so the scrolling form is not wrapped in a Pressable). */}
+        <Pressable accessible={false} className="absolute bottom-0 left-0 right-0 top-0" focusable={false} onPress={onClose} testID="barber-book-dismiss" />
         <View className="max-h-[90%] w-full rounded-t-2xl bg-surface">
           <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled">
             <View className="items-center gap-3 p-5">

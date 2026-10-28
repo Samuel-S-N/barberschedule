@@ -159,6 +159,22 @@ test("cancelling the commission prompt saves nothing and keeping the past is the
   await expect.poll(() => calls.compensation).toMatchObject({ apply_retroactively: false, new_commission_percent: 55 });
 });
 
+test("tapping outside the commission prompt cancels it", async ({ page }) => {
+  const calls: Record<string, unknown> = {};
+
+  await signInAsOwner(page);
+  await mockOwnerRest(page, calls);
+  await page.goto("/barber-profile?id=b1");
+  await page.getByTestId("barber-comp-edit").click();
+  await page.getByTestId("comp-percent").fill("55");
+  await page.getByTestId("comp-save").click();
+  await expect(page.getByTestId("confirm-dialog")).toBeVisible();
+  await page.mouse.click(5, 5);
+
+  await expect(page.getByTestId("confirm-dialog")).toHaveCount(0);
+  expect(calls.compensation).toBeUndefined();
+});
+
 test("an unchanged percent saves without asking", async ({ page }) => {
   const calls: Record<string, unknown> = {};
 

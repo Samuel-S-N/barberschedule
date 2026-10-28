@@ -1,11 +1,13 @@
+import { X } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Modal, Text, View } from "react-native";
+import { Modal, Pressable, Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { Button } from "../../../components/ui/Button";
 import { Input } from "../../../components/ui/Input";
 import { DateInput } from "../../../components/ui/MaskedInputs";
+import { colors } from "../../../lib/design/colors";
 import { centsToReaisInput, parseReaisToCents } from "../../../lib/money";
 import type { PayoutOverviewItem } from "../types";
 import { PeriodBreakdown } from "./PeriodBreakdown";
@@ -50,25 +52,30 @@ export function PayoutSheet({ busy, item, onClose, onSubmit, today }: Props) {
 
   return (
     <Modal animationType="fade" onRequestClose={onClose} transparent visible>
-      <View className="flex-1 justify-end bg-black/40" testID="payout-sheet-backdrop">
-        <View className="max-h-[90%] w-full rounded-t-2xl bg-surface" testID="payout-sheet">
+      <View className="flex-1 items-center justify-center bg-black/40 p-5" testID="payout-sheet-backdrop">
+        {/* Tapping the dimmed area outside the window closes it (a sibling layer, so the scrolling form is not wrapped in a Pressable). */}
+        <Pressable accessible={false} className="absolute bottom-0 left-0 right-0 top-0" focusable={false} onPress={onClose} testID="payout-sheet-dismiss" />
+        <View className="max-h-full w-full max-w-[420px] rounded-2xl bg-surface" testID="payout-sheet">
           <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled">
-            <View className="items-center p-5">
-              <View className="w-full max-w-[420px] gap-3">
-                <Text accessibilityRole="header" className="text-2xl font-display-bold text-ink">{t("payouts.sheet.title", { name: item.barberName })}</Text>
-                <Text className="text-sm font-sans text-neutral-600">{t("payouts.sheet.note")}</Text>
-                <View className="gap-1 rounded-xl border border-neutral-300 p-3">
-                  <Text className="text-xs font-sans-medium text-neutral-500">{t("payouts.sheet.open")}</Text>
-                  <PeriodBreakdown item={item} showTotal testIdPrefix="payout-sheet-period" />
-                </View>
-                <Input keyboardType="numeric" label={t("payouts.form.amount")} onChangeText={setAmount} placeholder={t("examples.money")} testID="payout-amount" value={amount} />
-                <DateInput label={t("payouts.form.date")} onChangeValue={setPaidOn} testID="payout-date" value={paidOn} />
-                <Input label={t("payouts.form.note")} onChangeText={setNote} placeholder={t("examples.payoutNote")} testID="payout-note" value={note} />
-                {error ? <Text className="text-sm font-sans text-danger-500">{error}</Text> : null}
-                <View className="flex-row gap-2">
-                  <Button disabled={busy} label={t("payouts.form.save")} onPress={submit} size="sm" testID="payout-submit" />
-                  <Button label={t("common.cancel")} onPress={onClose} size="sm" variant="outline" />
-                </View>
+            <View className="gap-3 p-5">
+              <View className="flex-row items-start justify-between gap-2">
+                <Text accessibilityRole="header" className="flex-1 text-xl font-display-semibold text-ink">{t("payouts.sheet.title", { name: item.barberName })}</Text>
+                <Pressable accessibilityLabel={t("agendaCard.close")} accessibilityRole="button" className="h-11 w-11 items-center justify-center" hitSlop={8} onPress={onClose} testID="payout-sheet-close">
+                  <X color={colors.ink} size={22} />
+                </Pressable>
+              </View>
+              <Text className="text-sm font-sans text-neutral-600">{t("payouts.sheet.note")}</Text>
+              <View className="gap-1 rounded-xl border border-neutral-300 p-3">
+                <Text className="text-xs font-sans-medium text-neutral-500">{t("payouts.sheet.open")}</Text>
+                <PeriodBreakdown item={item} showTotal testIdPrefix="payout-sheet-period" />
+              </View>
+              <Input keyboardType="numeric" label={t("payouts.form.amount")} onChangeText={setAmount} placeholder={t("examples.money")} testID="payout-amount" value={amount} />
+              <DateInput label={t("payouts.form.date")} onChangeValue={setPaidOn} testID="payout-date" value={paidOn} />
+              <Input label={t("payouts.form.note")} onChangeText={setNote} placeholder={t("examples.payoutNote")} testID="payout-note" value={note} />
+              {error ? <Text className="text-sm font-sans text-danger-500">{error}</Text> : null}
+              <View className="flex-row gap-2">
+                <Button disabled={busy} label={t("payouts.form.save")} onPress={submit} size="sm" testID="payout-submit" />
+                <Button label={t("common.cancel")} onPress={onClose} size="sm" variant="outline" />
               </View>
             </View>
           </KeyboardAwareScrollView>
