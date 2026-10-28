@@ -2,6 +2,9 @@ import { parseSignupInput } from "../../src/features/auth/validation";
 import { parseBarberInput } from "../../src/features/barbers/validation";
 import { parseCustomerInput } from "../../src/features/customers/validation";
 import { parseServiceInput } from "../../src/features/services/validation";
+import { en } from "../../src/i18n/locales/en";
+import { es } from "../../src/i18n/locales/es";
+import { pt } from "../../src/i18n/locales/pt";
 
 // Same limits as the CHECK constraints in migration 0064: the app refuses before the database does.
 const shopId = "a1000000-0000-0000-0000-000000000001";
@@ -12,6 +15,7 @@ describe("text limits", () => {
 
     expect(parseSignupInput({ ...base, fullName: "a".repeat(100) })).toMatchObject({ ok: true });
     expect(parseSignupInput({ ...base, fullName: "a".repeat(101) })).toEqual({ errors: { fullName: "auth.validation.fullNameTooLong" }, ok: false });
+    for (const locale of [en, es, pt]) expect(locale.auth.validation.fullNameTooLong).toMatch(/100/);
   });
 
   it("customers cap name 100, email 254, phone 30", () => {
