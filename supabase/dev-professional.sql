@@ -1,6 +1,6 @@
 -- Local-only dev user (not part of seed.sql: the pgTAP RLS tests assume the seed has exactly one professional).
 -- Recreate after `supabase db reset` with:
---   docker exec -i supabase_db_barberschedule psql -U postgres -d postgres < supabase/dev-professional.sql
+--   docker exec -i supabase_db_zenc psql -U postgres -d postgres < supabase/dev-professional.sql
 -- Login: professional@teste.com / professional1234, with its own professional row "Professional Teste". Idempotent; needs the seed shop.
 begin;
 -- professional teste: local login for the professional screens (professional@teste.com / professional1234), with its own new professional row.
