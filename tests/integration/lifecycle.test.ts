@@ -6,9 +6,9 @@ import {
 import { toDomainError } from "../../src/lib/errors/domain-errors";
 
 const appointmentRow = {
-  barber_buffer_minutes_snapshot: 10,
-  barber_id: "barber-1",
-  barber_service_id: "barber-service-1",
+  professional_buffer_minutes_snapshot: 10,
+  professional_id: "professional-1",
+  professional_service_id: "professional-service-1",
   created_at: "2026-08-13T10:00:00Z",
   customer_id: "customer-1",
   ends_at: "2026-08-17T12:30:00Z",

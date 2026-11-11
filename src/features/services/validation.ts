@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { BarberServiceInput, ServiceInput } from "./types";
+import type { ProfessionalServiceInput, ServiceInput } from "./types";
 
 const serviceSchema = z.object({
   description: z.string().trim().min(1).max(500, "Description must be at most 500 characters.").nullable().optional(),
@@ -10,8 +10,8 @@ const serviceSchema = z.object({
   shopId: z.string().guid("Shop id must be a UUID."),
 });
 
-const barberServiceSchema = z.object({
-  barberId: z.string().guid("Barber id must be a UUID."),
+const professionalServiceSchema = z.object({
+  professionalId: z.string().guid("Professional id must be a UUID."),
   durationOverrideMinutes: z
     .number()
     .int()
@@ -56,11 +56,11 @@ export function parseServiceInput(input: ServiceInput) {
   };
 }
 
-export function parseBarberServiceInput(input: BarberServiceInput) {
-  const parsed = barberServiceSchema.parse(input);
+export function parseProfessionalServiceInput(input: ProfessionalServiceInput) {
+  const parsed = professionalServiceSchema.parse(input);
 
   return {
-    barberId: parsed.barberId,
+    professionalId: parsed.professionalId,
     durationOverrideMinutes: parsed.durationOverrideMinutes ?? null,
     priceOverrideCents: parsed.priceOverrideCents ?? null,
     serviceId: parsed.serviceId,

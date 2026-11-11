@@ -38,14 +38,14 @@ async function mockOwnerRest(page: Page, calls: Record<string, unknown>) {
 
       return json(route, null);
     }
-    if (path.endsWith("/rpc/list_owner_barbers")) return json(route, []);
+    if (path.endsWith("/rpc/list_owner_professionals")) return json(route, []);
     if (path.endsWith("/services") && method === "GET") {
       return json(route, [
         { active: true, archived_at: null, description: null, duration_minutes: 30, id: S1, is_standard: true, name: "Seed cut", price_cents: 3500, shop_id: shop },
         { active: true, archived_at: null, description: null, duration_minutes: 45, id: S2, is_standard: false, name: "Beard", price_cents: 4500, shop_id: shop },
       ]);
     }
-    if (path.endsWith("/barber_services") && method === "GET") return json(route, []);
+    if (path.endsWith("/professional_services") && method === "GET") return json(route, []);
     await route.abort();
   });
 }

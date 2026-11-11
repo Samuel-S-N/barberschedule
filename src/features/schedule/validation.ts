@@ -32,7 +32,7 @@ function timeToMinutes(time: string) {
 const timeSchema = z.string().regex(timePattern, "Time must use HH:mm.");
 
 const workingPeriodSchema = z.object({
-  barberId: z.string().guid("Barber id must be a UUID."),
+  professionalId: z.string().guid("Professional id must be a UUID."),
   endTime: timeSchema,
   shopId: z.string().guid("Shop id must be a UUID."),
   startTime: timeSchema,
@@ -43,7 +43,7 @@ const workingPeriodSchema = z.object({
 );
 
 const scheduleOverrideSchema = z.object({
-  barberId: z.string().guid("Barber id must be a UUID."),
+  professionalId: z.string().guid("Professional id must be a UUID."),
   endTime: timeSchema.nullish(),
   kind: z.enum(["block", "opening"]),
   localDate: z.string().refine(isIsoDate, "Local date must use YYYY-MM-DD."),
@@ -86,11 +86,11 @@ export function parseWorkingPeriodInput(input: WorkingPeriodInput) {
 
 export function assertNoOverlappingWorkingPeriod(
   candidate: WorkingPeriodInput,
-  periods: Pick<WorkingPeriod, "barberId" | "endTime" | "startTime" | "weekday">[],
+  periods: Pick<WorkingPeriod, "professionalId" | "endTime" | "startTime" | "weekday">[],
 ) {
   const overlaps = periods.some(
     (period) =>
-      period.barberId === candidate.barberId
+      period.professionalId === candidate.professionalId
       && period.weekday === candidate.weekday
       && candidate.startTime < period.endTime
       && candidate.endTime > period.startTime,

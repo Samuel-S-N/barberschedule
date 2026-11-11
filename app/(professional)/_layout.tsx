@@ -1,0 +1,79 @@
+import { useQuery } from "@tanstack/react-query";
+import { Tabs } from "expo-router";
+import { CalendarDays, Coins, User, Users } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
+import { Text, View } from "react-native";
+
+import { BottomTabBar } from "../../src/components/domain/BottomTabBar";
+import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
+import { Button } from "../../src/components/ui/Button";
+import { Screen } from "../../src/components/ui/Screen";
+import { selectTab } from "../../src/lib/navigation/select-tab";
+import { getMyProfessionalProfile } from "../../src/features/professionals/api";
+import { usePushRegistration } from "../../src/features/notifications/use-push-registration";
+import { errorMessage } from "../../src/i18n/errors";
+import { useHardwareBack } from "../../src/lib/navigation/use-back";
+import { useSupabaseSession } from "../../src/providers/AppProviders";
+
+export default function ProfessionalLayout() {
+  const { t } = useTranslation();
+  const { profile, supabase } = useSupabaseSession();
+  const items = [
+    { icon: CalendarDays, key: "my-agenda", label: t("tabs.agenda") },
+    { icon: Users, key: "clients", label: t("tabs.clients") },
+    { icon: Coins, key: "earnings", label: t("tabs.earnings") },
+    { icon: User, key: "my-profile", label: t("tabs.profile") },
+  ];
+  // Also proves the account is linked to an active professional row before any tab renders.
+  const professional = useQuery({
+    enabled: profile?.role === "professional",
+    queryFn: () => getMyProfessionalProfile(supabase),
+    queryKey: ["my-professional-profile", profile?.userId],
+  });
+
+  usePushRegistration(Boolean(professional.data));
+  useHardwareBack();
+
+  if (professional.isError) {
+    return (
+      <Screen className="flex-1 bg-canvas">
+        <View className="flex-1 items-center justify-center gap-4 p-5">
+          <Text className="text-base font-sans text-danger-500">{errorMessage(professional.error, t, t("professional.profile.loadError"))}</Text>
+          <Button label={t("common.tryAgain")} onPress={() => void professional.refetch()} />
+        </View>
+      </Screen>
+    );
+  }
+
+  if (!professional.data) {
+    return (
+      <Screen className="flex-1 bg-canvas">
+        <View className="items-center gap-3 p-5">
+          <SkeletonBlock height={56} width={320} />
+          <SkeletonBlock height={56} width={320} />
+        </View>
+      </Screen>
+    );
+  }
+
+  return (
+    <Tabs
+      backBehavior="history"
+      screenOptions={{ headerShown: false }}
+      tabBar={({ navigateToTab, state }) => (
+        <Screen className="bg-surface" edges={["bottom", "left", "right"]}>
+          <BottomTabBar activeKey={state.routes[state.index].name} items={items} onSelect={(key) => selectTab(state, navigateToTab, key)} />
+        </Screen>
+      )}
+    >
+      <Tabs.Screen name="my-agenda" />
+      <Tabs.Screen name="clients" />
+      <Tabs.Screen name="earnings" />
+      <Tabs.Screen name="my-profile" />
+      {/* Declared WITHOUT `href: null`: since SDK 58 a hidden or undeclared route is not navigable (the navigator redirects to the
+          first tab), and the custom tab bar already shows only the four items above. */}
+      <Tabs.Screen name="move-appointment" />
+      <Tabs.Screen name="professional-notifications" />
+    </Tabs>
+  );
+}

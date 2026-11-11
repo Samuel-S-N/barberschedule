@@ -24,9 +24,9 @@ function param(value: string | string[] | undefined) {
 }
 
 export default function BookTimeScreen() {
-  const params = useLocalSearchParams<{ barberId?: string; barberServiceId?: string; localDate?: string; shopId?: string }>();
-  const barberId = param(params.barberId);
-  const barberServiceId = param(params.barberServiceId);
+  const params = useLocalSearchParams<{ professionalId?: string; professionalServiceId?: string; localDate?: string; shopId?: string }>();
+  const professionalId = param(params.professionalId);
+  const professionalServiceId = param(params.professionalServiceId);
   const localDate = param(params.localDate);
   const shopId = param(params.shopId);
   const router = useRouter();
@@ -36,8 +36,8 @@ export default function BookTimeScreen() {
   const { supabase } = useSupabaseSession();
   const [startsAt, setStartsAt] = useState<string | null>(null);
   const availability = useQuery({
-    ...getAvailableSlotsQueryOptions(supabase, { barberId, barberServiceId, localDate }),
-    enabled: Boolean(barberId && barberServiceId && localDate),
+    ...getAvailableSlotsQueryOptions(supabase, { professionalId, professionalServiceId, localDate }),
+    enabled: Boolean(professionalId && professionalServiceId && localDate),
   });
   const slots: TimeSlot[] = (availability.data ?? []).map((slot: AvailableSlot) => ({
     status: slot.startsAt === startsAt ? "selected" : "free",
@@ -53,7 +53,7 @@ export default function BookTimeScreen() {
 
   const next = () =>
     router.push(
-      `/book/review?shopId=${encodeURIComponent(shopId)}&barberId=${encodeURIComponent(barberId)}&barberServiceId=${encodeURIComponent(barberServiceId)}&localDate=${encodeURIComponent(localDate)}&startsAt=${encodeURIComponent(startsAt ?? "")}`,
+      `/book/review?shopId=${encodeURIComponent(shopId)}&professionalId=${encodeURIComponent(professionalId)}&professionalServiceId=${encodeURIComponent(professionalServiceId)}&localDate=${encodeURIComponent(localDate)}&startsAt=${encodeURIComponent(startsAt ?? "")}`,
     );
 
   return (
@@ -63,7 +63,7 @@ export default function BookTimeScreen() {
           <View className="w-full max-w-[420px]">
             <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("book.timeTitle")} />
           </View>
-          <StepIndicator current="time" ids={{ barberId, barberServiceId, localDate, shopId }} />
+          <StepIndicator current="time" ids={{ professionalId, professionalServiceId, localDate, shopId }} />
           <Text className="w-full max-w-[420px] text-base font-sans text-neutral-600">{localDate ? formatDateNumeric(localDate, language) : ""}</Text>
           <View className="w-full max-w-[420px] gap-2">
             {availability.isLoading ? (

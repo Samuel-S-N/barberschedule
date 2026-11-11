@@ -20,7 +20,7 @@ type Props = {
   note?: string;
 };
 
-// Privacy and data is the same for every role: terms, data download and (client / barber) account deletion.
+// Privacy and data is the same for every role: terms, data download and (client / professional) account deletion.
 export function PrivacyDataScreen({ allowDelete, note }: Props) {
   const { t } = useTranslation();
   const router = useRouter();

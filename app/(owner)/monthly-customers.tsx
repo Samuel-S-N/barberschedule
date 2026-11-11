@@ -14,8 +14,8 @@ import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { DateInput } from "../../src/components/ui/MaskedInputs";
 import { Screen } from "../../src/components/ui/Screen";
-import { listOwnerBarbers } from "../../src/features/barbers/api";
-import type { OwnerBarber } from "../../src/features/barbers/types";
+import { listOwnerProfessionals } from "../../src/features/professionals/api";
+import type { OwnerProfessional } from "../../src/features/professionals/types";
 import { listOwnerCustomers } from "../../src/features/customers/api";
 import { listMonthlyCustomers } from "../../src/features/customers/monthly-api";
 import { cancelRecurrenceOccurrence, endRecurrenceSeries, reactivateRecurrenceSeries, setRecurrenceSeriesActive } from "../../src/features/recurrence/api";
@@ -25,7 +25,7 @@ import { PlanSummary } from "../../src/features/recurrence/PlanSummary";
 import { RequestCard } from "../../src/features/recurrence/RequestCard";
 import { decideRecurrenceRequest, decideSeriesCancellation, listCancellationRequests, listRecurrenceRequests } from "../../src/features/recurrence/requests-api";
 import type { RecurrenceSeries } from "../../src/features/recurrence/types";
-import { listOwnerBarberServices, listOwnerServices } from "../../src/features/services/api";
+import { listOwnerProfessionalServices, listOwnerServices } from "../../src/features/services/api";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
 import { errorMessage } from "../../src/i18n/errors";
 import { useLanguage } from "../../src/i18n/use-language";
@@ -64,28 +64,28 @@ export default function MonthlyCustomersScreen() {
     enabled: shopId !== null,
     queryFn: async () => {
       const id = shopId ?? "";
-      const [customers, barberServices, barbers, services, series] = await Promise.all([
+      const [customers, professionalServices, professionals, services, series] = await Promise.all([
         listOwnerCustomers(supabase, id),
-        listOwnerBarberServices(supabase, id),
-        listOwnerBarbers(supabase, id),
+        listOwnerProfessionalServices(supabase, id),
+        listOwnerProfessionals(supabase, id),
         listOwnerServices(supabase, id),
         listMonthlyCustomers(supabase, id),
       ]);
 
-      return { barberServices: barberServices.filter((item) => item.active), barbers, customers: customers.filter((customer) => customer.active), series, services };
+      return { professionalServices: professionalServices.filter((item) => item.active), professionals, customers: customers.filter((customer) => customer.active), series, services };
     },
     queryKey: ["owner-recurring", shopId],
   });
   const requests = useQuery({ enabled: shopId !== null, queryFn: () => listRecurrenceRequests(supabase, shopId ?? ""), queryKey: ["owner-recurrence-requests", shopId] });
   const cancellations = useQuery({ enabled: shopId !== null, queryFn: () => listCancellationRequests(supabase, shopId ?? ""), queryKey: ["owner-recurrence-cancellations", shopId] });
 
-  // The service and barber names behind each series' barber service; the card shows them on separate lines.
+  // The service and professional names behind each series' professional service; the card shows them on separate lines.
   const labels = useMemo(() => {
-    const map = new Map<string, { barberName: string; serviceName: string }>();
-    for (const item of data.data?.barberServices ?? []) {
-      const barber = data.data?.barbers.find((candidate: OwnerBarber) => candidate.id === item.barberId);
+    const map = new Map<string, { professionalName: string; serviceName: string }>();
+    for (const item of data.data?.professionalServices ?? []) {
+      const professional = data.data?.professionals.find((candidate: OwnerProfessional) => candidate.id === item.professionalId);
       const service = data.data?.services.find((candidate) => candidate.id === item.serviceId);
-      if (barber && service) map.set(item.id, { barberName: barber.name, serviceName: service.name });
+      if (professional && service) map.set(item.id, { professionalName: professional.name, serviceName: service.name });
     }
 
     return map;
@@ -174,15 +174,15 @@ export default function MonthlyCustomersScreen() {
                       {group.items.map((item: RecurrenceSeries) => (
                       <Card key={item.id} testID={`series-${item.id}`} variant="outlined">
                         <View className={`gap-2 ${item.endedAt !== null ? "opacity-70" : ""}`}>
-                          <PlanSummary periodicity={recurrenceLabel(t, item.intervalWeeks)} title={labels.get(item.barberServiceId)?.serviceName ?? (item.customerName || item.customerId)} />
+                          <PlanSummary periodicity={recurrenceLabel(t, item.intervalWeeks)} title={labels.get(item.professionalServiceId)?.serviceName ?? (item.customerName || item.customerId)} />
                           <Text className="text-sm font-sans text-neutral-700">
                             {t("owner.recurring.priceState", {
                               price: item.specialPriceCents === null ? t("owner.recurring.catalogPrice") : formatPriceBRL(item.specialPriceCents),
                               state: item.endedAt !== null ? t("owner.recurring.endedBadge") : item.active ? t("owner.recurring.active") : t("owner.recurring.inactive"),
                             })}
                           </Text>
-                          {labels.has(item.barberServiceId) ? <Text className="text-sm font-sans text-neutral-700">{item.customerName || item.customerId}</Text> : null}
-                          {labels.has(item.barberServiceId) ? <Text className="text-sm font-sans text-neutral-700">{labels.get(item.barberServiceId)?.barberName}</Text> : null}
+                          {labels.has(item.professionalServiceId) ? <Text className="text-sm font-sans text-neutral-700">{item.customerName || item.customerId}</Text> : null}
+                          {labels.has(item.professionalServiceId) ? <Text className="text-sm font-sans text-neutral-700">{labels.get(item.professionalServiceId)?.professionalName}</Text> : null}
                           <Text className="text-sm font-sans text-neutral-700" style={{ fontVariant: ["tabular-nums"] }}>
                             {t("owner.recurring.when", { date: formatDateNumeric(item.localStartDate, language), time: item.localStartTime })}
                           </Text>

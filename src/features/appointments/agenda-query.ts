@@ -7,7 +7,7 @@ import type { Appointment, AppointmentRow } from "./types";
 type AgendaSupabaseClient = Pick<SupabaseClient, "rpc">;
 
 type OwnerAgendaRow = AppointmentRow & {
-  barber_name: string;
+  professional_name: string;
   customer_name: string;
   customer_phone?: string | null;
 };
@@ -21,14 +21,14 @@ export type OwnerAgendaInput = {
 };
 
 export type OwnerAgendaAppointment = Appointment & {
-  barberName: string;
+  professionalName: string;
   customerName: string;
   customerPhone: string | null;
 };
 
 export type OwnerAgendaOverride = {
-  barberId: string;
-  barberName: string;
+  professionalId: string;
+  professionalName: string;
   endTime: string | null;
   id: string;
   kind: "block" | "opening";
@@ -65,7 +65,7 @@ export async function listOwnerAgenda(
 
     return {
       ...toAppointment(agendaRow),
-      barberName: agendaRow.barber_name,
+      professionalName: agendaRow.professional_name,
       customerName: agendaRow.customer_name,
       customerPhone: agendaRow.customer_phone ?? null,
     };
@@ -88,8 +88,8 @@ export async function listOwnerAgendaOverrides(
 
   return (data ?? []).map((row: unknown) => {
     const override = row as {
-      barber_id: string;
-      barber_name: string;
+      professional_id: string;
+      professional_name: string;
       end_time: string | null;
       id: string;
       kind: "block" | "opening";
@@ -98,8 +98,8 @@ export async function listOwnerAgendaOverrides(
     };
 
     return {
-      barberId: override.barber_id,
-      barberName: override.barber_name,
+      professionalId: override.professional_id,
+      professionalName: override.professional_name,
       endTime: override.end_time ? override.end_time.slice(0, 5) : null,
       id: override.id,
       kind: override.kind,

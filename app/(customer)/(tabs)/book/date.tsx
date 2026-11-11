@@ -17,10 +17,10 @@ function param(value: string | string[] | undefined) {
 }
 
 export default function BookDateScreen() {
-  const params = useLocalSearchParams<{ barberId?: string; barberServiceId?: string; shopId?: string }>();
+  const params = useLocalSearchParams<{ professionalId?: string; professionalServiceId?: string; shopId?: string }>();
   const router = useRouter();
-  const barberId = param(params.barberId);
-  const barberServiceId = param(params.barberServiceId);
+  const professionalId = param(params.professionalId);
+  const professionalServiceId = param(params.professionalServiceId);
   const shopId = param(params.shopId);
   const { t } = useTranslation();
   const back = useBack();
@@ -34,13 +34,13 @@ export default function BookDateScreen() {
         <View className="w-full max-w-[420px]">
           <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("book.dateTitle")} />
         </View>
-        <StepIndicator current="date" ids={{ barberId, barberServiceId, shopId }} />
+        <StepIndicator current="date" ids={{ professionalId, professionalServiceId, shopId }} />
         <MonthCalendar onSelectDate={setLocalDate} selectedDate={localDate} today={today} />
         <View className="w-full max-w-[420px]">
           <Button
             label={t("book.continue")}
             onPress={() => router.push(
-              `/book/time?shopId=${encodeURIComponent(shopId)}&barberId=${encodeURIComponent(barberId)}&barberServiceId=${encodeURIComponent(barberServiceId)}&localDate=${encodeURIComponent(localDate)}`,
+              `/book/time?shopId=${encodeURIComponent(shopId)}&professionalId=${encodeURIComponent(professionalId)}&professionalServiceId=${encodeURIComponent(professionalServiceId)}&localDate=${encodeURIComponent(localDate)}`,
             )}
           />
         </View>

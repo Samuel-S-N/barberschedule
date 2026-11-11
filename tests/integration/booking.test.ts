@@ -6,9 +6,9 @@ describe("booking RPC contract", () => {
     const rpc = jest.fn().mockResolvedValue({
       data: [
         {
-          barber_buffer_minutes_snapshot: 10,
-          barber_id: "barber-1",
-          barber_service_id: "barber-service-1",
+          professional_buffer_minutes_snapshot: 10,
+          professional_id: "professional-1",
+          professional_service_id: "professional-service-1",
           created_at: "2026-08-13T10:00:00Z",
           customer_id: "customer-1",
           ends_at: "2026-08-17T12:30:00Z",
@@ -31,7 +31,7 @@ describe("booking RPC contract", () => {
 
     await expect(
       bookAppointment({ rpc } as never, {
-        barberServiceId: "barber-service-1",
+        professionalServiceId: "professional-service-1",
         customerId: "customer-1",
         notes: "First visit",
         source: "customer",
@@ -45,7 +45,7 @@ describe("booking RPC contract", () => {
     });
 
     expect(rpc).toHaveBeenCalledWith("book_appointment", {
-      barber_service_id: "barber-service-1",
+      professional_service_id: "professional-service-1",
       customer_id: "customer-1",
       notes: "First visit",
       source: "customer",

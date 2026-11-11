@@ -18,7 +18,7 @@ export type AgendaCardProps = {
   onOpen: () => void;
   status: AppointmentStatus;
   subtitle?: string;
-  testPrefix: "barber" | "owner";
+  testPrefix: "professional" | "owner";
   timeLabel: string;
 };
 
@@ -40,9 +40,9 @@ export function AgendaCard({ actions, appointmentId, busy, customerName, onCompl
         </Pressable>
         {hasActions ? (
           <View className="flex-row flex-wrap gap-2">
-            {actions.confirm ? <Button disabled={busy} label={t("barber.agenda.confirm")} onPress={onConfirm} size="sm" testID={`${testPrefix}-confirm-${appointmentId}`} /> : null}
-            {actions.complete ? <Button disabled={busy} label={t("barber.agenda.complete")} onPress={onComplete} size="sm" testID={`${testPrefix}-complete-${appointmentId}`} /> : null}
-            {actions.noShow ? <Button disabled={busy} label={t("barber.agenda.noShow")} onPress={onNoShow} size="sm" testID={`${testPrefix}-noshow-${appointmentId}`} variant="outline" /> : null}
+            {actions.confirm ? <Button disabled={busy} label={t("professional.agenda.confirm")} onPress={onConfirm} size="sm" testID={`${testPrefix}-confirm-${appointmentId}`} /> : null}
+            {actions.complete ? <Button disabled={busy} label={t("professional.agenda.complete")} onPress={onComplete} size="sm" testID={`${testPrefix}-complete-${appointmentId}`} /> : null}
+            {actions.noShow ? <Button disabled={busy} label={t("professional.agenda.noShow")} onPress={onNoShow} size="sm" testID={`${testPrefix}-noshow-${appointmentId}`} variant="outline" /> : null}
           </View>
         ) : null}
       </View>

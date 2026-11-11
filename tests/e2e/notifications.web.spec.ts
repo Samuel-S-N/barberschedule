@@ -7,7 +7,7 @@ const notification = (overrides: Record<string, unknown> = {}) => ({
   created_at: "2026-10-20T10:00:00Z",
   id: "n1",
   kind: "appointment_confirmed",
-  params: { barber_name: "Browser Barber", customer_name: "Ana", service_name: "Browser Cut", starts_at: "2026-10-21T13:00:00Z" },
+  params: { professional_name: "Browser Professional", customer_name: "Ana", service_name: "Browser Cut", starts_at: "2026-10-21T13:00:00Z" },
   read_at: null,
   ...overrides,
 });
@@ -35,7 +35,7 @@ test("the bell shows the unread count, opens the list, marks as read and opens t
   await page.getByTestId("notification-bell").click();
   await expect(page).toHaveURL(/\/notifications/);
   await expect(page.getByTestId("notification-n1")).toContainText("Appointment confirmed");
-  await expect(page.getByTestId("notification-n1")).toContainText("Browser Cut with Browser Barber");
+  await expect(page.getByTestId("notification-n1")).toContainText("Browser Cut with Browser Professional");
   await expect(page.getByTestId("notification-unread-n1")).toBeVisible();
   await expect(page.getByTestId("notification-n2")).toContainText("Appointment cancelled");
 

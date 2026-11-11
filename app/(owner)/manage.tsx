@@ -19,7 +19,7 @@ export default function OwnerManageScreen() {
             <Text accessibilityRole="header" className="text-3xl leading-[44px] font-display-bold text-ink">{t("owner.manage.title")}</Text>
             <MenuBlock
               items={[
-                { icon: Users, key: "barbers", label: t("owner.hub.manageBarbers"), onPress: go("/barbers") },
+                { icon: Users, key: "professionals", label: t("owner.hub.manageProfessionals"), onPress: go("/professionals") },
                 { icon: Scissors, key: "services", label: t("owner.hub.manageServices"), onPress: go("/services") },
                 { icon: Contact, key: "customers", label: t("owner.hub.manageCustomers"), onPress: go("/customers") },
                 { icon: Repeat, key: "monthly-customers", label: t("owner.manage.recurring"), onPress: go("/monthly-customers") },

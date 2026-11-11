@@ -16,7 +16,7 @@ export function ChartSection({ children, rows, testID, title }: Props) {
         <Text accessibilityRole="header" className="text-lg font-display-semibold text-ink">{title}</Text>
         {children}
         <Pressable accessibilityRole="button" onPress={() => setOpen(!open)} testID={`${testID}-toggle`}>
-          <Text className="text-sm font-sans-semibold text-primary-600">{open ? t("barber.reports.hideData") : t("barber.reports.showData")}</Text>
+          <Text className="text-sm font-sans-semibold text-primary-600">{open ? t("professional.reports.hideData") : t("professional.reports.showData")}</Text>
         </Pressable>
         {open ? (
           <View className="gap-1">

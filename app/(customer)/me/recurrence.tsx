@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
 
-import { BarberCard } from "../../../src/components/domain/BarberCard";
+import { ProfessionalCard } from "../../../src/components/domain/ProfessionalCard";
 import { BottomActionBar } from "../../../src/components/domain/BottomActionBar";
 import { ConfirmDialog } from "../../../src/components/domain/ConfirmDialog";
 import { EmptyState } from "../../../src/components/domain/EmptyState";
@@ -18,13 +18,13 @@ import { Button } from "../../../src/components/ui/Button";
 import { Card } from "../../../src/components/ui/Card";
 import { Screen } from "../../../src/components/ui/Screen";
 import type { AvailableSlot } from "../../../src/features/availability/types";
-import { listPublicBarbers } from "../../../src/features/barbers/api";
+import { listPublicProfessionals } from "../../../src/features/professionals/api";
 import { useWeekdaySlots } from "../../../src/features/recurrence/customer-flow/use-weekday-slots";
 import { WeekdayList } from "../../../src/features/recurrence/customer-flow/WeekdayList";
 import { PlanCard } from "../../../src/features/recurrence/PlanCard";
 import { buildPlanOffers } from "../../../src/features/recurrence/plan-offers";
-import type { PlanOffer, PlanOfferBarber } from "../../../src/features/recurrence/plan-offers";
-import { listPlansForBarber } from "../../../src/features/recurrence/plans-api";
+import type { PlanOffer, PlanOfferProfessional } from "../../../src/features/recurrence/plan-offers";
+import { listPlansForProfessional } from "../../../src/features/recurrence/plans-api";
 import { recurrenceLabel } from "../../../src/features/recurrence/pricing";
 import { planValue } from "../../../src/features/recurrence/price-text";
 import { PlanSummary } from "../../../src/features/recurrence/PlanSummary";
@@ -41,14 +41,14 @@ import { useBack } from "../../../src/lib/navigation/use-back";
 import { useNow } from "../../../src/lib/use-now";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 
-type Step = "barber" | "list" | "plan" | "review" | "time" | "weekday";
-const FLOW = ["plan", "barber", "weekday", "time", "review", "send"] as const;
+type Step = "professional" | "list" | "plan" | "review" | "time" | "weekday";
+const FLOW = ["plan", "professional", "weekday", "time", "review", "send"] as const;
 const WEEKDAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
 const CURRENT = ["pending", "active", "cancel_requested"];
 
 // Plans: the customer has at most one current plan (pending or active). Without one they subscribe from the top button;
 // with one a bottom bar offers "Change plan" and an active plan can ask for its cancellation. The flow is
-// plan › barber › weekday › time › review › send; the barber or the owner answers.
+// plan › professional › weekday › time › review › send; the professional or the owner answers.
 export default function CustomerRecurrenceScreen() {
   const { t } = useTranslation();
   const language = useLanguage();
@@ -59,7 +59,7 @@ export default function CustomerRecurrenceScreen() {
   const [trail, setTrail] = useState<Step[]>(["list"]);
   const step = trail[trail.length - 1];
   const [offer, setOffer] = useState<PlanOffer | null>(null);
-  const [barber, setBarber] = useState<PlanOfferBarber | null>(null);
+  const [professional, setProfessional] = useState<PlanOfferProfessional | null>(null);
   const [weekday, setWeekday] = useState<number | null>(null);
   const [startsAt, setStartsAt] = useState<string | null>(null);
   const [replacing, setReplacing] = useState(false);
@@ -70,22 +70,22 @@ export default function CustomerRecurrenceScreen() {
 
   const shops = useQuery({ queryFn: () => listPublicShops(supabase), queryKey: ["public-shops"] });
   const shopId = shops.data?.[0]?.id ?? "";
-  const barbers = useQuery({ enabled: Boolean(shopId), queryFn: () => listPublicBarbers(supabase, shopId), queryKey: ["public-barbers", shopId] });
+  const professionals = useQuery({ enabled: Boolean(shopId), queryFn: () => listPublicProfessionals(supabase, shopId), queryKey: ["public-professionals", shopId] });
   const requests = useQuery({ queryFn: () => listMyRecurrenceRequests(supabase), queryKey: ["my-recurrence-requests"] });
 
-  // Plan-first: every barber's plans merged, so one plan lists the barbers that offer it.
-  const barberList = barbers.data ?? [];
+  // Plan-first: every professional's plans merged, so one plan lists the professionals that offer it.
+  const professionalList = professionals.data ?? [];
   const planQueries = useQueries({
-    queries: barberList.map((item) => ({ queryFn: () => listPlansForBarber(supabase, item.id), queryKey: ["barber-plans", item.id] })),
+    queries: professionalList.map((item) => ({ queryFn: () => listPlansForProfessional(supabase, item.id), queryKey: ["professional-plans", item.id] })),
   });
-  const plansLoading = barbers.isLoading || planQueries.some((query) => query.isLoading);
+  const plansLoading = professionals.isLoading || planQueries.some((query) => query.isLoading);
   const offers = buildPlanOffers(
-    barberList.map((item) => ({ avatarUrl: item.avatarUrl ?? null, id: item.id, name: item.name })),
-    Object.fromEntries(barberList.map((item, index) => [item.id, planQueries[index]?.data ?? []])),
+    professionalList.map((item) => ({ avatarUrl: item.avatarUrl ?? null, id: item.id, name: item.name })),
+    Object.fromEntries(professionalList.map((item, index) => [item.id, planQueries[index]?.data ?? []])),
   );
 
   // The first date of a weekday is its next occurrence; weekdays without any free time are disabled.
-  const { dates, disabledDays, queries: weekdaySlots } = useWeekdaySlots({ barberId: barber?.barberId ?? "", barberServiceId: barber?.barberServiceId ?? "", enabled: step === "weekday" && Boolean(barber), today });
+  const { dates, disabledDays, queries: weekdaySlots } = useWeekdaySlots({ professionalId: professional?.professionalId ?? "", professionalServiceId: professional?.professionalServiceId ?? "", enabled: step === "weekday" && Boolean(professional), today });
   const slots = weekday ? weekdaySlots[weekday - 1].data ?? [] : [];
   const slotRows: TimeSlot[] = slots.map((slot: AvailableSlot) => ({ status: slot.startsAt === startsAt ? "selected" : "free", time: slot.localTime }));
   const chosen = startsAt ? formatInstantInShopTime(new Date(startsAt)) : null;
@@ -98,7 +98,7 @@ export default function CustomerRecurrenceScreen() {
   const refresh = () => void queryClient.invalidateQueries({ queryKey: ["my-recurrence-requests"] });
   const resetFlow = () => {
     setOffer(null);
-    setBarber(null);
+    setProfessional(null);
     setWeekday(null);
     setStartsAt(null);
     setReplacing(false);
@@ -110,7 +110,7 @@ export default function CustomerRecurrenceScreen() {
       const status = currentPlan ? requestDisplayStatus(currentPlan) : null;
 
       return requestRecurrence(supabase, {
-        barberServiceId: barber?.barberServiceId ?? "",
+        professionalServiceId: professional?.professionalServiceId ?? "",
         replacesRequestId: replacing && status === "pending" ? currentPlan?.id : undefined,
         replacesSeriesId: replacing && currentPlan?.seriesId && (status === "active" || status === "cancel_requested") ? currentPlan.seriesId : undefined,
         startDate: chosen?.localDate ?? "",
@@ -158,7 +158,7 @@ export default function CustomerRecurrenceScreen() {
     return (
       <Card key={request.id} testID={`my-request-${request.id}`} variant="outlined">
         <View className={`gap-2 ${muted ? "opacity-60" : ""}`}>
-          <Text className="text-base font-sans-semibold text-ink">{request.planName ?? request.serviceName} · {request.barberName}</Text>
+          <Text className="text-base font-sans-semibold text-ink">{request.planName ?? request.serviceName} · {request.professionalName}</Text>
           <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>
             {recurrenceLabel(t, request.weeks)} · {formatDateNumeric(request.startDate, language)} {request.startTime}
           </Text>
@@ -224,7 +224,7 @@ export default function CustomerRecurrenceScreen() {
                       caption={value.caption}
                       key={candidate.planId}
                       normalText={t("recurrence.normalPrice", { price: formatPriceBRL(candidate.normalCents) })}
-                      onPress={() => { setOffer(candidate); setBarber(null); setWeekday(null); setStartsAt(null); go("barber"); }}
+                      onPress={() => { setOffer(candidate); setProfessional(null); setWeekday(null); setStartsAt(null); go("professional"); }}
                       periodicity={recurrenceLabel(t, candidate.weeks)}
                       testID={`offer-${candidate.planId}`}
                       title={candidate.name}
@@ -234,11 +234,11 @@ export default function CustomerRecurrenceScreen() {
               </>
             ) : null}
 
-            {step === "barber" && offer ? (
+            {step === "professional" && offer ? (
               <>
-                <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{t("recurrence.chooseBarber")}</Text>
-                {offer.barbers.map((item) => (
-                  <BarberCard avatarUrl={item.avatarUrl} key={item.barberId} name={item.barberName} onPress={() => { setBarber(item); setWeekday(null); setStartsAt(null); go("weekday"); }} testID={`offer-barber-${item.barberId}`} />
+                <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{t("recurrence.chooseProfessional")}</Text>
+                {offer.professionals.map((item) => (
+                  <ProfessionalCard avatarUrl={item.avatarUrl} key={item.professionalId} name={item.professionalName} onPress={() => { setProfessional(item); setWeekday(null); setStartsAt(null); go("weekday"); }} testID={`offer-professional-${item.professionalId}`} />
                 ))}
               </>
             ) : null}
@@ -261,7 +261,7 @@ export default function CustomerRecurrenceScreen() {
               </>
             ) : null}
 
-            {step === "review" && offer && barber && chosen ? (
+            {step === "review" && offer && professional && chosen ? (
               <>
                 <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{t("recurrence.review")}</Text>
                 <Card testID="recurrence-review">
@@ -273,7 +273,7 @@ export default function CustomerRecurrenceScreen() {
                       periodicity={recurrenceLabel(t, offer.weeks)}
                       title={offer.name}
                     />
-                    <Text className="text-sm font-sans text-neutral-700">{barber.barberName}</Text>
+                    <Text className="text-sm font-sans text-neutral-700">{professional.professionalName}</Text>
                     <Text className="text-sm font-sans text-neutral-700">{t("recurrence.everyWeekday", { weekday: weekdayName })}</Text>
                     <Text className="text-sm font-sans text-neutral-700" style={{ fontVariant: ["tabular-nums"] }}>{t("recurrence.startsOn", { date: formatDateNumeric(chosen.localDate, language) })} · {chosen.localTime}</Text>
                   </View>

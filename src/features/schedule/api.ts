@@ -36,8 +36,8 @@ export class ScheduleError extends Error {
   }
 }
 
-const workingPeriodColumns = "id, shop_id, barber_id, weekday, start_time, end_time";
-const scheduleOverrideColumns = "id, shop_id, barber_id, local_date, kind, start_time, end_time";
+const workingPeriodColumns = "id, shop_id, professional_id, weekday, start_time, end_time";
+const scheduleOverrideColumns = "id, shop_id, professional_id, local_date, kind, start_time, end_time";
 
 export function toScheduleError(error: ScheduleDatabaseError): ScheduleError {
   switch (error.code) {
@@ -81,7 +81,7 @@ function toTime(value: string) {
 
 function toWorkingPeriod(row: WorkingPeriodRow): WorkingPeriod {
   return {
-    barberId: row.barber_id,
+    professionalId: row.professional_id,
     endTime: toTime(row.end_time),
     id: row.id,
     shopId: row.shop_id,
@@ -92,7 +92,7 @@ function toWorkingPeriod(row: WorkingPeriodRow): WorkingPeriod {
 
 function toScheduleOverride(row: ScheduleOverrideRow): ScheduleOverride {
   return {
-    barberId: row.barber_id,
+    professionalId: row.professional_id,
     endTime: row.end_time ? toTime(row.end_time) : null,
     id: row.id,
     kind: row.kind,
@@ -125,7 +125,7 @@ export async function createWorkingPeriod(
   const { data, error } = await supabase
     .from("working_periods")
     .insert({
-      barber_id: parsed.barberId,
+      professional_id: parsed.professionalId,
       end_time: parsed.endTime,
       shop_id: parsed.shopId,
       start_time: parsed.startTime,
@@ -173,7 +173,7 @@ export async function createScheduleOverride(
   const { data, error } = await supabase
     .from("schedule_overrides")
     .insert({
-      barber_id: parsed.barberId,
+      professional_id: parsed.professionalId,
       end_time: parsed.endTime,
       kind: parsed.kind,
       local_date: parsed.localDate,
@@ -201,13 +201,13 @@ export async function deleteScheduleOverride(
 
 export async function listMyScheduleOverrides(
   supabase: ScheduleSupabaseClient,
-  barberId: string,
+  professionalId: string,
   fromLocalDate: string,
 ) {
   const { data, error } = await supabase
     .from("schedule_overrides")
     .select(scheduleOverrideColumns)
-    .eq("barber_id", barberId)
+    .eq("professional_id", professionalId)
     .gte("local_date", fromLocalDate)
     .order("local_date", { ascending: true })
     .order("start_time", { ascending: true });

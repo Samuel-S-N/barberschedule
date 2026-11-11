@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
-import { barberId, barberServiceId, json, shopId } from "./customer-helpers";
+import { professionalId, professionalServiceId, json, shopId } from "./customer-helpers";
 
 const ownerId = "55555555-5555-4555-8555-555555555555";
 const OPEN = "c0c0c0c0-0000-4000-8000-000000000001";
@@ -23,7 +23,7 @@ const inDays = (days: number) => new Date(Date.now() + days * 24 * 3600 * 1000).
 // A conflict inside the 30-day booking window by default.
 let occurrenceDate = inDays(10);
 const conflict = (id: string, status: "open" | "resolved") => ({
-  barber_id: barberId, barber_service_id: barberServiceId, customer_name: "Ana Souza", customer_phone: "11999999999", id,
+  professional_id: professionalId, professional_service_id: professionalServiceId, customer_name: "Ana Souza", customer_phone: "11999999999", id,
   local_start_time: "10:00:00", occurrence_date: occurrenceDate, reason: "SLOT_UNAVAILABLE", series_id: "s1", service_name: "Cut", status,
 });
 

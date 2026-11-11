@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 const shopId = "11111111-1111-4111-8111-111111111111";
-const barberId = "22222222-2222-4222-8222-222222222222";
+const professionalId = "22222222-2222-4222-8222-222222222222";
 const ownerId = "33333333-3333-4333-8333-333333333333";
 
 test("an authenticated owner can add and remove schedule records", async ({ page }) => {
@@ -38,12 +38,12 @@ test("an authenticated owner can add and remove schedule records", async ({ page
       return;
     }
 
-    if (path.endsWith("/rpc/list_owner_barbers")) {
+    if (path.endsWith("/rpc/list_owner_professionals")) {
       await json([{
         active: true,
         archived_at: null,
-        id: barberId,
-        name: "Browser Barber",
+        id: professionalId,
+        name: "Browser Professional",
         shop_id: shopId,
         user_id: null,
       }]);
@@ -103,8 +103,8 @@ test("an authenticated owner can add and remove schedule records", async ({ page
   await page.goto("/schedule");
 
   await expect(page.getByRole("heading", { name: "Owner schedule" })).toBeVisible();
-  await expect(page.getByText("Selected barber: Browser Barber")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Browser Barber (selected)" })).toBeVisible();
+  await expect(page.getByText("Selected professional: Browser Professional")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Browser Professional (selected)" })).toBeVisible();
 
   await page.getByTestId("weekday-1").click();
   await page.getByTestId("period-start").fill("09:00");

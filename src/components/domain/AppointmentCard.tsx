@@ -10,7 +10,7 @@ import type { AppointmentStatus } from "./StatusBadge";
 export type AppointmentCardProps = {
   status: AppointmentStatus;
   serviceName: string;
-  barberName: string;
+  professionalName: string;
   dateLabel: string;
   timeLabel: string;
   shopName: string;
@@ -22,7 +22,7 @@ export type AppointmentCardProps = {
 export function AppointmentCard({
   status,
   serviceName,
-  barberName,
+  professionalName,
   dateLabel,
   timeLabel,
   shopName,
@@ -33,7 +33,7 @@ export function AppointmentCard({
   const cancelled = status === "cancelled";
   const { t } = useTranslation();
   const accessibilityLabel = t("appointments.cardLabel", {
-    barber: barberName,
+    professional: professionalName,
     date: dateLabel,
     service: serviceName,
     shop: shopName,
@@ -55,7 +55,7 @@ export function AppointmentCard({
       <View className="flex-row items-center gap-1.5">
         <Scissors color={colors.neutral[600]} size={16} />
         <Text className="text-base font-sans-semibold text-ink">
-          {serviceName} · {barberName}
+          {serviceName} · {professionalName}
         </Text>
       </View>
       <View className="flex-row items-center gap-1.5">

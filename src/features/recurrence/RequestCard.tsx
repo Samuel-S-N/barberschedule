@@ -14,7 +14,7 @@ import { PlanSummary } from "./PlanSummary";
 import { staffPlanPrice } from "./price-text";
 import type { StaffRecurrenceRequest } from "./requests-api";
 
-// A pending recurrence request with Accept / Decline; shared by the owner and the barber screens.
+// A pending recurrence request with Accept / Decline; shared by the owner and the professional screens.
 export function RequestCard({ busy, onDecide, request }: { busy: boolean; onDecide: (accept: boolean) => void; request: StaffRecurrenceRequest }) {
   const { t } = useTranslation();
   const language = useLanguage();
@@ -29,13 +29,13 @@ export function RequestCard({ busy, onDecide, request }: { busy: boolean; onDeci
       <View className="gap-2">
         <PlanSummary {...price} periodicity={recurrenceLabel(t, request.weeks)} title={request.serviceName} />
         <Text className="text-sm font-sans text-neutral-700">{request.customerName}</Text>
-        <Text className="text-sm font-sans text-neutral-700">{request.barberName}</Text>
+        <Text className="text-sm font-sans text-neutral-700">{request.professionalName}</Text>
         <Text className="text-sm font-sans text-neutral-700" style={{ fontVariant: ["tabular-nums"] }}>{formatDateNumeric(request.startDate, language)} {request.startTime}</Text>
         <View className="flex-row flex-wrap items-center gap-2">
           <Button disabled={busy} label={t("recurrence.accept")} onPress={() => onDecide(true)} size="sm" testID={`request-accept-${request.id}`} />
           <Button disabled={busy} label={t("recurrence.reject")} onPress={() => onDecide(false)} size="sm" testID={`request-reject-${request.id}`} variant="danger" />
           {request.customerPhone ? (
-            <ContactLink fill={false} icon={MessageCircle} testID={`request-whatsapp-${request.id}`} url={whatsappUrl(request.customerPhone)}>{t("barber.clients.whatsapp")}</ContactLink>
+            <ContactLink fill={false} icon={MessageCircle} testID={`request-whatsapp-${request.id}`} url={whatsappUrl(request.customerPhone)}>{t("professional.clients.whatsapp")}</ContactLink>
           ) : null}
         </View>
       </View>

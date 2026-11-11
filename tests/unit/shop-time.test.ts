@@ -9,7 +9,7 @@ import {
 } from "../../src/features/schedule/validation";
 
 const shopId = "11111111-1111-4111-8111-111111111111";
-const barberId = "22222222-2222-4222-8222-222222222222";
+const professionalId = "22222222-2222-4222-8222-222222222222";
 
 describe("shop-local schedule helpers", () => {
   it("converts America/Sao_Paulo local date and time to and from an instant", () => {
@@ -36,7 +36,7 @@ describe("shop-local schedule helpers", () => {
   it("rejects malformed and zero-length working periods", () => {
     expect(() =>
       parseWorkingPeriodInput({
-        barberId,
+        professionalId,
         endTime: "09:00",
         shopId,
         startTime: "09:00",
@@ -46,7 +46,7 @@ describe("shop-local schedule helpers", () => {
 
     expect(() =>
       parseWorkingPeriodInput({
-        barberId,
+        professionalId,
         endTime: "10:00",
         shopId,
         startTime: "9:00",
@@ -57,14 +57,14 @@ describe("shop-local schedule helpers", () => {
 
   it("rejects working periods that overlap an existing period on the same weekday", () => {
     const existing = parseWorkingPeriodInput({
-      barberId,
+      professionalId,
       endTime: "12:00",
       shopId,
       startTime: "09:00",
       weekday: 1,
     });
     const overlapping = parseWorkingPeriodInput({
-      barberId,
+      professionalId,
       endTime: "13:00",
       shopId,
       startTime: "11:00",
@@ -79,7 +79,7 @@ describe("shop-local schedule helpers", () => {
   it("accepts all-day and partial blocks plus timed extra openings", () => {
     expect(
       parseScheduleOverrideInput({
-        barberId,
+        professionalId,
         kind: "block",
         localDate: "2026-08-20",
         shopId,
@@ -87,7 +87,7 @@ describe("shop-local schedule helpers", () => {
     ).toMatchObject({ endTime: null, kind: "block", startTime: null });
     expect(
       parseScheduleOverrideInput({
-        barberId,
+        professionalId,
         endTime: "13:00",
         kind: "block",
         localDate: "2026-08-20",
@@ -97,7 +97,7 @@ describe("shop-local schedule helpers", () => {
     ).toMatchObject({ kind: "block", startTime: "12:00" });
     expect(
       parseScheduleOverrideInput({
-        barberId,
+        professionalId,
         endTime: "18:00",
         kind: "opening",
         localDate: "2026-08-20",

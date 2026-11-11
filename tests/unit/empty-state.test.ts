@@ -8,12 +8,12 @@ describe("EmptyState", () => {
     const view = await render(
       React.createElement(EmptyState, {
         title: "No appointments yet",
-        subtitle: "Choose a barber and book your time",
+        subtitle: "Choose a professional and book your time",
       }),
     );
 
     expect(view.getByText("No appointments yet")).toBeTruthy();
-    expect(view.getByText("Choose a barber and book your time")).toBeTruthy();
+    expect(view.getByText("Choose a professional and book your time")).toBeTruthy();
   });
 
   it("does not render an action button when actionLabel/onAction are omitted", async () => {

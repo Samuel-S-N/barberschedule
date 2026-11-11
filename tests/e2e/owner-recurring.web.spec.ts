@@ -24,8 +24,8 @@ async function signInAsOwner(page: Page) {
 }
 
 const series = [
-  { active: true, barber_service_id: BS1, customer_id: C1, customer_name: "Ana Souza", ends_on: null, ended_at: null, id: R1, interval_weeks: 4, local_start_date: "2026-10-05", local_start_time: "09:00:00", special_price_cents: 3000 },
-  { active: true, barber_service_id: BS1, customer_id: C1, customer_name: "Ana Souza", ends_on: null, ended_at: null, id: R2, interval_weeks: 2, local_start_date: "2026-10-06", local_start_time: "10:30:00", special_price_cents: null },
+  { active: true, professional_service_id: BS1, customer_id: C1, customer_name: "Ana Souza", ends_on: null, ended_at: null, id: R1, interval_weeks: 4, local_start_date: "2026-10-05", local_start_time: "09:00:00", special_price_cents: 3000 },
+  { active: true, professional_service_id: BS1, customer_id: C1, customer_name: "Ana Souza", ends_on: null, ended_at: null, id: R2, interval_weeks: 2, local_start_date: "2026-10-06", local_start_time: "10:30:00", special_price_cents: null },
 ];
 
 async function mockOwnerRest(page: Page, calls: Record<string, unknown>) {
@@ -35,14 +35,14 @@ async function mockOwnerRest(page: Page, calls: Record<string, unknown>) {
 
     if (path.endsWith("/rpc/get_current_profile")) return json(route, [{ full_name: "Owner", role: "owner", user_id: ownerId }]);
     if (path.endsWith("/shops")) return json(route, [{ id: shop }]);
-    if (path.endsWith("/rpc/list_owner_barbers")) return json(route, [{ active: true, archived_at: null, id: B1, name: "Bruno Barber", shop_id: shop, user_id: null }]);
+    if (path.endsWith("/rpc/list_owner_professionals")) return json(route, [{ active: true, archived_at: null, id: B1, name: "Bruno Professional", shop_id: shop, user_id: null }]);
     if (path.endsWith("/customers") && method === "GET") return json(route, [{ active: true, archived_at: null, email: "ana@x.com", full_name: "Ana Souza", id: C1, phone: null, shop_id: shop, user_id: null }]);
     if (path.endsWith("/services") && method === "GET") return json(route, [{ active: true, archived_at: null, description: null, duration_minutes: 30, id: S1, is_standard: true, name: "Cut", price_cents: 4000, shop_id: shop }]);
-    if (path.endsWith("/barber_services") && method === "GET") return json(route, [{ active: true, archived_at: null, barber_id: B1, duration_override_minutes: null, id: BS1, price_override_cents: null, service_id: S1, shop_id: shop }]);
+    if (path.endsWith("/professional_services") && method === "GET") return json(route, [{ active: true, archived_at: null, professional_id: B1, duration_override_minutes: null, id: BS1, price_override_cents: null, service_id: S1, shop_id: shop }]);
     if (path.endsWith("/rpc/list_owner_recurrence_series")) return json(route, series);
     if (path.endsWith("/rpc/list_recurrence_requests")) {
       return json(route, [{
-        barber_id: B1, barber_name: "Bruno Barber", customer_name: "Dani Costa", customer_phone: "11912345678", id: "rq1", interval_weeks: 1,
+        professional_id: B1, professional_name: "Bruno Professional", customer_name: "Dani Costa", customer_phone: "11912345678", id: "rq1", interval_weeks: 1,
         local_start_date: "2026-11-02", local_start_time: "10:00:00", normal_cents: 3500, recurrence_cents: 2500, service_name: "Cut",
       }]);
     }
@@ -51,10 +51,10 @@ async function mockOwnerRest(page: Page, calls: Record<string, unknown>) {
 
       return json(route, [{}]);
     }
-    if (path.endsWith("/rpc/list_recurrence_plans_for_barber")) {
+    if (path.endsWith("/rpc/list_recurrence_plans_for_professional")) {
       return json(route, [
-        { barber_service_id: BS1, interval_weeks: 1, name: "Corte mensal", normal_cents: 4000, plan_id: "plan-w1", price_cents: 3000, service_name: "Browser Cut" },
-        { barber_service_id: BS1, interval_weeks: 3, name: "Trimestral", normal_cents: 4000, plan_id: "plan-w3", price_cents: 3500, service_name: "Browser Cut" },
+        { professional_service_id: BS1, interval_weeks: 1, name: "Corte mensal", normal_cents: 4000, plan_id: "plan-w1", price_cents: 3000, service_name: "Browser Cut" },
+        { professional_service_id: BS1, interval_weeks: 3, name: "Trimestral", normal_cents: 4000, plan_id: "plan-w3", price_cents: 3500, service_name: "Browser Cut" },
       ]);
     }
     if (path.endsWith("/rpc/create_recurrence_for_customer")) {
@@ -130,7 +130,7 @@ test("active series show frequency, service and price", async ({ page }) => {
   await page.getByTestId("recurring-tab-active").click();
   await expect(page.getByTestId(`series-${R1}`)).toContainText("Ana Souza");
   await expect(page.getByTestId(`series-${R1}`)).toContainText("Cut");
-  await expect(page.getByTestId(`series-${R1}`)).toContainText("Bruno Barber");
+  await expect(page.getByTestId(`series-${R1}`)).toContainText("Bruno Professional");
   await expect(page.getByTestId(`series-${R1}`)).toContainText("R$ 30,00");
   await expect(page.getByTestId(`series-${R2}`)).toContainText("Catalog price");
 });
@@ -173,7 +173,7 @@ test("ended plans are listed apart from the active ones and can be reactivated",
   await signInAsOwner(page);
   await mockOwnerRest(page, calls);
   await page.route("**/rest/v1/rpc/list_owner_recurrence_series", async (route) => {
-    const base = { barber_service_id: BS1, customer_id: C1, customer_name: "Ana Souza", ends_on: null, interval_weeks: 1, local_start_date: "2026-10-23", local_start_time: "16:30:00", special_price_cents: 2500 };
+    const base = { professional_service_id: BS1, customer_id: C1, customer_name: "Ana Souza", ends_on: null, interval_weeks: 1, local_start_date: "2026-10-23", local_start_time: "16:30:00", special_price_cents: 2500 };
 
     await json(route, [
       { ...base, active: true, ended_at: null, id: "live-1" },

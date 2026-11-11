@@ -17,8 +17,8 @@ describe("availability API contract", () => {
     });
 
     await expect(getAvailableSlots({ rpc } as never, {
-      barberId: "22222222-2222-4222-8222-222222222222",
-      barberServiceId: "33333333-3333-4333-8333-333333333333",
+      professionalId: "22222222-2222-4222-8222-222222222222",
+      professionalServiceId: "33333333-3333-4333-8333-333333333333",
       localDate: "2026-08-17",
     })).resolves.toEqual([{
       endsAt: "2026-08-17T12:30:00+00:00",
@@ -28,8 +28,8 @@ describe("availability API contract", () => {
     }]);
 
     expect(rpc).toHaveBeenCalledWith("get_available_slots", {
-      barber_id: "22222222-2222-4222-8222-222222222222",
-      barber_service_id: "33333333-3333-4333-8333-333333333333",
+      professional_id: "22222222-2222-4222-8222-222222222222",
+      professional_service_id: "33333333-3333-4333-8333-333333333333",
       local_date: "2026-08-17",
     });
   });

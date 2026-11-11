@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
-import { barberId, json, mockCustomerRest, shopId, signInAsCustomer } from "./customer-helpers";
+import { professionalId, json, mockCustomerRest, shopId, signInAsCustomer } from "./customer-helpers";
 
-const barberUserId = "66666666-6666-4666-8666-666666666666";
+const professionalUserId = "66666666-6666-4666-8666-666666666666";
 const ownerUserId = "77777777-7777-4777-8777-777777777777";
 
 async function signIn(page: Page, userId: string) {
@@ -17,23 +17,23 @@ async function signIn(page: Page, userId: string) {
   }, { id: userId });
 }
 
-async function mockStaffRest(page: Page, role: "barber" | "owner", userId: string) {
+async function mockStaffRest(page: Page, role: "professional" | "owner", userId: string) {
   await page.route("**/rest/v1/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
 
     if (path.endsWith("/rpc/get_current_profile")) return json(route, [{ full_name: "Staff", role, user_id: userId }]);
-    if (path.endsWith("/rpc/export_my_data")) return json(route, { appointments: [], barbers: [] });
-    if (path.endsWith("/rpc/get_my_barber_profile")) return json(route, [{ avatar_url: null, bio: null, chair_rental_amount_cents: null, chair_rental_frequency: null, commission_percent: "40.00", compensation_type: "commission", id: barberId, name: "Staff", shop_id: shopId }]);
+    if (path.endsWith("/rpc/export_my_data")) return json(route, { appointments: [], professionals: [] });
+    if (path.endsWith("/rpc/get_my_professional_profile")) return json(route, [{ avatar_url: null, bio: null, chair_rental_amount_cents: null, chair_rental_frequency: null, commission_percent: "40.00", compensation_type: "commission", id: professionalId, name: "Staff", shop_id: shopId }]);
     if (path.endsWith("/shops")) return json(route, [{ id: shopId }]);
-    if (path.endsWith("/rpc/list_owner_barbers")) return json(route, []);
+    if (path.endsWith("/rpc/list_owner_professionals")) return json(route, []);
     await route.abort();
   });
 }
 
-const settingsRoutes = { barber: "/my-profile/settings", customer: "/me/settings", owner: "/owner-profile/settings" } as const;
-const privacyRoutes = { barber: "/my-profile/privacy", customer: "/me/privacy", owner: "/owner-profile/privacy" } as const;
+const settingsRoutes = { professional: "/my-profile/settings", customer: "/me/settings", owner: "/owner-profile/settings" } as const;
+const privacyRoutes = { professional: "/my-profile/privacy", customer: "/me/privacy", owner: "/owner-profile/privacy" } as const;
 
-async function open(page: Page, role: "barber" | "customer" | "owner") {
+async function open(page: Page, role: "professional" | "customer" | "owner") {
   if (role === "customer") {
     await signInAsCustomer(page);
     await mockCustomerRest(page, async (route, url) => {
@@ -43,12 +43,12 @@ async function open(page: Page, role: "barber" | "customer" | "owner") {
       }
     });
   } else {
-    await signIn(page, role === "barber" ? barberUserId : ownerUserId);
-    await mockStaffRest(page, role, role === "barber" ? barberUserId : ownerUserId);
+    await signIn(page, role === "professional" ? professionalUserId : ownerUserId);
+    await mockStaffRest(page, role, role === "professional" ? professionalUserId : ownerUserId);
   }
 }
 
-for (const role of ["customer", "barber", "owner"] as const) {
+for (const role of ["customer", "professional", "owner"] as const) {
   test(`${role}: Settings holds only the language`, async ({ page }) => {
     await open(page, role);
     await page.goto(settingsRoutes[role]);

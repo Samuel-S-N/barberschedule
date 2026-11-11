@@ -91,7 +91,7 @@ export default function RecurrenceConflictsScreen() {
                     {open ? (
                       <View className="flex-row flex-wrap gap-2">
                         <Button label={t("owner.conflicts.reschedule")} onPress={() => router.push({
-                          params: { barberId: conflict.barberId, barberServiceId: conflict.barberServiceId, conflictId: conflict.id, customerName: conflict.customerName, localStartTime: conflict.localStartTime, occurrenceDate: conflict.occurrenceDate, serviceName: conflict.serviceName },
+                          params: { professionalId: conflict.professionalId, professionalServiceId: conflict.professionalServiceId, conflictId: conflict.id, customerName: conflict.customerName, localStartTime: conflict.localStartTime, occurrenceDate: conflict.occurrenceDate, serviceName: conflict.serviceName },
                           pathname: "/conflict-reschedule",
                         })} size="sm" testID={`conflict-reschedule-${conflict.id}`} />
                         <Button disabled={resolve.isPending} label={t("owner.conflicts.dismiss")} onPress={() => resolve.mutate({ id: conflict.id })} size="sm" testID={`conflict-dismiss-${conflict.id}`} variant="outline" />

@@ -5,7 +5,7 @@ describe("recurrence contracts", () => {
     const rpc = jest.fn().mockResolvedValue({
       data: [{
         active: true,
-        barber_service_id: "11111111-1111-4111-8111-111111111111",
+        professional_service_id: "11111111-1111-4111-8111-111111111111",
         customer_id: "22222222-2222-4222-8222-222222222222",
         customer_name: "Ana",
         ended_at: null,
@@ -20,7 +20,7 @@ describe("recurrence contracts", () => {
     });
 
     await expect(createRecurrenceSeries({ rpc } as never, {
-      barberServiceId: "11111111-1111-4111-8111-111111111111",
+      professionalServiceId: "11111111-1111-4111-8111-111111111111",
       customerId: "22222222-2222-4222-8222-222222222222",
       intervalWeeks: 2,
       localStartDate: "2026-08-17",
@@ -33,7 +33,7 @@ describe("recurrence contracts", () => {
       local_start_date: "2026-08-17",
       local_start_time: "09:00",
       special_price_cents: 3500,
-      target_barber_service_id: "11111111-1111-4111-8111-111111111111",
+      target_professional_service_id: "11111111-1111-4111-8111-111111111111",
       target_customer_id: "22222222-2222-4222-8222-222222222222",
     });
   });

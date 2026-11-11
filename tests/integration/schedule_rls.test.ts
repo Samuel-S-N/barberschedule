@@ -40,7 +40,7 @@ describe("task 4 schedule helpers", () => {
 
     await expect(
       createWorkingPeriod({ from } as never, {
-        barberId: "22222222-2222-4222-8222-222222222222",
+        professionalId: "22222222-2222-4222-8222-222222222222",
         endTime: "18:00",
         shopId: "11111111-1111-4111-8111-111111111111",
         startTime: "09:00",
@@ -64,7 +64,7 @@ describe("task 4 schedule helpers", () => {
       .mockResolvedValueOnce({
         data: [
           {
-            barber_id: "barber-1",
+            professional_id: "professional-1",
             end_time: "12:00:00",
             id: "period-1",
             shop_id: "shop-1",
@@ -72,7 +72,7 @@ describe("task 4 schedule helpers", () => {
             weekday: 1,
           },
           {
-            barber_id: "barber-1",
+            professional_id: "professional-1",
             end_time: "18:00:00",
             id: "period-2",
             shop_id: "shop-1",
@@ -86,7 +86,7 @@ describe("task 4 schedule helpers", () => {
 
     await expect(listOwnerWorkingPeriods({ from } as never, "shop-1")).resolves.toEqual([
       {
-        barberId: "barber-1",
+        professionalId: "professional-1",
         endTime: "12:00",
         id: "period-1",
         shopId: "shop-1",
@@ -94,7 +94,7 @@ describe("task 4 schedule helpers", () => {
         weekday: 1,
       },
       {
-        barberId: "barber-1",
+        professionalId: "professional-1",
         endTime: "18:00",
         id: "period-2",
         shopId: "shop-1",
@@ -108,7 +108,7 @@ describe("task 4 schedule helpers", () => {
   it("preserves all-day, partial-block, and extra-opening override shapes", async () => {
     const rows = [
       {
-        barber_id: "barber-1",
+        professional_id: "professional-1",
         end_time: null,
         id: "override-1",
         kind: "block",
@@ -117,7 +117,7 @@ describe("task 4 schedule helpers", () => {
         start_time: null,
       },
       {
-        barber_id: "barber-1",
+        professional_id: "professional-1",
         end_time: "13:00:00",
         id: "override-2",
         kind: "block",
@@ -126,7 +126,7 @@ describe("task 4 schedule helpers", () => {
         start_time: "12:00:00",
       },
       {
-        barber_id: "barber-1",
+        professional_id: "professional-1",
         end_time: "18:00:00",
         id: "override-3",
         kind: "opening",
@@ -156,7 +156,7 @@ describe("task 4 schedule helpers", () => {
     const select = jest.fn().mockReturnValue({
       maybeSingle: jest.fn().mockResolvedValue({
         data: {
-          barber_id: "22222222-2222-4222-8222-222222222222",
+          professional_id: "22222222-2222-4222-8222-222222222222",
           end_time: "18:00:00",
           id: "override-3",
           kind: "opening",
@@ -172,7 +172,7 @@ describe("task 4 schedule helpers", () => {
 
     await expect(
       createScheduleOverride({ from } as never, {
-        barberId: "22222222-2222-4222-8222-222222222222",
+        professionalId: "22222222-2222-4222-8222-222222222222",
         endTime: "18:00",
         kind: "opening",
         localDate: "2026-08-22",
@@ -182,7 +182,7 @@ describe("task 4 schedule helpers", () => {
     ).resolves.toMatchObject({ kind: "opening", startTime: "16:00" });
 
     expect(insert).toHaveBeenCalledWith({
-      barber_id: "22222222-2222-4222-8222-222222222222",
+      professional_id: "22222222-2222-4222-8222-222222222222",
       end_time: "18:00",
       kind: "opening",
       local_date: "2026-08-22",

@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 const shopId = "11111111-1111-4111-8111-111111111111";
-const barberServiceId = "22222222-2222-4222-8222-222222222222";
+const professionalServiceId = "22222222-2222-4222-8222-222222222222";
 const customerId = "33333333-3333-4333-8333-333333333333";
 const ownerId = "44444444-4444-4444-8444-444444444444";
 
@@ -21,7 +21,7 @@ test("an owner opens the manual recurrence steps and inspects a conflict", async
   }, { userId: ownerId });
 
   const series = {
-    active: true, barber_service_id: barberServiceId, customer_id: customerId,
+    active: true, professional_service_id: professionalServiceId, customer_id: customerId,
     customer_name: "Monthly Customer", ended_at: null, ends_on: null,
     id: "55555555-5555-4555-855555555555", interval_weeks: 4,
     local_start_date: "2026-08-17", local_start_time: "09:00:00", special_price_cents: 3500,
@@ -35,12 +35,12 @@ test("an owner opens the manual recurrence steps and inspects a conflict", async
     if (path.endsWith("/rpc/get_current_profile")) return json([{ role: "owner", user_id: ownerId }]);
     if (path.endsWith("/shops")) return json([{ id: shopId }]);
     if (path.endsWith("/customers")) return json([{ active: true, archived_at: null, email: "customer@example.com", full_name: "Monthly Customer", id: customerId, phone: "+55 11 99999-9999", shop_id: shopId, user_id: null }]);
-    if (path.endsWith("/barber_services")) return json([{ active: true, archived_at: null, barber_id: "barber-1", duration_override_minutes: null, id: barberServiceId, price_override_cents: null, service_id: "service-1", shop_id: shopId }]);
-    if (path.endsWith("/rpc/list_owner_barbers")) return json([{ active: true, archived_at: null, id: "barber-1", name: "Browser Barber", shop_id: shopId, user_id: null }]);
+    if (path.endsWith("/professional_services")) return json([{ active: true, archived_at: null, professional_id: "professional-1", duration_override_minutes: null, id: professionalServiceId, price_override_cents: null, service_id: "service-1", shop_id: shopId }]);
+    if (path.endsWith("/rpc/list_owner_professionals")) return json([{ active: true, archived_at: null, id: "professional-1", name: "Browser Professional", shop_id: shopId, user_id: null }]);
     if (path.endsWith("/services")) return json([{ active: true, archived_at: null, description: null, duration_minutes: 30, id: "service-1", is_standard: true, name: "Cut", price_cents: 4000, shop_id: shopId }]);
     if (path.endsWith("/rpc/list_owner_recurrence_series")) return json([series]);
     if (path.endsWith("/rpc/create_recurrence_for_customer")) return json([series]);
-    if (path.endsWith("/rpc/list_recurrence_plans_for_barber")) return json([{ barber_service_id: barberServiceId, interval_weeks: 1, name: "Corte mensal", normal_cents: 4000, plan_id: "plan-w1", price_cents: 3000, service_name: "Cut" }]);
+    if (path.endsWith("/rpc/list_recurrence_plans_for_professional")) return json([{ professional_service_id: professionalServiceId, interval_weeks: 1, name: "Corte mensal", normal_cents: 4000, plan_id: "plan-w1", price_cents: 3000, service_name: "Cut" }]);
     if (path.endsWith("/rpc/ensure_recurrence_window")) return json([{ appointments_created: 1, conflicts_created: 0 }]);
     if (path.endsWith("/rpc/list_owner_recurrence_conflicts")) return json([{
       customer_name: "Monthly Customer", customer_phone: "+55 11 99999-9999", id: "conflict-1",
@@ -79,7 +79,7 @@ test("an owner can cancel an occurrence and end a recurring booking", async ({ p
   }, { userId: ownerId });
 
   let currentSeries = {
-    active: true, barber_service_id: barberServiceId, customer_id: customerId,
+    active: true, professional_service_id: professionalServiceId, customer_id: customerId,
     customer_name: "Monthly Customer", ended_at: null as string | null, ends_on: null,
     id: "55555555-5555-4555-855555555555", interval_weeks: 4,
     local_start_date: "2026-08-17", local_start_time: "09:00:00", special_price_cents: 3500,
@@ -95,8 +95,8 @@ test("an owner can cancel an occurrence and end a recurring booking", async ({ p
     if (path.endsWith("/rpc/get_current_profile")) return json([{ role: "owner", user_id: ownerId }]);
     if (path.endsWith("/shops")) return json([{ id: shopId }]);
     if (path.endsWith("/customers")) return json([{ active: true, archived_at: null, email: "customer@example.com", full_name: "Monthly Customer", id: customerId, phone: "+55 11 99999-9999", shop_id: shopId, user_id: null }]);
-    if (path.endsWith("/barber_services")) return json([{ active: true, archived_at: null, barber_id: "barber-1", duration_override_minutes: null, id: barberServiceId, price_override_cents: null, service_id: "service-1", shop_id: shopId }]);
-    if (path.endsWith("/rpc/list_owner_barbers")) return json([{ active: true, archived_at: null, id: "barber-1", name: "Browser Barber", shop_id: shopId, user_id: null }]);
+    if (path.endsWith("/professional_services")) return json([{ active: true, archived_at: null, professional_id: "professional-1", duration_override_minutes: null, id: professionalServiceId, price_override_cents: null, service_id: "service-1", shop_id: shopId }]);
+    if (path.endsWith("/rpc/list_owner_professionals")) return json([{ active: true, archived_at: null, id: "professional-1", name: "Browser Professional", shop_id: shopId, user_id: null }]);
     if (path.endsWith("/services")) return json([{ active: true, archived_at: null, description: null, duration_minutes: 30, id: "service-1", is_standard: true, name: "Cut", price_cents: 4000, shop_id: shopId }]);
     if (path.endsWith("/rpc/list_owner_recurrence_series")) return json([currentSeries]);
     if (path.endsWith("/rpc/ensure_recurrence_window")) return json([{ appointments_created: 0, conflicts_created: 0 }]);

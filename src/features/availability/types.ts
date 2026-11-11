@@ -13,7 +13,7 @@ export type AvailableSlotRow = {
 };
 
 export type AvailableSlotsInput = {
-  barberId: string;
-  barberServiceId: string;
+  professionalId: string;
+  professionalServiceId: string;
   localDate: string;
 };

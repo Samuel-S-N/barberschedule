@@ -80,7 +80,7 @@ test.describe("Portuguese customer", () => {
   test("a booking error is translated", async ({ page }) => {
     await signInAsCustomer(page);
     await mockCustomerRest(page, async (route, url) => {
-      if (url.pathname.endsWith("/barber_services")) {
+      if (url.pathname.endsWith("/professional_services")) {
         await json(route, [{ duration_override_minutes: null, id: "33333333-3333-4333-8333-333333333333", price_override_cents: null, service_id: "s", services: { duration_minutes: 30, name: "Corte", price_cents: 4000 } }]);
         return true;
       }
@@ -95,7 +95,7 @@ test.describe("Portuguese customer", () => {
     });
 
     await page.goto("/book");
-    await page.getByRole("button", { name: "Browser Barber" }).click();
+    await page.getByRole("button", { name: "Browser Professional" }).click();
     await page.getByRole("button", { name: "Corte" }).click();
     await page.getByRole("button", { name: "Continuar", exact: true }).click();
     await page.getByRole("button", { name: "09:00" }).click();
@@ -129,7 +129,7 @@ async function signInAsOwner(page: import("@playwright/test").Page, handler?: Pa
     if (handler && (await handler(route, url)) === true) return;
     if (url.pathname.endsWith("/rpc/get_current_profile")) return json(route, [{ full_name: "Browser Owner", role: "owner", user_id: "55555555-5555-4555-8555-555555555555" }]);
     if (url.pathname.endsWith("/shops")) return json(route, [{ id: "11111111-1111-4111-8111-111111111111", name: "Browser Shop" }]);
-    if (url.pathname.endsWith("/rpc/list_owner_barbers")) return json(route, [{ active: true, archived_at: null, id: "22222222-2222-4222-8222-222222222222", name: "Browser Barber", shop_id: "11111111-1111-4111-8111-111111111111", user_id: null }]);
+    if (url.pathname.endsWith("/rpc/list_owner_professionals")) return json(route, [{ active: true, archived_at: null, id: "22222222-2222-4222-8222-222222222222", name: "Browser Professional", shop_id: "11111111-1111-4111-8111-111111111111", user_id: null }]);
     if (url.pathname.endsWith("/working_periods") || url.pathname.endsWith("/schedule_overrides")) return json(route, []);
     await route.abort();
   });
@@ -159,8 +159,8 @@ test.describe("Portuguese owner", () => {
 
     await page.goto("/schedule");
     await expect(page.getByRole("heading", { name: "Horários" })).toBeVisible();
-    await expect(page.getByText("Barbeiro selecionado: Browser Barber")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Browser Barber (selecionado)" })).toBeVisible();
+    await expect(page.getByText("Barbeiro selecionado: Browser Professional")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Browser Professional (selecionado)" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Adicionar período de trabalho" })).toBeVisible();
   });
 });

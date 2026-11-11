@@ -3,7 +3,7 @@ export type DomainErrorCode =
   | "DAILY_BOOKING_LIMIT"
   | "BOOKING_FORBIDDEN"
   | "SERVICE_UNAVAILABLE"
-  | "BARBER_UNAVAILABLE"
+  | "PROFESSIONAL_UNAVAILABLE"
   | "CUSTOMER_UNAVAILABLE"
   | "SCHEDULE_UNAVAILABLE"
   | "INVALID_BOOKING_START"
@@ -29,11 +29,11 @@ export type DomainErrorCode =
   | "PROFILE_INVALID"
   | "ACCOUNT_DELETION_BLOCKED"
   | "ACCOUNT_REQUEST_FAILED"
-  | "BARBER_NOT_LINKED"
-  | "BARBER_INVITE_CONFLICT"
+  | "PROFESSIONAL_NOT_LINKED"
+  | "PROFESSIONAL_INVITE_CONFLICT"
   | "COMPENSATION_INVALID"
   | "EARNINGS_INVALID_RANGE"
-  | "BARBER_REQUEST_FAILED"
+  | "PROFESSIONAL_REQUEST_FAILED"
   | "SHOP_HOURS_INVALID"
   | "CUSTOMER_NAME_REQUIRED"
   | "CUSTOMER_EMAIL_INVALID"
@@ -69,7 +69,7 @@ export function toDomainError(error: { code?: string; message?: string }): Domai
     case "P0004":
       return new DomainError("SERVICE_UNAVAILABLE", "That service is no longer available.");
     case "P0005":
-      return new DomainError("BARBER_UNAVAILABLE", "That barber is no longer available.");
+      return new DomainError("PROFESSIONAL_UNAVAILABLE", "That professional is no longer available.");
     case "P0006":
       return new DomainError("SCHEDULE_UNAVAILABLE", "That time is outside the schedule.");
     case "P0007":
@@ -124,9 +124,9 @@ export function toDomainError(error: { code?: string; message?: string }): Domai
         "Cancel your upcoming appointments (or contact the shop about your recurring schedule) before deleting your account.",
       );
     case "P0019":
-      return new DomainError("BARBER_NOT_LINKED", "This account is not linked to an active barber.");
+      return new DomainError("PROFESSIONAL_NOT_LINKED", "This account is not linked to an active professional.");
     case "P0020":
-      return new DomainError("BARBER_INVITE_CONFLICT", "This barber already has an account or the email is in use.");
+      return new DomainError("PROFESSIONAL_INVITE_CONFLICT", "This professional already has an account or the email is in use.");
     case "P0021":
       return new DomainError("COMPENSATION_INVALID", "Enter a valid commission or chair rental.");
     case "P0022":
@@ -142,7 +142,7 @@ export function toDomainError(error: { code?: string; message?: string }): Domai
     case "P0028":
       return new DomainError("CUSTOMER_NOTE_INVALID", "The note must have up to 500 characters.");
     case "P0030":
-      return new DomainError("RENT_PAYMENT_INVALID", "Enter a valid payment for a chair-rental barber.");
+      return new DomainError("RENT_PAYMENT_INVALID", "Enter a valid payment for a chair-rental professional.");
     case "P0029":
       return new DomainError("REPORT_FORBIDDEN", "Only the shop owner can see this report.");
     default:

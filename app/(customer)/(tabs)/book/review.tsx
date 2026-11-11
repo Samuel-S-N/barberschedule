@@ -13,9 +13,9 @@ import { Toast } from "../../../../src/components/domain/Toast";
 import { Button } from "../../../../src/components/ui/Button";
 import { Input } from "../../../../src/components/ui/Input";
 import { bookAppointment } from "../../../../src/features/appointments/api";
-import { listPublicBarbers } from "../../../../src/features/barbers/api";
+import { listPublicProfessionals } from "../../../../src/features/professionals/api";
 import { listMyCustomers } from "../../../../src/features/customers/api";
-import { useBarberServices } from "../../../../src/features/services/use-barber-services";
+import { useProfessionalServices } from "../../../../src/features/services/use-professional-services";
 import { errorMessage } from "../../../../src/i18n/errors";
 import { useLanguage } from "../../../../src/i18n/use-language";
 import { formatInstantInShopTime } from "../../../../src/lib/dates/shop-time";
@@ -33,10 +33,10 @@ function param(value: string | string[] | undefined) {
 }
 
 export default function BookReviewScreen() {
-  const params = useLocalSearchParams<{ barberId?: string; barberServiceId?: string; localDate?: string; shopId?: string; startsAt?: string }>();
+  const params = useLocalSearchParams<{ professionalId?: string; professionalServiceId?: string; localDate?: string; shopId?: string; startsAt?: string }>();
   const shopId = param(params.shopId);
-  const barberId = param(params.barberId);
-  const barberServiceId = param(params.barberServiceId);
+  const professionalId = param(params.professionalId);
+  const professionalServiceId = param(params.professionalServiceId);
   const localDate = param(params.localDate);
   const startsAt = param(params.startsAt);
   const router = useRouter();
@@ -47,14 +47,14 @@ export default function BookReviewScreen() {
   const { profile, supabase } = useSupabaseSession();
   const [notes, setNotes] = useState("");
   const [feedback, setFeedback] = useState<{ message: string; variant: "success" | "error" } | null>(null);
-  const barbers = useQuery({
+  const professionals = useQuery({
     enabled: Boolean(shopId),
-    queryFn: () => listPublicBarbers(supabase, shopId),
-    queryKey: ["public-barbers", shopId],
+    queryFn: () => listPublicProfessionals(supabase, shopId),
+    queryKey: ["public-professionals", shopId],
   });
-  const services = useBarberServices(barberId);
-  const option = services.data?.find((candidate) => candidate.barberServiceId === barberServiceId);
-  const barber = barbers.data?.find((candidate) => candidate.id === barberId);
+  const services = useProfessionalServices(professionalId);
+  const option = services.data?.find((candidate) => candidate.professionalServiceId === professionalServiceId);
+  const professional = professionals.data?.find((candidate) => candidate.id === professionalId);
   const customers = useQuery({
     enabled: profile?.role === "customer",
     queryFn: () => listMyCustomers(supabase),
@@ -69,7 +69,7 @@ export default function BookReviewScreen() {
         throw new Error(NO_SLOT_SELECTED);
       }
       return bookAppointment(supabase, {
-        barberServiceId,
+        professionalServiceId,
         customerId: customer.id,
         notes: submittedNotes || null,
         source: "customer",
@@ -115,11 +115,11 @@ export default function BookReviewScreen() {
           <View className="w-full max-w-[420px]">
             <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("book.reviewTitle")} />
           </View>
-          <StepIndicator current="review" ids={{ barberId, barberServiceId, localDate, shopId }} />
-          {option && barber && localDate ? (
+          <StepIndicator current="review" ids={{ professionalId, professionalServiceId, localDate, shopId }} />
+          {option && professional && localDate ? (
             <View className="w-full max-w-[420px]">
               <BookingSummary
-                barberName={barber.name}
+                professionalName={professional.name}
                 dateLabel={formatDateNumeric(localDate, language)}
                 durationMinutes={option.durationMinutes}
                 priceCents={option.priceCents}

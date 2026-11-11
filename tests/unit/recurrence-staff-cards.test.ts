@@ -4,7 +4,7 @@ import { render } from "@testing-library/react-native";
 import { CancellationCard } from "../../src/features/recurrence/CancellationCard";
 import { RequestCard } from "../../src/features/recurrence/RequestCard";
 
-const request = { barberId: "b1", barberName: "Rafael Souza", customerName: "Carlos Mendes", customerPhone: null, id: "rq1", normalCents: 4500, recurrenceCents: 4000, serviceName: "Corte masculino", startDate: "2026-10-22", startTime: "14:00", weeks: 1 };
+const request = { professionalId: "b1", professionalName: "Rafael Souza", customerName: "Carlos Mendes", customerPhone: null, id: "rq1", normalCents: 4500, recurrenceCents: 4000, serviceName: "Corte masculino", startDate: "2026-10-22", startTime: "14:00", weeks: 1 };
 
 describe("RequestCard", () => {
   it("follows the plan card standard when the request has a special price", async () => {
@@ -29,8 +29,8 @@ describe("RequestCard", () => {
 });
 
 describe("CancellationCard", () => {
-  it("shows service and periodicity without a value, then customer and barber", async () => {
-    const view = await render(React.createElement(CancellationCard, { busy: false, onDecide: jest.fn(), request: { barberName: "Rafael Souza", customerName: "Ana Souza", customerPhone: null, requestedAt: "2026-10-20T10:00:00Z", seriesId: "s1", serviceName: "Corte masculino", weeks: 1 } }));
+  it("shows service and periodicity without a value, then customer and professional", async () => {
+    const view = await render(React.createElement(CancellationCard, { busy: false, onDecide: jest.fn(), request: { professionalName: "Rafael Souza", customerName: "Ana Souza", customerPhone: null, requestedAt: "2026-10-20T10:00:00Z", seriesId: "s1", serviceName: "Corte masculino", weeks: 1 } }));
 
     expect(view.getByText(/Corte masculino/)).toBeTruthy();
     expect(view.getByText("Ana Souza")).toBeTruthy();

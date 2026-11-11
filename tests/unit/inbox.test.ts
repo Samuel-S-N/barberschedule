@@ -4,7 +4,7 @@ import { inboxText } from "../../src/features/notifications/inbox-text";
 
 it("maps rows", async () => {
   const limit = jest.fn().mockResolvedValue({
-    data: [{ appointment_id: "a1", created_at: "2026-10-20T10:00:00Z", id: "n1", kind: "appointment_cancelled", params: { barber_name: "Bia", customer_name: "Ana", service_name: "Cut", starts_at: "2026-10-21T13:00:00Z" }, read_at: null }],
+    data: [{ appointment_id: "a1", created_at: "2026-10-20T10:00:00Z", id: "n1", kind: "appointment_cancelled", params: { professional_name: "Bia", customer_name: "Ana", service_name: "Cut", starts_at: "2026-10-21T13:00:00Z" }, read_at: null }],
     error: null,
   });
   const order = jest.fn().mockReturnValue({ limit });
@@ -14,7 +14,7 @@ it("maps rows", async () => {
 
   expect(item).toEqual({
     appointmentId: "a1", createdAt: "2026-10-20T10:00:00Z", id: "n1", kind: "appointment_cancelled",
-    params: { barberName: "Bia", customerName: "Ana", intervalWeeks: null, serviceName: "Cut", startsAt: "2026-10-21T13:00:00Z" }, readAt: null,
+    params: { professionalName: "Bia", customerName: "Ana", intervalWeeks: null, serviceName: "Cut", startsAt: "2026-10-21T13:00:00Z" }, readAt: null,
   });
   expect(supabase.from).toHaveBeenCalledWith("notifications");
 });
@@ -33,22 +33,22 @@ it("has text keys for every kind", () => {
 
 it("routes appointment events to the role's agenda", () => {
   expect(inboxRoute("appointment_confirmed", "customer")).toBe("/appointments");
-  expect(inboxRoute("appointment_awaiting_confirmation", "barber")).toBe("/my-agenda");
+  expect(inboxRoute("appointment_awaiting_confirmation", "professional")).toBe("/my-agenda");
   expect(inboxRoute("appointment_cancelled", "owner")).toBe("/agenda");
 });
 
 it("gives each role its own notifications URL", () => {
   expect(notificationsPath("customer")).toBe("/notifications");
-  expect(notificationsPath("barber")).toBe("/barber-notifications");
+  expect(notificationsPath("professional")).toBe("/professional-notifications");
   expect(notificationsPath("owner")).toBe("/owner-notifications");
 });
 
 it("routes recurrence notifications", () => {
-  expect(inboxRoute("recurrence_requested", "barber")).toBe("/my-profile/recurrence");
+  expect(inboxRoute("recurrence_requested", "professional")).toBe("/my-profile/recurrence");
   expect(inboxRoute("recurrence_requested", "owner")).toBe("/monthly-customers");
   expect(inboxRoute("recurrence_accepted", "customer")).toBe("/me/recurrence");
   expect(inboxRoute("recurrence_cancel_requested", "owner")).toBe("/monthly-customers");
-  expect(inboxRoute("recurrence_cancel_requested", "barber")).toBe("/my-profile/recurrence");
+  expect(inboxRoute("recurrence_cancel_requested", "professional")).toBe("/my-profile/recurrence");
   expect(inboxRoute("recurrence_cancel_accepted", "customer")).toBe("/me/recurrence");
   expect(inboxRoute("recurrence_cancel_declined", "customer")).toBe("/me/recurrence");
 });

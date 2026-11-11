@@ -20,7 +20,7 @@ export default function BookIndexScreen() {
   });
 
   if (shops.data?.length === 1) {
-    return <Redirect href={`/book/barber?shopId=${encodeURIComponent(shops.data[0].id)}`} />;
+    return <Redirect href={`/book/professional?shopId=${encodeURIComponent(shops.data[0].id)}`} />;
   }
 
   return (
@@ -47,7 +47,7 @@ export default function BookIndexScreen() {
             <Button
               key={shop.id}
               label={t("book.startAt", { shop: shop.name })}
-              onPress={() => router.push(`/book/barber?shopId=${encodeURIComponent(shop.id)}`)}
+              onPress={() => router.push(`/book/professional?shopId=${encodeURIComponent(shop.id)}`)}
               size="lg"
               variant="primary"
             />

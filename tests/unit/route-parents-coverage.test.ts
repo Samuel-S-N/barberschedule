@@ -19,7 +19,7 @@ const patterns = routeFiles(appDir)
   .map((file) => routePattern(file.replace(/\.tsx$/, "").split("/")));
 
 const known = new Set([...patterns, ...ROOT_ROUTES]);
-const sample = { barberId: "b1", barberServiceId: "bs1", localDate: "2026-11-02", shopId: "s1" };
+const sample = { professionalId: "b1", professionalServiceId: "bs1", localDate: "2026-11-02", shopId: "s1" };
 
 describe("fixed-parent navigation covers every screen", () => {
   it("every route file is a root, a history exception or has a parent", () => {

@@ -1,33 +1,33 @@
 import { buildPlanOffers } from "../../src/features/recurrence/plan-offers";
-import type { BarberPlan } from "../../src/features/recurrence/plans-api";
+import type { ProfessionalPlan } from "../../src/features/recurrence/plans-api";
 
-const plan = (overrides: Partial<BarberPlan>): BarberPlan => ({
-  barberServiceId: "bs1", name: "Corte mensal", normalCents: 3500, planId: "p-month", priceCents: 2500, serviceName: "Cut", weeks: 1, ...overrides,
+const plan = (overrides: Partial<ProfessionalPlan>): ProfessionalPlan => ({
+  professionalServiceId: "bs1", name: "Corte mensal", normalCents: 3500, planId: "p-month", priceCents: 2500, serviceName: "Cut", weeks: 1, ...overrides,
 });
 
-const barbers = [
+const professionals = [
   { avatarUrl: null, id: "b1", name: "Bia" },
   { avatarUrl: "https://x/y.png", id: "b2", name: "Caio" },
   { avatarUrl: null, id: "b3", name: "Dani" },
 ];
 
-it("merges every barber's plans into plan-first offers, listing the barbers that offer each plan", () => {
-  const offers = buildPlanOffers(barbers, {
-    b1: [plan({}), plan({ barberServiceId: "bs1c", name: "Corte + Barba", planId: "p-combo", serviceName: "Cut + Beard" })],
-    b2: [plan({ barberServiceId: "bs2" })],
+it("merges every professional's plans into plan-first offers, listing the professionals that offer each plan", () => {
+  const offers = buildPlanOffers(professionals, {
+    b1: [plan({}), plan({ professionalServiceId: "bs1c", name: "Corte + Barba", planId: "p-combo", serviceName: "Cut + Beard" })],
+    b2: [plan({ professionalServiceId: "bs2" })],
     b3: [],
   });
 
   expect(offers.map((offer) => offer.planId)).toEqual(["p-month", "p-combo"]);
-  expect(offers.find((offer) => offer.planId === "p-month")?.barbers).toEqual([
-    { avatarUrl: null, barberId: "b1", barberName: "Bia", barberServiceId: "bs1" },
-    { avatarUrl: "https://x/y.png", barberId: "b2", barberName: "Caio", barberServiceId: "bs2" },
+  expect(offers.find((offer) => offer.planId === "p-month")?.professionals).toEqual([
+    { avatarUrl: null, professionalId: "b1", professionalName: "Bia", professionalServiceId: "bs1" },
+    { avatarUrl: "https://x/y.png", professionalId: "b2", professionalName: "Caio", professionalServiceId: "bs2" },
   ]);
-  expect(offers.find((offer) => offer.planId === "p-combo")?.barbers).toHaveLength(1);
+  expect(offers.find((offer) => offer.planId === "p-combo")?.professionals).toHaveLength(1);
 });
 
 it("orders offers by service name, then periodicity", () => {
-  const offers = buildPlanOffers(barbers.slice(0, 1), {
+  const offers = buildPlanOffers(professionals.slice(0, 1), {
     b1: [plan({ planId: "p2", weeks: 2 }), plan({ planId: "p1", weeks: 1 }), plan({ planId: "pa", serviceName: "Beard", weeks: 4 })],
   });
 
@@ -35,5 +35,5 @@ it("orders offers by service name, then periodicity", () => {
 });
 
 it("no plans, no offers", () => {
-  expect(buildPlanOffers(barbers, {})).toEqual([]);
+  expect(buildPlanOffers(professionals, {})).toEqual([]);
 });

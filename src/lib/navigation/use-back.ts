@@ -14,7 +14,7 @@ export function useParentHref() {
 
 // Back always goes to the screen's fixed parent, never through the history: after a notification or a tab hop the
 // history is not the user's mental model. Customer screens sit in a root Stack (pop back to the parent), owner and
-// barber screens are hidden tab screens (switch to the parent), auth screens replace.
+// professional screens are hidden tab screens (switch to the parent), auth screens replace.
 export function useBack() {
   const router = useRouter();
   const { group, href, pattern } = useParentHref();

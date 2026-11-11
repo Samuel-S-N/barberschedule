@@ -2,7 +2,7 @@ import { addLocalDays } from "../../lib/dates/calendar-strip-days";
 
 export type ReportDay = { cancelled: number; completed: number; date: string; earningsCents: number; noShow: number; upcoming: number };
 export type ReportService = { completed: number; name: string; serviceId: string };
-export type BarberReport = { days: ReportDay[]; services: ReportService[] };
+export type ProfessionalReport = { days: ReportDay[]; services: ReportService[] };
 export type ReportTotals = { cancelled: number; cancellationRate: number | null; completed: number; earningsCents: number; noShow: number; upcoming: number };
 export type SeriesPoint = { from: string; key: string; value: number };
 export type DonutItem = { key: string; name: string; value: number };

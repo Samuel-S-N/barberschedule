@@ -11,8 +11,8 @@ import { Card } from "../../src/components/ui/Card";
 import { Input } from "../../src/components/ui/Input";
 import { DateInput, TimeInput } from "../../src/components/ui/MaskedInputs";
 import { Screen } from "../../src/components/ui/Screen";
-import { listOwnerBarbers } from "../../src/features/barbers/api";
-import type { OwnerBarber } from "../../src/features/barbers/types";
+import { listOwnerProfessionals } from "../../src/features/professionals/api";
+import type { OwnerProfessional } from "../../src/features/professionals/types";
 import { createScheduleOverride, deleteScheduleOverride, listOwnerScheduleOverrides } from "../../src/features/schedule/api";
 import { closedDates, copyDayToOthers } from "../../src/features/shops/day-tools";
 import { listPublicShops, listShopHours, saveShopHours, updateShopContact } from "../../src/features/shops/api";
@@ -52,10 +52,10 @@ export default function OwnerShopScreen() {
   const closure = useQuery({
     enabled: Boolean(shop),
     queryFn: async () => {
-      const [barbers, overrides] = await Promise.all([listOwnerBarbers(supabase, shop!.id), listOwnerScheduleOverrides(supabase, shop!.id)]);
-      const activeBarbers = (barbers as OwnerBarber[]).filter((barber) => barber.active);
+      const [professionals, overrides] = await Promise.all([listOwnerProfessionals(supabase, shop!.id), listOwnerScheduleOverrides(supabase, shop!.id)]);
+      const activeProfessionals = (professionals as OwnerProfessional[]).filter((professional) => professional.active);
 
-      return { activeBarbers, overrides, dates: closedDates(overrides, activeBarbers.map((barber: OwnerBarber) => barber.id), today) };
+      return { activeProfessionals, overrides, dates: closedDates(overrides, activeProfessionals.map((professional: OwnerProfessional) => professional.id), today) };
     },
     queryKey: ["owner-schedule", shop?.id, "closures"],
   });
@@ -65,8 +65,8 @@ export default function OwnerShopScreen() {
   };
   const closeShop = useMutation({
     mutationFn: async () => {
-      for (const barber of closure.data?.activeBarbers ?? []) {
-        await createScheduleOverride(supabase, { barberId: barber.id, endTime: null, kind: "block", localDate: closeDate, shopId: shop!.id, startTime: null });
+      for (const professional of closure.data?.activeProfessionals ?? []) {
+        await createScheduleOverride(supabase, { professionalId: professional.id, endTime: null, kind: "block", localDate: closeDate, shopId: shop!.id, startTime: null });
       }
     },
     onError: (error) => setFeedback({ message: errorMessage(error, t, t("owner.shop.closedError")), variant: "error" }),

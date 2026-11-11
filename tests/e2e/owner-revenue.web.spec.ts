@@ -17,9 +17,9 @@ async function signInAsOwner(page: Page) {
 }
 
 const report = {
-  barbers: [
-    { barber_id: "b1", barber_share_cents: 4400, compensation_type: "commission", completed: 3, gross_cents: 11000, name: "Ana Barber", rent_estimate_cents: 0 },
-    { barber_id: "b2", barber_share_cents: 5000, compensation_type: "chair_rental", completed: 1, gross_cents: 5000, name: "Bruno Chair", rent_estimate_cents: 7000 },
+  professionals: [
+    { professional_id: "b1", professional_share_cents: 4400, compensation_type: "commission", completed: 3, gross_cents: 11000, name: "Ana Professional", rent_estimate_cents: 0 },
+    { professional_id: "b2", professional_share_cents: 5000, compensation_type: "chair_rental", completed: 1, gross_cents: 5000, name: "Bruno Chair", rent_estimate_cents: 7000 },
   ],
   days: [{ cancelled: 1, completed: 4, date: new Date().toISOString().slice(0, 10), gross_cents: 16000, no_show: 0, upcoming: 0 }],
   services: [{ completed: 3, gross_cents: 11000, name: "Browser Cut", service_id: "s1" }, { completed: 1, gross_cents: 5000, name: "Pro Cut", service_id: "s2" }],
@@ -40,7 +40,7 @@ async function mockOwnerRest(page: Page, requests: Array<Record<string, unknown>
   });
 }
 
-test("the owner reaches Revenue from the tab bar and sees totals, charts and the barber table", async ({ page }) => {
+test("the owner reaches Revenue from the tab bar and sees totals, charts and the professional table", async ({ page }) => {
   await signInAsOwner(page);
   await mockOwnerRest(page);
 
@@ -53,11 +53,11 @@ test("the owner reaches Revenue from the tab bar and sees totals, charts and the
   await expect(page.getByTestId("stat-shop-income")).toContainText("R$ 66,00");
   await expect(page.getByTestId("stat-completed")).toContainText("4");
   await expect(page.getByTestId("chart-revenue")).toBeVisible();
-  await expect(page.getByTestId("donut-barbers")).toContainText("Ana Barber");
+  await expect(page.getByTestId("donut-professionals")).toContainText("Ana Professional");
   await expect(page.getByTestId("donut-services")).toContainText("Browser Cut");
   await expect(page.getByTestId("donut-outcome")).toContainText("Cancelled");
-  await expect(page.getByTestId("barber-row-b2")).toContainText("Bruno Chair");
-  await expect(page.getByTestId("barber-row-b2")).toContainText("R$ 70,00");
+  await expect(page.getByTestId("professional-row-b2")).toContainText("Bruno Chair");
+  await expect(page.getByTestId("professional-row-b2")).toContainText("R$ 70,00");
   await expect(page.getByText(/estimated/i).first()).toBeVisible();
 });
 
@@ -86,15 +86,15 @@ test("the owner records and removes a chair rent payment", async ({ page }) => {
 
     if (path.endsWith("/rpc/get_current_profile")) return json([{ full_name: "Owner", role: "owner", user_id: ownerId }]);
     if (path.endsWith("/rpc/get_shop_report")) {
-      return json({ ...report, barbers: report.barbers.map((b) => (b.barber_id === "b2" ? { ...b, rent_paid_cents: paid } : { ...b, rent_paid_cents: 0 })) });
+      return json({ ...report, professionals: report.professionals.map((b) => (b.professional_id === "b2" ? { ...b, rent_paid_cents: paid } : { ...b, rent_paid_cents: 0 })) });
     }
     if (path.endsWith("/rpc/list_rent_payments")) return json(payments);
     if (path.endsWith("/rpc/record_rent_payment")) {
       calls.record = route.request().postDataJSON();
       const body = calls.record as { payment_amount_cents: number; payment_paid_on: string };
-      payments.push({ amount_cents: body.payment_amount_cents, barber_id: "b2", barber_name: "Bruno Chair", id: "pay-1", note: null, paid_on: body.payment_paid_on });
+      payments.push({ amount_cents: body.payment_amount_cents, professional_id: "b2", professional_name: "Bruno Chair", id: "pay-1", note: null, paid_on: body.payment_paid_on });
 
-      return json({ amount_cents: body.payment_amount_cents, barber_id: "b2", id: "pay-1", note: null, paid_on: body.payment_paid_on });
+      return json({ amount_cents: body.payment_amount_cents, professional_id: "b2", id: "pay-1", note: null, paid_on: body.payment_paid_on });
     }
     if (path.endsWith("/rpc/delete_rent_payment")) {
       calls.remove = route.request().postDataJSON();
@@ -113,8 +113,8 @@ test("the owner records and removes a chair rent payment", async ({ page }) => {
   await page.getByTestId("rent-pay-save").click();
 
   await expect(page.getByTestId("rent-payment-pay-1")).toContainText("R$ 50,00");
-  await expect(page.getByTestId("barber-row-b2")).toContainText("R$ 50,00");
-  expect(calls.record).toEqual({ payment_amount_cents: 5000, payment_note: null, payment_paid_on: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/), target_barber_id: "b2" });
+  await expect(page.getByTestId("professional-row-b2")).toContainText("R$ 50,00");
+  expect(calls.record).toEqual({ payment_amount_cents: 5000, payment_note: null, payment_paid_on: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/), target_professional_id: "b2" });
 
   await page.getByTestId("rent-remove-pay-1").click();
   expect(calls.remove).toBeUndefined();
@@ -159,12 +159,12 @@ test("the owner exports the revenue report as a CSV file", async ({ page }) => {
   const content = (await readFile((await file.path())!, "utf8")).replace("\uFEFF", "");
 
   expect(file.suggestedFilename()).toMatch(/^revenue-\d{4}-\d{2}-\d{2}_\d{4}-\d{2}-\d{2}\.csv$/);
-  expect(content).toContain("Barber;Completed;Revenue;Barber share;Rent (estimate);Rent paid");
+  expect(content).toContain("Professional;Completed;Revenue;Professional share;Rent (estimate);Rent paid");
   expect(content).toContain("Bruno Chair;1;50,00;50,00;70,00;0,00");
   expect(content).toContain("Browser Cut;3;110,00");
 });
 
-test("each barber and service shows the change versus the previous period", async ({ page }) => {
+test("each professional and service shows the change versus the previous period", async ({ page }) => {
   // Same clock the app uses for "today" (shop time), so the mock can tell the current period from the previous one.
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
 
@@ -179,7 +179,7 @@ test("each barber and service shows the change versus the previous period", asyn
       if (end === today) return json(report);
       // Previous period: Ana earned half as much; the service was not sold at all; Bruno did not exist yet.
       return json({
-        barbers: [{ ...report.barbers[0], gross_cents: 5500 }],
+        professionals: [{ ...report.professionals[0], gross_cents: 5500 }],
         days: report.days,
         services: [{ completed: 1, gross_cents: 5500, name: "Browser Cut", service_id: "s1" }],
       });
@@ -190,8 +190,8 @@ test("each barber and service shows the change versus the previous period", asyn
 
   await page.goto("/revenue");
   // 11000 vs 5500 = +100%; Bruno has no previous row, so there is nothing to compare.
-  await expect(page.getByTestId("barber-delta-b1")).toContainText("+100%");
-  await expect(page.getByTestId("barber-delta-b2")).toContainText("No previous data");
+  await expect(page.getByTestId("professional-delta-b1")).toContainText("+100%");
+  await expect(page.getByTestId("professional-delta-b2")).toContainText("No previous data");
 
   await page.getByTestId("section-services-toggle").click();
   await expect(page.getByTestId("section-services")).toContainText("+100%");

@@ -17,13 +17,13 @@ describe("booking concurrency boundary", () => {
 
     const results = await Promise.allSettled([
       bookAppointment({ rpc } as never, {
-        barberServiceId: "service-1",
+        professionalServiceId: "service-1",
         customerId: "customer-1",
         source: "customer",
         startsAt: "2026-08-17T12:00:00Z",
       }),
       bookAppointment({ rpc } as never, {
-        barberServiceId: "service-1",
+        professionalServiceId: "service-1",
         customerId: "customer-2",
         source: "customer",
         startsAt: "2026-08-17T12:00:00Z",

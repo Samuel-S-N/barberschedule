@@ -18,8 +18,8 @@ import { formatDateNumeric } from "../../lib/i18n/format";
 import { DateStep, TimeStep } from "../availability/steps";
 
 export type RescheduleFlowProps = {
-  barberId: string;
-  barberServiceId: string;
+  professionalId: string;
+  professionalServiceId: string;
   // The slot being moved; shown in the review.
   current: { localDate: string; localTime: string } | null;
   // Label of the review's "current" row (default: the current time).
@@ -38,7 +38,7 @@ export type RescheduleFlowProps = {
   onMoved: () => Promise<void> | void;
   // The final action: reschedule the appointment, resolve the conflict...
   submit: (startsAt: string) => Promise<unknown>;
-  // Service / barber (or customer) rows of the review.
+  // Service / professional (or customer) rows of the review.
   summaryRows: Array<[label: string, value: string]>;
   testPrefix: "conflict" | "move" | "owner" | "reschedule";
 };
@@ -48,7 +48,7 @@ const FLOW = ["date", "time", "review", "confirm"] as const;
 
 // Reschedule like the booking wizard: date › time › review › confirm, with the step bar on top.
 // "Confirm" is the button of the review step, as in booking, so it has no screen of its own.
-export function RescheduleFlow({ barberId, barberServiceId, current, currentCard, currentLabel, currentTitle, initialDate, keepLabel, onExit, onMoved, submit, summaryRows, testPrefix }: RescheduleFlowProps) {
+export function RescheduleFlow({ professionalId, professionalServiceId, current, currentCard, currentLabel, currentTitle, initialDate, keepLabel, onExit, onMoved, submit, summaryRows, testPrefix }: RescheduleFlowProps) {
   const { t } = useTranslation();
   const language = useLanguage();
   const queryClient = useQueryClient();
@@ -112,7 +112,7 @@ export function RescheduleFlow({ barberId, barberServiceId, current, currentCard
           ) : null}
 
           {step === "time" ? (
-            <TimeStep barberId={barberId} barberServiceId={barberServiceId} localDate={localDate} onContinue={() => go("review")} onSelect={setStartsAt} startsAt={startsAt} testID={`${testPrefix}-continue`} />
+            <TimeStep professionalId={professionalId} professionalServiceId={professionalServiceId} localDate={localDate} onContinue={() => go("review")} onSelect={setStartsAt} startsAt={startsAt} testID={`${testPrefix}-continue`} />
           ) : null}
 
           {step === "review" ? (

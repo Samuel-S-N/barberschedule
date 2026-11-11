@@ -1,10 +1,10 @@
 import type { AvailableSlot } from "../availability/types";
-import type { BarberAgendaAppointment } from "./barber-agenda";
+import type { ProfessionalAgendaAppointment } from "./professional-agenda";
 import { buildDayTimeline } from "./day-slots";
 
-export type DaySummary = { completed: number; freeSlots: number; next: BarberAgendaAppointment | null; total: number };
+export type DaySummary = { completed: number; freeSlots: number; next: ProfessionalAgendaAppointment | null; total: number };
 
-export function buildDaySummary(appointments: BarberAgendaAppointment[], slots: AvailableSlot[], now: Date): DaySummary {
+export function buildDaySummary(appointments: ProfessionalAgendaAppointment[], slots: AvailableSlot[], now: Date): DaySummary {
   const live = appointments.filter((a) => a.status !== "cancelled");
   const upcoming = live
     .filter((a) => (a.status === "scheduled" || a.status === "confirmed") && new Date(a.endsAt) > now)

@@ -3,7 +3,7 @@ import { buildAppointmentIcs } from "../../src/features/appointments/ics";
 describe("buildAppointmentIcs", () => {
   const ics = buildAppointmentIcs(
     {
-      description: "Barber: João",
+      description: "Professional: João",
       endsAt: "2026-08-17T12:45:00.000Z",
       id: "abc",
       location: "Rua A, 10; Centro",

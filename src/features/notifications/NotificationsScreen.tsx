@@ -102,7 +102,7 @@ export default function NotificationsScreen() {
                         <Text className={`text-base text-ink ${item.readAt ? "font-sans-medium" : "font-sans-semibold"}`}>{t(text.titleKey)}</Text>
                         <Text className="text-sm font-sans text-neutral-600">
                           {t(text.bodyKey, {
-                            barberName: item.params.barberName,
+                            professionalName: item.params.professionalName,
                             customerName: item.params.customerName,
                             date: when(item.params.startsAt),
                             label: recurrenceLabel(t, item.params.intervalWeeks ?? 1),

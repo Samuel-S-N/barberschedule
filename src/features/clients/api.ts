@@ -23,7 +23,7 @@ function toError(error: { code?: string }) {
   const domainError = toDomainError(error);
 
   return domainError.code === "BOOKING_REQUEST_FAILED"
-    ? new DomainError("BARBER_REQUEST_FAILED", "Unable to complete the barber request.")
+    ? new DomainError("PROFESSIONAL_REQUEST_FAILED", "Unable to complete the professional request.")
     : domainError;
 }
 

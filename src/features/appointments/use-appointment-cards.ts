@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import type { AppointmentCardProps } from "../../components/domain/AppointmentCard";
 import { useLanguage } from "../../i18n/use-language";
 import { useSupabaseSession } from "../../providers/AppProviders";
-import { listPublicBarbers } from "../barbers/api";
+import { listPublicProfessionals } from "../professionals/api";
 import { listPublicShops } from "../shops/api";
 import { formatAppointmentLabels } from "./agenda-view";
 import type { Appointment } from "./types";
@@ -16,15 +16,15 @@ export function useAppointmentCards(appointments: Appointment[]) {
   // Single-shop MVP: every appointment belongs to the same shop.
   const shopId = appointments[0]?.shopId ?? "";
   const shops = useQuery({ queryFn: () => listPublicShops(supabase), queryKey: ["public-shops"] });
-  const barbers = useQuery({
+  const professionals = useQuery({
     enabled: Boolean(shopId),
-    queryFn: () => listPublicBarbers(supabase, shopId),
-    queryKey: ["public-barbers", shopId],
+    queryFn: () => listPublicProfessionals(supabase, shopId),
+    queryKey: ["public-professionals", shopId],
   });
 
   return (appointment: Appointment): Omit<AppointmentCardProps, "onPress" | "testID"> => ({
     ...formatAppointmentLabels(appointment, language),
-    barberName: barbers.data?.find((barber) => barber.id === appointment.barberId)?.name ?? t("appointments.fallbackBarber"),
+    professionalName: professionals.data?.find((professional) => professional.id === appointment.professionalId)?.name ?? t("appointments.fallbackProfessional"),
     serviceName: appointment.serviceNameSnapshot,
     shopName: shops.data?.find((shop) => shop.id === appointment.shopId)?.name ?? t("appointments.fallbackShop"),
     status: appointment.status,

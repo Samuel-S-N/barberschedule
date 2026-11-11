@@ -1,14 +1,14 @@
 import type { DonutItem } from "../reports/build-report";
 
 export type ShopDay = { cancelled: number; completed: number; date: string; grossCents: number; noShow: number; upcoming: number };
-export type ShopBarber = {
-  barberId: string; barberShareCents: number; compensationType: "chair_rental" | "commission"; completed: number;
+export type ShopProfessional = {
+  professionalId: string; professionalShareCents: number; compensationType: "chair_rental" | "commission"; completed: number;
   grossCents: number; name: string; rentEstimateCents: number; rentPaidCents: number;
 };
 export type ShopService = { completed: number; grossCents: number; name: string; serviceId: string };
-export type ShopReport = { barbers: ShopBarber[]; days: ShopDay[]; services: ShopService[] };
+export type ShopReport = { professionals: ShopProfessional[]; days: ShopDay[]; services: ShopService[] };
 export type ShopTotals = {
-  barberShareCents: number; cancelled: number; cancellationRate: number | null; completed: number; grossCents: number;
+  professionalShareCents: number; cancelled: number; cancellationRate: number | null; completed: number; grossCents: number;
   noShow: number; rentEstimateCents: number; rentPaidCents: number; shopIncomeCents: number;
 };
 
@@ -17,23 +17,23 @@ export function sumShopReport(report: ShopReport): ShopTotals {
     (sum, d) => ({ cancelled: sum.cancelled + d.cancelled, completed: sum.completed + d.completed, grossCents: sum.grossCents + d.grossCents, noShow: sum.noShow + d.noShow }),
     { cancelled: 0, completed: 0, grossCents: 0, noShow: 0 },
   );
-  const barberShareCents = report.barbers.reduce((sum, b) => sum + b.barberShareCents, 0);
-  const rentEstimateCents = report.barbers.reduce((sum, b) => sum + b.rentEstimateCents, 0);
-  const rentPaidCents = report.barbers.reduce((sum, b) => sum + b.rentPaidCents, 0);
+  const professionalShareCents = report.professionals.reduce((sum, b) => sum + b.professionalShareCents, 0);
+  const rentEstimateCents = report.professionals.reduce((sum, b) => sum + b.rentEstimateCents, 0);
+  const rentPaidCents = report.professionals.reduce((sum, b) => sum + b.rentPaidCents, 0);
   const closed = days.completed + days.cancelled + days.noShow;
 
   return {
     ...days,
-    barberShareCents,
+    professionalShareCents,
     cancellationRate: closed === 0 ? null : (days.cancelled + days.noShow) / closed,
     rentEstimateCents,
     rentPaidCents,
-    shopIncomeCents: days.grossCents - barberShareCents + rentPaidCents,
+    shopIncomeCents: days.grossCents - professionalShareCents + rentPaidCents,
   };
 }
 
-export function barberRows(report: ShopReport) {
-  return report.barbers.map((b) => ({ ...b, shopShareCents: b.grossCents - b.barberShareCents + b.rentPaidCents }));
+export function professionalRows(report: ShopReport) {
+  return report.professionals.map((b) => ({ ...b, shopShareCents: b.grossCents - b.professionalShareCents + b.rentPaidCents }));
 }
 
 export function topByValue(items: Array<{ key: string; name: string; value: number }>, max = 4): DonutItem[] {

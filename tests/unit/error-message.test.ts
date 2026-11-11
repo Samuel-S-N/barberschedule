@@ -48,10 +48,10 @@ describe("errorMessage", () => {
 
   it("translates the overlap error thrown by client-side validation", async () => {
     await i18n.changeLanguage("es");
-    const barberId = "11111111-1111-4111-8111-111111111111";
+    const professionalId = "11111111-1111-4111-8111-111111111111";
     const shopId = "22222222-2222-4222-8222-222222222222";
-    const existing = parseWorkingPeriodInput({ barberId, endTime: "12:00", shopId, startTime: "09:00", weekday: 1 });
-    const overlapping = parseWorkingPeriodInput({ barberId, endTime: "13:00", shopId, startTime: "11:00", weekday: 1 });
+    const existing = parseWorkingPeriodInput({ professionalId, endTime: "12:00", shopId, startTime: "09:00", weekday: 1 });
+    const overlapping = parseWorkingPeriodInput({ professionalId, endTime: "13:00", shopId, startTime: "11:00", weekday: 1 });
     let thrown: unknown;
 
     try {

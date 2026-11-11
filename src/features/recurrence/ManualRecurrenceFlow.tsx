@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
-import { BarberCard } from "../../components/domain/BarberCard";
+import { ProfessionalCard } from "../../components/domain/ProfessionalCard";
 import { EmptyState } from "../../components/domain/EmptyState";
 import { RadioBlock } from "../../components/domain/RadioBlock";
 import { ScreenHeader } from "../../components/domain/ScreenHeader";
@@ -28,44 +28,44 @@ import { useWeekdaySlots } from "./customer-flow/use-weekday-slots";
 import { WeekdayList } from "./customer-flow/WeekdayList";
 import { PlanCard } from "./PlanCard";
 import { buildPlanOffers } from "./plan-offers";
-import type { PlanOffer, PlanOfferBarber } from "./plan-offers";
-import { listPlansForBarber } from "./plans-api";
+import type { PlanOffer, PlanOfferProfessional } from "./plan-offers";
+import { listPlansForProfessional } from "./plans-api";
 import { recurrenceLabel } from "./pricing";
 import { planValue } from "./price-text";
 import { PlanSummary } from "./PlanSummary";
 import { createRecurrenceForCustomer } from "./requests-api";
 
 type Props = {
-  // Owner: the active barbers; barber: just themself. With more than one, the flow has a Barber step.
-  barbers: { avatarUrl: string | null; id: string; name: string }[];
+  // Owner: the active professionals; professional: just themself. With more than one, the flow has a Professional step.
+  professionals: { avatarUrl: string | null; id: string; name: string }[];
   customers: { id: string; name: string }[];
   // The series was created: refresh and leave.
   onCreated: () => void;
   // Back on the first step.
   onExit: () => void;
-  // Server-side customer search (the barber's customers); the owner's list is filtered locally.
+  // Server-side customer search (the professional's customers); the owner's list is filtered locally.
   onSearch?: (term: string) => void;
   today: string;
 };
 
-type Step = "barber" | "customer" | "plan" | "review" | "time" | "weekday";
+type Step = "professional" | "customer" | "plan" | "review" | "time" | "weekday";
 const WEEKDAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
 
 // Staff create a recurring plan for a customer (no account needed) with the same steps as every booking:
-// customer › plan › [barber] › weekday › time › review › create. Plans and prices come from the barbers' plans.
-export function ManualRecurrenceFlow({ barbers, customers, onCreated, onExit, onSearch, today }: Props) {
+// customer › plan › [professional] › weekday › time › review › create. Plans and prices come from the professionals' plans.
+export function ManualRecurrenceFlow({ professionals, customers, onCreated, onExit, onSearch, today }: Props) {
   const { t } = useTranslation();
   const language = useLanguage();
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
-  const withBarberStep = barbers.length > 1;
-  const flow: string[] = ["customer", "plan", ...(withBarberStep ? ["barber"] : []), "weekday", "time", "review", "send"];
+  const withProfessionalStep = professionals.length > 1;
+  const flow: string[] = ["customer", "plan", ...(withProfessionalStep ? ["professional"] : []), "weekday", "time", "review", "send"];
   const [trail, setTrail] = useState<Step[]>(["customer"]);
   const step = trail[trail.length - 1];
   const [search, setSearch] = useState("");
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [offer, setOffer] = useState<PlanOffer | null>(null);
-  const [barber, setBarber] = useState<PlanOfferBarber | null>(null);
+  const [professional, setProfessional] = useState<PlanOfferProfessional | null>(null);
   const [weekday, setWeekday] = useState<number | null>(null);
   const [startsAt, setStartsAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -73,12 +73,12 @@ export function ManualRecurrenceFlow({ barbers, customers, onCreated, onExit, on
   const goBack = () => (trail.length > 1 ? setTrail((existing) => existing.slice(0, -1)) : onExit());
 
   const planQueries = useQueries({
-    queries: barbers.map((item) => ({ queryFn: () => listPlansForBarber(supabase, item.id), queryKey: ["barber-plans", item.id] })),
+    queries: professionals.map((item) => ({ queryFn: () => listPlansForProfessional(supabase, item.id), queryKey: ["professional-plans", item.id] })),
   });
   const plansLoading = planQueries.some((query) => query.isLoading);
-  const offers = buildPlanOffers(barbers, Object.fromEntries(barbers.map((item, index) => [item.id, planQueries[index]?.data ?? []])));
+  const offers = buildPlanOffers(professionals, Object.fromEntries(professionals.map((item, index) => [item.id, planQueries[index]?.data ?? []])));
 
-  const { dates, disabledDays, queries: weekdaySlots } = useWeekdaySlots({ barberId: barber?.barberId ?? "", barberServiceId: barber?.barberServiceId ?? "", enabled: step === "weekday" && Boolean(barber), today });
+  const { dates, disabledDays, queries: weekdaySlots } = useWeekdaySlots({ professionalId: professional?.professionalId ?? "", professionalServiceId: professional?.professionalServiceId ?? "", enabled: step === "weekday" && Boolean(professional), today });
   const slots = weekday ? weekdaySlots[weekday - 1].data ?? [] : [];
   const slotRows: TimeSlot[] = slots.map((slot: AvailableSlot) => ({ status: slot.startsAt === startsAt ? "selected" : "free", time: slot.localTime.slice(0, 5) }));
   const chosen = startsAt ? formatInstantInShopTime(new Date(startsAt)) : null;
@@ -91,18 +91,18 @@ export function ManualRecurrenceFlow({ barbers, customers, onCreated, onExit, on
     setOffer(candidate);
     setWeekday(null);
     setStartsAt(null);
-    // One barber offers it (or the barber role): no choice to make, the Barber step lists only those who offer it.
-    if (withBarberStep) {
-      setBarber(null);
-      go("barber");
+    // One professional offers it (or the professional role): no choice to make, the Professional step lists only those who offer it.
+    if (withProfessionalStep) {
+      setProfessional(null);
+      go("professional");
     } else {
-      setBarber(candidate.barbers[0] ?? null);
+      setProfessional(candidate.professionals[0] ?? null);
       go("weekday");
     }
   };
 
   const create = useMutation({
-    mutationFn: () => createRecurrenceForCustomer(supabase, { barberServiceId: barber?.barberServiceId ?? "", customerId: customerId ?? "", startDate: chosen?.localDate ?? "", startTime: chosen?.localTime ?? "", weeks: offer?.weeks ?? 1 }),
+    mutationFn: () => createRecurrenceForCustomer(supabase, { professionalServiceId: professional?.professionalServiceId ?? "", customerId: customerId ?? "", startDate: chosen?.localDate ?? "", startTime: chosen?.localTime ?? "", weeks: offer?.weeks ?? 1 }),
     onError: (caught) => {
       setError(errorMessage(caught, t, t("recurrence.sendError")));
       // The time may have just been taken: drop the stale choice, go back to the times and reload them.
@@ -112,7 +112,7 @@ export function ManualRecurrenceFlow({ barbers, customers, onCreated, onExit, on
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["owner-recurring"] });
-      void queryClient.invalidateQueries({ queryKey: ["barber-agenda"] });
+      void queryClient.invalidateQueries({ queryKey: ["professional-agenda"] });
       void queryClient.invalidateQueries({ queryKey: ["owner-agenda"] });
       onCreated();
     },
@@ -164,9 +164,9 @@ export function ManualRecurrenceFlow({ barbers, customers, onCreated, onExit, on
               </>
             ) : null}
 
-            {step === "barber" && offer ? (
-              offer.barbers.map((item) => (
-                <BarberCard avatarUrl={item.avatarUrl} key={item.barberId} name={item.barberName} onPress={() => { setBarber(item); setWeekday(null); setStartsAt(null); go("weekday"); }} testID={`offer-barber-${item.barberId}`} />
+            {step === "professional" && offer ? (
+              offer.professionals.map((item) => (
+                <ProfessionalCard avatarUrl={item.avatarUrl} key={item.professionalId} name={item.professionalName} onPress={() => { setProfessional(item); setWeekday(null); setStartsAt(null); go("weekday"); }} testID={`offer-professional-${item.professionalId}`} />
               ))
             ) : null}
 
@@ -186,13 +186,13 @@ export function ManualRecurrenceFlow({ barbers, customers, onCreated, onExit, on
               </>
             ) : null}
 
-            {step === "review" && offer && barber && chosen && value ? (
+            {step === "review" && offer && professional && chosen && value ? (
               <>
                 <Card testID="manual-summary">
                   <View className="gap-2">
                     <PlanSummary amountText={formatPriceBRL(value.amountCents)} caption={value.caption} normalText={t("recurrence.normalPrice", { price: formatPriceBRL(offer.normalCents) })} periodicity={recurrenceLabel(t, offer.weeks)} title={offer.name} />
                     <Text className="text-sm font-sans text-neutral-700">{customer?.name}</Text>
-                    <Text className="text-sm font-sans text-neutral-700">{barber.barberName}</Text>
+                    <Text className="text-sm font-sans text-neutral-700">{professional.professionalName}</Text>
                     <Text className="text-sm font-sans text-neutral-700">{t("recurrence.everyWeekday", { weekday: weekdayName })}</Text>
                     <Text className="text-sm font-sans text-neutral-700" style={{ fontVariant: ["tabular-nums"] }}>{t("recurrence.startsOn", { date: formatDateNumeric(chosen.localDate, language) })} · {chosen.localTime}</Text>
                   </View>

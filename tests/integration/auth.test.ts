@@ -50,7 +50,7 @@ describe("auth session routing", () => {
     expect(
       getRedirect({
         role: "customer",
-        segments: ["(owner)", "barbers"],
+        segments: ["(owner)", "professionals"],
         session: createSession(),
       }),
     ).toBe("/");

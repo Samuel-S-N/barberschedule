@@ -12,9 +12,9 @@ export function getAvailableSlotsQueryOptions(
     queryFn: () => getAvailableSlots(supabase, input),
     queryKey: [
       "available-slots",
-      input.barberId,
+      input.professionalId,
       input.localDate,
-      input.barberServiceId,
+      input.professionalServiceId,
     ],
   });
 }

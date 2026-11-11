@@ -1,7 +1,7 @@
-export type AppointmentSource = "customer" | "owner" | "recurrence" | "barber";
+export type AppointmentSource = "customer" | "owner" | "recurrence" | "professional";
 
 export type BookingInput = {
-  barberServiceId: string;
+  professionalServiceId: string;
   customerId: string;
   notes?: string | null;
   source: AppointmentSource;
@@ -9,9 +9,9 @@ export type BookingInput = {
 };
 
 export type AppointmentRow = {
-  barber_buffer_minutes_snapshot: number;
-  barber_id: string;
-  barber_service_id: string;
+  professional_buffer_minutes_snapshot: number;
+  professional_id: string;
+  professional_service_id: string;
   created_at: string;
   customer_id: string;
   ends_at: string;
@@ -30,9 +30,9 @@ export type AppointmentRow = {
 };
 
 export type Appointment = {
-  barberBufferMinutesSnapshot: number;
-  barberId: string;
-  barberServiceId: string;
+  professionalBufferMinutesSnapshot: number;
+  professionalId: string;
+  professionalServiceId: string;
   createdAt: string;
   customerId: string;
   endsAt: string;

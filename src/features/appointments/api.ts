@@ -7,9 +7,9 @@ type AppointmentsSupabaseClient = Pick<SupabaseClient, "rpc">;
 
 export function toAppointment(row: AppointmentRow): Appointment {
   return {
-    barberBufferMinutesSnapshot: row.barber_buffer_minutes_snapshot,
-    barberId: row.barber_id,
-    barberServiceId: row.barber_service_id,
+    professionalBufferMinutesSnapshot: row.professional_buffer_minutes_snapshot,
+    professionalId: row.professional_id,
+    professionalServiceId: row.professional_service_id,
     createdAt: row.created_at,
     customerId: row.customer_id,
     endsAt: row.ends_at,
@@ -29,14 +29,14 @@ export function toAppointment(row: AppointmentRow): Appointment {
 }
 
 const appointmentColumns =
-  "id, shop_id, barber_id, customer_id, barber_service_id, service_id, starts_at, ends_at, occupied_until, status, source, notes, service_name_snapshot, service_duration_minutes_snapshot, service_price_cents_snapshot, barber_buffer_minutes_snapshot, created_at, updated_at";
+  "id, shop_id, professional_id, customer_id, professional_service_id, service_id, starts_at, ends_at, occupied_until, status, source, notes, service_name_snapshot, service_duration_minutes_snapshot, service_price_cents_snapshot, professional_buffer_minutes_snapshot, created_at, updated_at";
 
 export async function bookAppointment(
   supabase: AppointmentsSupabaseClient,
   input: BookingInput,
 ) {
   const { data, error } = await supabase.rpc("book_appointment", {
-    barber_service_id: input.barberServiceId,
+    professional_service_id: input.professionalServiceId,
     customer_id: input.customerId,
     notes: input.notes ?? null,
     source: input.source,

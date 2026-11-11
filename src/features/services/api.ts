@@ -1,16 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type {
-  BarberService,
-  BarberServiceInput,
-  BarberServiceRow,
+  ProfessionalService,
+  ProfessionalServiceInput,
+  ProfessionalServiceRow,
   ResolvedService,
   ResolvedServiceRow,
   Service,
   ServiceInput,
   ServiceRow,
 } from "./types";
-import { parseBarberServiceInput, parseServiceInput } from "./validation";
+import { parseProfessionalServiceInput, parseServiceInput } from "./validation";
 
 type ServiceSupabaseClient = Pick<SupabaseClient, "from" | "rpc">;
 
@@ -34,11 +34,11 @@ function toService(row: ServiceRow): Service {
   };
 }
 
-function toBarberService(row: BarberServiceRow): BarberService {
+function toProfessionalService(row: ProfessionalServiceRow): ProfessionalService {
   return {
     active: row.active,
     archivedAt: row.archived_at,
-    barberId: row.barber_id,
+    professionalId: row.professional_id,
     durationOverrideMinutes: row.duration_override_minutes,
     id: row.id,
     priceOverrideCents: row.price_override_cents,
@@ -50,9 +50,9 @@ function toBarberService(row: BarberServiceRow): BarberService {
 function toResolvedService(row: ResolvedServiceRow): ResolvedService {
   return {
     active: row.active,
-    barberId: row.barber_id,
-    barberName: row.barber_name,
-    barberServiceId: row.barber_service_id,
+    professionalId: row.professional_id,
+    professionalName: row.professional_name,
+    professionalServiceId: row.professional_service_id,
     durationMinutes: row.duration_minutes,
     priceCents: row.price_cents,
     serviceId: row.service_id,
@@ -63,8 +63,8 @@ function toResolvedService(row: ResolvedServiceRow): ResolvedService {
 
 const serviceColumns =
   "id, shop_id, name, description, duration_minutes, price_cents, active, archived_at, is_standard";
-const barberServiceColumns =
-  "id, shop_id, barber_id, service_id, duration_override_minutes, price_override_cents, active, archived_at";
+const professionalServiceColumns =
+  "id, shop_id, professional_id, service_id, duration_override_minutes, price_override_cents, active, archived_at";
 
 export async function listPublicServices(
   supabase: ServiceSupabaseClient,
@@ -184,103 +184,103 @@ export async function setServiceStandard(
   return toService(data as ServiceRow);
 }
 
-export async function listOwnerBarberServices(
+export async function listOwnerProfessionalServices(
   supabase: ServiceSupabaseClient,
   shopId: string,
 ) {
   const { data, error } = await supabase
-    .from("barber_services")
-    .select(barberServiceColumns)
+    .from("professional_services")
+    .select(professionalServiceColumns)
     .eq("shop_id", shopId)
     .order("id", { ascending: true });
   throwIfError(error);
 
-  return (data ?? []).map((row) => toBarberService(row as BarberServiceRow));
+  return (data ?? []).map((row) => toProfessionalService(row as ProfessionalServiceRow));
 }
 
-export async function createBarberService(
+export async function createProfessionalService(
   supabase: ServiceSupabaseClient,
-  input: BarberServiceInput,
+  input: ProfessionalServiceInput,
 ) {
-  const parsed = parseBarberServiceInput(input);
+  const parsed = parseProfessionalServiceInput(input);
   const { data, error } = await supabase
-    .from("barber_services")
+    .from("professional_services")
     .insert({
-      barber_id: parsed.barberId,
+      professional_id: parsed.professionalId,
       duration_override_minutes: parsed.durationOverrideMinutes,
       price_override_cents: parsed.priceOverrideCents,
       service_id: parsed.serviceId,
       shop_id: parsed.shopId,
     })
-    .select(barberServiceColumns)
+    .select(professionalServiceColumns)
     .maybeSingle();
   throwIfError(error);
 
   if (!data) {
-    throw new Error("Barber service insert returned no row.");
+    throw new Error("Professional service insert returned no row.");
   }
 
-  return toBarberService(data as BarberServiceRow);
+  return toProfessionalService(data as ProfessionalServiceRow);
 }
 
-export async function updateBarberService(
+export async function updateProfessionalService(
   supabase: ServiceSupabaseClient,
-  barberServiceId: string,
-  input: Omit<BarberServiceInput, "shopId" | "barberId" | "serviceId">,
+  professionalServiceId: string,
+  input: Omit<ProfessionalServiceInput, "shopId" | "professionalId" | "serviceId">,
 ) {
-  const parsed = parseBarberServiceInput({
-    barberId: "00000000-0000-0000-0000-000000000000",
+  const parsed = parseProfessionalServiceInput({
+    professionalId: "00000000-0000-0000-0000-000000000000",
     serviceId: "00000000-0000-0000-0000-000000000000",
     shopId: "00000000-0000-0000-0000-000000000000",
     ...input,
   });
   const { data, error } = await supabase
-    .from("barber_services")
+    .from("professional_services")
     .update({
       duration_override_minutes: parsed.durationOverrideMinutes,
       price_override_cents: parsed.priceOverrideCents,
     })
-    .eq("id", barberServiceId)
-    .select(barberServiceColumns)
+    .eq("id", professionalServiceId)
+    .select(professionalServiceColumns)
     .maybeSingle();
   throwIfError(error);
 
   if (!data) {
-    throw new Error("Barber service update returned no row.");
+    throw new Error("Professional service update returned no row.");
   }
 
-  return toBarberService(data as BarberServiceRow);
+  return toProfessionalService(data as ProfessionalServiceRow);
 }
 
-export async function setBarberServiceActive(
+export async function setProfessionalServiceActive(
   supabase: ServiceSupabaseClient,
-  barberServiceId: string,
+  professionalServiceId: string,
   active: boolean,
 ) {
   const { data, error } = await supabase
-    .from("barber_services")
+    .from("professional_services")
     .update({
       active,
       archived_at: active ? null : new Date().toISOString(),
     })
-    .eq("id", barberServiceId)
-    .select(barberServiceColumns)
+    .eq("id", professionalServiceId)
+    .select(professionalServiceColumns)
     .maybeSingle();
   throwIfError(error);
 
   if (!data) {
-    throw new Error("Barber service status update returned no row.");
+    throw new Error("Professional service status update returned no row.");
   }
 
-  return toBarberService(data as BarberServiceRow);
+  return toProfessionalService(data as ProfessionalServiceRow);
 }
 
 export async function resolveEffectiveService(
   supabase: Pick<ServiceSupabaseClient, "rpc">,
-  barberServiceId: string,
+  professionalServiceId: string,
 ) {
   const { data, error } = await supabase.rpc("resolve_effective_service", {
-    target_barber_service_id: barberServiceId,
+    target_professional_service_id: professionalServiceId,
   });
   throwIfError(error);
 

@@ -1,8 +1,8 @@
-import type { BarberPlan } from "./plans-api";
+import type { ProfessionalPlan } from "./plans-api";
 
-export type PlanOfferBarber = { avatarUrl: string | null; barberId: string; barberName: string; barberServiceId: string };
+export type PlanOfferProfessional = { avatarUrl: string | null; professionalId: string; professionalName: string; professionalServiceId: string };
 export type PlanOffer = {
-  barbers: PlanOfferBarber[];
+  professionals: PlanOfferProfessional[];
   name: string;
   normalCents: number;
   planId: string;
@@ -11,20 +11,20 @@ export type PlanOffer = {
   weeks: number;
 };
 
-// Plan-first: each plan appears once, with the barbers who offer it (a plan belongs to a service, a barber offers a service).
+// Plan-first: each plan appears once, with the professionals who offer it (a plan belongs to a service, a professional offers a service).
 export function buildPlanOffers(
-  barbers: { avatarUrl: string | null; id: string; name: string }[],
-  plansByBarber: Record<string, BarberPlan[]>,
+  professionals: { avatarUrl: string | null; id: string; name: string }[],
+  plansByProfessional: Record<string, ProfessionalPlan[]>,
 ): PlanOffer[] {
   const offers = new Map<string, PlanOffer>();
 
-  for (const barber of barbers) {
-    for (const plan of plansByBarber[barber.id] ?? []) {
+  for (const professional of professionals) {
+    for (const plan of plansByProfessional[professional.id] ?? []) {
       const offer = offers.get(plan.planId) ?? {
-        barbers: [], name: plan.name, normalCents: plan.normalCents, planId: plan.planId, priceCents: plan.priceCents, serviceName: plan.serviceName, weeks: plan.weeks,
+        professionals: [], name: plan.name, normalCents: plan.normalCents, planId: plan.planId, priceCents: plan.priceCents, serviceName: plan.serviceName, weeks: plan.weeks,
       };
 
-      offer.barbers.push({ avatarUrl: barber.avatarUrl, barberId: barber.id, barberName: barber.name, barberServiceId: plan.barberServiceId });
+      offer.professionals.push({ avatarUrl: professional.avatarUrl, professionalId: professional.id, professionalName: professional.name, professionalServiceId: plan.professionalServiceId });
       offers.set(plan.planId, offer);
     }
   }

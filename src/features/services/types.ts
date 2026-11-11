@@ -18,10 +18,10 @@ export type ServiceInput = {
   shopId: string;
 };
 
-export type BarberService = {
+export type ProfessionalService = {
   active: boolean;
   archivedAt: string | null;
-  barberId: string;
+  professionalId: string;
   durationOverrideMinutes: number | null;
   id: string;
   priceOverrideCents: number | null;
@@ -29,8 +29,8 @@ export type BarberService = {
   shopId: string;
 };
 
-export type BarberServiceInput = {
-  barberId: string;
+export type ProfessionalServiceInput = {
+  professionalId: string;
   durationOverrideMinutes?: number | null;
   priceOverrideCents?: number | null;
   serviceId: string;
@@ -39,9 +39,9 @@ export type BarberServiceInput = {
 
 export type ResolvedService = {
   active: boolean;
-  barberId: string;
-  barberName: string;
-  barberServiceId: string;
+  professionalId: string;
+  professionalName: string;
+  professionalServiceId: string;
   durationMinutes: number;
   priceCents: number;
   serviceId: string;
@@ -61,10 +61,10 @@ export type ServiceRow = {
   shop_id: string;
 };
 
-export type BarberServiceRow = {
+export type ProfessionalServiceRow = {
   active: boolean;
   archived_at: string | null;
-  barber_id: string;
+  professional_id: string;
   duration_override_minutes: number | null;
   id: string;
   price_override_cents: number | null;
@@ -74,9 +74,9 @@ export type BarberServiceRow = {
 
 export type ResolvedServiceRow = {
   active: boolean;
-  barber_id: string;
-  barber_name: string;
-  barber_service_id: string;
+  professional_id: string;
+  professional_name: string;
+  professional_service_id: string;
   duration_minutes: number;
   price_cents: number;
   service_id: string;

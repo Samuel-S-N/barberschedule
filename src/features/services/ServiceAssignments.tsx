@@ -9,21 +9,21 @@ import { Input } from "../../components/ui/Input";
 import { errorMessage } from "../../i18n/errors";
 import { centsToReaisInput, parseReaisToCents } from "../../lib/money";
 import { useSupabaseSession } from "../../providers/AppProviders";
-import type { OwnerBarber } from "../barbers/types";
-import { createBarberService, setBarberServiceActive, updateBarberService } from "./api";
-import type { BarberService, Service } from "./types";
+import type { OwnerProfessional } from "../professionals/types";
+import { createProfessionalService, setProfessionalServiceActive, updateProfessionalService } from "./api";
+import type { ProfessionalService, Service } from "./types";
 import { isIntegerInput, parseIntegerInput } from "./validation";
 
 type Props = {
-  barberServices: BarberService[];
-  barbers: OwnerBarber[];
+  professionalServices: ProfessionalService[];
+  professionals: OwnerProfessional[];
   onFeedback: (message: string, variant: "error" | "success") => void;
   service: Service;
   shopId: string;
 };
 
-// Which barbers offer this service, with the owner's per-barber price and duration overrides (one service x many barbers).
-export function ServiceAssignments({ barberServices, barbers, onFeedback, service, shopId }: Props) {
+// Which professionals offer this service, with the owner's per-professional price and duration overrides (one service x many professionals).
+export function ServiceAssignments({ professionalServices, professionals, onFeedback, service, shopId }: Props) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
@@ -40,7 +40,7 @@ export function ServiceAssignments({ barberServices, barbers, onFeedback, servic
       if (overridePrice.trim() !== "" && priceOverride === null) throw new Error("invalid price");
       if (overrideDuration.trim() !== "" && !isIntegerInput(overrideDuration)) throw new Error("invalid duration");
 
-      return updateBarberService(supabase, overrideId ?? "", {
+      return updateProfessionalService(supabase, overrideId ?? "", {
         durationOverrideMinutes: overrideDuration.trim() === "" ? null : parseIntegerInput(overrideDuration, "Duration"),
         priceOverrideCents: priceOverride,
       });
@@ -53,7 +53,7 @@ export function ServiceAssignments({ barberServices, barbers, onFeedback, servic
     },
   });
 
-  const startOverride = (assignment: BarberService) => {
+  const startOverride = (assignment: ProfessionalService) => {
     setOverrideId(assignment.id);
     setOverridePrice(assignment.priceOverrideCents === null ? "" : centsToReaisInput(assignment.priceOverrideCents));
     setOverrideDuration(assignment.durationOverrideMinutes === null ? "" : String(assignment.durationOverrideMinutes));
@@ -62,32 +62,32 @@ export function ServiceAssignments({ barberServices, barbers, onFeedback, servic
   const busy = change.isPending || saveOverride.isPending;
 
   return (
-    <View className="gap-2" testID={`barbers-${service.id}`}>
-      {barbers.map((barber) => {
-        const assignment = barberServices.find((item) => item.barberId === barber.id && item.serviceId === service.id) ?? null;
+    <View className="gap-2" testID={`professionals-${service.id}`}>
+      {professionals.map((professional) => {
+        const assignment = professionalServices.find((item) => item.professionalId === professional.id && item.serviceId === service.id) ?? null;
         const offered = assignment?.active ?? false;
         const effectivePrice = formatPriceBRL(assignment?.priceOverrideCents ?? service.priceCents);
         const effectiveMinutes = assignment?.durationOverrideMinutes ?? service.durationMinutes;
 
         return (
-          <View className="gap-2 rounded-2xl border border-neutral-200 p-3" key={barber.id} testID={`assignment-${service.id}-${barber.id}`}>
-            <Text className="text-base font-sans-semibold text-ink">{barber.name}</Text>
+          <View className="gap-2 rounded-2xl border border-neutral-200 p-3" key={professional.id} testID={`assignment-${service.id}-${professional.id}`}>
+            <Text className="text-base font-sans-semibold text-ink">{professional.name}</Text>
             <Text className="text-sm font-sans text-neutral-600">
               {offered ? t("owner.services.assignmentSummary", { minutes: effectiveMinutes, price: effectivePrice }) : t("owner.services.notOffered")}
             </Text>
             <View className="flex-row flex-wrap gap-2">
               {offered && assignment ? (
                 <>
-                  <Button disabled={busy} label={t("owner.services.overrideEdit")} onPress={() => startOverride(assignment)} size="sm" testID={`override-edit-${service.id}-${barber.id}`} variant="outline" />
-                  <Button disabled={busy} label={t("owner.services.unassign")} onPress={() => change.mutate(() => setBarberServiceActive(supabase, assignment.id, false))} size="sm" testID={`unassign-${service.id}-${barber.id}`} variant="outline" />
+                  <Button disabled={busy} label={t("owner.services.overrideEdit")} onPress={() => startOverride(assignment)} size="sm" testID={`override-edit-${service.id}-${professional.id}`} variant="outline" />
+                  <Button disabled={busy} label={t("owner.services.unassign")} onPress={() => change.mutate(() => setProfessionalServiceActive(supabase, assignment.id, false))} size="sm" testID={`unassign-${service.id}-${professional.id}`} variant="outline" />
                 </>
               ) : (
                 <Button
                   disabled={busy}
                   label={t("owner.services.assign")}
-                  onPress={() => change.mutate(() => (assignment ? setBarberServiceActive(supabase, assignment.id, true) : createBarberService(supabase, { barberId: barber.id, serviceId: service.id, shopId })))}
+                  onPress={() => change.mutate(() => (assignment ? setProfessionalServiceActive(supabase, assignment.id, true) : createProfessionalService(supabase, { professionalId: professional.id, serviceId: service.id, shopId })))}
                   size="sm"
-                  testID={`assign-${service.id}-${barber.id}`}
+                  testID={`assign-${service.id}-${professional.id}`}
                 />
               )}
             </View>

@@ -1,13 +1,13 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
-import { barberId, json, shopId } from "./customer-helpers";
+import { professionalId, json, shopId } from "./customer-helpers";
 
 const ownerId = "55555555-5555-4555-8555-555555555555";
-const barberUserId = "66666666-6666-4666-8666-666666666666";
+const professionalUserId = "66666666-6666-4666-8666-666666666666";
 const slot = { ends_at: "2099-01-04T12:30:00Z", local_date: "2099-01-04", local_time: "09:00:00", starts_at: "2099-01-04T12:00:00Z" };
 
-type Role = "barber" | "owner";
+type Role = "professional" | "owner";
 
 async function signIn(page: Page, role: Role) {
   await page.addInitScript(({ id }) => {
@@ -17,17 +17,17 @@ async function signIn(page: Page, role: Role) {
     const session = JSON.stringify({ access_token: token, expires_at: now + 3600, expires_in: 3600, refresh_token: "e2e-refresh-token", token_type: "bearer", user: { id } });
     localStorage.setItem("sb-example-auth-token", session);
     localStorage.setItem("sb-127-auth-token", session);
-  }, { id: role === "owner" ? ownerId : barberUserId });
+  }, { id: role === "owner" ? ownerId : professionalUserId });
 }
 
 const plan = (planId: string, name: string, serviceId: string, weeks: number, price: number) => ({
-  barber_service_id: serviceId, interval_weeks: weeks, name, normal_cents: 3500, plan_id: planId, price_cents: price, service_name: "Browser Cut",
+  professional_service_id: serviceId, interval_weeks: weeks, name, normal_cents: 3500, plan_id: planId, price_cents: price, service_name: "Browser Cut",
 });
 
-// Two barbers offer "Corte mensal"; only the first offers "Quinzenal".
-const plansByBarber: Record<string, unknown[]> = {
-  [barberId]: [plan("p-month", "Corte mensal", "bs1", 1, 2500), plan("p-biweekly", "Quinzenal", "bs1b", 2, 3000)],
-  "barber-2": [plan("p-month", "Corte mensal", "bs2", 1, 2500)],
+// Two professionals offer "Corte mensal"; only the first offers "Quinzenal".
+const plansByProfessional: Record<string, unknown[]> = {
+  [professionalId]: [plan("p-month", "Corte mensal", "bs1", 1, 2500), plan("p-biweekly", "Quinzenal", "bs1b", 2, 3000)],
+  "professional-2": [plan("p-month", "Corte mensal", "bs2", 1, 2500)],
 };
 
 async function mockStaffRest(page: Page, role: Role, calls: { created: unknown[]; fail?: boolean }) {
@@ -36,12 +36,12 @@ async function mockStaffRest(page: Page, role: Role, calls: { created: unknown[]
     const method = route.request().method();
     const body = method === "POST" ? (route.request().postDataJSON() as Record<string, unknown>) : {};
 
-    if (path.endsWith("/rpc/get_current_profile")) return json(route, [{ full_name: "Staff", role, user_id: role === "owner" ? ownerId : barberUserId }]);
+    if (path.endsWith("/rpc/get_current_profile")) return json(route, [{ full_name: "Staff", role, user_id: role === "owner" ? ownerId : professionalUserId }]);
     if (path.endsWith("/shops")) return json(route, [{ id: shopId }]);
-    if (path.endsWith("/rpc/list_owner_barbers")) {
+    if (path.endsWith("/rpc/list_owner_professionals")) {
       return json(route, [
-        { active: true, archived_at: null, id: barberId, name: "Bruno Barber", shop_id: shopId, user_id: null },
-        { active: true, archived_at: null, id: "barber-2", name: "Caio Cutter", shop_id: shopId, user_id: null },
+        { active: true, archived_at: null, id: professionalId, name: "Bruno Professional", shop_id: shopId, user_id: null },
+        { active: true, archived_at: null, id: "professional-2", name: "Caio Cutter", shop_id: shopId, user_id: null },
       ]);
     }
     if (path.endsWith("/customers") && method === "GET") {
@@ -50,11 +50,11 @@ async function mockStaffRest(page: Page, role: Role, calls: { created: unknown[]
         { active: true, archived_at: null, email: null, full_name: "Dani Costa", id: "c2", phone: null, shop_id: shopId, user_id: null },
       ]);
     }
-    if (path.endsWith("/rpc/barber_search_customers")) return json(route, [{ email: null, full_name: "Walk In", has_account: false, id: "c-walk", phone: "11999990000" }]);
-    if (path.endsWith("/rpc/get_my_barber_profile")) {
-      return json(route, [{ avatar_url: null, bio: null, chair_rental_amount_cents: null, chair_rental_frequency: null, commission_percent: "40.00", compensation_type: "commission", id: barberId, name: "Browser Barber", shop_id: shopId }]);
+    if (path.endsWith("/rpc/professional_search_customers")) return json(route, [{ email: null, full_name: "Walk In", has_account: false, id: "c-walk", phone: "11999990000" }]);
+    if (path.endsWith("/rpc/get_my_professional_profile")) {
+      return json(route, [{ avatar_url: null, bio: null, chair_rental_amount_cents: null, chair_rental_frequency: null, commission_percent: "40.00", compensation_type: "commission", id: professionalId, name: "Browser Professional", shop_id: shopId }]);
     }
-    if (path.endsWith("/rpc/list_recurrence_plans_for_barber")) return json(route, plansByBarber[String(body.target_barber_id)] ?? []);
+    if (path.endsWith("/rpc/list_recurrence_plans_for_professional")) return json(route, plansByProfessional[String(body.target_professional_id)] ?? []);
     if (path.endsWith("/rpc/get_available_slots")) {
       // Wednesdays have no free time.
       const weekday = new Date(`${String(body.local_date)}T12:00:00Z`).getUTCDay();
@@ -68,9 +68,9 @@ async function mockStaffRest(page: Page, role: Role, calls: { created: unknown[]
       return json(route, [{}]);
     }
     if (path.endsWith("/rpc/list_recurrence_requests") || path.endsWith("/rpc/list_recurrence_cancellations") || path.endsWith("/rpc/list_owner_recurrence_series")) return json(route, []);
-    if (path.endsWith("/rpc/list_my_barber_services")) return json(route, []);
-    if (path.endsWith("/barber_services") || path.endsWith("/services")) return json(route, []);
-    if (path.endsWith("/rpc/list_my_barber_agenda") || path.endsWith("/schedule_overrides")) return json(route, []);
+    if (path.endsWith("/rpc/list_my_professional_services")) return json(route, []);
+    if (path.endsWith("/professional_services") || path.endsWith("/services")) return json(route, []);
+    if (path.endsWith("/rpc/list_my_professional_agenda") || path.endsWith("/schedule_overrides")) return json(route, []);
     await route.abort();
   });
 }
@@ -91,14 +91,14 @@ async function openFlow(page: Page, role: Role, options: { fail?: boolean } = {}
   return calls;
 }
 
-for (const role of ["owner", "barber"] as const) {
+for (const role of ["owner", "professional"] as const) {
   const total = role === "owner" ? 7 : 6;
   const routeEnd = role === "owner" ? "/recurrence-manual" : "/my-profile/recurrence-manual";
   const list = role === "owner" ? /\/monthly-customers/ : /\/my-profile\/recurrence/;
   const customerId = role === "owner" ? "c1" : "c-walk";
 
   test.describe(`${role} manual recurrence steps`, () => {
-    test("Customer › Plan › (Barber) › Day › Time › Review, then create", async ({ page }) => {
+    test("Customer › Plan › (Professional) › Day › Time › Review, then create", async ({ page }) => {
       const calls = await openFlow(page, role);
 
       await expect(page).toHaveURL(new RegExp(`${routeEnd}$`));
@@ -114,10 +114,10 @@ for (const role of ["owner", "barber"] as const) {
       let step = 3;
 
       if (role === "owner") {
-        await expect(page.getByTestId("step-label")).toHaveText("Step 3 of 7 · Barber");
-        await expect(page.getByTestId(`offer-barber-${barberId}`)).toBeVisible();
-        await expect(page.getByTestId("offer-barber-barber-2")).toBeVisible();
-        await page.getByTestId(`offer-barber-${barberId}`).click();
+        await expect(page.getByTestId("step-label")).toHaveText("Step 3 of 7 · Professional");
+        await expect(page.getByTestId(`offer-professional-${professionalId}`)).toBeVisible();
+        await expect(page.getByTestId("offer-professional-professional-2")).toBeVisible();
+        await page.getByTestId(`offer-professional-${professionalId}`).click();
         step = 4;
       }
 
@@ -140,7 +140,7 @@ for (const role of ["owner", "barber"] as const) {
       await page.getByTestId("manual-recurrence-save").click();
 
       await expect.poll(() => calls.created).toEqual([{
-        target_barber_service_id: "bs1", target_customer_id: customerId, target_interval_weeks: 1, target_start_date: "2099-01-04", target_start_time: "09:00",
+        target_professional_service_id: "bs1", target_customer_id: customerId, target_interval_weeks: 1, target_start_date: "2099-01-04", target_start_time: "09:00",
       }]);
       await expect(page).toHaveURL(list);
       await expect(page.getByText("Recurring booking saved.")).toBeVisible();
@@ -165,7 +165,7 @@ for (const role of ["owner", "barber"] as const) {
 
       await page.getByTestId(`option-${customerId}`).click();
       await page.getByTestId("offer-p-month").click();
-      if (role === "owner") await page.getByTestId(`offer-barber-${barberId}`).click();
+      if (role === "owner") await page.getByTestId(`offer-professional-${professionalId}`).click();
       await page.getByTestId("weekday-1").click();
       await page.getByRole("button", { name: "09:00" }).click();
       await page.getByTestId("manual-continue").click();
@@ -177,12 +177,12 @@ for (const role of ["owner", "barber"] as const) {
   });
 }
 
-test("the Barber step lists only the barbers that offer the chosen plan", async ({ page }) => {
+test("the Professional step lists only the professionals that offer the chosen plan", async ({ page }) => {
   await openFlow(page, "owner");
 
   await page.getByTestId("option-c1").click();
   await page.getByTestId("offer-p-biweekly").click();
-  await expect(page.getByTestId("step-label")).toHaveText("Step 3 of 7 · Barber");
-  await expect(page.getByTestId(`offer-barber-${barberId}`)).toBeVisible();
-  await expect(page.getByTestId("offer-barber-barber-2")).toHaveCount(0);
+  await expect(page.getByTestId("step-label")).toHaveText("Step 3 of 7 · Professional");
+  await expect(page.getByTestId(`offer-professional-${professionalId}`)).toBeVisible();
+  await expect(page.getByTestId("offer-professional-professional-2")).toHaveCount(0);
 });

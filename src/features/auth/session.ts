@@ -10,14 +10,14 @@ type ResolveAuthRedirectInput = {
 
 export const LOGIN_ROUTE = "/login";
 export const HOME_ROUTE = "/";
-export const BARBER_HOME_ROUTE = "/my-agenda";
+export const PROFESSIONAL_HOME_ROUTE = "/my-agenda";
 
 function getTopLevelGroup(segments: string[]) {
   return segments.find((segment) => segment.startsWith("(")) ?? null;
 }
 
 const GROUP_ROLE: Record<string, AppRole> = {
-  "(barber)": "barber",
+  "(professional)": "professional",
   "(customer)": "customer",
   "(owner)": "owner",
 };
@@ -47,6 +47,6 @@ export function resolveAuthRedirect({
     return null;
   }
 
-  // "/" is also an owner route, so a barber sent there from an owner screen would stay stuck in the owner group.
-  return profileRole === "barber" ? BARBER_HOME_ROUTE : HOME_ROUTE;
+  // "/" is also an owner route, so a professional sent there from an owner screen would stay stuck in the owner group.
+  return profileRole === "professional" ? PROFESSIONAL_HOME_ROUTE : HOME_ROUTE;
 }

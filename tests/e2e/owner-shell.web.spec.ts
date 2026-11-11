@@ -20,7 +20,7 @@ async function mockOwnerRest(page: Page) {
     const json = (body: unknown) => route.fulfill({ body: JSON.stringify(body), contentType: "application/json", status: 200 });
 
     if (path.endsWith("/rpc/get_current_profile")) return json([{ full_name: "Olivia Owner", role: "owner", user_id: ownerId }]);
-    if (path.endsWith("/rpc/get_shop_report")) return json({ barbers: [], days: [], services: [] });
+    if (path.endsWith("/rpc/get_shop_report")) return json({ professionals: [], days: [], services: [] });
     if (path.endsWith("/rpc/list_rent_payments")) return json([]);
     if (path.endsWith("/rpc/list_owner_agenda")) return json([]);
     await route.abort();
@@ -39,7 +39,7 @@ test("the owner lands on the agenda with a tab bar and reaches every area from M
 
   await page.getByTestId("tab-manage").click();
   await expect(page).toHaveURL(/\/manage/);
-  for (const key of ["barbers", "services", "customers", "monthly-customers", "schedule", "shop", "recurrence-conflicts"]) {
+  for (const key of ["professionals", "services", "customers", "monthly-customers", "schedule", "shop", "recurrence-conflicts"]) {
     await expect(page.getByTestId(`menu-${key}`)).toBeVisible();
   }
   await page.getByTestId("menu-services").click();
@@ -69,7 +69,7 @@ test("back from a Manage screen returns to Manage, not to the agenda", async ({ 
   await mockOwnerRest(page);
 
   await page.goto("/manage");
-  for (const [key, path] of [["barbers", /\/barbers/], ["services", /\/services/], ["customers", /\/customers/], ["schedule", /\/schedule/], ["shop", /\/shop/]] as const) {
+  for (const [key, path] of [["professionals", /\/professionals/], ["services", /\/services/], ["customers", /\/customers/], ["schedule", /\/schedule/], ["shop", /\/shop/]] as const) {
     await page.getByTestId(`menu-${key}`).click();
     await expect(page).toHaveURL(path);
     // Earlier Manage screens stay mounted in the tab navigator but are aria-hidden; click the active one.
@@ -82,23 +82,23 @@ test("a cold start on a Manage screen still goes back to Manage", async ({ page 
   await signInAsOwner(page);
   await mockOwnerRest(page);
 
-  await page.goto("/barbers");
+  await page.goto("/professionals");
   await page.getByTestId("back").click();
   await expect(page).toHaveURL(/\/manage/);
 });
 
-test("back walks the stack one screen at a time: Manage › Barbers › New barber", async ({ page }) => {
+test("back walks the stack one screen at a time: Manage › Professionals › New professional", async ({ page }) => {
   await signInAsOwner(page);
   await mockOwnerRest(page);
 
   const back = () => page.locator('[data-testid="back"]:not([aria-hidden="true"] *)').click();
 
   await page.goto("/manage");
-  await page.getByTestId("menu-barbers").click();
+  await page.getByTestId("menu-professionals").click();
   await page.getByTestId("fab-add").click();
-  await expect(page).toHaveURL(/\/barber-new/);
+  await expect(page).toHaveURL(/\/professional-new/);
   await back();
-  await expect(page).toHaveURL(/\/barbers/);
+  await expect(page).toHaveURL(/\/professionals/);
   await back();
   await expect(page).toHaveURL(/\/manage/);
 });

@@ -25,7 +25,7 @@ async function mockOwnerRest(page: Page, calls: Record<string, unknown>, bookFai
 
     if (path.endsWith("/rpc/get_current_profile")) return json(route, [{ full_name: "Owner", role: "owner", user_id: ownerId }]);
     if (path.endsWith("/shops")) return json(route, [{ id: shop }]);
-    if (path.endsWith("/rpc/list_owner_barbers")) return json(route, [{ active: true, archived_at: null, id: "b1", name: "Bruno Barber", shop_id: shop, user_id: null }]);
+    if (path.endsWith("/rpc/list_owner_professionals")) return json(route, [{ active: true, archived_at: null, id: "b1", name: "Bruno Professional", shop_id: shop, user_id: null }]);
     if (path.endsWith("/customers")) {
       return json(route, [
         { active: true, archived_at: null, email: "ana@x.com", full_name: "Ana Customer", id: "c1", phone: null, shop_id: shop, user_id: null },
@@ -33,8 +33,8 @@ async function mockOwnerRest(page: Page, calls: Record<string, unknown>, bookFai
       ]);
     }
     if (path.endsWith("/services")) return json(route, [{ active: true, archived_at: null, description: null, duration_minutes: 30, id: "s1", is_standard: true, name: "Cut", price_cents: 4000, shop_id: shop }]);
-    if (path.endsWith("/barber_services")) {
-      return json(route, [{ active: true, archived_at: null, barber_id: "b1", duration_override_minutes: null, id: "bs1", price_override_cents: null, service_id: "s1", shop_id: shop }]);
+    if (path.endsWith("/professional_services")) {
+      return json(route, [{ active: true, archived_at: null, professional_id: "b1", duration_override_minutes: null, id: "bs1", price_override_cents: null, service_id: "s1", shop_id: shop }]);
     }
     if (path.endsWith("/rpc/get_available_slots")) {
       calls.slots = route.request().postDataJSON();
@@ -47,7 +47,7 @@ async function mockOwnerRest(page: Page, calls: Record<string, unknown>, bookFai
       if (bookFails) return json(route, { code: "P0001", message: "SLOT_UNAVAILABLE" }, 400);
 
       return json(route, [{
-        barber_buffer_minutes_snapshot: 0, barber_id: "b1", barber_service_id: "bs1", created_at: "2026-10-01T10:00:00Z", customer_id: "c1",
+        professional_buffer_minutes_snapshot: 0, professional_id: "b1", professional_service_id: "bs1", created_at: "2026-10-01T10:00:00Z", customer_id: "c1",
         ends_at: slotStart.toISOString(), id: "appt-new", notes: null, occupied_until: slotStart.toISOString(), service_duration_minutes_snapshot: 30,
         service_id: "s1", service_name_snapshot: "Cut", service_price_cents_snapshot: 4000, shop_id: shop, source: "owner",
         starts_at: slotStart.toISOString(), status: "scheduled", updated_at: "2026-10-01T10:00:00Z",
@@ -77,7 +77,7 @@ test("the owner books with the booking steps: customer, service, date, time, rev
   await page.getByTestId("option-c1").click();
 
   await expect(page.getByTestId("step-label")).toHaveText("Step 2 of 6 · Service");
-  await expect(page.getByTestId("option-bs1")).toContainText("Bruno Barber · Cut");
+  await expect(page.getByTestId("option-bs1")).toContainText("Bruno Professional · Cut");
   await page.getByTestId("option-bs1").click();
 
   await expect(page.getByTestId("step-label")).toHaveText("Step 3 of 6 · Date");
@@ -93,14 +93,14 @@ test("the owner books with the booking steps: customer, service, date, time, rev
   const summary = page.getByTestId("owner-summary");
 
   await expect(summary).toContainText("Ana Customer");
-  await expect(summary).toContainText("Bruno Barber");
+  await expect(summary).toContainText("Bruno Professional");
   await expect(summary).toContainText("Cut");
   await page.getByTestId("owner-form-notes").fill("window seat");
   await page.getByTestId("owner-form-create").click();
 
   await expect(page).toHaveURL(/\/agenda/);
   await expect(page.getByText("Appointment created.")).toBeVisible();
-  expect(calls.book).toEqual({ barber_service_id: "bs1", customer_id: "c1", notes: "window seat", source: "owner", starts_at: slotStart.toISOString() });
+  expect(calls.book).toEqual({ professional_service_id: "bs1", customer_id: "c1", notes: "window seat", source: "owner", starts_at: slotStart.toISOString() });
 });
 
 test("back steps back, a finished step is tappable, and the first step leaves", async ({ page }) => {
