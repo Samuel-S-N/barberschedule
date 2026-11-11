@@ -6,8 +6,8 @@ Status: accepted
 ## Decision
 
 - Create `0010_appointments_core.sql` before `0011_availability_functions.sql`, with `0012_availability_hardening.sql` adding cross-identity and snapshot invariants. Availability must filter the same occupied ranges that future booking writes.
-- Store appointments as UTC `timestamptz` values with `starts_at`, service `ends_at`, and `occupied_until`. `occupied_until` includes the barber buffer snapshot.
-- Protect scheduled and confirmed barber occupancy with a PostgreSQL GiST exclusion constraint over `[starts_at, occupied_until)`. Cancelled appointments do not participate.
+- Store appointments as UTC `timestamptz` values with `starts_at`, service `ends_at`, and `occupied_until`. `occupied_until` includes the professional buffer snapshot.
+- Protect scheduled and confirmed professional occupancy with a PostgreSQL GiST exclusion constraint over `[starts_at, occupied_until)`. Cancelled appointments do not participate.
 - Calculate availability in PostgreSQL from local weekly working periods plus local dated openings minus blocks. Generate candidate starts every 15 minutes; a service may have any positive minute duration, and its buffer must fit the same opening.
 - Merge adjacent/overlapping opening intervals before subtracting blocks, and align starts to the global quarter-hour grid rather than to an arbitrary period boundary.
 - Convert candidate timestamps with the shop's IANA timezone. The public result retains the requested local date/time and returns UTC instants for the service start/end.

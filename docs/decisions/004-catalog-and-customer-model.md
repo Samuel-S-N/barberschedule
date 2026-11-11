@@ -13,9 +13,9 @@ Task 3 adds the first shop catalog and customer records needed before schedule, 
 - Customer records are never auto-linked from matching email or phone values.
 - Catalog money is stored as integer cents (`price_cents`, `price_override_cents`).
 - Service duration is required at the service level and stored as positive integer minutes.
-- Barber-specific duration and price changes are explicit nullable overrides on `barber_services`.
-- Barbers, services, customers, and barber-services use soft deactivation with `active` plus `archived_at`; references to those rows can stay valid after deactivation.
-- `resolve_effective_service(target_barber_service_id)` resolves the current effective duration and price by applying barber overrides over the current service defaults.
+- Professional-specific duration and price changes are explicit nullable overrides on `professional_services`.
+- Professionals, services, customers, and professional-services use soft deactivation with `active` plus `archived_at`; references to those rows can stay valid after deactivation.
+- `resolve_effective_service(target_professional_service_id)` resolves the current effective duration and price by applying professional overrides over the current service defaults.
 - Public catalog reads stay limited to active rows. Owners can still read archived rows for history.
 
 ## Why
@@ -23,7 +23,7 @@ Task 3 adds the first shop catalog and customer records needed before schedule, 
 - Nullable `customers.user_id` supports owner-created walk-in customers before an authenticated account exists.
 - Avoiding email/phone auto-linking prevents accidental account attachment and keeps ownership decisions explicit.
 - Integer cents avoid floating-point money bugs.
-- Required base service duration/price keep the catalog complete even when no barber override exists.
+- Required base service duration/price keep the catalog complete even when no professional override exists.
 - Soft deactivation preserves row references without hard deletes while later tasks add immutable appointment snapshots where history must not change.
 - The effective-service function gives later booking work one stable place to resolve the current catalog values at booking time.
 

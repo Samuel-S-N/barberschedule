@@ -4,7 +4,7 @@ Run these **in order**, by a human with access to the hosted project. Nothing he
 project yet. Never run `supabase db reset` against it.
 
 Migrations pending on hosted: `0031` … `0038` (merged to `main`), plus `0039` (email-claim flag), `0040`
-(`barber_book_new_customer`), `0041` (barber cancel/move), `0042` (agenda customer phone) and `0043`
+(`professional_book_new_customer`), `0041` (professional cancel/move), `0042` (agenda customer phone) and `0043`
 (`list_my_working_periods`) once their PRs are merged. Apply whatever is on `main` at the time; the order is the file order.
 
 ## 1. Before touching the database
@@ -53,12 +53,12 @@ without understanding which migration is missing.
 update public.app_settings set email_claim_enabled = true;
 ```
 
-With it on, a customer who signs up with a verified email that a barber already used gets that history (a barber-created
+With it on, a customer who signs up with a verified email that a professional already used gets that history (a professional-created
 row is merged into the account's own row if one exists). Turn it off again if confirmations are ever disabled.
 
 ## 5. Edge Functions and scheduler
 
-- Functions: `npx supabase functions deploy dispatch-notifications invite-barber delete-account`.
+- Functions: `npx supabase functions deploy dispatch-notifications invite-professional delete-account`.
 - Secrets (never in git): `SUPABASE_SERVICE_ROLE_KEY`, optional `EXPO_ACCESS_TOKEN`
   (`npx supabase secrets set ...`).
 - `pg_cron` registers the jobs in migration `0022` when the extension is available; otherwise schedule
@@ -68,11 +68,11 @@ row is merged into the account's own row if one exists). Turn it off again if co
 
 ## 6. Smoke test on hosted
 
-1. Barber login: agenda loads; book a walk-in customer from a free slot; the booking appears.
-2. Barber: cancel and move an appointment (the customer with an account gets the notification).
-3. Barber: clients tab (search, load more), reports, working hours, privacy screen.
+1. Professional login: agenda loads; book a walk-in customer from a free slot; the booking appears.
+2. Professional: cancel and move an appointment (the customer with an account gets the notification).
+3. Professional: clients tab (search, load more), reports, working hours, privacy screen.
 4. Owner: login, Revenue screen, agenda.
-5. Customer: sign up with an email a barber used before; after confirming the email the history is there.
+5. Customer: sign up with an email a professional used before; after confirming the email the history is there.
 6. Password recovery link opens the app (web origin and, on a dev build, `barberschedule://`).
 
 ## 7. Rollback
