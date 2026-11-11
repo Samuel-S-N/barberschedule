@@ -19,7 +19,7 @@ describe("buildAppointmentIcs", () => {
   });
 
   it("writes UTC times, a stable UID and escaped text", () => {
-    expect(ics).toContain("UID:abc@barberschedule\r\n");
+    expect(ics).toContain("UID:abc@zencpro.app\r\n");
     expect(ics).toContain("DTSTAMP:20260801T100000Z\r\n");
     expect(ics).toContain("DTSTART:20260817T120000Z\r\n");
     expect(ics).toContain("DTEND:20260817T124500Z\r\n");

@@ -26,7 +26,7 @@ test("resolves when the child already exited", async () => {
 });
 
 test("reuses a spawn error", async () => {
-  const child = spawn("barberschedule-command-that-does-not-exist");
+  const child = spawn("zenc-command-that-does-not-exist");
   const firstWait = waitForExit(child);
 
   await assert.rejects(firstWait, { code: "ENOENT" });

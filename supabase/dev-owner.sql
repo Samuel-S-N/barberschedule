@@ -1,5 +1,5 @@
 -- Local-only dev owner (not part of seed.sql). Recreate after `supabase db reset` with:
---   docker exec -i supabase_db_barberschedule psql -U postgres -d postgres < supabase/dev-owner.sql
+--   docker exec -i supabase_db_zenc psql -U postgres -d postgres < supabase/dev-owner.sql
 -- Login: owner@teste.com / owner1234. Becomes the owner of the seed shop (shops.owner_user_id is unique,
 -- so the seed owner stops owning it). Idempotent; needs the seed shop.
 begin;

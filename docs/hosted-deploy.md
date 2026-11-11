@@ -37,7 +37,7 @@ without understanding which migration is missing.
 
 1. **Email confirmations ON** (Providers > Email > "Confirm email"). The customer email claim relies on it.
 2. **URL Configuration:** Site URL = the production web origin; Redirect URLs = the production origin with `/**`
-   and `barberschedule://**`. Local-only `exp://` URLs do not belong here.
+   and `zenc://**`. Local-only `exp://` URLs do not belong here.
 3. **Minimum password length 8** (Providers > Email), the same rule as the app and `supabase/config.toml`.
 4. Verify with the repo's check (it fails while confirmations are off):
 
@@ -73,7 +73,7 @@ row is merged into the account's own row if one exists). Turn it off again if co
 3. Professional: clients tab (search, load more), reports, working hours, privacy screen.
 4. Owner: login, Revenue screen, agenda.
 5. Customer: sign up with an email a professional used before; after confirming the email the history is there.
-6. Password recovery link opens the app (web origin and, on a dev build, `barberschedule://`).
+6. Password recovery link opens the app (web origin and, on a dev build, `zenc://`).
 
 ## 7. Rollback
 

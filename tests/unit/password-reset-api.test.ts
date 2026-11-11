@@ -7,9 +7,9 @@ describe("requestPasswordReset", () => {
   it("sends the redirect the e-mail link must open", async () => {
     const resetPasswordForEmail = jest.fn().mockResolvedValue({ error: null });
 
-    await requestPasswordReset(client({ resetPasswordForEmail }), "a@b.co", "barberschedule://reset-password");
+    await requestPasswordReset(client({ resetPasswordForEmail }), "a@b.co", "zenc://reset-password");
 
-    expect(resetPasswordForEmail).toHaveBeenCalledWith("a@b.co", { redirectTo: "barberschedule://reset-password" });
+    expect(resetPasswordForEmail).toHaveBeenCalledWith("a@b.co", { redirectTo: "zenc://reset-password" });
   });
 });
 

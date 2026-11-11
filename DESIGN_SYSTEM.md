@@ -1,4 +1,4 @@
-# Design System — Barberschedule
+# Design System — Zenc
 
 App de agendamento para barbearias. Stack: **React Native · Expo · TypeScript · NativeWind v4 · Tailwind v3**.
 
@@ -17,7 +17,7 @@ npx expo install lucide-react-native react-native-svg
 npx expo install react-native-reanimated
 ```
 
-Criar `tailwind.config.ts`, `lib/colors.ts` (espelho JS dos tokens abaixo, para SVG/Reanimated) e `lib/motion.ts` na raiz do app, junto com `global.css` + `babel.config.js`/`metro.config.js` configurados para NativeWind (o app ainda não tem NativeWind instalado — stack atual do barberschedule é Expo Router + React 19 + RN puro, sem lib de estilo).
+Criar `tailwind.config.ts`, `lib/colors.ts` (espelho JS dos tokens abaixo, para SVG/Reanimated) e `lib/motion.ts` na raiz do app, junto com `global.css` + `babel.config.js`/`metro.config.js` configurados para NativeWind (o app ainda não tem NativeWind instalado — stack atual do zenc é Expo Router + React 19 + RN puro, sem lib de estilo).
 
 ---
 
@@ -127,7 +127,7 @@ Segunda cor de marca — referência ao vermelho do barber pole, usada com moder
 | `warning-400` | `#E8A93B` | Avisos leves (tom levemente diferente do primary p/ não confundir com CTA) |
 | `warning-500` | `#C98A1F` | Avisos médios, "pendente de confirmação" |
 
-### 2.6 Status de agendamento (domínio Barberschedule)
+### 2.6 Status de agendamento (domínio Zenc)
 
 | Token | HEX | Uso |
 |---|---|---|
@@ -512,4 +512,4 @@ import { Scissors, Clock, Calendar, User, Star } from "lucide-react-native";
 
 ---
 
-*v1 — design system inicial do Barberschedule, seguindo a mesma convenção de tokens/estrutura do FitBrother (NativeWind v4, tipografia dupla display/corpo, ícones lucide, motion via Reanimated), com paleta e componentes de domínio próprios (âmbar/carvão/vinho, agendamento em vez de nutrição).*
+*v1 — design system inicial do Zenc, seguindo a mesma convenção de tokens/estrutura do FitBrother (NativeWind v4, tipografia dupla display/corpo, ícones lucide, motion via Reanimated), com paleta e componentes de domínio próprios (âmbar/carvão/vinho, agendamento em vez de nutrição).*

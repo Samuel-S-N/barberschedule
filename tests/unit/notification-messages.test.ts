@@ -69,7 +69,7 @@ describe("buildMessage", () => {
   });
 
   it("returns a generic message for an unknown event type", () => {
-    expect(buildMessage("something.else", "pt", {})).toEqual({ body: "Você tem uma nova notificação.", title: "Barberschedule" });
+    expect(buildMessage("something.else", "pt", {})).toEqual({ body: "Você tem uma nova notificação.", title: "Zenc" });
   });
 
   it("never returns the raw event code as title or body", () => {

@@ -12,7 +12,7 @@ type SelectE2EWebPortOptions = {
 };
 
 export function getE2EWebPort() {
-  const configuredPort = Number(process.env.BARBERSCHEDULE_E2E_WEB_PORT);
+  const configuredPort = Number(process.env.ZENC_E2E_WEB_PORT);
 
   if (Number.isInteger(configuredPort) && configuredPort > 0) {
     return configuredPort;
@@ -58,6 +58,6 @@ export async function selectE2EWebPort({
   }
 
   throw new Error(
-    `No free localhost port found for BARBERSCHEDULE_E2E_WEB_PORT starting at ${preferredPort} and ending at ${maxPort}`,
+    `No free localhost port found for ZENC_E2E_WEB_PORT starting at ${preferredPort} and ending at ${maxPort}`,
   );
 }

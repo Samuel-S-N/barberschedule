@@ -92,7 +92,7 @@ where user_id = '00000000-0000-0000-0000-000000000004';
 insert into public.shops (id, name, owner_user_id)
 values (
   '10000000-0000-0000-0000-000000000001',
-  'Barberschedule MVP',
+  'Zenc',
   '00000000-0000-0000-0000-000000000001'
 );
 
@@ -182,7 +182,7 @@ select is(
     from public.shops
     where id = '10000000-0000-0000-0000-000000000001'
   ),
-  'Barberschedule MVP',
+  'Zenc',
   'customer cannot change public shop fields'
 );
 

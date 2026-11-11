@@ -1,6 +1,7 @@
-# Barberschedule
+# Zenc
 
-Sistema de agendamento para barbearias, com aplicações Web e mobile em Expo,
+Sistema de agendamento para estabelecimentos de beleza (barbearias, salões, nail e lash
+designers, trancistas e similares), com aplicações Web e mobile em Expo,
 autenticação, catálogo, agenda, disponibilidade, recorrências e integração
 com Supabase.
 
