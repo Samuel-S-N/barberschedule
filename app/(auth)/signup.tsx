@@ -14,10 +14,11 @@ import { signUpCustomer } from "../../src/features/auth/api";
 import { parseSignupInput } from "../../src/features/auth/validation";
 import { errorMessage } from "../../src/i18n/errors";
 import { formatPhone } from "../../src/features/account/phone";
-import { colors } from "../../src/lib/design/colors";
+import { useColors } from "../../src/lib/design/theme/ThemeProvider";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 export default function SignupScreen() {
+  const colors = useColors();
   const router = useRouter();
   const { t } = useTranslation();
   const field = useFieldChain(6);
@@ -86,7 +87,7 @@ export default function SignupScreen() {
               testID="signup-accept-terms"
             >
               <View className={`h-6 w-6 items-center justify-center rounded-md border ${acceptedTerms ? "border-primary-400 bg-primary-400" : "border-neutral-300 bg-surface"}`}>
-                {acceptedTerms ? <Check color={colors.ink} size={16} /> : null}
+                {acceptedTerms ? <Check color={colors.onPrimary} size={16} /> : null}
               </View>
               <Text className="flex-1 text-sm font-sans text-neutral-700">{t("auth.signup.acceptTerms")}</Text>
             </Pressable>

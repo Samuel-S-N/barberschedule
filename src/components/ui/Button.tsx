@@ -21,7 +21,7 @@ export type ButtonProps = {
 };
 
 const VARIANT_CLASSNAME: Record<ButtonVariant, string> = {
-  primary: "bg-primary-400",
+  primary: "bg-accent",
   dark: "bg-ink",
   outline: "bg-transparent border border-neutral-200",
   ghost: "bg-transparent",
@@ -29,7 +29,7 @@ const VARIANT_CLASSNAME: Record<ButtonVariant, string> = {
 };
 
 const VARIANT_TEXT_CLASSNAME: Record<ButtonVariant, string> = {
-  primary: "text-ink",
+  primary: "text-on-accent",
   dark: "text-white",
   outline: "text-neutral-800",
   ghost: "text-primary-600",

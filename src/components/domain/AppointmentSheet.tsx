@@ -5,7 +5,7 @@ import { Modal, Pressable, Text, View } from "react-native";
 
 import { isOpenStatus } from "../../features/appointments/agenda-actions";
 import { telUrl, whatsappUrl } from "../../features/clients/format";
-import { colors } from "../../lib/design/colors";
+import { useColors } from "../../lib/design/theme/ThemeProvider";
 import { Button } from "../ui/Button";
 import { ContactLink } from "./ContactLink";
 import { formatPriceBRL } from "./ServiceCard";
@@ -37,6 +37,7 @@ export type AppointmentSheetProps = {
 };
 
 export function AppointmentSheet({ appointment, busy, onCancel, onClose, onMove, onOpenCustomer, remindUrl, testPrefix }: AppointmentSheetProps) {
+  const colors = useColors();
   const { t } = useTranslation();
   const [confirmingCancel, setConfirmingCancel] = useState(false);
 

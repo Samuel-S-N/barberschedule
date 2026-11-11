@@ -1,7 +1,7 @@
 import { Pressable, Text, View } from "react-native";
 import { MapPin, Star } from "lucide-react-native";
 
-import { colors } from "../../lib/design/colors";
+import { useColors } from "../../lib/design/theme/ThemeProvider";
 import { Avatar } from "./Avatar";
 
 export type ProfessionalCardProps = {
@@ -25,6 +25,7 @@ export function ProfessionalCard({
   onPress,
   testID,
 }: ProfessionalCardProps) {
+  const colors = useColors();
   return (
     <Pressable
       accessibilityLabel={name}

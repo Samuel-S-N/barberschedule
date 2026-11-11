@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
 
-import { colors } from "../../lib/design/colors";
+import { useColors } from "../../lib/design/theme/ThemeProvider";
 
 export type BottomTabItem = { key: string; label: string; icon: LucideIcon };
 
@@ -13,6 +13,7 @@ export type BottomTabBarProps = {
 };
 
 export function BottomTabBar({ items, activeKey, onSelect, testID }: BottomTabBarProps) {
+  const colors = useColors();
   return (
     <View accessibilityRole="tablist" className="flex-row border-t border-neutral-200 bg-surface" testID={testID}>
       {items.map((item) => {

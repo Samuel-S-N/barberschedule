@@ -1,10 +1,11 @@
 import type { LucideIcon } from "lucide-react-native";
 import { Linking, Platform, Pressable, Text, View } from "react-native";
 
-import { colors } from "../../lib/design/colors";
+import { useColors } from "../../lib/design/theme/ThemeProvider";
 
 // `fill` (default) shares the row equally with its siblings; `fill={false}` keeps the link's own width so a wrapping row drops it to the next line.
 export function ContactLink({ children, fill = true, icon: Icon, testID, url }: { children: string; fill?: boolean; icon: LucideIcon; testID: string; url: string | null }) {
+  const colors = useColors();
   const grow = fill ? "flex-1" : "shrink-0";
   const body = (
     <View className={`min-h-[44px] ${fill ? "flex-1 " : ""}flex-row items-center justify-center gap-2 rounded-full border border-neutral-200 bg-surface px-4 ${url ? "" : "opacity-50"}`}>

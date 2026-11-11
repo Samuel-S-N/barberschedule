@@ -30,7 +30,7 @@ jest.mock("../../src/providers/AppProviders", () => ({
 import { useFonts } from "expo-font";
 import { Stack as MockedStack, ThemeProvider as MockedThemeProvider } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { colors } from "../../src/lib/design/colors";
+import { DEFAULT_COLORS } from "../../src/lib/design/colors";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import RootLayout, { RootNavigator } from "../../app/_layout";
 
@@ -98,7 +98,7 @@ describe("RootNavigator font gate", () => {
 
     const theme = jest.mocked(MockedThemeProvider).mock.calls[0][0] as unknown as { value: { colors: Record<string, string> } };
 
-    expect(theme.value.colors.background).toBe(colors.canvas);
+    expect(theme.value.colors.background).toBe(DEFAULT_COLORS.canvas);
     expect(theme.value.colors.primary).toBe("blue");
   });
 });

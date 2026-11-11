@@ -12,10 +12,11 @@ import { useMyProfile } from "../../src/features/account/use-my-profile";
 import { signOut } from "../../src/features/auth/api";
 import { useOwnerAsProfessional } from "../../src/features/professionals/owner/use-owner-as-professional";
 import { errorMessage } from "../../src/i18n/errors";
-import { colors } from "../../src/lib/design/colors";
+import { useColors } from "../../src/lib/design/theme/ThemeProvider";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 export default function OwnerSettingsScreen() {
+  const colors = useColors();
   const { t } = useTranslation();
   const router = useRouter();
   const { profile: sessionProfile, session, supabase } = useSupabaseSession();

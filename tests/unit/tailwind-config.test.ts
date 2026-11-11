@@ -6,24 +6,19 @@ describe("tailwind config tokens", () => {
   const spacing = theme!.extend!.spacing as Record<string, string>;
   const fontFamily = theme!.extend!.fontFamily as Record<string, string[]>;
 
-  it("defines the primary amber scale", () => {
-    expect(colors.primary).toEqual({
-      50: "#FDF6EC", 100: "#FAE8CC", 200: "#F3CE8F", 300: "#EAB157",
-      400: "#DB9A34", 500: "#BD8020", 600: "#9C6819", 700: "#784F14",
-      800: "#56380E", 900: "#392509",
-    });
-  });
+  it("maps the themeable colours to CSS variables, so a shop theme can repaint them", () => {
+    const primary = colors.primary as Record<string, string>;
 
-  it("defines the charcoal/surface anchors", () => {
-    expect(colors.ink).toBe("#171412");
-    expect(colors["ink-soft"]).toBe("#241F1B");
-    expect(colors.canvas).toBe("#F7F3EE");
-    expect(colors.surface).toBe("#FFFDFA");
-    expect(colors.mist).toBe("#ECE6DE");
-  });
-
-  it("defines the wine accent", () => {
-    expect(colors.wine).toEqual({ 50: "#FBEEEF", 100: "#F4DBDD", 500: "#7A1F2B" });
+    for (const step of [50, 100, 200, 300, 400, 500, 600, 700, 800, 900]) {
+      expect(primary[step]).toBe(`rgb(var(--c-primary-${step}) / <alpha-value>)`);
+    }
+    expect(colors.ink).toBe("rgb(var(--c-ink) / <alpha-value>)");
+    expect(colors.canvas).toBe("rgb(var(--c-canvas) / <alpha-value>)");
+    expect(colors.surface).toBe("rgb(var(--c-surface) / <alpha-value>)");
+    expect(colors.mist).toBe("rgb(var(--c-mist) / <alpha-value>)");
+    expect(colors.accent).toBe("rgb(var(--c-accent) / <alpha-value>)");
+    expect(colors["on-accent"]).toBe("rgb(var(--c-on-accent) / <alpha-value>)");
+    expect(colors["on-primary"]).toBe("rgb(var(--c-on-primary) / <alpha-value>)");
   });
 
   it("defines feedback tokens", () => {
