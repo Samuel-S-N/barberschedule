@@ -44,7 +44,7 @@ describe("useAppointmentCards", () => {
 
     const read = await renderProbe();
 
-    expect(read()).toMatchObject({ professionalName: "Barbeiro", shopName: "Barbearia" });
+    expect(read()).toMatchObject({ professionalName: "Profissional", shopName: "Estabelecimento" });
   });
 
   it("formats the date in the current language and keeps real names", async () => {

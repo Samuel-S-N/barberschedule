@@ -159,7 +159,7 @@ test.describe("Portuguese owner", () => {
 
     await page.goto("/schedule");
     await expect(page.getByRole("heading", { name: "Horários" })).toBeVisible();
-    await expect(page.getByText("Barbeiro selecionado: Browser Professional")).toBeVisible();
+    await expect(page.getByText("Profissional selecionado: Browser Professional")).toBeVisible();
     await expect(page.getByRole("button", { name: "Browser Professional (selecionado)" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Adicionar período de trabalho" })).toBeVisible();
   });
