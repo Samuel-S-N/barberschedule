@@ -22,8 +22,11 @@ tempo de execução.
 - **Fixos para todas as lojas:** cores de status e erro (`danger`, `success`, `warning`), `white`, paleta categórica
   dos gráficos, barra de status, splash e ícone do app.
 - O token `wine` (e `ink-soft`) tem 0 usos e sai.
-- **Padrão Zenc inalterado:** os valores atuais ficam em `defaults.ts` e no `global.css`; a derivação roda só para
-  cores personalizadas. Com tudo nulo, o provider não escreve nenhuma variável.
+- **Padrão Zenc inalterado:** os valores atuais ficam em `DEFAULT_COLORS` (`src/lib/design/colors.ts`, sem imports,
+  junto de `colorsToVars`) e no `global.css`; a derivação roda só para cores personalizadas. Valores iguais às
+  amostras padrão (`#DB9A34`, `#F7F3EE`) contam como "não escolhidos", preservando o padrão exato. Com tudo nulo, o
+  provider **na web** não escreve nenhuma variável; **no nativo** ele sempre aplica `vars()`, inclusive o padrão, para
+  não depender de `:root` do CSS no nativo.
 - **Quando vale:** só depois do login, em todas as plataformas. Antes, padrão Zenc. O tema pré-login por
   subdomínio (`<slug>.zencpro.app`) entra com o subprojeto de resolução de loja; só a origem de "qual é a loja
   atual" muda. Hoje a loja atual é a primeira loja (suposição de loja única, igual às outras telas).
@@ -43,6 +46,8 @@ Migration aditiva `supabase/migrations/0066_shop_theme.sql`:
   cliente não conseguem gravar.
 
 ## Derivação (`src/lib/design/theme/derive.ts`, função pura)
+
+Ajustes de 2026-11-11: ver o plano `2026-11-11-shop-theme.md`, seção "Ajustes ao spec".
 
 Assinatura: `deriveTheme(input: { primary?: string | null; accent?: string | null; base?: string | null }): Theme`
 com `Theme = { vars: Record<string, string>; colors: Colors; adjusted: { primary: boolean; accent: boolean } }`.
@@ -68,13 +73,14 @@ Tokens: `primary-50…900`, `accent`, `on-accent`, `on-primary`, `canvas`, `surf
 `canvas` L 0.966 C 0.008; `surface` L 0.995 C 0.005; `mist` L 0.927 C 0.013.
 
 **Cor de preenchimento (principal 400 e destaque):**
-1. Converter para OKLCH. Limitar L a [0.40, 0.88].
+1. Converter para OKLCH. Limitar L a [0.15, 0.88] (ajuste de 2026-11-11: o piso 0.40 marcaria como "ajustadas"
+   as nossas próprias amostras escuras, como o Vinho e o Preto).
 2. `on` = o de maior contraste entre `ink` (da base efetiva) e branco.
 3. Se contraste(`on`, preenchimento) < 4.5, mover L (mais claro se `on` = ink, mais escuro se `on` = branco) em
    passos de 0.01 (máx. 50), reduzindo a intensidade até caber no gamut sRGB. Marcar `adjusted`.
 
 **Escala principal (50–900):** o preenchimento ajustado ancora o 400. Para k < 400, `L_k = A + t·(L50 − A)` com
-`t = (L_k,padrão − L400,padrão) / (L50,padrão − L400,padrão)`; para k > 400, `L_k = A − t·(A − L900)` com
+`t = (L_k,padrão − L400,padrão) / (L50,padrão − L400,padrão)`; para k > 400, `L_k = A − t·(A − L900)` (com `L900 = min(L900,padrão, A − 0.12)`) com
 `t = (L400,padrão − L_k,padrão) / (L400,padrão − L900,padrão)` (A = L do âncora; extremos fixos, sempre
 monótona). Matiz = o da cor escolhida; `C_k = C_k,padrão · clamp(C_âncora / 0.137, 0.25, 2)`, reduzida ao gamut.
 Depois: baixar `L_600` (e `L_700`) até contraste ≥ 4.5 contra `canvas` efetivo e garantir L estritamente
@@ -88,7 +94,7 @@ decrescente de 400 a 900 com folga mínima de 0.02.
 
 **Contratos testados (entre 500 cores sorteadas com semente fixa e os extremos amarelo puro, azul-marinho, cinza,
 preto, branco):** `on-primary`/`on-accent` sobre o preenchimento ≥ 4.5; `primary-600` sobre `canvas` ≥ 4.5;
-`neutral-500…900` e `ink` sobre `canvas` e `surface` ≥ 4.5; `neutral-400` sobre `canvas` não pior que 2.89
+`neutral-500…900` e `ink` sobre `canvas` e `surface` ≥ 4.5; `neutral-400` sobre `canvas` ≥ 98% de 2.89
 (razão do padrão, texto de apoio). **Lacuna conhecida do padrão:** `primary-600` sobre `canvas` mede 4.31
 (4.69 sobre `surface`); fica como está para não alterar o visual atual e entra na revisão da paleta Zenc.
 
@@ -97,7 +103,7 @@ preto, branco):** `on-primary`/`on-accent` sobre o preenchimento ≥ 4.5; `prima
 - `tailwind.config.ts`: `primary`, `canvas`, `surface`, `mist`, `ink`, `neutral` e os novos `accent`,
   `on-accent`, `on-primary` viram `rgb(var(--c-…) / <alpha-value>)`. `danger`, `success`, `warning` seguem em hex.
   Os 510 usos de `className` não mudam; `Button` primário e `FabAdd` passam de `primary` para `accent`.
-- `global.css`: `:root { --c-…: R G B; }` com os valores padrão. Um teste compara o CSS com `defaults.ts`.
+- `global.css`: `:root { --c-…: R G B; }` com os valores padrão. Um teste compara o CSS com `DEFAULT_COLORS`.
 - `ThemeProvider` (`src/lib/design/theme/ThemeProvider.tsx`): aplica `theme.vars`. **Web:** escreve em
   `document.documentElement.style` (o `Modal` do react-native-web renderiza em `document.body`, fora da raiz do
   app; 4 pop-ups usam `Modal`). **Nativo:** `<View style={vars(theme.vars)} className="flex-1">` na raiz (o
@@ -106,9 +112,9 @@ preto, branco):** `on-primary`/`on-accent` sobre o preenchimento ≥ 4.5; `prima
 - `useColors(): Colors`: mesmo formato do `colors` atual (hex), menos `wine`/`inkSoft`, mais `accent`,
   `onAccent`, `onPrimary`. Os 29 arquivos que importam `colors` passam a chamar o hook; o layout raiz usa o hook
   para o fundo dos navegadores. `colors.ts` continua exportando o padrão como `DEFAULT_COLORS`.
-- **Loja atual:** `useCurrentShopId()` (primeira loja de `listPublicShops`) e `useShopTheme(shopId)`
+- **Loja atual:** `useShopTheme()` (primeira loja; uma consulta devolve `shopId` e as 3 cores)
   (`select theme_primary, theme_accent, theme_base`). Cache do último tema por loja em `key-value-storage`
-  (`zenc.shop-theme.<shopId>`) para a próxima abertura nascer na cor certa. O layout raiz mantém a tela de
+  (`zenc.shop-theme.<userId>`, por usuário, pois a loja só é conhecida depois da consulta) para a próxima abertura nascer na cor certa. O layout raiz mantém a tela de
   carregamento enquanto há sessão e o tema ainda não foi resolvido.
 - **Risco técnico:** `vars()` do NativeWind 4.2.7 ainda não foi provado neste app (nativo e `Modal` da web). A
   primeira tarefa do plano é um spike descartável; se falhar, o desenho volta para revisão antes de migrar telas.
@@ -147,10 +153,10 @@ preto, branco):** `on-primary`/`on-accent` sobre o preenchimento ≥ 4.5; `prima
 
 ## Entrega
 
-- **PR A, tokens:** spike, derivação, `defaults.ts`, tokens do Tailwind, `global.css`, `ThemeProvider`,
+- **PR A, tokens:** spike, derivação, `DEFAULT_COLORS`, tokens do Tailwind, `global.css`, `ThemeProvider`,
   `useColors`, troca nos 29 arquivos, `Button`/`FabAdd` em `accent`, remoção de `wine`. Sem mudança visível com o
   padrão.
-- **PR B, tema da loja:** migration `0066`, `useCurrentShopId`/`useShopTheme`/cache/espera no carregamento,
+- **PR B, tema da loja:** migration `0066`, `useShopTheme`/cache/espera no carregamento,
   tela Aparência, i18n, e2e. Branch a partir da A.
 
 ## Fora de escopo
