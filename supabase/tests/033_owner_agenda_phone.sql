@@ -13,13 +13,13 @@ update public.profiles set role = 'owner' where user_id = 'fd000000-0000-0000-00
 
 insert into public.shops (id, name, owner_user_id) values ('fd100000-0000-0000-0000-000000000001', 'Agenda Phone Shop', 'fd000000-0000-0000-0000-000000000001');
 insert into public.customers (id, shop_id, user_id, full_name, phone) values ('fd200000-0000-0000-0000-000000000001', 'fd100000-0000-0000-0000-000000000001', null, 'Phone Customer', '11999990001');
-insert into public.barbers (id, shop_id, name) values ('fd300000-0000-0000-0000-000000000001', 'fd100000-0000-0000-0000-000000000001', 'Agenda Barber');
+insert into public.professionals (id, shop_id, name) values ('fd300000-0000-0000-0000-000000000001', 'fd100000-0000-0000-0000-000000000001', 'Agenda Professional');
 insert into public.services (id, shop_id, name, duration_minutes, price_cents) values ('fd400000-0000-0000-0000-000000000001', 'fd100000-0000-0000-0000-000000000001', 'Cut', 30, 4000);
-insert into public.barber_services (id, shop_id, barber_id, service_id) values ('fd500000-0000-0000-0000-000000000001', 'fd100000-0000-0000-0000-000000000001', 'fd300000-0000-0000-0000-000000000001', 'fd400000-0000-0000-0000-000000000001');
+insert into public.professional_services (id, shop_id, professional_id, service_id) values ('fd500000-0000-0000-0000-000000000001', 'fd100000-0000-0000-0000-000000000001', 'fd300000-0000-0000-0000-000000000001', 'fd400000-0000-0000-0000-000000000001');
 
 insert into public.appointments (
-  shop_id, barber_id, customer_id, barber_service_id, service_id, starts_at, ends_at, occupied_until, status,
-  service_name_snapshot, service_duration_minutes_snapshot, service_price_cents_snapshot, barber_buffer_minutes_snapshot
+  shop_id, professional_id, customer_id, professional_service_id, service_id, starts_at, ends_at, occupied_until, status,
+  service_name_snapshot, service_duration_minutes_snapshot, service_price_cents_snapshot, professional_buffer_minutes_snapshot
 ) values (
   'fd100000-0000-0000-0000-000000000001', 'fd300000-0000-0000-0000-000000000001', 'fd200000-0000-0000-0000-000000000001',
   'fd500000-0000-0000-0000-000000000001', 'fd400000-0000-0000-0000-000000000001',

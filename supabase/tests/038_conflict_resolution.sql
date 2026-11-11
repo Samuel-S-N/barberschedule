@@ -7,21 +7,21 @@ select plan(11);
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at)
 values
   ('00000000-0000-0000-0000-000000000000', 'fb000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'conf-owner@example.com', 'password-hash', now()),
-  ('00000000-0000-0000-0000-000000000000', 'fb000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'conf-barber@example.com', 'password-hash', now()),
+  ('00000000-0000-0000-0000-000000000000', 'fb000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'conf-professional@example.com', 'password-hash', now()),
   ('00000000-0000-0000-0000-000000000000', 'fb000000-0000-0000-0000-000000000003', 'authenticated', 'authenticated', 'conf-customer@example.com', 'password-hash', now()),
   ('00000000-0000-0000-0000-000000000000', 'fb000000-0000-0000-0000-000000000004', 'authenticated', 'authenticated', 'conf-other@example.com', 'password-hash', now());
 
 update public.profiles set role = 'owner' where user_id = 'fb000000-0000-0000-0000-000000000001';
-update public.profiles set role = 'barber' where user_id = 'fb000000-0000-0000-0000-000000000002';
+update public.profiles set role = 'professional' where user_id = 'fb000000-0000-0000-0000-000000000002';
 
 insert into public.shops (id, name, owner_user_id) values ('fb100000-0000-0000-0000-000000000001', 'Conflict Shop', 'fb000000-0000-0000-0000-000000000001');
 insert into public.customers (id, shop_id, user_id, full_name, email) values
   ('fb200000-0000-0000-0000-000000000001', 'fb100000-0000-0000-0000-000000000001', 'fb000000-0000-0000-0000-000000000003', 'Plan Customer', 'conf-customer@shop.example'),
   ('fb200000-0000-0000-0000-000000000002', 'fb100000-0000-0000-0000-000000000001', 'fb000000-0000-0000-0000-000000000004', 'Other Customer', 'conf-other@shop.example');
-insert into public.barbers (id, shop_id, name, user_id) values ('fb300000-0000-0000-0000-000000000001', 'fb100000-0000-0000-0000-000000000001', 'Conflict Barber', 'fb000000-0000-0000-0000-000000000002');
+insert into public.professionals (id, shop_id, name, user_id) values ('fb300000-0000-0000-0000-000000000001', 'fb100000-0000-0000-0000-000000000001', 'Conflict Professional', 'fb000000-0000-0000-0000-000000000002');
 insert into public.services (id, shop_id, name, duration_minutes, price_cents) values ('fb400000-0000-0000-0000-000000000001', 'fb100000-0000-0000-0000-000000000001', 'Conflict Cut', 30, 3500);
-insert into public.barber_services (id, shop_id, barber_id, service_id) values ('fb500000-0000-0000-0000-000000000001', 'fb100000-0000-0000-0000-000000000001', 'fb300000-0000-0000-0000-000000000001', 'fb400000-0000-0000-0000-000000000001');
-insert into public.working_periods (shop_id, barber_id, weekday, start_time, end_time)
+insert into public.professional_services (id, shop_id, professional_id, service_id) values ('fb500000-0000-0000-0000-000000000001', 'fb100000-0000-0000-0000-000000000001', 'fb300000-0000-0000-0000-000000000001', 'fb400000-0000-0000-0000-000000000001');
+insert into public.working_periods (shop_id, professional_id, weekday, start_time, end_time)
 select 'fb100000-0000-0000-0000-000000000001', 'fb300000-0000-0000-0000-000000000001', day, '09:00', '18:00' from generate_series(1, 7) as day;
 
 -- Mondays two and three weeks ahead, in the shop's timezone.
@@ -34,7 +34,7 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 select set_config('request.jwt.claim.sub', 'fb000000-0000-0000-0000-000000000001', true);
 select public.save_recurrence_plan(null, 'fb400000-0000-0000-0000-000000000001', 1, 2500, 'Corte mensal', true);
 
--- a customer subscribes and the barber accepts
+-- a customer subscribes and the professional accepts
 select set_config('request.jwt.claim.sub', 'fb000000-0000-0000-0000-000000000003', true);
 select count(*) from public.request_recurrence('fb500000-0000-0000-0000-000000000001', 1, (select monday from conf_dates), '10:00');
 select set_config('request.jwt.claim.sub', 'fb000000-0000-0000-0000-000000000002', true);
@@ -60,7 +60,7 @@ select 'fb800000-0000-0000-0000-000000000002', id, (select monday from conf_date
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'fb000000-0000-0000-0000-000000000001', true);
-select is((select barber_service_id::text || '/' || barber_id::text from public.list_owner_recurrence_conflicts('fb100000-0000-0000-0000-000000000001') where id = 'fb800000-0000-0000-0000-000000000001'), 'fb500000-0000-0000-0000-000000000001/fb300000-0000-0000-0000-000000000001', 'the conflict list carries the barber and barber-service ids');
+select is((select professional_service_id::text || '/' || professional_id::text from public.list_owner_recurrence_conflicts('fb100000-0000-0000-0000-000000000001') where id = 'fb800000-0000-0000-0000-000000000001'), 'fb500000-0000-0000-0000-000000000001/fb300000-0000-0000-0000-000000000001', 'the conflict list carries the professional and professional-service ids');
 
 -- reschedule to another day: becomes the series' occurrence for the conflicted date, at the plan's price
 select lives_ok(

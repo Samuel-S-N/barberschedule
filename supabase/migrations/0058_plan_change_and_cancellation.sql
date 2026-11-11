@@ -19,7 +19,7 @@ drop function public.list_my_recurrence_requests();
 create function public.list_my_recurrence_requests()
 returns table (
   id uuid, status public.recurrence_request_status, interval_weeks smallint, local_start_date date, local_start_time time,
-  barber_name text, service_name text, recurrence_cents integer,
+  professional_name text, service_name text, recurrence_cents integer,
   series_id uuid, series_active boolean, series_ended_at timestamptz, plan_name text, cancel_requested_at timestamptz
 )
 language sql stable security definer set search_path = pg_catalog, public, pg_temp as $$
@@ -30,8 +30,8 @@ language sql stable security definer set search_path = pg_catalog, public, pg_te
          rs.cancel_requested_at
   from public.recurrence_requests r
   join public.customers c on c.id = r.customer_id and c.user_id = auth.uid()
-  join public.barbers b on b.id = r.barber_id
-  join public.barber_services bs on bs.id = r.barber_service_id
+  join public.professionals b on b.id = r.professional_id
+  join public.professional_services bs on bs.id = r.professional_service_id
   join public.services s on s.id = bs.service_id
   left join public.recurrence_series rs on rs.id = r.series_id
   order by r.created_at desc limit 20;
@@ -44,9 +44,9 @@ returns void language plpgsql security definer set search_path = pg_catalog, pub
 declare
   series_row public.recurrence_series%rowtype;
   cust public.customers%rowtype;
-  bs public.barber_services%rowtype;
+  bs public.professional_services%rowtype;
   owner_user uuid;
-  barber_user uuid;
+  professional_user uuid;
   params jsonb;
 begin
   select * into series_row from public.recurrence_series where id = target_series_id for update;
@@ -57,13 +57,13 @@ begin
 
   update public.recurrence_series set cancel_requested_at = clock_timestamp(), updated_at = clock_timestamp() where id = series_row.id;
 
-  select * into bs from public.barber_services where id = series_row.barber_service_id;
+  select * into bs from public.professional_services where id = series_row.professional_service_id;
   select owner_user_id into owner_user from public.shops where id = series_row.shop_id;
-  select user_id into barber_user from public.barbers where id = bs.barber_id;
+  select user_id into professional_user from public.professionals where id = bs.professional_id;
   params := jsonb_build_object('customer_name', cust.full_name, 'interval_weeks', series_row.interval_weeks,
     'service_name', (select name from public.services where id = bs.service_id));
-  perform public.add_inbox_event(barber_user, 'recurrence_cancel_requested', params, format('reccancelreq:%s:%s', series_row.id, barber_user), 'recurrence.cancel_requested');
-  if owner_user is distinct from barber_user then
+  perform public.add_inbox_event(professional_user, 'recurrence_cancel_requested', params, format('reccancelreq:%s:%s', series_row.id, professional_user), 'recurrence.cancel_requested');
+  if owner_user is distinct from professional_user then
     perform public.add_inbox_event(owner_user, 'recurrence_cancel_requested', params, format('reccancelreq:%s:%s', series_row.id, owner_user), 'recurrence.cancel_requested');
   end if;
 end;
@@ -73,7 +73,7 @@ create function public.decide_series_cancellation(target_series_id uuid, accept 
 returns void language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare
   series_row public.recurrence_series%rowtype;
-  bs public.barber_services%rowtype;
+  bs public.professional_services%rowtype;
   customer_user uuid;
   params jsonb;
 begin
@@ -81,8 +81,8 @@ begin
   if not found then
     raise exception using errcode = 'P0012', message = 'APPOINTMENT_NOT_FOUND';
   end if;
-  select * into bs from public.barber_services where id = series_row.barber_service_id;
-  if not (public.is_shop_owner(series_row.shop_id) or public.is_own_barber(bs.barber_id)) then
+  select * into bs from public.professional_services where id = series_row.professional_service_id;
+  if not (public.is_shop_owner(series_row.shop_id) or public.is_own_professional(bs.professional_id)) then
     raise exception using errcode = 'P0010', message = 'APPOINTMENT_FORBIDDEN';
   end if;
   if series_row.cancel_requested_at is null or not series_row.active then
@@ -109,16 +109,16 @@ end;
 $$;
 
 create function public.list_recurrence_cancellations(target_shop_id uuid)
-returns table (series_id uuid, customer_name text, customer_phone text, barber_name text, service_name text, interval_weeks smallint, requested_at timestamptz)
+returns table (series_id uuid, customer_name text, customer_phone text, professional_name text, service_name text, interval_weeks smallint, requested_at timestamptz)
 language sql stable security definer set search_path = pg_catalog, public, pg_temp as $$
   select rs.id, c.full_name, c.phone, b.name, s.name, rs.interval_weeks, rs.cancel_requested_at
   from public.recurrence_series rs
   join public.customers c on c.id = rs.customer_id and c.shop_id = rs.shop_id
-  join public.barber_services bs on bs.id = rs.barber_service_id
-  join public.barbers b on b.id = bs.barber_id
+  join public.professional_services bs on bs.id = rs.professional_service_id
+  join public.professionals b on b.id = bs.professional_id
   join public.services s on s.id = bs.service_id
   where rs.shop_id = target_shop_id and rs.active and rs.cancel_requested_at is not null
-    and (public.is_shop_owner(target_shop_id) or public.is_own_barber(bs.barber_id))
+    and (public.is_shop_owner(target_shop_id) or public.is_own_professional(bs.professional_id))
   order by rs.cancel_requested_at;
 $$;
 
@@ -130,21 +130,21 @@ grant execute on function public.request_series_cancellation(uuid), public.decid
 -- The old four-argument signature goes away; the new one keeps working for four arguments through the defaults.
 drop function public.request_recurrence(uuid, integer, date, time);
 
-create function public.request_recurrence(target_barber_service_id uuid, target_interval_weeks integer, target_start_date date, target_start_time time,
+create function public.request_recurrence(target_professional_service_id uuid, target_interval_weeks integer, target_start_date date, target_start_time time,
   target_replaces_series_id uuid default null, target_replaces_request_id uuid default null)
 returns setof public.recurrence_requests
 language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare
-  bs public.barber_services%rowtype;
+  bs public.professional_services%rowtype;
   cust public.customers%rowtype;
   tz text;
   local_today date;
   created public.recurrence_requests%rowtype;
   owner_user uuid;
-  barber_user uuid;
+  professional_user uuid;
   params jsonb;
 begin
-  select * into bs from public.barber_services where id = target_barber_service_id and active;
+  select * into bs from public.professional_services where id = target_professional_service_id and active;
   select * into cust from public.customers where user_id = auth.uid() and shop_id = bs.shop_id and active;
   if bs.id is null or cust.id is null then
     raise exception using errcode = 'P0007', message = 'CUSTOMER_UNAVAILABLE';
@@ -168,20 +168,20 @@ begin
     raise exception using errcode = 'P0015', message = 'RECURRENCE_INVALID';
   end if;
   if not exists (
-    select 1 from public.get_available_slots(bs.barber_id, target_start_date, bs.id) slot where slot.local_time = target_start_time
+    select 1 from public.get_available_slots(bs.professional_id, target_start_date, bs.id) slot where slot.local_time = target_start_time
   ) then
     raise exception using errcode = 'P0001', message = 'SLOT_UNAVAILABLE';
   end if;
 
-  insert into public.recurrence_requests (shop_id, customer_id, barber_id, barber_service_id, interval_weeks, local_start_date, local_start_time, replaces_series_id)
-  values (bs.shop_id, cust.id, bs.barber_id, bs.id, target_interval_weeks, target_start_date, target_start_time, target_replaces_series_id)
+  insert into public.recurrence_requests (shop_id, customer_id, professional_id, professional_service_id, interval_weeks, local_start_date, local_start_time, replaces_series_id)
+  values (bs.shop_id, cust.id, bs.professional_id, bs.id, target_interval_weeks, target_start_date, target_start_time, target_replaces_series_id)
   returning * into created;
 
-  select user_id into barber_user from public.barbers where id = bs.barber_id;
+  select user_id into professional_user from public.professionals where id = bs.professional_id;
   params := jsonb_build_object('customer_name', cust.full_name, 'interval_weeks', target_interval_weeks,
     'service_name', (select name from public.services where id = bs.service_id));
-  perform public.add_inbox_event(barber_user, 'recurrence_requested', params, format('recreq:%s:%s', created.id, barber_user), 'recurrence.requested');
-  if owner_user is distinct from barber_user then
+  perform public.add_inbox_event(professional_user, 'recurrence_requested', params, format('recreq:%s:%s', created.id, professional_user), 'recurrence.requested');
+  if owner_user is distinct from professional_user then
     perform public.add_inbox_event(owner_user, 'recurrence_requested', params, format('recreq:%s:%s', created.id, owner_user), 'recurrence.requested');
   end if;
 
@@ -197,7 +197,7 @@ returns setof public.recurrence_requests
 language plpgsql security definer set search_path = pg_catalog, public, pg_temp as $$
 declare
   req public.recurrence_requests%rowtype;
-  bs public.barber_services%rowtype;
+  bs public.professional_services%rowtype;
   new_series_id uuid;
   price integer;
   customer_user uuid;
@@ -205,14 +205,14 @@ declare
 begin
   select * into req from public.recurrence_requests where id = target_request_id for update;
   if not found then raise exception using errcode = 'P0012', message = 'APPOINTMENT_NOT_FOUND'; end if;
-  if not (public.is_shop_owner(req.shop_id) or public.is_own_barber(req.barber_id)) then
+  if not (public.is_shop_owner(req.shop_id) or public.is_own_professional(req.professional_id)) then
     raise exception using errcode = 'P0010', message = 'APPOINTMENT_FORBIDDEN';
   end if;
   if req.status <> 'pending' then
     raise exception using errcode = 'P0031', message = 'RECURRENCE_REQUEST_NOT_PENDING';
   end if;
 
-  select * into bs from public.barber_services where id = req.barber_service_id;
+  select * into bs from public.professional_services where id = req.professional_service_id;
   select user_id into customer_user from public.customers where id = req.customer_id;
 
   if accept then
@@ -224,8 +224,8 @@ begin
       where id = req.replaces_series_id and active;
     end if;
     select p.price_cents into price from public.service_recurrence_prices p where p.service_id = bs.service_id and p.interval_weeks = req.interval_weeks;
-    insert into public.recurrence_series (shop_id, customer_id, barber_service_id, local_start_date, local_start_time, interval_weeks, special_price_cents)
-    values (req.shop_id, req.customer_id, req.barber_service_id, req.local_start_date, req.local_start_time, req.interval_weeks, price)
+    insert into public.recurrence_series (shop_id, customer_id, professional_service_id, local_start_date, local_start_time, interval_weeks, special_price_cents)
+    values (req.shop_id, req.customer_id, req.professional_service_id, req.local_start_date, req.local_start_time, req.interval_weeks, price)
     returning id into new_series_id;
 
     perform public.materialize_shop_as_owner(req.shop_id);

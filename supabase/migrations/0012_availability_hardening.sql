@@ -1,11 +1,11 @@
-alter table public.barber_services
-add constraint barber_services_identity_key
-  unique (shop_id, id, barber_id, service_id);
+alter table public.professional_services
+add constraint professional_services_identity_key
+  unique (shop_id, id, professional_id, service_id);
 
 alter table public.appointments
-add constraint appointments_barber_service_identity_fk
-  foreign key (shop_id, barber_service_id, barber_id, service_id)
-  references public.barber_services (shop_id, id, barber_id, service_id)
+add constraint appointments_professional_service_identity_fk
+  foreign key (shop_id, professional_service_id, professional_id, service_id)
+  references public.professional_services (shop_id, id, professional_id, service_id)
   on delete restrict;
 
 create or replace function public.prevent_appointment_snapshot_update()
@@ -17,7 +17,7 @@ begin
   if old.service_name_snapshot is distinct from new.service_name_snapshot
     or old.service_duration_minutes_snapshot is distinct from new.service_duration_minutes_snapshot
     or old.service_price_cents_snapshot is distinct from new.service_price_cents_snapshot
-    or old.barber_buffer_minutes_snapshot is distinct from new.barber_buffer_minutes_snapshot
+    or old.professional_buffer_minutes_snapshot is distinct from new.professional_buffer_minutes_snapshot
   then
     raise exception using
       errcode = '22000',
@@ -40,15 +40,15 @@ as $$
 begin
   if not exists (
     select 1
-    from public.barber_services
+    from public.professional_services
     where shop_id = new.shop_id
-      and id = new.barber_service_id
-      and barber_id = new.barber_id
+      and id = new.professional_service_id
+      and professional_id = new.professional_id
       and service_id = new.service_id
   ) then
     raise exception using
       errcode = '23503',
-      message = 'Appointment barber service identity is invalid.';
+      message = 'Appointment professional service identity is invalid.';
   end if;
 
   return new;
@@ -60,9 +60,9 @@ before insert or update on public.appointments
 for each row execute function public.validate_appointment_identity();
 
 create or replace function public.get_available_slots(
-  barber_id uuid,
+  professional_id uuid,
   local_date date,
-  barber_service_id uuid
+  professional_service_id uuid
 )
 returns table (
   local_date date,
@@ -77,27 +77,27 @@ set search_path = pg_catalog, public, pg_temp
 as $$
   with target as (
     select
-      barbers.id as barber_id,
-      barbers.shop_id,
+      professionals.id as professional_id,
+      professionals.shop_id,
       shops.timezone,
       coalesce(
-        barber_services.duration_override_minutes,
+        professional_services.duration_override_minutes,
         services.duration_minutes
       ) * interval '1 minute' as service_duration,
-      barbers.buffer_minutes * interval '1 minute' as buffer_duration
-    from public.barber_services
-    inner join public.barbers
-      on barbers.id = barber_services.barber_id
-     and barbers.shop_id = barber_services.shop_id
+      professionals.buffer_minutes * interval '1 minute' as buffer_duration
+    from public.professional_services
+    inner join public.professionals
+      on professionals.id = professional_services.professional_id
+     and professionals.shop_id = professional_services.shop_id
     inner join public.services
-      on services.id = barber_services.service_id
-     and services.shop_id = barber_services.shop_id
+      on services.id = professional_services.service_id
+     and services.shop_id = professional_services.shop_id
     inner join public.shops
-      on shops.id = barbers.shop_id
-    where barber_services.id = $3
-      and barbers.id = $1
-      and barber_services.active
-      and barbers.active
+      on shops.id = professionals.shop_id
+    where professional_services.id = $3
+      and professionals.id = $1
+      and professional_services.active
+      and professionals.active
       and services.active
   ),
   raw_openings as (
@@ -109,7 +109,7 @@ as $$
     from target
     inner join public.working_periods
       on working_periods.shop_id = target.shop_id
-     and working_periods.barber_id = target.barber_id
+     and working_periods.professional_id = target.professional_id
     where working_periods.weekday = extract(isodow from $2)::smallint
 
     union all
@@ -122,7 +122,7 @@ as $$
     from target
     inner join public.schedule_overrides
       on schedule_overrides.shop_id = target.shop_id
-     and schedule_overrides.barber_id = target.barber_id
+     and schedule_overrides.professional_id = target.professional_id
     where schedule_overrides.local_date = $2
       and schedule_overrides.kind = 'opening'
   ),
@@ -178,7 +178,7 @@ as $$
     from target
     inner join public.schedule_overrides
       on schedule_overrides.shop_id = target.shop_id
-     and schedule_overrides.barber_id = target.barber_id
+     and schedule_overrides.professional_id = target.professional_id
     where schedule_overrides.local_date = $2
       and schedule_overrides.kind = 'block'
   ),
@@ -230,7 +230,7 @@ as $$
       candidates.local_starts_at at time zone target.timezone
         + target.service_duration as ends_at,
       target.buffer_duration,
-      target.barber_id,
+      target.professional_id,
       target.shop_id
     from candidates
     cross join target
@@ -241,7 +241,7 @@ as $$
     select 1
     from public.appointments
     where appointments.shop_id = slots.shop_id
-      and appointments.barber_id = slots.barber_id
+      and appointments.professional_id = slots.professional_id
       and appointments.status in ('scheduled', 'confirmed')
       and tstzrange(
         slots.starts_at,

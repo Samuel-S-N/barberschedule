@@ -1,15 +1,15 @@
-create table public.barber_customer_notes (
-  barber_id uuid not null references public.barbers (id) on delete cascade,
+create table public.professional_customer_notes (
+  professional_id uuid not null references public.professionals (id) on delete cascade,
   customer_id uuid not null references public.customers (id) on delete cascade,
   note text not null,
   updated_at timestamptz not null default now(),
-  primary key (barber_id, customer_id),
-  constraint barber_customer_notes_length check (char_length(note) between 1 and 500)
+  primary key (professional_id, customer_id),
+  constraint professional_customer_notes_length check (char_length(note) between 1 and 500)
 );
 
 -- Private to the author: no policies and no grants, so only the security-definer RPCs below can touch it.
-revoke all on table public.barber_customer_notes from anon, authenticated;
-alter table public.barber_customer_notes enable row level security;
+revoke all on table public.professional_customer_notes from anon, authenticated;
+alter table public.professional_customer_notes enable row level security;
 
 create function public.is_my_client(target_customer_id uuid)
 returns boolean
@@ -20,13 +20,13 @@ set search_path = pg_catalog, public, pg_temp
 as $$
   select exists (
     select 1
-    from public.barbers b
+    from public.professionals b
     join public.customers c on c.shop_id = b.shop_id and c.id = target_customer_id
     where b.user_id = auth.uid() and b.active
       and c.active and c.anonymized_at is null
       and (
-        c.created_by_barber_id = b.id
-        or exists (select 1 from public.appointments a where a.barber_id = b.id and a.customer_id = c.id)
+        c.created_by_professional_id = b.id
+        or exists (select 1 from public.appointments a where a.professional_id = b.id and a.customer_id = c.id)
       )
   );
 $$;
@@ -55,13 +55,13 @@ security definer
 set search_path = pg_catalog, public, pg_temp
 as $$
 declare
-  me public.barbers%rowtype;
+  me public.professionals%rowtype;
   needle text := lower(btrim(coalesce(search, '')));
   digits text := regexp_replace(coalesce(search, ''), '\D', '', 'g');
 begin
-  select * into me from public.barbers where user_id = auth.uid() and active;
+  select * into me from public.professionals where user_id = auth.uid() and active;
   if not found then
-    raise exception using errcode = 'P0019', message = 'BARBER_NOT_LINKED';
+    raise exception using errcode = 'P0019', message = 'PROFESSIONAL_NOT_LINKED';
   end if;
   if page_limit < 1 or page_limit > 100 or page_offset < 0 or lapsed_days < 1 then
     raise exception using errcode = 'P0014', message = 'AGENDA_INVALID_RANGE';
@@ -82,13 +82,13 @@ begin
       max(a.starts_at) filter (where a.status = 'completed') as last_visit_at,
       min(a.starts_at) filter (where a.status in ('scheduled', 'confirmed') and a.starts_at > now()) as next_visit_at
     from public.customers c
-    left join public.appointments a on a.customer_id = c.id and a.barber_id = me.id
+    left join public.appointments a on a.customer_id = c.id and a.professional_id = me.id
     where c.shop_id = me.shop_id
       and c.active
       and c.anonymized_at is null
       and (
-        c.created_by_barber_id = me.id
-        or exists (select 1 from public.appointments x where x.barber_id = me.id and x.customer_id = c.id)
+        c.created_by_professional_id = me.id
+        or exists (select 1 from public.appointments x where x.professional_id = me.id and x.customer_id = c.id)
       )
       and (
         needle = ''
@@ -113,12 +113,12 @@ security definer
 set search_path = pg_catalog, public, pg_temp
 as $$
 declare
-  me public.barbers%rowtype;
+  me public.professionals%rowtype;
   cust public.customers%rowtype;
 begin
-  select * into me from public.barbers where user_id = auth.uid() and active;
+  select * into me from public.professionals where user_id = auth.uid() and active;
   if not found then
-    raise exception using errcode = 'P0019', message = 'BARBER_NOT_LINKED';
+    raise exception using errcode = 'P0019', message = 'PROFESSIONAL_NOT_LINKED';
   end if;
   if not public.is_my_client(target_customer_id) then
     raise exception using errcode = 'P0007', message = 'CUSTOMER_UNAVAILABLE';
@@ -140,22 +140,22 @@ begin
         'favorite_service', (
           select f.service_name_snapshot
           from public.appointments f
-          where f.barber_id = me.id and f.customer_id = cust.id and f.status = 'completed'
+          where f.professional_id = me.id and f.customer_id = cust.id and f.status = 'completed'
           group by f.service_name_snapshot
           order by count(*) desc, f.service_name_snapshot
           limit 1
         )
       )
       from public.appointments a
-      where a.barber_id = me.id and a.customer_id = cust.id
+      where a.professional_id = me.id and a.customer_id = cust.id
     ),
-    'note', (select n.note from public.barber_customer_notes n where n.barber_id = me.id and n.customer_id = cust.id),
+    'note', (select n.note from public.professional_customer_notes n where n.professional_id = me.id and n.customer_id = cust.id),
     'history', coalesce((
       select jsonb_agg(to_jsonb(h) order by h.starts_at desc)
       from (
         select a.id, a.starts_at, a.service_name_snapshot as service_name, a.status
         from public.appointments a
-        where a.barber_id = me.id and a.customer_id = cust.id
+        where a.professional_id = me.id and a.customer_id = cust.id
         order by a.starts_at desc
         limit 20
       ) h
@@ -171,12 +171,12 @@ security definer
 set search_path = pg_catalog, public, pg_temp
 as $$
 declare
-  me public.barbers%rowtype;
+  me public.professionals%rowtype;
   clean text := nullif(btrim(coalesce(new_note, '')), '');
 begin
-  select * into me from public.barbers where user_id = auth.uid() and active;
+  select * into me from public.professionals where user_id = auth.uid() and active;
   if not found then
-    raise exception using errcode = 'P0019', message = 'BARBER_NOT_LINKED';
+    raise exception using errcode = 'P0019', message = 'PROFESSIONAL_NOT_LINKED';
   end if;
   if not public.is_my_client(target_customer_id) then
     raise exception using errcode = 'P0007', message = 'CUSTOMER_UNAVAILABLE';
@@ -186,11 +186,11 @@ begin
   end if;
 
   if clean is null then
-    delete from public.barber_customer_notes where barber_id = me.id and customer_id = target_customer_id;
+    delete from public.professional_customer_notes where professional_id = me.id and customer_id = target_customer_id;
   else
-    insert into public.barber_customer_notes (barber_id, customer_id, note)
+    insert into public.professional_customer_notes (professional_id, customer_id, note)
     values (me.id, target_customer_id, clean)
-    on conflict (barber_id, customer_id) do update set note = excluded.note, updated_at = now();
+    on conflict (professional_id, customer_id) do update set note = excluded.note, updated_at = now();
   end if;
 end;
 $$;

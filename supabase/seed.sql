@@ -15,13 +15,13 @@ set role = 'owner', full_name = 'Seed Owner'
 where user_id = 'a0000000-0000-0000-0000-000000000001';
 
 insert into public.shops (id, name, timezone, owner_user_id)
-values ('a1000000-0000-0000-0000-000000000001', 'Seed Barber Shop', 'America/Sao_Paulo', 'a0000000-0000-0000-0000-000000000001')
+values ('a1000000-0000-0000-0000-000000000001', 'Seed Shop', 'America/Sao_Paulo', 'a0000000-0000-0000-0000-000000000001')
 on conflict (id) do nothing;
 
-insert into public.barbers (id, shop_id, name, active, archived_at)
+insert into public.professionals (id, shop_id, name, active, archived_at)
 values
-  ('a2000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001', 'Seed Barber', true, null),
-  ('a2000000-0000-0000-0000-000000000002', 'a1000000-0000-0000-0000-000000000001', 'Archived Barber', false, '2029-01-01T00:00:00Z')
+  ('a2000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001', 'Seed Professional', true, null),
+  ('a2000000-0000-0000-0000-000000000002', 'a1000000-0000-0000-0000-000000000001', 'Archived Professional', false, '2029-01-01T00:00:00Z')
 on conflict (id) do nothing;
 
 insert into public.services (id, shop_id, name, duration_minutes, price_cents, active, archived_at)
@@ -30,7 +30,7 @@ values
   ('a3000000-0000-0000-0000-000000000002', 'a1000000-0000-0000-0000-000000000001', 'Archived Service', 45, 5500, false, '2029-01-01T00:00:00Z')
 on conflict (id) do nothing;
 
-insert into public.barber_services (id, shop_id, barber_id, service_id, active, archived_at)
+insert into public.professional_services (id, shop_id, professional_id, service_id, active, archived_at)
 values
   ('a4000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001', 'a2000000-0000-0000-0000-000000000001', 'a3000000-0000-0000-0000-000000000001', true, null),
   ('a4000000-0000-0000-0000-000000000002', 'a1000000-0000-0000-0000-000000000001', 'a2000000-0000-0000-0000-000000000002', 'a3000000-0000-0000-0000-000000000002', false, '2029-01-01T00:00:00Z')
@@ -43,16 +43,16 @@ values
   ('a5000000-0000-0000-0000-000000000003', 'a1000000-0000-0000-0000-000000000001', null, 'Seed Walk In', 'seed-walkin@example.test', '+55 11 90000-0003', false, '2029-01-01T00:00:00Z')
 on conflict (id) do nothing;
 
-insert into public.working_periods (shop_id, barber_id, weekday, start_time, end_time)
+insert into public.working_periods (shop_id, professional_id, weekday, start_time, end_time)
 select 'a1000000-0000-0000-0000-000000000001', 'a2000000-0000-0000-0000-000000000001', weekday, '09:00', '18:00'
 from generate_series(1, 7) as weekday
-on conflict (shop_id, barber_id, weekday, start_time, end_time) do nothing;
+on conflict (shop_id, professional_id, weekday, start_time, end_time) do nothing;
 
 insert into public.appointments (
-  id, shop_id, barber_id, customer_id, barber_service_id, service_id,
+  id, shop_id, professional_id, customer_id, professional_service_id, service_id,
   starts_at, ends_at, occupied_until, status, source, notes,
   service_name_snapshot, service_duration_minutes_snapshot,
-  service_price_cents_snapshot, barber_buffer_minutes_snapshot
+  service_price_cents_snapshot, professional_buffer_minutes_snapshot
 ) values (
   'a6000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001',
   'a2000000-0000-0000-0000-000000000001', 'a5000000-0000-0000-0000-000000000001',
@@ -63,7 +63,7 @@ insert into public.appointments (
 on conflict (id) do nothing;
 
 insert into public.recurrence_series (
-  id, shop_id, customer_id, barber_service_id, local_start_date, local_start_time,
+  id, shop_id, customer_id, professional_service_id, local_start_date, local_start_time,
   interval_weeks, special_price_cents
 ) values (
   'a7000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001',

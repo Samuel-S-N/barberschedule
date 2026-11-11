@@ -7,21 +7,21 @@ select plan(8);
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at)
 values
   ('00000000-0000-0000-0000-000000000000', 'f9000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'react-owner@example.com', 'password-hash', now()),
-  ('00000000-0000-0000-0000-000000000000', 'f9000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'react-barber@example.com', 'password-hash', now()),
+  ('00000000-0000-0000-0000-000000000000', 'f9000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'react-professional@example.com', 'password-hash', now()),
   ('00000000-0000-0000-0000-000000000000', 'f9000000-0000-0000-0000-000000000003', 'authenticated', 'authenticated', 'react-customer@example.com', 'password-hash', now()),
   ('00000000-0000-0000-0000-000000000000', 'f9000000-0000-0000-0000-000000000004', 'authenticated', 'authenticated', 'react-other@example.com', 'password-hash', now());
 
 update public.profiles set role = 'owner' where user_id = 'f9000000-0000-0000-0000-000000000001';
-update public.profiles set role = 'barber' where user_id = 'f9000000-0000-0000-0000-000000000002';
+update public.profiles set role = 'professional' where user_id = 'f9000000-0000-0000-0000-000000000002';
 
 insert into public.shops (id, name, owner_user_id) values ('f9100000-0000-0000-0000-000000000001', 'React Shop', 'f9000000-0000-0000-0000-000000000001');
 insert into public.customers (id, shop_id, user_id, full_name, email) values
   ('f9200000-0000-0000-0000-000000000001', 'f9100000-0000-0000-0000-000000000001', 'f9000000-0000-0000-0000-000000000003', 'React Customer', 'react-customer@shop.example'),
   ('f9200000-0000-0000-0000-000000000002', 'f9100000-0000-0000-0000-000000000001', 'f9000000-0000-0000-0000-000000000004', 'Other Customer', 'react-other@shop.example');
-insert into public.barbers (id, shop_id, name, user_id) values ('f9300000-0000-0000-0000-000000000001', 'f9100000-0000-0000-0000-000000000001', 'React Barber', 'f9000000-0000-0000-0000-000000000002');
+insert into public.professionals (id, shop_id, name, user_id) values ('f9300000-0000-0000-0000-000000000001', 'f9100000-0000-0000-0000-000000000001', 'React Professional', 'f9000000-0000-0000-0000-000000000002');
 insert into public.services (id, shop_id, name, duration_minutes, price_cents) values ('f9400000-0000-0000-0000-000000000001', 'f9100000-0000-0000-0000-000000000001', 'React Cut', 30, 3500);
-insert into public.barber_services (id, shop_id, barber_id, service_id) values ('f9500000-0000-0000-0000-000000000001', 'f9100000-0000-0000-0000-000000000001', 'f9300000-0000-0000-0000-000000000001', 'f9400000-0000-0000-0000-000000000001');
-insert into public.working_periods (shop_id, barber_id, weekday, start_time, end_time)
+insert into public.professional_services (id, shop_id, professional_id, service_id) values ('f9500000-0000-0000-0000-000000000001', 'f9100000-0000-0000-0000-000000000001', 'f9300000-0000-0000-0000-000000000001', 'f9400000-0000-0000-0000-000000000001');
+insert into public.working_periods (shop_id, professional_id, weekday, start_time, end_time)
 select 'f9100000-0000-0000-0000-000000000001', 'f9300000-0000-0000-0000-000000000001', day, '09:00', '18:00' from generate_series(1, 7) as day;
 
 create temporary table react_dates as select date_trunc('week', current_date + 14)::date as monday;

@@ -70,22 +70,22 @@ values
     '30000000-0000-0000-0000-000000000003'
   );
 
-insert into public.barbers (id, shop_id, name)
+insert into public.professionals (id, shop_id, name)
 values
   (
     '32000000-0000-0000-0000-000000000001',
     '31000000-0000-0000-0000-000000000001',
-    'Task 4 Barber'
+    'Task 4 Professional'
   ),
   (
     '32000000-0000-0000-0000-000000000002',
     '31000000-0000-0000-0000-000000000002',
-    'Task 4 Other Barber'
+    'Task 4 Other Professional'
   );
 
 select throws_ok(
   $$
-    insert into public.working_periods (shop_id, barber_id, weekday, start_time, end_time)
+    insert into public.working_periods (shop_id, professional_id, weekday, start_time, end_time)
     values ('31000000-0000-0000-0000-000000000001', '32000000-0000-0000-0000-000000000001', 1, '09:00', '09:00')
   $$,
   '23514',
@@ -95,7 +95,7 @@ select throws_ok(
 
 select throws_ok(
   $$
-    insert into public.working_periods (shop_id, barber_id, weekday, start_time, end_time)
+    insert into public.working_periods (shop_id, professional_id, weekday, start_time, end_time)
     values ('31000000-0000-0000-0000-000000000001', '32000000-0000-0000-0000-000000000001', 1, '12:00', '09:00')
   $$,
   '23514',
@@ -103,20 +103,20 @@ select throws_ok(
   'reversed working periods are rejected'
 );
 
-insert into public.working_periods (id, shop_id, barber_id, weekday, start_time, end_time)
+insert into public.working_periods (id, shop_id, professional_id, weekday, start_time, end_time)
 values
   ('33000000-0000-0000-0000-000000000001', '31000000-0000-0000-0000-000000000001', '32000000-0000-0000-0000-000000000001', 1, '09:00', '12:00'),
   ('33000000-0000-0000-0000-000000000002', '31000000-0000-0000-0000-000000000001', '32000000-0000-0000-0000-000000000001', 1, '13:00', '18:00');
 
 select is(
-  (select count(*)::int from public.working_periods where barber_id = '32000000-0000-0000-0000-000000000001'),
+  (select count(*)::int from public.working_periods where professional_id = '32000000-0000-0000-0000-000000000001'),
   2,
   'two working periods are allowed for the same weekday'
 );
 
 select throws_ok(
   $$
-    insert into public.working_periods (shop_id, barber_id, weekday, start_time, end_time)
+    insert into public.working_periods (shop_id, professional_id, weekday, start_time, end_time)
     values ('31000000-0000-0000-0000-000000000001', '32000000-0000-0000-0000-000000000001', 1, '11:00', '14:00')
   $$,
   '23P01',
@@ -126,7 +126,7 @@ select throws_ok(
 
 select throws_ok(
   $$
-    insert into public.working_periods (shop_id, barber_id, weekday, start_time, end_time)
+    insert into public.working_periods (shop_id, professional_id, weekday, start_time, end_time)
     values ('31000000-0000-0000-0000-000000000001', '32000000-0000-0000-0000-000000000001', 1, '09:00', '12:00')
   $$,
   '23505',
@@ -134,7 +134,7 @@ select throws_ok(
   'duplicate identical working periods are rejected'
 );
 
-insert into public.schedule_overrides (id, shop_id, barber_id, local_date, kind)
+insert into public.schedule_overrides (id, shop_id, professional_id, local_date, kind)
 values ('34000000-0000-0000-0000-000000000001', '31000000-0000-0000-0000-000000000001', '32000000-0000-0000-0000-000000000001', '2026-08-20', 'block');
 
 select is(
@@ -145,7 +145,7 @@ select is(
 
 select throws_ok(
   $$
-    insert into public.schedule_overrides (shop_id, barber_id, local_date, kind, start_time)
+    insert into public.schedule_overrides (shop_id, professional_id, local_date, kind, start_time)
     values ('31000000-0000-0000-0000-000000000001', '32000000-0000-0000-0000-000000000001', '2026-08-21', 'block', '12:00')
   $$,
   '23514',
@@ -155,7 +155,7 @@ select throws_ok(
 
 select throws_ok(
   $$
-    insert into public.schedule_overrides (shop_id, barber_id, local_date, kind, start_time, end_time)
+    insert into public.schedule_overrides (shop_id, professional_id, local_date, kind, start_time, end_time)
     values ('31000000-0000-0000-0000-000000000001', '32000000-0000-0000-0000-000000000001', '2026-08-21', 'block', '12:00', '12:00')
   $$,
   '23514',
@@ -165,7 +165,7 @@ select throws_ok(
 
 select throws_ok(
   $$
-    insert into public.schedule_overrides (shop_id, barber_id, local_date, kind)
+    insert into public.schedule_overrides (shop_id, professional_id, local_date, kind)
     values ('31000000-0000-0000-0000-000000000001', '32000000-0000-0000-0000-000000000001', '2026-08-22', 'opening')
   $$,
   '23514',
@@ -173,13 +173,13 @@ select throws_ok(
   'extra openings require both times'
 );
 
-insert into public.schedule_overrides (id, shop_id, barber_id, local_date, kind, start_time, end_time)
+insert into public.schedule_overrides (id, shop_id, professional_id, local_date, kind, start_time, end_time)
 values
   ('34000000-0000-0000-0000-000000000002', '31000000-0000-0000-0000-000000000001', '32000000-0000-0000-0000-000000000001', '2026-08-21', 'block', '12:00', '13:00'),
   ('34000000-0000-0000-0000-000000000003', '31000000-0000-0000-0000-000000000001', '32000000-0000-0000-0000-000000000001', '2026-08-22', 'opening', '16:00', '18:00');
 
 select is(
-  (select count(*)::int from public.schedule_overrides where barber_id = '32000000-0000-0000-0000-000000000001'),
+  (select count(*)::int from public.schedule_overrides where professional_id = '32000000-0000-0000-0000-000000000001'),
   3,
   'all-day blocks, partial blocks, and extra openings are records'
 );
@@ -222,7 +222,7 @@ select is(
 
 select throws_ok(
   $$
-    insert into public.schedule_overrides (shop_id, barber_id, local_date, kind)
+    insert into public.schedule_overrides (shop_id, professional_id, local_date, kind)
     values ('31000000-0000-0000-0000-000000000001', '32000000-0000-0000-0000-000000000001', '2026-08-23', 'block')
   $$,
   '42501',
@@ -232,7 +232,7 @@ select throws_ok(
 
 select throws_ok(
   $$
-    insert into public.working_periods (shop_id, barber_id, weekday, start_time, end_time)
+    insert into public.working_periods (shop_id, professional_id, weekday, start_time, end_time)
     values ('31000000-0000-0000-0000-000000000001', '32000000-0000-0000-0000-000000000001', 2, '09:00', '18:00')
   $$,
   '42501',

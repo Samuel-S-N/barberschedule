@@ -50,17 +50,17 @@ values (
   '40000000-0000-0000-0000-000000000001'
 );
 
-insert into public.barbers (id, shop_id, name)
+insert into public.professionals (id, shop_id, name)
 values
   (
     '42000000-0000-0000-0000-000000000001',
     '41000000-0000-0000-0000-000000000001',
-    'Task 5 Main Barber'
+    'Task 5 Main Professional'
   ),
   (
     '42000000-0000-0000-0000-000000000002',
     '41000000-0000-0000-0000-000000000001',
-    'Task 5 Other Barber'
+    'Task 5 Other Professional'
   );
 
 insert into public.customers (id, shop_id, full_name, email)
@@ -95,7 +95,7 @@ values
     5100
   );
 
-insert into public.barber_services (id, shop_id, barber_id, service_id)
+insert into public.professional_services (id, shop_id, professional_id, service_id)
 values
   (
     '45000000-0000-0000-0000-000000000001',
@@ -122,7 +122,7 @@ values
     '44000000-0000-0000-0000-000000000003'
   );
 
-insert into public.working_periods (shop_id, barber_id, weekday, start_time, end_time)
+insert into public.working_periods (shop_id, professional_id, weekday, start_time, end_time)
 values
   (
     '41000000-0000-0000-0000-000000000001',
@@ -242,7 +242,7 @@ select is(
     )
   ),
   0,
-  'a barber cannot request another barber service availability'
+  'a professional cannot request another professional service availability'
 );
 
 select is(
@@ -259,7 +259,7 @@ select is(
   'availability preserves arbitrary service durations in the returned end instant'
 );
 
-insert into public.schedule_overrides (shop_id, barber_id, local_date, kind, start_time, end_time)
+insert into public.schedule_overrides (shop_id, professional_id, local_date, kind, start_time, end_time)
 values
   (
     '41000000-0000-0000-0000-000000000001',
@@ -304,7 +304,7 @@ select ok(
   'candidate starts use a global 15-minute grid'
 );
 
-update public.barbers
+update public.professionals
 set active = false, archived_at = now()
 where id = '42000000-0000-0000-0000-000000000001';
 
@@ -318,10 +318,10 @@ select is(
     )
   ),
   0,
-  'inactive barbers have no availability'
+  'inactive professionals have no availability'
 );
 
-update public.barbers
+update public.professionals
 set active = true, archived_at = null
 where id = '42000000-0000-0000-0000-000000000001';
 
@@ -356,19 +356,19 @@ select is(
     )
   ),
   6,
-  'another barber uses only that barber service and schedule'
+  'another professional uses only that professional service and schedule'
 );
 
-update public.barbers
+update public.professionals
 set buffer_minutes = 15
 where id = '42000000-0000-0000-0000-000000000001';
 
 insert into public.appointments (
   id,
   shop_id,
-  barber_id,
+  professional_id,
   customer_id,
-  barber_service_id,
+  professional_service_id,
   service_id,
   starts_at,
   ends_at,
@@ -376,7 +376,7 @@ insert into public.appointments (
   service_name_snapshot,
   service_duration_minutes_snapshot,
   service_price_cents_snapshot,
-  barber_buffer_minutes_snapshot
+  professional_buffer_minutes_snapshot
 )
 values (
   '46000000-0000-0000-0000-000000000001',
@@ -404,7 +404,7 @@ select ok(
     )
     where local_time between '09:45'::time and '10:30'::time
   ),
-  'a scheduled appointment and barber buffer occupy overlapping candidate starts'
+  'a scheduled appointment and professional buffer occupy overlapping candidate starts'
 );
 
 select ok(
@@ -463,10 +463,10 @@ select throws_ok(
   $$
     insert into public.appointments (
       id,
-      shop_id, barber_id, customer_id, barber_service_id, service_id,
+      shop_id, professional_id, customer_id, professional_service_id, service_id,
       starts_at, ends_at, occupied_until, service_name_snapshot,
       service_duration_minutes_snapshot, service_price_cents_snapshot,
-      barber_buffer_minutes_snapshot
+      professional_buffer_minutes_snapshot
     ) values (
       '46000000-0000-0000-0000-000000000002',
       '41000000-0000-0000-0000-000000000001',
@@ -480,17 +480,17 @@ select throws_ok(
   $$,
   '23P01',
   null,
-  'active barber occupied ranges are protected by an exclusion constraint'
+  'active professional occupied ranges are protected by an exclusion constraint'
 );
 
 select lives_ok(
   $$
     insert into public.appointments (
       id,
-      shop_id, barber_id, customer_id, barber_service_id, service_id,
+      shop_id, professional_id, customer_id, professional_service_id, service_id,
       starts_at, ends_at, occupied_until, status, service_name_snapshot,
       service_duration_minutes_snapshot, service_price_cents_snapshot,
-      barber_buffer_minutes_snapshot
+      professional_buffer_minutes_snapshot
     ) values (
       '46000000-0000-0000-0000-000000000003',
       '41000000-0000-0000-0000-000000000001',
@@ -513,7 +513,7 @@ select throws_ok(
   $$,
   '23503',
   null,
-  'appointment barber-service identity cannot be inconsistent'
+  'appointment professional-service identity cannot be inconsistent'
 );
 
 select throws_ok(
@@ -527,7 +527,7 @@ select throws_ok(
   'appointment snapshots are immutable'
 );
 
-insert into public.schedule_overrides (shop_id, barber_id, local_date, kind, start_time, end_time)
+insert into public.schedule_overrides (shop_id, professional_id, local_date, kind, start_time, end_time)
 values (
   '41000000-0000-0000-0000-000000000001',
   '42000000-0000-0000-0000-000000000001',
@@ -564,7 +564,7 @@ select ok(
   'a candidate ending at a partial block boundary remains available'
 );
 
-insert into public.schedule_overrides (shop_id, barber_id, local_date, kind, start_time, end_time)
+insert into public.schedule_overrides (shop_id, professional_id, local_date, kind, start_time, end_time)
 values
   (
     '41000000-0000-0000-0000-000000000001',
@@ -596,7 +596,7 @@ select is(
   'an all-day block overrides every opening and removes every candidate'
 );
 
-insert into public.schedule_overrides (shop_id, barber_id, local_date, kind, start_time, end_time)
+insert into public.schedule_overrides (shop_id, professional_id, local_date, kind, start_time, end_time)
 values (
   '41000000-0000-0000-0000-000000000001',
   '42000000-0000-0000-0000-000000000001',

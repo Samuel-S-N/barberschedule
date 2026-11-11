@@ -11,9 +11,9 @@ select is((select count(*)::int from public.recurrence_conflicts where status = 
 
 set local role anon;
 select set_config('request.jwt.claim.role', 'anon', true);
-select is((select count(*)::int from public.barbers where active), 1, 'anonymous users see active barbers');
+select is((select count(*)::int from public.professionals where active), 1, 'anonymous users see active professionals');
 select is((select count(*)::int from public.services where active), 1, 'anonymous users see active services');
-select is((select count(*)::int from public.barber_services where active), 1, 'anonymous users see active barber services');
+select is((select count(*)::int from public.professional_services where active), 1, 'anonymous users see active professional services');
 select throws_ok($$ select * from public.customers $$, '42501', null, 'anonymous users cannot read customers');
 select throws_ok($$ select * from public.working_periods $$, '42501', null, 'anonymous users cannot read schedules');
 select throws_ok($$ select * from public.appointments $$, '42501', null, 'anonymous users cannot read appointments');

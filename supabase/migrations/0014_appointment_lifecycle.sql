@@ -136,9 +136,9 @@ begin
   if not exists (
     select 1
     from public.get_available_slots(
-      target.barber_id,
+      target.professional_id,
       target_local_day,
-      target.barber_service_id
+      target.professional_service_id
     ) slot
     where slot.starts_at = $2
   ) then
@@ -152,7 +152,7 @@ begin
       starts_at = $2,
       ends_at = $2 + target.service_duration_minutes_snapshot * interval '1 minute',
       occupied_until = $2 + (
-        target.service_duration_minutes_snapshot + target.barber_buffer_minutes_snapshot
+        target.service_duration_minutes_snapshot + target.professional_buffer_minutes_snapshot
       ) * interval '1 minute',
       status = target.status,
       updated_at = clock_timestamp()

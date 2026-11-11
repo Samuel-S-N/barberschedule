@@ -1,7 +1,7 @@
--- The barber only needs the id to book: do not hand back another person's phone or account id for a probed email.
-drop function public.barber_find_or_create_customer(text, text, text);
+-- The professional only needs the id to book: do not hand back another person's phone or account id for a probed email.
+drop function public.professional_find_or_create_customer(text, text, text);
 
-create function public.barber_find_or_create_customer(
+create function public.professional_find_or_create_customer(
   target_name text,
   target_email text default null,
   target_phone text default null
@@ -12,14 +12,14 @@ security definer
 set search_path = pg_catalog, public, pg_temp
 as $$
 declare
-  me public.barbers%rowtype;
+  me public.professionals%rowtype;
   clean_name text := nullif(btrim(target_name), '');
   clean_email text := lower(nullif(btrim(target_email), ''));
   clean_phone text := nullif(regexp_replace(coalesce(target_phone, ''), '\D', '', 'g'), '');
   account_id uuid;
   found_row public.customers;
 begin
-  select * into me from public.barbers where user_id = auth.uid() and active;
+  select * into me from public.professionals where user_id = auth.uid() and active;
   if not found then
     raise exception using errcode = 'P0008', message = 'BOOKING_FORBIDDEN';
   end if;
@@ -58,7 +58,7 @@ begin
   end if;
 
   begin
-    insert into public.customers (shop_id, user_id, full_name, email, phone, created_by_barber_id)
+    insert into public.customers (shop_id, user_id, full_name, email, phone, created_by_professional_id)
     values (me.shop_id, account_id, clean_name, clean_email, clean_phone, me.id)
     returning * into found_row;
   exception when unique_violation then
@@ -75,5 +75,5 @@ begin
 end;
 $$;
 
-revoke all on function public.barber_find_or_create_customer(text, text, text) from public, anon;
-grant execute on function public.barber_find_or_create_customer(text, text, text) to authenticated;
+revoke all on function public.professional_find_or_create_customer(text, text, text) from public, anon;
+grant execute on function public.professional_find_or_create_customer(text, text, text) to authenticated;

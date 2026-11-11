@@ -54,11 +54,11 @@ values
     '20000000-0000-0000-0000-000000000004',
     'authenticated',
     'authenticated',
-    'task3-barber-linked@example.com',
+    'task3-professional-linked@example.com',
     'password-hash',
     now(),
     '{"provider":"email","providers":["email"]}',
-    '{"full_name":"Task 3 Linked Barber"}'
+    '{"full_name":"Task 3 Linked Professional"}'
   );
 
 update public.profiles
@@ -125,7 +125,7 @@ select throws_ok(
   'service price cannot be negative'
 );
 
-insert into public.barbers (
+insert into public.professionals (
   id,
   shop_id,
   user_id,
@@ -138,7 +138,7 @@ values
     '22000000-0000-0000-0000-000000000001',
     '21000000-0000-0000-0000-000000000001',
     '20000000-0000-0000-0000-000000000004',
-    'Alice Barber',
+    'Alice Professional',
     true,
     null
   ),
@@ -146,7 +146,7 @@ values
     '22000000-0000-0000-0000-000000000002',
     '21000000-0000-0000-0000-000000000001',
     null,
-    'Bob Barber',
+    'Bob Professional',
     false,
     now()
   );
@@ -191,10 +191,10 @@ values
 
 select throws_ok(
   $$
-    insert into public.barber_services (
+    insert into public.professional_services (
       id,
       shop_id,
-      barber_id,
+      professional_id,
       service_id,
       duration_override_minutes
     )
@@ -208,15 +208,15 @@ select throws_ok(
   $$,
   '23514',
   null,
-  'barber service duration override must be positive'
+  'professional service duration override must be positive'
 );
 
 select throws_ok(
   $$
-    insert into public.barber_services (
+    insert into public.professional_services (
       id,
       shop_id,
-      barber_id,
+      professional_id,
       service_id,
       price_override_cents
     )
@@ -230,13 +230,13 @@ select throws_ok(
   $$,
   '23514',
   null,
-  'barber service price override cannot be negative'
+  'professional service price override cannot be negative'
 );
 
-insert into public.barber_services (
+insert into public.professional_services (
   id,
   shop_id,
-  barber_id,
+  professional_id,
   service_id,
   active
 )
@@ -257,14 +257,14 @@ select is(
     where pg_namespace.nspname = 'public'
       and pg_proc.proname = 'resolve_effective_service'
   ),
-  'target_barber_service_id',
+  'target_professional_service_id',
   'resolve_effective_service exposes the expected PostgREST argument name'
 );
 
-insert into public.barber_services (
+insert into public.professional_services (
   id,
   shop_id,
-  barber_id,
+  professional_id,
   service_id,
   duration_override_minutes,
   price_override_cents,
@@ -280,10 +280,10 @@ values (
   true
 );
 
-insert into public.barber_services (
+insert into public.professional_services (
   id,
   shop_id,
-  barber_id,
+  professional_id,
   service_id,
   active
 )
@@ -297,10 +297,10 @@ values (
 
 select throws_ok(
   $$
-    insert into public.barber_services (
+    insert into public.professional_services (
       id,
       shop_id,
-      barber_id,
+      professional_id,
       service_id
     )
     values (
@@ -312,7 +312,7 @@ select throws_ok(
   $$,
   '23505',
   null,
-  'duplicate barber-service combinations are rejected'
+  'duplicate professional-service combinations are rejected'
 );
 
 insert into public.customers (
@@ -357,18 +357,18 @@ select set_config('request.jwt.claim.role', 'anon', true);
 select is(
   (
     select count(*)::int
-    from public.barbers
+    from public.professionals
     where shop_id = '21000000-0000-0000-0000-000000000001'
   ),
   1,
-  'anonymous users read only active barbers'
+  'anonymous users read only active professionals'
 );
 
 select throws_ok(
-  $$ select user_id from public.barbers $$,
+  $$ select user_id from public.professionals $$,
   '42501',
   null,
-  'anonymous users cannot read barber user associations'
+  'anonymous users cannot read professional user associations'
 );
 
 select is(
@@ -384,11 +384,11 @@ select is(
 select is(
   (
     select count(*)::int
-    from public.barber_services
+    from public.professional_services
     where shop_id = '21000000-0000-0000-0000-000000000001'
   ),
   2,
-  'anonymous users read only active barber services with active parents'
+  'anonymous users read only active professional services with active parents'
 );
 
 select is(
@@ -421,7 +421,7 @@ select is(
     )
   ),
   75,
-  'public effective-service lookup applies the barber duration override'
+  'public effective-service lookup applies the professional duration override'
 );
 
 select is(
@@ -432,7 +432,7 @@ select is(
     )
   ),
   6500,
-  'public effective-service lookup applies the barber price override'
+  'public effective-service lookup applies the professional price override'
 );
 
 select is(
@@ -466,10 +466,10 @@ select is(
 );
 
 select throws_ok(
-  $$ select user_id from public.barbers $$,
+  $$ select user_id from public.professionals $$,
   '42501',
   null,
-  'customers cannot read barber user associations'
+  'customers cannot read professional user associations'
 );
 
 select is(
@@ -515,7 +515,7 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select lives_ok(
   $$
-    insert into public.barbers (
+    insert into public.professionals (
       id,
       shop_id,
       name
@@ -523,30 +523,30 @@ select lives_ok(
     values (
       '22000000-0000-0000-0000-000000000003',
       '21000000-0000-0000-0000-000000000001',
-      'Carla Barber'
+      'Carla Professional'
     )
   $$,
-  'owner can create a barber'
+  'owner can create a professional'
 );
 
 select is(
   (
     select count(*)::int
-    from public.barbers
+    from public.professionals
     where id = '22000000-0000-0000-0000-000000000003'
   ),
   1,
-  'owner-created barber is readable by the owner'
+  'owner-created professional is readable by the owner'
 );
 
 select is(
   (
     select user_id::text
-    from public.list_owner_barbers('21000000-0000-0000-0000-000000000001')
+    from public.list_owner_professionals('21000000-0000-0000-0000-000000000001')
     where id = '22000000-0000-0000-0000-000000000001'
   ),
   '20000000-0000-0000-0000-000000000004',
-  'owners can still read internal barber user associations'
+  'owners can still read internal professional user associations'
 );
 
 select lives_ok(
@@ -659,8 +659,8 @@ select is(
 
 select lives_ok(
   $$
-    update public.barbers
-    set name = 'Hijacked Barber'
+    update public.professionals
+    set name = 'Hijacked Professional'
     where id = '22000000-0000-0000-0000-000000000001'
   $$,
   'other owner update attempt is filtered by RLS'
@@ -669,11 +669,11 @@ select lives_ok(
 select is(
   (
     select name
-    from public.barbers
+    from public.professionals
     where id = '22000000-0000-0000-0000-000000000001'
   ),
-  'Alice Barber',
-  'other owners cannot change another shop barber'
+  'Alice Professional',
+  'other owners cannot change another shop professional'
 );
 
 reset role;
@@ -688,30 +688,30 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 select is(
   (
     select count(*)::int
-    from public.barbers
+    from public.professionals
     where shop_id = '21000000-0000-0000-0000-000000000001'
   ),
   3,
-  'owners can read active and inactive barbers'
+  'owners can read active and inactive professionals'
 );
 
 select is(
   (
     select count(user_id)::int
-    from public.list_owner_barbers('21000000-0000-0000-0000-000000000001')
+    from public.list_owner_professionals('21000000-0000-0000-0000-000000000001')
   ),
   1,
-  'owner reads keep barber user associations available only through the owner projection'
+  'owner reads keep professional user associations available only through the owner projection'
 );
 
 select is(
   (
     select count(*)::int
-    from public.barber_services
+    from public.professional_services
     where shop_id = '21000000-0000-0000-0000-000000000001'
   ),
   3,
-  'owners can read active and inactive-public barber services'
+  'owners can read active and inactive-public professional services'
 );
 
 select is(

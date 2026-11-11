@@ -1,4 +1,4 @@
-create function public.get_my_barber_report(period_start date, period_end date)
+create function public.get_my_professional_report(period_start date, period_end date)
 returns jsonb
 language plpgsql
 stable
@@ -6,15 +6,15 @@ security definer
 set search_path = pg_catalog, public, pg_temp
 as $$
 declare
-  me public.barbers%rowtype;
+  me public.professionals%rowtype;
   tz text;
   range_start timestamptz;
   range_end timestamptz;
   share numeric;
 begin
-  select * into me from public.barbers where user_id = auth.uid() and active;
+  select * into me from public.professionals where user_id = auth.uid() and active;
   if not found then
-    raise exception using errcode = 'P0019', message = 'BARBER_NOT_LINKED';
+    raise exception using errcode = 'P0019', message = 'PROFESSIONAL_NOT_LINKED';
   end if;
   if period_end < period_start or period_end - period_start > 91 then
     raise exception using errcode = 'P0022', message = 'EARNINGS_INVALID_RANGE';
@@ -23,7 +23,7 @@ begin
   select s.timezone into tz from public.shops s where s.id = me.shop_id;
   range_start := period_start::timestamp at time zone tz;
   range_end := (period_end + 1)::timestamp at time zone tz;
-  -- The barber's own share: commission percent, or the whole amount for chair rental. Gross is never returned.
+  -- The professional's own share: commission percent, or the whole amount for chair rental. Gross is never returned.
   share := case when me.compensation_type = 'commission' then me.commission_percent else 100 end;
 
   return jsonb_build_object(
@@ -38,7 +38,7 @@ begin
           (count(*) filter (where a.status = 'no_show'))::int as no_show,
           (count(*) filter (where a.status in ('scheduled', 'confirmed')))::int as upcoming
         from public.appointments a
-        where a.barber_id = me.id and a.starts_at >= range_start and a.starts_at < range_end
+        where a.professional_id = me.id and a.starts_at >= range_start and a.starts_at < range_end
         group by 1
       ) d
     ), '[]'::jsonb),
@@ -47,7 +47,7 @@ begin
       from (
         select a.service_id, a.service_name_snapshot as name, count(*)::int as completed
         from public.appointments a
-        where a.barber_id = me.id and a.status = 'completed' and a.starts_at >= range_start and a.starts_at < range_end
+        where a.professional_id = me.id and a.status = 'completed' and a.starts_at >= range_start and a.starts_at < range_end
         group by a.service_id, a.service_name_snapshot
       ) s
     ), '[]'::jsonb)
@@ -55,5 +55,5 @@ begin
 end;
 $$;
 
-revoke all on function public.get_my_barber_report(date, date) from public, anon;
-grant execute on function public.get_my_barber_report(date, date) to authenticated;
+revoke all on function public.get_my_professional_report(date, date) from public, anon;
+grant execute on function public.get_my_professional_report(date, date) to authenticated;

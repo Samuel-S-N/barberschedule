@@ -25,8 +25,8 @@ function json(status: number, body: Record<string, unknown>) {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Promotion to `barber` and the barbers.user_id link happen here, with the service role,
-// never from signup metadata: the public signUp path must not be able to claim a barber row.
+// Promotion to `professional` and the professionals.user_id link happen here, with the service role,
+// never from signup metadata: the public signUp path must not be able to claim a professional row.
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders, status: 204 });
   if (request.method !== "POST") return json(405, { code: "METHOD_NOT_ALLOWED" });
@@ -34,8 +34,8 @@ Deno.serve(async (request) => {
   const authorization = request.headers.get("Authorization");
   if (!authorization) return json(401, { code: "UNAUTHENTICATED" });
 
-  const { barberId, email } = (await request.json().catch(() => ({}))) as { barberId?: string; email?: string };
-  if (!barberId || !UUID.test(barberId) || !email || !EMAIL.test(email)) return json(400, { code: "INVALID_INPUT" });
+  const { professionalId, email } = (await request.json().catch(() => ({}))) as { professionalId?: string; email?: string };
+  if (!professionalId || !UUID.test(professionalId) || !email || !EMAIL.test(email)) return json(400, { code: "INVALID_INPUT" });
 
   const url = requiredEnv("SUPABASE_URL");
   const anonKey = requiredEnv("SUPABASE_ANON_KEY");
@@ -45,27 +45,27 @@ Deno.serve(async (request) => {
   const userResponse = await fetch(`${url}/auth/v1/user`, { headers: { apikey: anonKey, Authorization: authorization } });
   if (!userResponse.ok) return json(401, { code: "UNAUTHENTICATED" });
 
-  const barberResponse = await fetch(
-    `${url}/rest/v1/barbers?id=eq.${barberId}&select=id,shop_id,user_id,active`,
+  const professionalResponse = await fetch(
+    `${url}/rest/v1/professionals?id=eq.${professionalId}&select=id,shop_id,user_id,active`,
     { headers: service },
   );
-  const [barber] = (await barberResponse.json().catch(() => [])) as Array<{
+  const [professional] = (await professionalResponse.json().catch(() => [])) as Array<{
     active: boolean;
     id: string;
     shop_id: string;
     user_id: string | null;
   }>;
-  if (!barber) return json(403, { code: "FORBIDDEN" });
+  if (!professional) return json(403, { code: "FORBIDDEN" });
 
   // The caller's own JWT decides ownership, so this cannot be spoofed by the body.
   const ownerResponse = await fetch(`${url}/rest/v1/rpc/is_shop_owner`, {
-    body: JSON.stringify({ shop_id: barber.shop_id }),
+    body: JSON.stringify({ shop_id: professional.shop_id }),
     headers: { apikey: anonKey, Authorization: authorization, "Content-Type": "application/json" },
     method: "POST",
   });
   if (!ownerResponse.ok || (await ownerResponse.json()) !== true) return json(403, { code: "FORBIDDEN" });
 
-  if (barber.user_id || !barber.active) return json(409, { code: "BARBER_INVITE_CONFLICT" });
+  if (professional.user_id || !professional.active) return json(409, { code: "PROFESSIONAL_INVITE_CONFLICT" });
 
   const invited = await fetch(`${url}/auth/v1/invite`, {
     body: JSON.stringify({ email }),
@@ -73,12 +73,12 @@ Deno.serve(async (request) => {
     method: "POST",
   });
   if (!invited.ok) {
-    return json(invited.status === 422 || invited.status === 409 ? 409 : 500, { code: "BARBER_INVITE_CONFLICT" });
+    return json(invited.status === 422 || invited.status === 409 ? 409 : 500, { code: "PROFESSIONAL_INVITE_CONFLICT" });
   }
   const { id: userId } = (await invited.json()) as { id: string };
 
-  // Guarded by user_id is null so two racing invites cannot both link the same barber row.
-  const linked = await fetch(`${url}/rest/v1/barbers?id=eq.${barberId}&user_id=is.null`, {
+  // Guarded by user_id is null so two racing invites cannot both link the same professional row.
+  const linked = await fetch(`${url}/rest/v1/professionals?id=eq.${professionalId}&user_id=is.null`, {
     body: JSON.stringify({ invited_at: new Date().toISOString(), user_id: userId }),
     headers: { ...service, Prefer: "return=representation" },
     method: "PATCH",
@@ -86,11 +86,11 @@ Deno.serve(async (request) => {
   const linkedRows = linked.ok ? ((await linked.json()) as unknown[]) : [];
   if (linkedRows.length === 0) {
     await fetch(`${url}/auth/v1/admin/users/${userId}`, { headers: service, method: "DELETE" });
-    return json(409, { code: "BARBER_INVITE_CONFLICT" });
+    return json(409, { code: "PROFESSIONAL_INVITE_CONFLICT" });
   }
 
   const promoted = await fetch(`${url}/rest/v1/profiles?user_id=eq.${userId}`, {
-    body: JSON.stringify({ role: "barber" }),
+    body: JSON.stringify({ role: "professional" }),
     headers: service,
     method: "PATCH",
   });

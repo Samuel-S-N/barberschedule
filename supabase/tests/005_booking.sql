@@ -23,8 +23,8 @@ where user_id = '50000000-0000-0000-0000-000000000001';
 insert into public.shops (id, name, owner_user_id)
 values ('51000000-0000-0000-0000-000000000001', 'Task 6 Shop', '50000000-0000-0000-0000-000000000001');
 
-insert into public.barbers (id, shop_id, name, buffer_minutes)
-values ('52000000-0000-0000-0000-000000000001', '51000000-0000-0000-0000-000000000001', 'Task 6 Barber', 10);
+insert into public.professionals (id, shop_id, name, buffer_minutes)
+values ('52000000-0000-0000-0000-000000000001', '51000000-0000-0000-0000-000000000001', 'Task 6 Professional', 10);
 
 insert into public.customers (id, shop_id, user_id, full_name, email)
 values
@@ -34,10 +34,10 @@ values
 insert into public.services (id, shop_id, name, duration_minutes, price_cents)
 values ('54000000-0000-0000-0000-000000000001', '51000000-0000-0000-0000-000000000001', 'Task 6 Cut', 30, 4000);
 
-insert into public.barber_services (id, shop_id, barber_id, service_id)
+insert into public.professional_services (id, shop_id, professional_id, service_id)
 values ('55000000-0000-0000-0000-000000000001', '51000000-0000-0000-0000-000000000001', '52000000-0000-0000-0000-000000000001', '54000000-0000-0000-0000-000000000001');
 
-insert into public.working_periods (shop_id, barber_id, weekday, start_time, end_time)
+insert into public.working_periods (shop_id, professional_id, weekday, start_time, end_time)
 values ('51000000-0000-0000-0000-000000000001', '52000000-0000-0000-0000-000000000001', 1, '09:00', '18:00');
 
 set local role authenticated;
@@ -73,7 +73,7 @@ select is(
 select is(
   (select occupied_until - ends_at from public.appointments where customer_id = '53000000-0000-0000-0000-000000000001' limit 1),
   interval '10 minutes',
-  'booking snapshots the barber buffer in occupied_until'
+  'booking snapshots the professional buffer in occupied_until'
 );
 
 set local role authenticated;
@@ -172,7 +172,7 @@ select throws_ok(
     )
   $$,
   'P0001', null,
-  'owner cannot bypass a barber occupancy conflict'
+  'owner cannot bypass a professional occupancy conflict'
 );
 
 select throws_ok(
@@ -189,7 +189,7 @@ select throws_ok(
   'a service crossing the workday end is rejected'
 );
 
-insert into public.schedule_overrides (shop_id, barber_id, local_date, kind, start_time, end_time)
+insert into public.schedule_overrides (shop_id, professional_id, local_date, kind, start_time, end_time)
 values ('51000000-0000-0000-0000-000000000001', '52000000-0000-0000-0000-000000000001', current_setting('task6.local_date')::date, 'block', '15:00', '16:00');
 
 select throws_ok(
@@ -217,13 +217,13 @@ select throws_ok(
 
 update public.services set active = true, archived_at = null
 where id = '54000000-0000-0000-0000-000000000001';
-update public.barbers set active = false, archived_at = now()
+update public.professionals set active = false, archived_at = now()
 where id = '52000000-0000-0000-0000-000000000001';
 
 select throws_ok(
   $$ select * from public.book_appointment('55000000-0000-0000-0000-000000000001', '53000000-0000-0000-0000-000000000002', '2026-08-18 12:00:00+00', 'owner', null) $$,
   'P0005', null,
-  'inactive barber is rejected'
+  'inactive professional is rejected'
 );
 
 reset role;

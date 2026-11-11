@@ -1,17 +1,17 @@
-create type public.barber_compensation_type as enum ('commission', 'chair_rental');
+create type public.professional_compensation_type as enum ('commission', 'chair_rental');
 create type public.chair_rental_frequency as enum ('weekly', 'monthly');
 
-alter table public.barbers
+alter table public.professionals
   add column bio text,
   add column avatar_url text,
-  add column compensation_type public.barber_compensation_type not null default 'commission',
+  add column compensation_type public.professional_compensation_type not null default 'commission',
   add column commission_percent numeric(5, 2) not null default 0,
   add column chair_rental_amount_cents integer,
   add column chair_rental_frequency public.chair_rental_frequency,
   add column invited_at timestamptz;
 
-alter table public.barbers
-  add constraint barbers_compensation_matches_type check (
+alter table public.professionals
+  add constraint professionals_compensation_matches_type check (
     (
       compensation_type = 'commission'
       and commission_percent between 0 and 100
@@ -24,14 +24,14 @@ alter table public.barbers
       and chair_rental_frequency is not null
     )
   ),
-  add constraint barbers_bio_length check (bio is null or char_length(bio) <= 500);
+  add constraint professionals_bio_length check (bio is null or char_length(bio) <= 500);
 
-create unique index barbers_user_id_key on public.barbers (user_id) where user_id is not null;
+create unique index professionals_user_id_key on public.professionals (user_id) where user_id is not null;
 
 -- Owner-only listing now also exposes profile, compensation and invite state.
-drop function public.list_owner_barbers(uuid);
+drop function public.list_owner_professionals(uuid);
 
-create function public.list_owner_barbers(target_shop_id uuid)
+create function public.list_owner_professionals(target_shop_id uuid)
 returns table (
   id uuid,
   shop_id uuid,
@@ -41,7 +41,7 @@ returns table (
   archived_at timestamptz,
   bio text,
   avatar_url text,
-  compensation_type public.barber_compensation_type,
+  compensation_type public.professional_compensation_type,
   commission_percent numeric,
   chair_rental_amount_cents integer,
   chair_rental_frequency public.chair_rental_frequency,
@@ -59,30 +59,30 @@ begin
 
   return query
   select
-    barbers.id,
-    barbers.shop_id,
-    barbers.user_id,
-    barbers.name,
-    barbers.active,
-    barbers.archived_at,
-    barbers.bio,
-    barbers.avatar_url,
-    barbers.compensation_type,
-    barbers.commission_percent,
-    barbers.chair_rental_amount_cents,
-    barbers.chair_rental_frequency,
-    barbers.invited_at
-  from public.barbers
-  where barbers.shop_id = target_shop_id
-  order by barbers.name asc;
+    professionals.id,
+    professionals.shop_id,
+    professionals.user_id,
+    professionals.name,
+    professionals.active,
+    professionals.archived_at,
+    professionals.bio,
+    professionals.avatar_url,
+    professionals.compensation_type,
+    professionals.commission_percent,
+    professionals.chair_rental_amount_cents,
+    professionals.chair_rental_frequency,
+    professionals.invited_at
+  from public.professionals
+  where professionals.shop_id = target_shop_id
+  order by professionals.name asc;
 end;
 $$;
 
-revoke all on function public.list_owner_barbers(uuid) from public;
-grant execute on function public.list_owner_barbers(uuid) to authenticated;
+revoke all on function public.list_owner_professionals(uuid) from public;
+grant execute on function public.list_owner_professionals(uuid) to authenticated;
 
--- A barber acts only through the active barbers row linked to auth.uid().
-create function public.is_own_barber(target_barber_id uuid)
+-- A professional acts only through the active professionals row linked to auth.uid().
+create function public.is_own_professional(target_professional_id uuid)
 returns boolean
 language sql
 stable
@@ -91,42 +91,42 @@ set search_path = pg_catalog, public, pg_temp
 as $$
   select exists(
     select 1
-    from public.barbers
-    where barbers.id = target_barber_id
-      and barbers.user_id = auth.uid()
-      and barbers.active
+    from public.professionals
+    where professionals.id = target_professional_id
+      and professionals.user_id = auth.uid()
+      and professionals.active
   );
 $$;
 
-revoke all on function public.is_own_barber(uuid) from public;
-grant execute on function public.is_own_barber(uuid) to authenticated;
+revoke all on function public.is_own_professional(uuid) from public;
+grant execute on function public.is_own_professional(uuid) to authenticated;
 
 create policy "schedule_overrides_select_self"
 on public.schedule_overrides
 for select
 to authenticated
-using (public.is_own_barber(barber_id));
+using (public.is_own_professional(professional_id));
 
 create policy "schedule_overrides_insert_self_block"
 on public.schedule_overrides
 for insert
 to authenticated
-with check (public.is_own_barber(barber_id) and kind = 'block');
+with check (public.is_own_professional(professional_id) and kind = 'block');
 
 create policy "schedule_overrides_delete_self_block"
 on public.schedule_overrides
 for delete
 to authenticated
-using (public.is_own_barber(barber_id) and kind = 'block');
+using (public.is_own_professional(professional_id) and kind = 'block');
 
-create function public.get_my_barber_profile()
+create function public.get_my_professional_profile()
 returns table (
   id uuid,
   shop_id uuid,
   name text,
   bio text,
   avatar_url text,
-  compensation_type public.barber_compensation_type,
+  compensation_type public.professional_compensation_type,
   commission_percent numeric,
   chair_rental_amount_cents integer,
   chair_rental_frequency public.chair_rental_frequency
@@ -138,33 +138,33 @@ set search_path = pg_catalog, public, pg_temp
 as $$
 begin
   if auth.uid() is null then
-    raise exception using errcode = '42501', message = 'BARBER_NOT_LINKED';
+    raise exception using errcode = '42501', message = 'PROFESSIONAL_NOT_LINKED';
   end if;
 
   return query
   select
-    barbers.id,
-    barbers.shop_id,
-    barbers.name,
-    barbers.bio,
-    barbers.avatar_url,
-    barbers.compensation_type,
-    barbers.commission_percent,
-    barbers.chair_rental_amount_cents,
-    barbers.chair_rental_frequency
-  from public.barbers
-  where barbers.user_id = auth.uid()
-    and barbers.active;
+    professionals.id,
+    professionals.shop_id,
+    professionals.name,
+    professionals.bio,
+    professionals.avatar_url,
+    professionals.compensation_type,
+    professionals.commission_percent,
+    professionals.chair_rental_amount_cents,
+    professionals.chair_rental_frequency
+  from public.professionals
+  where professionals.user_id = auth.uid()
+    and professionals.active;
 
   if not found then
-    raise exception using errcode = 'P0019', message = 'BARBER_NOT_LINKED';
+    raise exception using errcode = 'P0019', message = 'PROFESSIONAL_NOT_LINKED';
   end if;
 end;
 $$;
 
-create function public.list_my_barber_services()
+create function public.list_my_professional_services()
 returns table (
-  barber_service_id uuid,
+  professional_service_id uuid,
   service_id uuid,
   service_name text,
   duration_minutes integer,
@@ -177,34 +177,34 @@ security definer
 set search_path = pg_catalog, public, pg_temp
 as $$
 declare
-  my_barber_id uuid;
+  my_professional_id uuid;
 begin
-  select barbers.id into my_barber_id
-  from public.barbers
-  where barbers.user_id = auth.uid() and barbers.active;
+  select professionals.id into my_professional_id
+  from public.professionals
+  where professionals.user_id = auth.uid() and professionals.active;
 
-  if my_barber_id is null then
-    raise exception using errcode = 'P0019', message = 'BARBER_NOT_LINKED';
+  if my_professional_id is null then
+    raise exception using errcode = 'P0019', message = 'PROFESSIONAL_NOT_LINKED';
   end if;
 
   return query
   select
-    barber_services.id,
+    professional_services.id,
     services.id,
     services.name,
-    coalesce(barber_services.duration_override_minutes, services.duration_minutes),
-    coalesce(barber_services.price_override_cents, services.price_cents),
-    (barber_services.active and services.active)
-  from public.barber_services
+    coalesce(professional_services.duration_override_minutes, services.duration_minutes),
+    coalesce(professional_services.price_override_cents, services.price_cents),
+    (professional_services.active and services.active)
+  from public.professional_services
   join public.services
-    on services.id = barber_services.service_id
-   and services.shop_id = barber_services.shop_id
-  where barber_services.barber_id = my_barber_id
+    on services.id = professional_services.service_id
+   and services.shop_id = professional_services.shop_id
+  where professional_services.professional_id = my_professional_id
   order by services.name;
 end;
 $$;
 
-create function public.update_my_barber_profile(new_bio text, new_avatar_url text)
+create function public.update_my_professional_profile(new_bio text, new_avatar_url text)
 returns table (
   id uuid,
   bio text,
@@ -227,18 +227,18 @@ begin
   end if;
 
   return query
-  update public.barbers
+  update public.professionals
   set bio = clean_bio, avatar_url = clean_avatar, updated_at = clock_timestamp()
-  where barbers.user_id = auth.uid() and barbers.active
-  returning barbers.id, barbers.bio, barbers.avatar_url;
+  where professionals.user_id = auth.uid() and professionals.active
+  returning professionals.id, professionals.bio, professionals.avatar_url;
 
   if not found then
-    raise exception using errcode = 'P0019', message = 'BARBER_NOT_LINKED';
+    raise exception using errcode = 'P0019', message = 'PROFESSIONAL_NOT_LINKED';
   end if;
 end;
 $$;
 
-create function public.list_my_barber_agenda(
+create function public.list_my_professional_agenda(
   range_start date,
   range_end date,
   page_limit integer default 100,
@@ -247,9 +247,9 @@ create function public.list_my_barber_agenda(
 returns table (
   id uuid,
   shop_id uuid,
-  barber_id uuid,
+  professional_id uuid,
   customer_id uuid,
-  barber_service_id uuid,
+  professional_service_id uuid,
   service_id uuid,
   starts_at timestamptz,
   ends_at timestamptz,
@@ -260,10 +260,10 @@ returns table (
   service_name_snapshot text,
   service_duration_minutes_snapshot integer,
   service_price_cents_snapshot integer,
-  barber_buffer_minutes_snapshot integer,
+  professional_buffer_minutes_snapshot integer,
   created_at timestamptz,
   updated_at timestamptz,
-  barber_name text,
+  professional_name text,
   customer_name text
 )
 language plpgsql
@@ -272,17 +272,17 @@ security definer
 set search_path = pg_catalog, public, pg_temp
 as $$
 declare
-  my_barber_id uuid;
+  my_professional_id uuid;
   my_shop_id uuid;
   target_timezone text;
 begin
-  select barbers.id, barbers.shop_id
-  into my_barber_id, my_shop_id
-  from public.barbers
-  where barbers.user_id = auth.uid() and barbers.active;
+  select professionals.id, professionals.shop_id
+  into my_professional_id, my_shop_id
+  from public.professionals
+  where professionals.user_id = auth.uid() and professionals.active;
 
-  if my_barber_id is null then
-    raise exception using errcode = 'P0019', message = 'BARBER_NOT_LINKED';
+  if my_professional_id is null then
+    raise exception using errcode = 'P0019', message = 'PROFESSIONAL_NOT_LINKED';
   end if;
 
   if range_end < range_start
@@ -301,9 +301,9 @@ begin
   select
     appointments.id,
     appointments.shop_id,
-    appointments.barber_id,
+    appointments.professional_id,
     appointments.customer_id,
-    appointments.barber_service_id,
+    appointments.professional_service_id,
     appointments.service_id,
     appointments.starts_at,
     appointments.ends_at,
@@ -314,19 +314,19 @@ begin
     appointments.service_name_snapshot,
     appointments.service_duration_minutes_snapshot,
     appointments.service_price_cents_snapshot,
-    appointments.barber_buffer_minutes_snapshot,
+    appointments.professional_buffer_minutes_snapshot,
     appointments.created_at,
     appointments.updated_at,
-    barbers.name,
+    professionals.name,
     customers.full_name
   from public.appointments
-  join public.barbers
-    on barbers.id = appointments.barber_id
-   and barbers.shop_id = appointments.shop_id
+  join public.professionals
+    on professionals.id = appointments.professional_id
+   and professionals.shop_id = appointments.shop_id
   join public.customers
     on customers.id = appointments.customer_id
    and customers.shop_id = appointments.shop_id
-  where appointments.barber_id = my_barber_id
+  where appointments.professional_id = my_professional_id
     and appointments.starts_at >= range_start::timestamp at time zone target_timezone
     and appointments.starts_at < (range_end + 1)::timestamp at time zone target_timezone
   order by appointments.starts_at, appointments.id
@@ -360,7 +360,7 @@ begin
     raise exception using errcode = 'P0012', message = 'APPOINTMENT_NOT_FOUND';
   end if;
 
-  if not public.is_own_barber(target.barber_id) then
+  if not public.is_own_professional(target.professional_id) then
     raise exception using errcode = 'P0010', message = 'APPOINTMENT_FORBIDDEN';
   end if;
 
@@ -377,7 +377,7 @@ begin
 end;
 $$;
 
-create function public.get_my_barber_earnings(period_start date, period_end date)
+create function public.get_my_professional_earnings(period_start date, period_end date)
 returns table (
   service_id uuid,
   service_name_snapshot text,
@@ -390,17 +390,17 @@ security definer
 set search_path = pg_catalog, public, pg_temp
 as $$
 declare
-  my_barber_id uuid;
+  my_professional_id uuid;
   my_shop_id uuid;
   target_timezone text;
 begin
-  select barbers.id, barbers.shop_id
-  into my_barber_id, my_shop_id
-  from public.barbers
-  where barbers.user_id = auth.uid() and barbers.active;
+  select professionals.id, professionals.shop_id
+  into my_professional_id, my_shop_id
+  from public.professionals
+  where professionals.user_id = auth.uid() and professionals.active;
 
-  if my_barber_id is null then
-    raise exception using errcode = 'P0019', message = 'BARBER_NOT_LINKED';
+  if my_professional_id is null then
+    raise exception using errcode = 'P0019', message = 'PROFESSIONAL_NOT_LINKED';
   end if;
 
   if period_end < period_start or period_end - period_start > 91 then
@@ -418,7 +418,7 @@ begin
     count(*)::bigint,
     coalesce(sum(appointments.service_price_cents_snapshot), 0)::bigint
   from public.appointments
-  where appointments.barber_id = my_barber_id
+  where appointments.professional_id = my_professional_id
     and appointments.status = 'completed'
     and appointments.starts_at >= period_start::timestamp at time zone target_timezone
     and appointments.starts_at < (period_end + 1)::timestamp at time zone target_timezone
@@ -427,16 +427,16 @@ begin
 end;
 $$;
 
-create function public.set_barber_compensation(
-  target_barber_id uuid,
-  new_type public.barber_compensation_type,
+create function public.set_professional_compensation(
+  target_professional_id uuid,
+  new_type public.professional_compensation_type,
   new_commission_percent numeric default null,
   new_rental_amount_cents integer default null,
   new_rental_frequency public.chair_rental_frequency default null
 )
 returns table (
   id uuid,
-  compensation_type public.barber_compensation_type,
+  compensation_type public.professional_compensation_type,
   commission_percent numeric,
   chair_rental_amount_cents integer,
   chair_rental_frequency public.chair_rental_frequency
@@ -448,9 +448,9 @@ as $$
 declare
   target_shop uuid;
 begin
-  select barbers.shop_id into target_shop
-  from public.barbers
-  where barbers.id = target_barber_id;
+  select professionals.shop_id into target_shop
+  from public.professionals
+  where professionals.id = target_professional_id;
 
   if target_shop is null or not public.is_shop_owner(target_shop) then
     raise exception using errcode = '42501', message = 'FORBIDDEN';
@@ -473,24 +473,24 @@ begin
   end if;
 
   return query
-  update public.barbers
+  update public.professionals
   set
     compensation_type = new_type,
     commission_percent = case when new_type = 'commission' then new_commission_percent else 0 end,
     chair_rental_amount_cents = case when new_type = 'chair_rental' then new_rental_amount_cents end,
     chair_rental_frequency = case when new_type = 'chair_rental' then new_rental_frequency end,
     updated_at = clock_timestamp()
-  where barbers.id = target_barber_id
+  where professionals.id = target_professional_id
   returning
-    barbers.id,
-    barbers.compensation_type,
-    barbers.commission_percent,
-    barbers.chair_rental_amount_cents,
-    barbers.chair_rental_frequency;
+    professionals.id,
+    professionals.compensation_type,
+    professionals.commission_percent,
+    professionals.chair_rental_amount_cents,
+    professionals.chair_rental_frequency;
 end;
 $$;
 
-create function public.get_barber_account_status(target_barber_id uuid)
+create function public.get_professional_account_status(target_professional_id uuid)
 returns boolean
 language plpgsql
 stable
@@ -501,9 +501,9 @@ declare
   target_shop uuid;
   target_user uuid;
 begin
-  select barbers.shop_id, barbers.user_id into target_shop, target_user
-  from public.barbers
-  where barbers.id = target_barber_id;
+  select professionals.shop_id, professionals.user_id into target_shop, target_user
+  from public.professionals
+  where professionals.id = target_professional_id;
 
   if target_shop is null or not public.is_shop_owner(target_shop) then
     raise exception using errcode = '42501', message = 'FORBIDDEN';
@@ -520,20 +520,20 @@ begin
 end;
 $$;
 
-revoke all on function public.get_my_barber_profile() from public;
-revoke all on function public.list_my_barber_services() from public;
-revoke all on function public.update_my_barber_profile(text, text) from public;
-revoke all on function public.list_my_barber_agenda(date, date, integer, integer) from public;
+revoke all on function public.get_my_professional_profile() from public;
+revoke all on function public.list_my_professional_services() from public;
+revoke all on function public.update_my_professional_profile(text, text) from public;
+revoke all on function public.list_my_professional_agenda(date, date, integer, integer) from public;
 revoke all on function public.set_my_appointment_status(uuid, public.appointment_status) from public;
-revoke all on function public.get_my_barber_earnings(date, date) from public;
-revoke all on function public.set_barber_compensation(uuid, public.barber_compensation_type, numeric, integer, public.chair_rental_frequency) from public;
-revoke all on function public.get_barber_account_status(uuid) from public;
+revoke all on function public.get_my_professional_earnings(date, date) from public;
+revoke all on function public.set_professional_compensation(uuid, public.professional_compensation_type, numeric, integer, public.chair_rental_frequency) from public;
+revoke all on function public.get_professional_account_status(uuid) from public;
 
-grant execute on function public.get_my_barber_profile() to authenticated;
-grant execute on function public.list_my_barber_services() to authenticated;
-grant execute on function public.update_my_barber_profile(text, text) to authenticated;
-grant execute on function public.list_my_barber_agenda(date, date, integer, integer) to authenticated;
+grant execute on function public.get_my_professional_profile() to authenticated;
+grant execute on function public.list_my_professional_services() to authenticated;
+grant execute on function public.update_my_professional_profile(text, text) to authenticated;
+grant execute on function public.list_my_professional_agenda(date, date, integer, integer) to authenticated;
 grant execute on function public.set_my_appointment_status(uuid, public.appointment_status) to authenticated;
-grant execute on function public.get_my_barber_earnings(date, date) to authenticated;
-grant execute on function public.set_barber_compensation(uuid, public.barber_compensation_type, numeric, integer, public.chair_rental_frequency) to authenticated;
-grant execute on function public.get_barber_account_status(uuid) to authenticated;
+grant execute on function public.get_my_professional_earnings(date, date) to authenticated;
+grant execute on function public.set_professional_compensation(uuid, public.professional_compensation_type, numeric, integer, public.chair_rental_frequency) to authenticated;
+grant execute on function public.get_professional_account_status(uuid) to authenticated;

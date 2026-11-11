@@ -24,7 +24,7 @@ create policy notifications_select_own on public.notifications
 for select to authenticated
 using (user_id = auth.uid());
 
--- Push events that were never sent before: customer "confirmed" and everything for barbers and owners.
+-- Push events that were never sent before: customer "confirmed" and everything for professionals and owners.
 alter table public.notification_outbox drop constraint notification_outbox_event_type_check;
 alter table public.notification_outbox add constraint notification_outbox_event_type_check check (event_type in (
   'appointment.booked', 'appointment.cancelled', 'appointment.rescheduled', 'appointment.reminder', 'recurrence.conflict',
@@ -56,12 +56,12 @@ begin
     'service_name', appt.service_name_snapshot,
     'starts_at', appt.starts_at,
     'customer_name', c.full_name,
-    'barber_name', b.name
+    'professional_name', b.name
   )
   into event_params
-  from public.customers c, public.barbers b
+  from public.customers c, public.professionals b
   where c.id = appt.customer_id and c.shop_id = appt.shop_id
-    and b.id = appt.barber_id and b.shop_id = appt.shop_id;
+    and b.id = appt.professional_id and b.shop_id = appt.shop_id;
 
   if event_params is null then
     return;
@@ -92,20 +92,20 @@ set search_path = pg_catalog, public, pg_temp
 as $$
 declare
   customer_user uuid;
-  barber_user uuid;
+  professional_user uuid;
   owner_user uuid;
   staff_kind text;
   customer_kind text;
   push_event text;
   suffix text := '';
 begin
-  -- The recurrence engine inserts up to 90 days at once; that must not flood barbers and owners.
+  -- The recurrence engine inserts up to 90 days at once; that must not flood professionals and owners.
   if new.source = 'recurrence' then
     return new;
   end if;
 
   select user_id into customer_user from public.customers where id = new.customer_id and shop_id = new.shop_id;
-  select user_id into barber_user from public.barbers where id = new.barber_id and shop_id = new.shop_id;
+  select user_id into professional_user from public.professionals where id = new.professional_id and shop_id = new.shop_id;
   select owner_user_id into owner_user from public.shops where id = new.shop_id;
 
   if tg_op = 'INSERT' then
@@ -136,8 +136,8 @@ begin
 
   if staff_kind is not null then
     push_event := 'staff.' || replace(staff_kind, 'appointment_', '');
-    perform public.add_inbox_notification(barber_user, staff_kind, new, suffix, push_event);
-    if owner_user is distinct from barber_user then
+    perform public.add_inbox_notification(professional_user, staff_kind, new, suffix, push_event);
+    if owner_user is distinct from professional_user then
       perform public.add_inbox_notification(owner_user, staff_kind, new, suffix, push_event);
     end if;
   end if;

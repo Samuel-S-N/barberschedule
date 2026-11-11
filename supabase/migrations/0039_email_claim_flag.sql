@@ -1,4 +1,4 @@
--- Email claim hardening: only link a barber-created customer by email where confirmations are really enforced.
+-- Email claim hardening: only link a professional-created customer by email where confirmations are really enforced.
 create table public.app_settings (
   singleton boolean primary key default true check (singleton),
   email_claim_enabled boolean not null default false
@@ -39,7 +39,7 @@ begin
   into account_email, account_confirmed, meta
   from auth.users where id = actor;
 
-  -- A barber may have booked this person before they had an account: link that row (history included) by confirmed email.
+  -- A professional may have booked this person before they had an account: link that row (history included) by confirmed email.
   -- With email confirmations off, Supabase stamps email_confirmed_at at signup, so the column alone proves nothing:
   -- claiming also needs the per-environment flag, turned on only where confirmations are enforced.
   if account_confirmed and (select email_claim_enabled from public.app_settings) then
@@ -51,8 +51,8 @@ begin
       and lower(c.email) = lower(account_email)
       and not exists (select 1 from public.customers x where x.shop_id = shop and x.user_id = actor);
 
-    -- Signed up before the claim was enabled (or before the barber booked them): the account already has its own row,
-    -- so merge the barber-created one into it instead of leaving the history stranded.
+    -- Signed up before the claim was enabled (or before the professional booked them): the account already has its own row,
+    -- so merge the professional-created one into it instead of leaving the history stranded.
     select * into mine from public.customers where shop_id = shop and user_id = actor;
     if found then
       select * into stale from public.customers
@@ -60,8 +60,8 @@ begin
       if found then
         update public.appointments set customer_id = mine.id where customer_id = stale.id;
         update public.recurrence_series set customer_id = mine.id where customer_id = stale.id;
-        insert into public.barber_customer_notes (barber_id, customer_id, note, updated_at)
-        select barber_id, mine.id, note, updated_at from public.barber_customer_notes where customer_id = stale.id
+        insert into public.professional_customer_notes (professional_id, customer_id, note, updated_at)
+        select professional_id, mine.id, note, updated_at from public.professional_customer_notes where customer_id = stale.id
         on conflict do nothing;
         delete from public.customers where id = stale.id;
         update public.customers set email = coalesce(email, stale.email), phone = coalesce(phone, stale.phone) where id = mine.id;

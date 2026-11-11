@@ -8,11 +8,11 @@ set search_path = pg_catalog, public, pg_temp
 as $$
 begin
   if new.is_standard and new.active then
-    insert into public.barber_services (shop_id, barber_id, service_id, active, archived_at)
+    insert into public.professional_services (shop_id, professional_id, service_id, active, archived_at)
     select new.shop_id, b.id, new.id, true, null
-    from public.barbers b
+    from public.professionals b
     where b.shop_id = new.shop_id and b.active
-    on conflict (shop_id, barber_id, service_id)
+    on conflict (shop_id, professional_id, service_id)
     do update set active = true, archived_at = null, updated_at = clock_timestamp();
   end if;
 
@@ -32,11 +32,11 @@ set search_path = pg_catalog, public, pg_temp
 as $$
 begin
   if new.active then
-    insert into public.barber_services (shop_id, barber_id, service_id, active, archived_at)
+    insert into public.professional_services (shop_id, professional_id, service_id, active, archived_at)
     select new.shop_id, new.id, s.id, true, null
     from public.services s
     where s.shop_id = new.shop_id and s.active and s.is_standard
-    on conflict (shop_id, barber_id, service_id)
+    on conflict (shop_id, professional_id, service_id)
     do update set active = true, archived_at = null, updated_at = clock_timestamp();
   end if;
 
@@ -44,8 +44,8 @@ begin
 end;
 $$;
 
-create trigger barbers_inherit_standard
-after insert or update of active on public.barbers
+create trigger professionals_inherit_standard
+after insert or update of active on public.professionals
 for each row execute function public.inherit_standard_services();
 
 create function public.list_my_service_options()
@@ -64,11 +64,11 @@ security definer
 set search_path = pg_catalog, public, pg_temp
 as $$
 declare
-  me public.barbers%rowtype;
+  me public.professionals%rowtype;
 begin
-  select * into me from public.barbers where user_id = auth.uid() and active;
+  select * into me from public.professionals where user_id = auth.uid() and active;
   if not found then
-    raise exception using errcode = 'P0019', message = 'BARBER_NOT_LINKED';
+    raise exception using errcode = 'P0019', message = 'PROFESSIONAL_NOT_LINKED';
   end if;
 
   return query
@@ -81,8 +81,8 @@ begin
     s.is_standard,
     (s.is_standard or coalesce(bs.active, false))
   from public.services s
-  left join public.barber_services bs
-    on bs.service_id = s.id and bs.shop_id = s.shop_id and bs.barber_id = me.id
+  left join public.professional_services bs
+    on bs.service_id = s.id and bs.shop_id = s.shop_id and bs.professional_id = me.id
   where s.shop_id = me.shop_id and s.active
   order by s.is_standard desc, s.name;
 end;
@@ -95,12 +95,12 @@ security definer
 set search_path = pg_catalog, public, pg_temp
 as $$
 declare
-  me public.barbers%rowtype;
+  me public.professionals%rowtype;
   target public.services%rowtype;
 begin
-  select * into me from public.barbers where user_id = auth.uid() and active;
+  select * into me from public.professionals where user_id = auth.uid() and active;
   if not found then
-    raise exception using errcode = 'P0019', message = 'BARBER_NOT_LINKED';
+    raise exception using errcode = 'P0019', message = 'PROFESSIONAL_NOT_LINKED';
   end if;
 
   select * into target from public.services where id = target_service_id and shop_id = me.shop_id and active;
@@ -111,12 +111,12 @@ begin
     raise exception using errcode = 'P0026', message = 'SERVICE_STANDARD_LOCKED';
   end if;
 
-  insert into public.barber_services (shop_id, barber_id, service_id, active, archived_at)
+  insert into public.professional_services (shop_id, professional_id, service_id, active, archived_at)
   values (me.shop_id, me.id, target.id, new_enabled, case when new_enabled then null else now() end)
-  on conflict on constraint barber_services_unique
+  on conflict on constraint professional_services_unique
   do update set
     active = new_enabled,
-    archived_at = case when new_enabled then null else coalesce(public.barber_services.archived_at, now()) end,
+    archived_at = case when new_enabled then null else coalesce(public.professional_services.archived_at, now()) end,
     updated_at = clock_timestamp();
 
   return query select target.id, new_enabled;

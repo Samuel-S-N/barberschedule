@@ -1,4 +1,4 @@
--- Barbers may also confirm their own scheduled appointments (scheduled -> confirmed).
+-- Professionals may also confirm their own scheduled appointments (scheduled -> confirmed).
 create or replace function public.set_my_appointment_status(
   appointment_id uuid,
   new_status public.appointment_status
@@ -24,7 +24,7 @@ begin
     raise exception using errcode = 'P0012', message = 'APPOINTMENT_NOT_FOUND';
   end if;
 
-  if not public.is_own_barber(target.barber_id) then
+  if not public.is_own_professional(target.professional_id) then
     raise exception using errcode = 'P0010', message = 'APPOINTMENT_FORBIDDEN';
   end if;
 

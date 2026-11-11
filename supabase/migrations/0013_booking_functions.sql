@@ -5,7 +5,7 @@ add column source public.appointment_source not null default 'customer',
 add column notes text;
 
 create or replace function public.book_appointment(
-  barber_service_id uuid,
+  professional_service_id uuid,
   customer_id uuid,
   starts_at timestamptz,
   source public.appointment_source,
@@ -30,10 +30,10 @@ begin
   select
     bs.id,
     bs.shop_id,
-    bs.barber_id,
+    bs.professional_id,
     bs.service_id,
-    b.name as barber_name,
-    b.active as barber_active,
+    b.name as professional_name,
+    b.active as professional_active,
     b.buffer_minutes,
     s.name as service_name,
     s.duration_minutes,
@@ -41,14 +41,14 @@ begin
     s.active as service_active,
     bs.duration_override_minutes,
     bs.price_override_cents,
-    bs.active as barber_service_active,
+    bs.active as professional_service_active,
     sh.timezone,
     c.active as customer_active,
     c.user_id as customer_user_id
   into target
-  from public.barber_services bs
-  join public.barbers b
-    on b.id = bs.barber_id and b.shop_id = bs.shop_id
+  from public.professional_services bs
+  join public.professionals b
+    on b.id = bs.professional_id and b.shop_id = bs.shop_id
   join public.services s
     on s.id = bs.service_id and s.shop_id = bs.shop_id
   join public.shops sh on sh.id = bs.shop_id
@@ -60,11 +60,11 @@ begin
     raise exception using errcode = 'P0004', message = 'SERVICE_UNAVAILABLE';
   end if;
 
-  if not target.barber_active then
-    raise exception using errcode = 'P0005', message = 'BARBER_UNAVAILABLE';
+  if not target.professional_active then
+    raise exception using errcode = 'P0005', message = 'PROFESSIONAL_UNAVAILABLE';
   end if;
 
-  if not target.service_active or not target.barber_service_active then
+  if not target.service_active or not target.professional_service_active then
     raise exception using errcode = 'P0004', message = 'SERVICE_UNAVAILABLE';
   end if;
 
@@ -106,7 +106,7 @@ begin
 
   if not exists (
     select 1
-    from public.get_available_slots(target.barber_id, local_day, $1) slot
+    from public.get_available_slots(target.professional_id, local_day, $1) slot
     where slot.starts_at = $3
   ) then
     raise exception using errcode = 'P0001', message = 'SLOT_UNAVAILABLE';
@@ -116,9 +116,9 @@ begin
     return query
     insert into public.appointments (
       shop_id,
-      barber_id,
+      professional_id,
       customer_id,
-      barber_service_id,
+      professional_service_id,
       service_id,
       starts_at,
       ends_at,
@@ -129,11 +129,11 @@ begin
       service_name_snapshot,
       service_duration_minutes_snapshot,
       service_price_cents_snapshot,
-      barber_buffer_minutes_snapshot
+      professional_buffer_minutes_snapshot
     )
     values (
       target.shop_id,
-      target.barber_id,
+      target.professional_id,
       $2,
       $1,
       target.service_id,

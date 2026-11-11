@@ -1,4 +1,4 @@
--- Barbers can cancel/move their own appointments (same rules as the owner). The customer is notified by the appointment trigger.
+-- Professionals can cancel/move their own appointments (same rules as the owner). The customer is notified by the appointment trigger.
 create or replace function public.cancel_appointment(appointment_id uuid)
 returns setof public.appointments
 language plpgsql
@@ -29,9 +29,9 @@ begin
   end if;
 
   owner_actor := public.is_shop_owner(target.shop_id);
-  -- The barber who owns the appointment manages it like the owner: no 90-minute lock, no daily limit.
+  -- The professional who owns the appointment manages it like the owner: no 90-minute lock, no daily limit.
   staff_actor := owner_actor or exists (
-    select 1 from public.barbers b where b.id = target.barber_id and b.user_id = actor_id and b.active
+    select 1 from public.professionals b where b.id = target.professional_id and b.user_id = actor_id and b.active
   );
   if not staff_actor and target.customer_user_id is distinct from actor_id then
     raise exception using errcode = 'P0010', message = 'APPOINTMENT_FORBIDDEN';
@@ -87,9 +87,9 @@ begin
   end if;
 
   owner_actor := public.is_shop_owner(target.shop_id);
-  -- The barber who owns the appointment manages it like the owner: no 90-minute lock, no daily limit.
+  -- The professional who owns the appointment manages it like the owner: no 90-minute lock, no daily limit.
   staff_actor := owner_actor or exists (
-    select 1 from public.barbers b where b.id = target.barber_id and b.user_id = actor_id and b.active
+    select 1 from public.professionals b where b.id = target.professional_id and b.user_id = actor_id and b.active
   );
   if not staff_actor and target.customer_user_id is distinct from actor_id then
     raise exception using errcode = 'P0010', message = 'APPOINTMENT_FORBIDDEN';
@@ -131,9 +131,9 @@ begin
   if not exists (
     select 1
     from public.get_available_slots(
-      target.barber_id,
+      target.professional_id,
       target_local_day,
-      target.barber_service_id
+      target.professional_service_id
     ) slot
     where slot.starts_at = $2
   ) then
@@ -147,7 +147,7 @@ begin
       starts_at = $2,
       ends_at = $2 + target.service_duration_minutes_snapshot * interval '1 minute',
       occupied_until = $2 + (
-        target.service_duration_minutes_snapshot + target.barber_buffer_minutes_snapshot
+        target.service_duration_minutes_snapshot + target.professional_buffer_minutes_snapshot
       ) * interval '1 minute',
       status = target.status,
       updated_at = clock_timestamp()

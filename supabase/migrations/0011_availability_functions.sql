@@ -1,7 +1,7 @@
 create or replace function public.get_available_slots(
-  barber_id uuid,
+  professional_id uuid,
   local_date date,
-  barber_service_id uuid
+  professional_service_id uuid
 )
 returns table (
   local_date date,
@@ -16,27 +16,27 @@ set search_path = pg_catalog, public, pg_temp
 as $$
   with target as (
     select
-      barbers.id as barber_id,
-      barbers.shop_id,
+      professionals.id as professional_id,
+      professionals.shop_id,
       shops.timezone,
       coalesce(
-        barber_services.duration_override_minutes,
+        professional_services.duration_override_minutes,
         services.duration_minutes
       ) * interval '1 minute' as service_duration,
-      barbers.buffer_minutes * interval '1 minute' as buffer_duration
-    from public.barber_services
-    inner join public.barbers
-      on barbers.id = barber_services.barber_id
-     and barbers.shop_id = barber_services.shop_id
+      professionals.buffer_minutes * interval '1 minute' as buffer_duration
+    from public.professional_services
+    inner join public.professionals
+      on professionals.id = professional_services.professional_id
+     and professionals.shop_id = professional_services.shop_id
     inner join public.services
-      on services.id = barber_services.service_id
-     and services.shop_id = barber_services.shop_id
+      on services.id = professional_services.service_id
+     and services.shop_id = professional_services.shop_id
     inner join public.shops
-      on shops.id = barbers.shop_id
-    where barber_services.id = $3
-      and barbers.id = $1
-      and barber_services.active
-      and barbers.active
+      on shops.id = professionals.shop_id
+    where professional_services.id = $3
+      and professionals.id = $1
+      and professional_services.active
+      and professionals.active
       and services.active
   ),
   openings as (
@@ -46,7 +46,7 @@ as $$
     from target
     inner join public.working_periods
       on working_periods.shop_id = target.shop_id
-     and working_periods.barber_id = target.barber_id
+     and working_periods.professional_id = target.professional_id
     where working_periods.weekday = extract(isodow from $2)::smallint
 
     union
@@ -57,7 +57,7 @@ as $$
     from target
     inner join public.schedule_overrides
       on schedule_overrides.shop_id = target.shop_id
-     and schedule_overrides.barber_id = target.barber_id
+     and schedule_overrides.professional_id = target.professional_id
     where schedule_overrides.local_date = $2
       and schedule_overrides.kind = 'opening'
   ),
@@ -79,7 +79,7 @@ as $$
       candidates.local_starts_at at time zone target.timezone
         + target.service_duration as ends_at,
       target.buffer_duration,
-      target.barber_id,
+      target.professional_id,
       target.shop_id
     from candidates
     cross join target
@@ -87,7 +87,7 @@ as $$
       select 1
       from public.schedule_overrides
       where schedule_overrides.shop_id = target.shop_id
-        and schedule_overrides.barber_id = target.barber_id
+        and schedule_overrides.professional_id = target.professional_id
         and schedule_overrides.local_date = $2
         and schedule_overrides.kind = 'block'
         and (
@@ -110,7 +110,7 @@ as $$
     select 1
     from public.appointments
     where appointments.shop_id = slots.shop_id
-      and appointments.barber_id = slots.barber_id
+      and appointments.professional_id = slots.professional_id
       and appointments.status in ('scheduled', 'confirmed')
       and tstzrange(slots.starts_at, slots.ends_at + slots.buffer_duration, '[)')
         && tstzrange(appointments.starts_at, appointments.occupied_until, '[)')

@@ -1,4 +1,4 @@
--- Name and nickname for staff (owners, barbers): update_my_profile needs a customers row, which they do not have.
+-- Name and nickname for staff (owners, professionals): update_my_profile needs a customers row, which they do not have.
 create function public.update_my_staff_profile(p_full_name text, p_nickname text default null)
 returns void
 language plpgsql

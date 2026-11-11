@@ -1,7 +1,7 @@
-alter table public.barbers
+alter table public.professionals
   add column lunch_start time,
   add column lunch_end time,
-  add constraint barbers_lunch_valid check (
+  add constraint professionals_lunch_valid check (
     (lunch_start is null and lunch_end is null)
     or (lunch_start is not null and lunch_end is not null and lunch_start < lunch_end)
   );
@@ -13,7 +13,7 @@ stable
 security definer
 set search_path = pg_catalog, public, pg_temp
 as $$
-  select b.lunch_start, b.lunch_end from public.barbers b where b.user_id = auth.uid() and b.active;
+  select b.lunch_start, b.lunch_end from public.professionals b where b.user_id = auth.uid() and b.active;
 $$;
 
 create function public.set_my_lunch_break(new_start time, new_end time)
@@ -27,18 +27,18 @@ begin
     raise exception using errcode = 'P0020', message = 'LUNCH_INVALID';
   end if;
 
-  update public.barbers
+  update public.professionals
   set lunch_start = new_start, lunch_end = new_end, updated_at = clock_timestamp()
   where user_id = auth.uid() and active;
 
   if not found then
-    raise exception using errcode = 'P0019', message = 'BARBER_NOT_LINKED';
+    raise exception using errcode = 'P0019', message = 'PROFESSIONAL_NOT_LINKED';
   end if;
 end;
 $$;
 
 create function public.list_shop_lunch_breaks(target_shop_id uuid)
-returns table (barber_id uuid, lunch_start time, lunch_end time)
+returns table (professional_id uuid, lunch_start time, lunch_end time)
 language plpgsql
 stable
 security definer
@@ -51,7 +51,7 @@ begin
 
   return query
   select b.id, b.lunch_start, b.lunch_end
-  from public.barbers b
+  from public.professionals b
   where b.shop_id = target_shop_id and b.lunch_start is not null;
 end;
 $$;
@@ -63,11 +63,11 @@ grant execute on function public.get_my_lunch_break() to authenticated;
 grant execute on function public.set_my_lunch_break(time, time) to authenticated;
 grant execute on function public.list_shop_lunch_breaks(uuid) to authenticated;
 
--- get_available_slots, as in 0012, now also removing every barber's daily lunch break.
+-- get_available_slots, as in 0012, now also removing every professional's daily lunch break.
 create or replace function public.get_available_slots(
-  barber_id uuid,
+  professional_id uuid,
   local_date date,
-  barber_service_id uuid
+  professional_service_id uuid
 )
 returns table (
   local_date date,
@@ -82,27 +82,27 @@ set search_path = pg_catalog, public, pg_temp
 as $$
   with target as (
     select
-      barbers.id as barber_id,
-      barbers.shop_id,
+      professionals.id as professional_id,
+      professionals.shop_id,
       shops.timezone,
       coalesce(
-        barber_services.duration_override_minutes,
+        professional_services.duration_override_minutes,
         services.duration_minutes
       ) * interval '1 minute' as service_duration,
-      barbers.buffer_minutes * interval '1 minute' as buffer_duration
-    from public.barber_services
-    inner join public.barbers
-      on barbers.id = barber_services.barber_id
-     and barbers.shop_id = barber_services.shop_id
+      professionals.buffer_minutes * interval '1 minute' as buffer_duration
+    from public.professional_services
+    inner join public.professionals
+      on professionals.id = professional_services.professional_id
+     and professionals.shop_id = professional_services.shop_id
     inner join public.services
-      on services.id = barber_services.service_id
-     and services.shop_id = barber_services.shop_id
+      on services.id = professional_services.service_id
+     and services.shop_id = professional_services.shop_id
     inner join public.shops
-      on shops.id = barbers.shop_id
-    where barber_services.id = $3
-      and barbers.id = $1
-      and barber_services.active
-      and barbers.active
+      on shops.id = professionals.shop_id
+    where professional_services.id = $3
+      and professionals.id = $1
+      and professional_services.active
+      and professionals.active
       and services.active
   ),
   raw_openings as (
@@ -114,7 +114,7 @@ as $$
     from target
     inner join public.working_periods
       on working_periods.shop_id = target.shop_id
-     and working_periods.barber_id = target.barber_id
+     and working_periods.professional_id = target.professional_id
     where working_periods.weekday = extract(isodow from $2)::smallint
 
     union all
@@ -127,7 +127,7 @@ as $$
     from target
     inner join public.schedule_overrides
       on schedule_overrides.shop_id = target.shop_id
-     and schedule_overrides.barber_id = target.barber_id
+     and schedule_overrides.professional_id = target.professional_id
     where schedule_overrides.local_date = $2
       and schedule_overrides.kind = 'opening'
   ),
@@ -183,19 +183,19 @@ as $$
     from target
     inner join public.schedule_overrides
       on schedule_overrides.shop_id = target.shop_id
-     and schedule_overrides.barber_id = target.barber_id
+     and schedule_overrides.professional_id = target.professional_id
     where schedule_overrides.local_date = $2
       and schedule_overrides.kind = 'block'
 
     union all
 
-    -- The barber's daily lunch break.
-    select tsrange($2 + barbers.lunch_start, $2 + barbers.lunch_end, '[)')
+    -- The professional's daily lunch break.
+    select tsrange($2 + professionals.lunch_start, $2 + professionals.lunch_end, '[)')
     from target
-    inner join public.barbers
-      on barbers.id = target.barber_id
-     and barbers.shop_id = target.shop_id
-    where barbers.lunch_start is not null
+    inner join public.professionals
+      on professionals.id = target.professional_id
+     and professionals.shop_id = target.shop_id
+    where professionals.lunch_start is not null
   ),
   effective_openings as (
     select unnest(
@@ -245,7 +245,7 @@ as $$
       candidates.local_starts_at at time zone target.timezone
         + target.service_duration as ends_at,
       target.buffer_duration,
-      target.barber_id,
+      target.professional_id,
       target.shop_id
     from candidates
     cross join target
@@ -256,7 +256,7 @@ as $$
     select 1
     from public.appointments
     where appointments.shop_id = slots.shop_id
-      and appointments.barber_id = slots.barber_id
+      and appointments.professional_id = slots.professional_id
       and appointments.status in ('scheduled', 'confirmed')
       and tstzrange(
         slots.starts_at,

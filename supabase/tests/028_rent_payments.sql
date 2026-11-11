@@ -7,17 +7,17 @@ select plan(10);
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at)
 values
   ('00000000-0000-0000-0000-000000000000', 'a2000000-0000-0000-0000-0000000000a1', 'authenticated', 'authenticated', 't28-owner@example.com', 'x', now()),
-  ('00000000-0000-0000-0000-000000000000', 'a2000000-0000-0000-0000-0000000000a2', 'authenticated', 'authenticated', 't28-barber@example.com', 'x', now());
+  ('00000000-0000-0000-0000-000000000000', 'a2000000-0000-0000-0000-0000000000a2', 'authenticated', 'authenticated', 't28-professional@example.com', 'x', now());
 
 update public.profiles set role = 'owner' where user_id = 'a2000000-0000-0000-0000-0000000000a1';
-update public.profiles set role = 'barber' where user_id = 'a2000000-0000-0000-0000-0000000000a2';
+update public.profiles set role = 'professional' where user_id = 'a2000000-0000-0000-0000-0000000000a2';
 
 insert into public.shops (id, name, owner_user_id) values ('a2100000-0000-0000-0000-000000000001', 'T28 Shop', 'a2000000-0000-0000-0000-0000000000a1');
 
-insert into public.barbers (id, shop_id, user_id, name, compensation_type, commission_percent, chair_rental_amount_cents, chair_rental_frequency)
+insert into public.professionals (id, shop_id, user_id, name, compensation_type, commission_percent, chair_rental_amount_cents, chair_rental_frequency)
 values
-  ('a2200000-0000-0000-0000-000000000001', 'a2100000-0000-0000-0000-000000000001', 'a2000000-0000-0000-0000-0000000000a2', 'Chair Barber', 'chair_rental', 0, 30000, 'monthly'),
-  ('a2200000-0000-0000-0000-000000000002', 'a2100000-0000-0000-0000-000000000001', null, 'Commission Barber', 'commission', 40, null, null);
+  ('a2200000-0000-0000-0000-000000000001', 'a2100000-0000-0000-0000-000000000001', 'a2000000-0000-0000-0000-0000000000a2', 'Chair Professional', 'chair_rental', 0, 30000, 'monthly'),
+  ('a2200000-0000-0000-0000-000000000002', 'a2100000-0000-0000-0000-000000000001', null, 'Commission Professional', 'commission', 40, null, null);
 
 set local role authenticated;
 select set_config('request.jwt.claim.role', 'authenticated', true);
@@ -28,23 +28,23 @@ select is(
   5000, 'the owner records a chair rent payment'
 );
 select is(
-  (select barber_name from public.list_rent_payments(current_date - 1, current_date + 1)),
-  'Chair Barber', 'and lists it with the barber name in the period'
+  (select professional_name from public.list_rent_payments(current_date - 1, current_date + 1)),
+  'Chair Professional', 'and lists it with the professional name in the period'
 );
 select is(
   (select count(*)::int from public.list_rent_payments(current_date - 30, current_date - 20)),
   0, 'payments outside the period are not listed'
 );
 select is(
-  (select (b ->> 'rent_paid_cents')::int from jsonb_array_elements(public.get_shop_report(current_date - 1, current_date + 1) -> 'barbers') b where b ->> 'name' = 'Chair Barber'),
-  5000, 'the shop report carries the paid rent per barber'
+  (select (b ->> 'rent_paid_cents')::int from jsonb_array_elements(public.get_shop_report(current_date - 1, current_date + 1) -> 'professionals') b where b ->> 'name' = 'Chair Professional'),
+  5000, 'the shop report carries the paid rent per professional'
 );
-select throws_ok($$ select * from public.record_rent_payment('a2200000-0000-0000-0000-000000000002', 1000, current_date) $$, 'P0030', null, 'a commission barber has no rent to pay');
+select throws_ok($$ select * from public.record_rent_payment('a2200000-0000-0000-0000-000000000002', 1000, current_date) $$, 'P0030', null, 'a commission professional has no rent to pay');
 select throws_ok($$ select * from public.record_rent_payment('a2200000-0000-0000-0000-000000000001', 0, current_date) $$, 'P0030', null, 'the amount must be positive');
 
 select set_config('request.jwt.claim.sub', 'a2000000-0000-0000-0000-0000000000a2', true);
-select throws_ok($$ select * from public.record_rent_payment('a2200000-0000-0000-0000-000000000001', 1000, current_date) $$, 'P0029', null, 'a barber cannot record payments');
-select throws_ok($$ select * from public.list_rent_payments(current_date - 1, current_date) $$, 'P0029', null, 'a barber cannot list payments');
+select throws_ok($$ select * from public.record_rent_payment('a2200000-0000-0000-0000-000000000001', 1000, current_date) $$, 'P0029', null, 'a professional cannot record payments');
+select throws_ok($$ select * from public.list_rent_payments(current_date - 1, current_date) $$, 'P0029', null, 'a professional cannot list payments');
 
 select set_config('request.jwt.claim.sub', 'a2000000-0000-0000-0000-0000000000a1', true);
 select lives_ok(

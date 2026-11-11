@@ -18,8 +18,8 @@ values
   ('81000000-0000-0000-0000-000000000001', 'Task 9 Shop', '80000000-0000-0000-0000-000000000001'),
   ('81000000-0000-0000-0000-000000000002', 'Task 9 Other Shop', '80000000-0000-0000-0000-000000000003');
 
-insert into public.barbers (id, shop_id, name)
-values ('82000000-0000-0000-0000-000000000001', '81000000-0000-0000-0000-000000000001', 'Task 9 Barber');
+insert into public.professionals (id, shop_id, name)
+values ('82000000-0000-0000-0000-000000000001', '81000000-0000-0000-0000-000000000001', 'Task 9 Professional');
 
 insert into public.customers (id, shop_id, user_id, full_name, email, phone)
 values
@@ -31,10 +31,10 @@ values
 insert into public.services (id, shop_id, name, duration_minutes, price_cents)
 values ('84000000-0000-0000-0000-000000000001', '81000000-0000-0000-0000-000000000001', 'Task 9 Cut', 30, 4000);
 
-insert into public.barber_services (id, shop_id, barber_id, service_id)
+insert into public.professional_services (id, shop_id, professional_id, service_id)
 values ('85000000-0000-0000-0000-000000000001', '81000000-0000-0000-0000-000000000001', '82000000-0000-0000-0000-000000000001', '84000000-0000-0000-0000-000000000001');
 
-insert into public.working_periods (shop_id, barber_id, weekday, start_time, end_time)
+insert into public.working_periods (shop_id, professional_id, weekday, start_time, end_time)
 select '81000000-0000-0000-0000-000000000001', '82000000-0000-0000-0000-000000000001', weekday, '08:00', '18:00'
 from generate_series(1, 7) as weekday;
 
@@ -116,18 +116,18 @@ reset role;
 select throws_ok(
   $$
     insert into public.appointments (
-      shop_id, barber_id, customer_id, barber_service_id, service_id,
+      shop_id, professional_id, customer_id, professional_service_id, service_id,
       starts_at, ends_at, occupied_until, status, source, notes,
       service_name_snapshot, service_duration_minutes_snapshot,
-      service_price_cents_snapshot, barber_buffer_minutes_snapshot,
+      service_price_cents_snapshot, professional_buffer_minutes_snapshot,
       recurrence_series_id, recurrence_occurrence_date
     )
     select
-      shop_id, barber_id, customer_id, barber_service_id, service_id,
+      shop_id, professional_id, customer_id, professional_service_id, service_id,
       starts_at + interval '1 day', ends_at + interval '1 day', occupied_until + interval '1 day',
       'cancelled', source, notes, service_name_snapshot,
       service_duration_minutes_snapshot, service_price_cents_snapshot,
-      barber_buffer_minutes_snapshot, recurrence_series_id, recurrence_occurrence_date
+      professional_buffer_minutes_snapshot, recurrence_series_id, recurrence_occurrence_date
     from public.appointments
     where recurrence_series_id = current_setting('task9.weekly_series')::uuid
     order by recurrence_occurrence_date
@@ -285,7 +285,7 @@ select ok(
   'resolved future conflicts retain a resolution timestamp'
 );
 
-insert into public.schedule_overrides (shop_id, barber_id, local_date, kind, start_time, end_time)
+insert into public.schedule_overrides (shop_id, professional_id, local_date, kind, start_time, end_time)
 values (
   '81000000-0000-0000-0000-000000000001',
   '82000000-0000-0000-0000-000000000001',
