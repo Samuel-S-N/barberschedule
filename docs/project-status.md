@@ -3,6 +3,10 @@
 Date: 2026-09-29
 Status: Tasks 1-16 implemented; credentialed EAS build remains deployment-only
 
+Note (2026-11-11): per-shop colour theme (decision 016): tokens read CSS variables, `deriveTheme` builds palettes from up to
+three colours with contrast guarantees, and owners choose their colours in Manage > App appearance. Dark mode, logo and the
+pre-sign-in theme per subdomain are not part of it.
+
 Note (2026-11-11): the role formerly called `barber` is now `professional` everywhere (database, edge functions, app and
 texts), and migrations 0001-0065 were rewritten in place because nothing was deployed. This file and `docs/decisions/` were
 renamed with the code; `docs/superpowers/specs` and `plans` keep the old wording as history. See
