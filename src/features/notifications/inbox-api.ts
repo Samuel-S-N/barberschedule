@@ -20,7 +20,7 @@ export type InboxItem = {
   createdAt: string;
   id: string;
   kind: InboxKind;
-  params: { barberName: string; customerName: string; intervalWeeks: number | null; serviceName: string; startsAt: string };
+  params: { professionalName: string; customerName: string; intervalWeeks: number | null; serviceName: string; startsAt: string };
   readAt: string | null;
 };
 
@@ -29,7 +29,7 @@ type Row = {
   created_at: string;
   id: string;
   kind: InboxKind;
-  params: { barber_name?: string; customer_name?: string; interval_weeks?: number; service_name?: string; starts_at?: string };
+  params: { professional_name?: string; customer_name?: string; interval_weeks?: number; service_name?: string; starts_at?: string };
   read_at: string | null;
 };
 
@@ -47,7 +47,7 @@ export async function listNotifications(supabase: Client, limit = 50): Promise<I
     id: row.id,
     kind: row.kind,
     params: {
-      barberName: row.params.barber_name ?? "",
+      professionalName: row.params.professional_name ?? "",
       customerName: row.params.customer_name ?? "",
       intervalWeeks: row.params.interval_weeks ?? null,
       serviceName: row.params.service_name ?? "",

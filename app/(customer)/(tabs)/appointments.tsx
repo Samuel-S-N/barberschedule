@@ -77,7 +77,7 @@ export default function AgendaScreen() {
       await saveCalendarFile(
         `appointment-${appointment.id}.ics`,
         buildAppointmentIcs({
-          description: card.barberName,
+          description: card.professionalName,
           endsAt: appointment.endsAt,
           id: appointment.id,
           location: shop?.address ?? null,
@@ -113,7 +113,7 @@ export default function AgendaScreen() {
               <Button
                 label={t("appointments.bookAgain")}
                 onPress={() => router.push(
-                  `/book/date?shopId=${encodeURIComponent(appointment.shopId)}&barberId=${encodeURIComponent(appointment.barberId)}&barberServiceId=${encodeURIComponent(appointment.barberServiceId)}`,
+                  `/book/date?shopId=${encodeURIComponent(appointment.shopId)}&professionalId=${encodeURIComponent(appointment.professionalId)}&professionalServiceId=${encodeURIComponent(appointment.professionalServiceId)}`,
                 )}
                 testID={`appointment-rebook-${appointment.id}`}
               />
@@ -146,7 +146,7 @@ export default function AgendaScreen() {
                     disabled={!open}
                     label={t("appointments.reschedule")}
                     onPress={() => router.push(
-                      `/reschedule?appointmentId=${encodeURIComponent(appointment.id)}&barberId=${encodeURIComponent(appointment.barberId)}&barberServiceId=${encodeURIComponent(appointment.barberServiceId)}`,
+                      `/reschedule?appointmentId=${encodeURIComponent(appointment.id)}&professionalId=${encodeURIComponent(appointment.professionalId)}&professionalServiceId=${encodeURIComponent(appointment.professionalServiceId)}`,
                     )}
                     testID={`appointment-reschedule-${appointment.id}`}
                     variant="outline"

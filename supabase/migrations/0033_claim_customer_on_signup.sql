@@ -28,7 +28,7 @@ begin
   into account_email, account_confirmed, meta
   from auth.users where id = actor;
 
-  -- A barber may have booked this person before they had an account: link that row (history included) by confirmed email.
+  -- A professional may have booked this person before they had an account: link that row (history included) by confirmed email.
   if account_confirmed then
     update public.customers c
     set user_id = actor

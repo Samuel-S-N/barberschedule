@@ -1,19 +1,19 @@
 import { expect, test } from "@playwright/test";
 
-import { barberId, barberServiceId, json, mockCustomerRest, signInAsCustomer } from "./customer-helpers";
+import { professionalId, professionalServiceId, json, mockCustomerRest, signInAsCustomer } from "./customer-helpers";
 
 const slot = { ends_at: "2099-01-04T12:30:00Z", local_date: "2099-01-04", local_time: "09:00:00", starts_at: "2099-01-04T12:00:00Z" };
 
-test("a customer subscribes plan-first: plan, barber, day (vertical list), time, review, send; and can cancel the pending request", async ({ page }) => {
+test("a customer subscribes plan-first: plan, professional, day (vertical list), time, review, send; and can cancel the pending request", async ({ page }) => {
   const calls: Record<string, unknown> = {};
   let requests: unknown[] = [];
 
   await signInAsCustomer(page);
   await mockCustomerRest(page, async (route, url) => {
-    if (url.pathname.endsWith("/rpc/list_recurrence_plans_for_barber")) {
+    if (url.pathname.endsWith("/rpc/list_recurrence_plans_for_professional")) {
       await json(route, [
-        { barber_service_id: barberServiceId, interval_weeks: 1, name: "Corte mensal", normal_cents: 3500, plan_id: "plan-w1", price_cents: 2500, service_name: "Browser Cut" },
-        { barber_service_id: barberServiceId, interval_weeks: 3, name: "Trimestral", normal_cents: 3500, plan_id: "plan-w3", price_cents: 3000, service_name: "Browser Cut" },
+        { professional_service_id: professionalServiceId, interval_weeks: 1, name: "Corte mensal", normal_cents: 3500, plan_id: "plan-w1", price_cents: 2500, service_name: "Browser Cut" },
+        { professional_service_id: professionalServiceId, interval_weeks: 3, name: "Trimestral", normal_cents: 3500, plan_id: "plan-w3", price_cents: 3000, service_name: "Browser Cut" },
       ]);
       return true;
     }
@@ -27,7 +27,7 @@ test("a customer subscribes plan-first: plan, barber, day (vertical list), time,
     }
     if (url.pathname.endsWith("/rpc/request_recurrence")) {
       calls.request = route.request().postDataJSON();
-      requests = [{ barber_name: "Browser Barber", cancel_requested_at: null, id: "rq1", interval_weeks: 1, local_start_date: "2099-01-04", local_start_time: "09:00:00", plan_name: "Corte mensal", recurrence_cents: 2500, series_active: null, series_ended_at: null, series_id: null, service_name: "Browser Cut", status: "pending" }];
+      requests = [{ professional_name: "Browser Professional", cancel_requested_at: null, id: "rq1", interval_weeks: 1, local_start_date: "2099-01-04", local_start_time: "09:00:00", plan_name: "Corte mensal", recurrence_cents: 2500, series_active: null, series_ended_at: null, series_id: null, service_name: "Browser Cut", status: "pending" }];
       await json(route, [{}]);
       return true;
     }
@@ -66,8 +66,8 @@ test("a customer subscribes plan-first: plan, barber, day (vertical list), time,
   await expect(quarterly).toContainText("per session");
   await page.getByTestId("offer-plan-w1").click();
 
-  await expect(page.getByTestId("step-label")).toHaveText("Step 2 of 6 · Barber");
-  await page.getByTestId(`offer-barber-${barberId}`).click();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 2 of 6 · Professional");
+  await page.getByTestId(`offer-professional-${professionalId}`).click();
 
   // The weekdays are a vertical list: one row under the other, all the same width.
   await expect(page.getByTestId("step-label")).toHaveText("Step 3 of 6 · Day");
@@ -88,7 +88,7 @@ test("a customer subscribes plan-first: plan, barber, day (vertical list), time,
 
   await expect(page.getByTestId("step-label")).toHaveText("Step 5 of 6 · Review");
   await expect(page.getByTestId("recurrence-review")).toContainText("Corte mensal");
-  await expect(page.getByTestId("recurrence-review")).toContainText("Browser Barber");
+  await expect(page.getByTestId("recurrence-review")).toContainText("Browser Professional");
   await expect(page.getByTestId("recurrence-review")).toContainText("Every Monday");
   await expect(page.getByTestId("recurrence-review").getByTestId("plan-amount")).toHaveText("R$ 100,00");
   await expect(page.getByTestId("recurrence-review")).toContainText("4 sessions per month");
@@ -96,7 +96,7 @@ test("a customer subscribes plan-first: plan, barber, day (vertical list), time,
   await expect(page.getByTestId("recurrence-review")).not.toContainText("per session");
   await page.getByTestId("recurrence-send").click();
   await expect.poll(() => calls.request).toEqual({
-    target_barber_service_id: barberServiceId, target_interval_weeks: 1, target_replaces_request_id: null, target_replaces_series_id: null, target_start_date: "2099-01-04", target_start_time: "09:00",
+    target_professional_service_id: professionalServiceId, target_interval_weeks: 1, target_replaces_request_id: null, target_replaces_series_id: null, target_start_date: "2099-01-04", target_start_time: "09:00",
   });
 
   await expect(page.getByTestId("my-request-status-rq1")).toHaveText("Waiting for plan confirmation");
@@ -107,7 +107,7 @@ test("a customer subscribes plan-first: plan, barber, day (vertical list), time,
 test("with no plans at all the plan step says so, and completed steps lead back", async ({ page }) => {
   await signInAsCustomer(page);
   await mockCustomerRest(page, async (route, url) => {
-    if (url.pathname.endsWith("/rpc/list_recurrence_plans_for_barber")) {
+    if (url.pathname.endsWith("/rpc/list_recurrence_plans_for_professional")) {
       await json(route, []);
       return true;
     }
@@ -125,7 +125,7 @@ test("with no plans at all the plan step says so, and completed steps lead back"
 
 test("a plan whose series was ended shows its title and Ended, not Active", async ({ page }) => {
   const request = (overrides: Record<string, unknown>) => ({
-    barber_name: "Browser Barber", id: "rq1", interval_weeks: 1, local_start_date: "2026-10-23", local_start_time: "16:30:00", plan_name: "Corte mensal",
+    professional_name: "Browser Professional", id: "rq1", interval_weeks: 1, local_start_date: "2026-10-23", local_start_time: "16:30:00", plan_name: "Corte mensal",
     recurrence_cents: 2500, series_active: true, series_ended_at: null, series_id: "s1", service_name: "Browser Cut", status: "accepted", ...overrides,
   });
   let rows = [request({ id: "rq-ended", series_active: false, series_ended_at: "2026-10-21T12:12:00Z" }), request({ id: "rq-live" })];

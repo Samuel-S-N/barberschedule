@@ -1,8 +1,8 @@
 import type { Page, Route } from "@playwright/test";
 
 export const shopId = "11111111-1111-4111-8111-111111111111";
-export const barberId = "22222222-2222-4222-8222-222222222222";
-export const barberServiceId = "33333333-3333-4333-8333-333333333333";
+export const professionalId = "22222222-2222-4222-8222-222222222222";
+export const professionalServiceId = "33333333-3333-4333-8333-333333333333";
 export const customerId = "44444444-4444-4444-8444-444444444444";
 export const customerUserId = "55555555-5555-4555-8555-555555555555";
 
@@ -23,7 +23,7 @@ export function appointmentRow(overrides: Record<string, unknown> = {}) {
   const end = new Date(start.getTime() + 30 * 60 * 1000);
 
   return {
-    barber_buffer_minutes_snapshot: 0, barber_id: barberId, barber_service_id: barberServiceId,
+    professional_buffer_minutes_snapshot: 0, professional_id: professionalId, professional_service_id: professionalServiceId,
     created_at: "2026-08-13T10:00:00Z", customer_id: customerId, ends_at: end.toISOString(),
     id: "appointment-upcoming", notes: null, occupied_until: end.toISOString(),
     service_duration_minutes_snapshot: 30, service_id: "service-1", service_name_snapshot: "Browser Cut",
@@ -60,7 +60,7 @@ export async function mockCustomerRest(page: Page, handler?: RestHandler) {
     if (path.endsWith("/rpc/ensure_my_customer")) return json(route, customerRow());
     if (path.endsWith("/customers")) return json(route, [customerRow()]);
     if (path.endsWith("/shops")) return json(route, [{ id: shopId, name: "Browser Shop" }]);
-    if (path.endsWith("/barbers")) return json(route, [{ active: true, archived_at: null, id: barberId, name: "Browser Barber", shop_id: shopId }]);
+    if (path.endsWith("/professionals")) return json(route, [{ active: true, archived_at: null, id: professionalId, name: "Browser Professional", shop_id: shopId }]);
     await route.abort();
   });
 }

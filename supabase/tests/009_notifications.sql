@@ -94,20 +94,20 @@ select ok(to_regprocedure('public.materialize_recurrence_job()') is not null, 'r
 select ok(to_regprocedure('public.mark_notification_failed(uuid,text)') is not null, 'failure transition function exists');
 select ok(to_regprocedure('public.mark_notification_sent(uuid)') is not null, 'success transition function exists');
 
-insert into public.barbers (id, shop_id, name)
-values ('92000000-0000-0000-0000-000000000001', '91000000-0000-0000-0000-000000000001', 'Task 10 Barber');
+insert into public.professionals (id, shop_id, name)
+values ('92000000-0000-0000-0000-000000000001', '91000000-0000-0000-0000-000000000001', 'Task 10 Professional');
 
 insert into public.services (id, shop_id, name, duration_minutes, price_cents)
 values ('93000000-0000-0000-0000-000000000001', '91000000-0000-0000-0000-000000000001', 'Task 10 Cut', 30, 4000);
 
-insert into public.barber_services (id, shop_id, barber_id, service_id)
+insert into public.professional_services (id, shop_id, professional_id, service_id)
 values ('94000000-0000-0000-0000-000000000001', '91000000-0000-0000-0000-000000000001', '92000000-0000-0000-0000-000000000001', '93000000-0000-0000-0000-000000000001');
 
 insert into public.appointments (
-  id, shop_id, barber_id, customer_id, barber_service_id, service_id,
+  id, shop_id, professional_id, customer_id, professional_service_id, service_id,
   starts_at, ends_at, occupied_until, service_name_snapshot,
   service_duration_minutes_snapshot, service_price_cents_snapshot,
-  barber_buffer_minutes_snapshot
+  professional_buffer_minutes_snapshot
 ) values (
   '95000000-0000-0000-0000-000000000001', '91000000-0000-0000-0000-000000000001',
   '92000000-0000-0000-0000-000000000001', '91100000-0000-0000-0000-000000000001',
@@ -157,10 +157,10 @@ select is(
 select is(public.enqueue_notification_reminders(), 0, 'cancelled appointments do not create reminders');
 
 insert into public.appointments (
-  id, shop_id, barber_id, customer_id, barber_service_id, service_id,
+  id, shop_id, professional_id, customer_id, professional_service_id, service_id,
   starts_at, ends_at, occupied_until, service_name_snapshot,
   service_duration_minutes_snapshot, service_price_cents_snapshot,
-  barber_buffer_minutes_snapshot
+  professional_buffer_minutes_snapshot
 ) values (
   '95000000-0000-0000-0000-000000000002', '91000000-0000-0000-0000-000000000001',
   '92000000-0000-0000-0000-000000000001', '91100000-0000-0000-0000-000000000001',
@@ -174,7 +174,7 @@ select is(public.enqueue_notification_reminders(), 1, 'the reminder job inserts 
 select is(public.enqueue_notification_reminders(), 0, 'the reminder job is idempotent');
 
 insert into public.recurrence_series (
-  id, shop_id, customer_id, barber_service_id, local_start_date, local_start_time, interval_weeks
+  id, shop_id, customer_id, professional_service_id, local_start_date, local_start_time, interval_weeks
 ) values (
   '96000000-0000-0000-0000-000000000001', '91000000-0000-0000-0000-000000000001',
   '91100000-0000-0000-0000-000000000001', '94000000-0000-0000-0000-000000000001',

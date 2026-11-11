@@ -3,10 +3,10 @@ import { expect, test } from "@playwright/test";
 import { json } from "./customer-helpers";
 
 const shopId = "11111111-1111-4111-8111-111111111111";
-const barberId = "22222222-2222-4222-8222-222222222222";
+const professionalId = "22222222-2222-4222-8222-222222222222";
 const ownerId = "33333333-3333-4333-8333-333333333333";
 
-test("the owner sees a weekly summary with the barber's lunch and copies the shop hours into an empty schedule", async ({ page }) => {
+test("the owner sees a weekly summary with the professional's lunch and copies the shop hours into an empty schedule", async ({ page }) => {
   const periods: Array<Record<string, unknown>> = [];
 
   await page.addInitScript(({ id }) => {
@@ -23,8 +23,8 @@ test("the owner sees a weekly summary with the barber's lunch and copies the sho
 
     if (path.endsWith("/rpc/get_current_profile")) return json(route, [{ full_name: "Owner", role: "owner", user_id: ownerId }]);
     if (path.endsWith("/shops")) return json(route, [{ id: shopId }]);
-    if (path.endsWith("/rpc/list_owner_barbers")) return json(route, [{ active: true, archived_at: null, commission_percent: "0.00", compensation_type: "commission", id: barberId, name: "Browser Barber", shop_id: shopId, user_id: null }]);
-    if (path.endsWith("/rpc/list_shop_lunch_breaks")) return json(route, [{ barber_id: barberId, lunch_end: "13:00:00", lunch_start: "12:00:00" }]);
+    if (path.endsWith("/rpc/list_owner_professionals")) return json(route, [{ active: true, archived_at: null, commission_percent: "0.00", compensation_type: "commission", id: professionalId, name: "Browser Professional", shop_id: shopId, user_id: null }]);
+    if (path.endsWith("/rpc/list_shop_lunch_breaks")) return json(route, [{ professional_id: professionalId, lunch_end: "13:00:00", lunch_start: "12:00:00" }]);
     if (path.endsWith("/shop_hours")) return json(route, [{ end_time: "18:00:00", start_time: "09:00:00", weekday: 1 }, { end_time: "17:00:00", start_time: "09:00:00", weekday: 2 }]);
     if (path.endsWith("/working_periods") && method === "GET") return json(route, periods);
     if (path.endsWith("/working_periods") && method === "POST") {

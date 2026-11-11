@@ -15,12 +15,12 @@ it("maps a refused cancellation request", async () => {
 
 it("lists the cancellation requests of the shop", async () => {
   const rpc = jest.fn().mockResolvedValue({
-    data: [{ barber_name: "Bia", customer_name: "Ana", customer_phone: "11912345678", interval_weeks: 2, requested_at: "2026-10-21T15:00:00Z", series_id: "s1", service_name: "Cut" }],
+    data: [{ professional_name: "Bia", customer_name: "Ana", customer_phone: "11912345678", interval_weeks: 2, requested_at: "2026-10-21T15:00:00Z", series_id: "s1", service_name: "Cut" }],
     error: null,
   });
 
   expect(await listCancellationRequests({ rpc } as never, "shop1")).toEqual([
-    { barberName: "Bia", customerName: "Ana", customerPhone: "11912345678", requestedAt: "2026-10-21T15:00:00Z", seriesId: "s1", serviceName: "Cut", weeks: 2 },
+    { professionalName: "Bia", customerName: "Ana", customerPhone: "11912345678", requestedAt: "2026-10-21T15:00:00Z", seriesId: "s1", serviceName: "Cut", weeks: 2 },
   ]);
   expect(rpc).toHaveBeenCalledWith("list_recurrence_cancellations", { target_shop_id: "shop1" });
 });

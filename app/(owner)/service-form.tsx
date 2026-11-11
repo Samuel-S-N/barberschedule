@@ -22,7 +22,7 @@ import { centsToReaisInput, parseReaisToCents } from "../../src/lib/money";
 import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
-// Create (no `id`) or edit (`?id=`) a service; editing also manages the standard flag, activation and which barbers offer it.
+// Create (no `id`) or edit (`?id=`) a service; editing also manages the standard flag, activation and which professionals offer it.
 export default function OwnerServiceFormScreen() {
   const { t } = useTranslation();
   const back = useBack();
@@ -99,8 +99,8 @@ export default function OwnerServiceFormScreen() {
             {service && catalog.data && shopId ? (
               <>
                 <Button disabled={busy} label={service.isStandard ? t("owner.services.removeStandard") : t("owner.services.makeStandard")} onPress={() => change.mutate(() => setServiceStandard(supabase, service.id, !service.isStandard))} testID={`service-standard-${service.id}`} variant="outline" />
-                <Text accessibilityRole="header" className="text-lg font-display-semibold text-ink">{t("owner.services.barbers")}</Text>
-                <ServiceAssignments barberServices={catalog.data.barberServices} barbers={catalog.data.barbers} onFeedback={notify} service={service} shopId={shopId} />
+                <Text accessibilityRole="header" className="text-lg font-display-semibold text-ink">{t("owner.services.professionals")}</Text>
+                <ServiceAssignments professionalServices={catalog.data.professionalServices} professionals={catalog.data.professionals} onFeedback={notify} service={service} shopId={shopId} />
                 <Button disabled={busy} label={service.active ? t("common.deactivate") : t("common.activate")} onPress={() => change.mutate(() => setServiceActive(supabase, service.id, !service.active))} testID={`service-toggle-${service.id}`} variant={service.active ? "danger" : "primary"} />
               </>
             ) : null}

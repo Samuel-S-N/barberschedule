@@ -1,14 +1,14 @@
 create type public.recurrence_exception_kind as enum ('cancelled');
 create type public.recurrence_conflict_status as enum ('open', 'resolved');
 
-alter table public.barber_services
-add constraint barber_services_shop_id_id_key unique (shop_id, id);
+alter table public.professional_services
+add constraint professional_services_shop_id_id_key unique (shop_id, id);
 
 create table public.recurrence_series (
   id uuid primary key default gen_random_uuid(),
   shop_id uuid not null references public.shops (id) on delete restrict,
   customer_id uuid not null,
-  barber_service_id uuid not null,
+  professional_service_id uuid not null,
   local_start_date date not null,
   local_start_time time not null,
   interval_weeks smallint not null,
@@ -22,9 +22,9 @@ create table public.recurrence_series (
     foreign key (shop_id, customer_id)
     references public.customers (shop_id, id)
     on delete restrict,
-  constraint recurrence_series_barber_service_fk
-    foreign key (shop_id, barber_service_id)
-    references public.barber_services (shop_id, id)
+  constraint recurrence_series_professional_service_fk
+    foreign key (shop_id, professional_service_id)
+    references public.professional_services (shop_id, id)
     on delete restrict,
   constraint recurrence_series_interval_weeks_positive check (interval_weeks > 0),
   constraint recurrence_series_special_price_non_negative

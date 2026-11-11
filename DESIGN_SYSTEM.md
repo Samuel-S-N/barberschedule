@@ -62,7 +62,7 @@ Base 4px, escala Tailwind padrão. Nada de valores soltos fora do theme.
 
 ### 2.1 Marca — Âmbar (primary)
 
-Dourado quente, remete a latão polido e navalha — CTAs, preços, ícones ativos, anel de avatar do barbeiro em destaque.
+Dourado quente, remete a latão polido e navalha — CTAs, preços, ícones ativos, anel de avatar do profissional em destaque.
 
 | Escala | HEX | Uso |
 |---|---|---|
@@ -93,7 +93,7 @@ Dourado quente, remete a latão polido e navalha — CTAs, preços, ícones ativ
 
 ### 2.3 Assinatura — Vinho (accent, uso pontual)
 
-Segunda cor de marca — referência ao vermelho do barber pole, usada com moderação: badge "Popular", indicador de barbeiro em destaque, detalhe decorativo. **Não usar como CTA principal** (isso é papel do âmbar).
+Segunda cor de marca — referência ao vermelho do barber pole, usada com moderação: badge "Popular", indicador de profissional em destaque, detalhe decorativo. **Não usar como CTA principal** (isso é papel do âmbar).
 
 | Token | HEX | Uso |
 |---|---|---|
@@ -141,7 +141,7 @@ Segunda cor de marca — referência ao vermelho do barber pole, usada com moder
 - Barba: `Sparkles` (ou ícone custom de navalha)
 - Horário: `Clock`
 - Data: `Calendar`
-- Barbeiro: `User`
+- Profissional: `User`
 - Avaliação: `Star`
 - Local: `MapPin`
 
@@ -151,7 +151,7 @@ Segunda cor de marca — referência ao vermelho do barber pole, usada com moder
 
 ### 3.1 Famílias
 
-- **Oswald** — **display**: headings, nome de barbearia/barbeiro em destaque, preços, título de tela. Condensada, remete a placa de barbearia/tipografia de sinalização vintage.
+- **Oswald** — **display**: headings, nome de barbearia/profissional em destaque, preços, título de tela. Condensada, remete a placa de barbearia/tipografia de sinalização vintage.
 - **Inter** — **corpo**: parágrafos, labels, inputs, metadados (mesma escolha do FitBrother — mantém consistência e legibilidade entre produtos).
 
 ```bash
@@ -174,7 +174,7 @@ import {
 } from "@expo-google-fonts/inter";
 ```
 
-**Mapa de papéis:** `font-display-*` (Oswald) para títulos, nome de barbeiro/barbearia e preços; `font-sans-*` (Inter) para corpo. Pegadinha do §1.1 vale para ambas.
+**Mapa de papéis:** `font-display-*` (Oswald) para títulos, nome de profissional/barbearia e preços; `font-sans-*` (Inter) para corpo. Pegadinha do §1.1 vale para ambas.
 
 ### 3.2 Escala
 
@@ -232,7 +232,7 @@ Tokens semânticos extras em `tailwind.config.ts`:
 | Inputs | 12px | `rounded-xl` |
 | Cards | 20px | `rounded-[20px]` |
 | Badges/chips/status | 9999px | `rounded-full` |
-| Avatar de barbeiro | 50% | `rounded-full` |
+| Avatar de profissional | 50% | `rounded-full` |
 | Time slot (chip de horário) | 12px | `rounded-xl` |
 | Bottom sheet (topo) | 24px | `rounded-t-3xl` |
 
@@ -252,7 +252,7 @@ Tokens semânticos extras em `tailwind.config.ts`:
 Mesma lógica do FitBrother — iOS via `shadow*`, Android via `elevation` explícito (`Platform.select`).
 
 **Nível 1 — Card padrão:** `shadowOpacity: 0.06, shadowRadius: 4, shadowOffset: {0,1}, elevation: 2`
-**Nível 2 — Card em destaque (ex. barbeiro selecionado):** `shadowOpacity: 0.10, shadowRadius: 12, shadowOffset: {0,4}, elevation: 5`
+**Nível 2 — Card em destaque (ex. profissional selecionado):** `shadowOpacity: 0.10, shadowRadius: 12, shadowOffset: {0,4}, elevation: 5`
 **Nível 3 — Bottom sheet, modal:** `shadowOpacity: 0.15, shadowRadius: 20, shadowOffset: {0,-2}, elevation: 12`
 
 ---
@@ -351,7 +351,7 @@ Tamanhos: `sm` 44px, `md` 52px (padrão), `lg` 60px. `rounded-full · px-6 · fo
 
 > Specs para os componentes específicos deste produto.
 
-### 12.1 Barber Card
+### 12.1 Professional Card
 
 ```
 ┌────────────────────────────────────────┐
@@ -433,7 +433,7 @@ Item `w-14 h-16 rounded-2xl`. Selecionado: `bg-ink`, dia da semana + número em 
 
 ### 12.7 Rating Stars
 
-`Star` (lucide) 16px, `fill={warning-400}` `stroke={warning-400}` para preenchida; vazia: `stroke={neutral-300}` sem fill. Usado em Barber Card e em tela de avaliação pós-atendimento.
+`Star` (lucide) 16px, `fill={warning-400}` `stroke={warning-400}` para preenchida; vazia: `stroke={neutral-300}` sem fill. Usado em Professional Card e em tela de avaliação pós-atendimento.
 
 ### 12.8 Empty State
 
@@ -442,23 +442,23 @@ Item `w-14 h-16 rounded-2xl`. Selecionado: `bg-ink`, dia da semana + número em 
         │   ✂   │   ← lucide Scissors · 64 · neutral-300
         ╰───────╯
    Nenhum agendamento ainda   ← text-lg font-display-semibold ink
-   Escolha um barbeiro e reserve seu horário  ← text-sm font-sans neutral-500
+   Escolha um profissional e reserve seu horário  ← text-sm font-sans neutral-500
         [   Agendar agora   ]  ← Button primary sm
 ```
 
 ### 12.9 Bottom Tab Bar
 
-4 tabs: **Início** (`House`), **Agenda** (`Calendar`), **Barbeiros** (`Users`), **Perfil** (`User`).
+4 tabs: **Início** (`House`), **Agenda** (`Calendar`), **Profissionais** (`Users`), **Perfil** (`User`).
 
 ```
 ┌─────────────────────────────────────────────┐
-│  Início   Agenda   Barbeiros   Perfil        │
+│  Início   Agenda   Profissionais   Perfil        │
 │    ◯        ●          ◯          ◯          │
 └─────────────────────────────────────────────┘
 ```
 Ícone lucide 24, ativa: `primary-600` + label visível; inativa: `neutral-400`.
 
-> **Implementação (área do cliente):** as abas são Home / Book / Agenda / Profile (`BottomTabBar` é apresentacional; os itens vêm do layout). Todas as abas mostram o label; a ativa muda apenas de cor e peso. "Barbeiros" não é uma aba: a escolha de barbeiro faz parte do fluxo Book.
+> **Implementação (área do cliente):** as abas são Home / Book / Agenda / Profile (`BottomTabBar` é apresentacional; os itens vêm do layout). Todas as abas mostram o label; a ativa muda apenas de cor e peso. "Profissionais" não é uma aba: a escolha de profissional faz parte do fluxo Book.
 
 ### 12.10 Toast
 
@@ -508,7 +508,7 @@ import { Scissors, Clock, Calendar, User, Star } from "lucide-react-native";
 3. Instalar fontes (`@expo-google-fonts/oswald`, `@expo-google-fonts/inter`) e registrar em `app/_layout.tsx` via `useFonts`.
 4. Instalar `lucide-react-native` + `react-native-svg`.
 5. Construir os componentes base do §11 (`Button`, `Input`, `Card`) antes de qualquer tela.
-6. Construir os componentes de domínio do §12 conforme as telas forem sendo implementadas (Barber Card, Service Card, Time Slot Picker, Appointment Card primeiro — são o núcleo do fluxo de agendamento).
+6. Construir os componentes de domínio do §12 conforme as telas forem sendo implementadas (Professional Card, Service Card, Time Slot Picker, Appointment Card primeiro — são o núcleo do fluxo de agendamento).
 
 ---
 

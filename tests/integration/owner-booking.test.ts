@@ -6,9 +6,9 @@ import { listOwnerAgenda, listOwnerAgendaOverrides } from "../../src/features/ap
 import { toDomainError } from "../../src/lib/errors/domain-errors";
 
 const appointmentRow = {
-  barber_buffer_minutes_snapshot: 0,
-  barber_id: "barber-1",
-  barber_service_id: "barber-service-1",
+  professional_buffer_minutes_snapshot: 0,
+  professional_id: "professional-1",
+  professional_service_id: "professional-service-1",
   created_at: "2026-08-13T10:00:00Z",
   customer_id: "customer-1",
   ends_at: "2026-08-17T12:30:00Z",
@@ -39,7 +39,7 @@ describe("owner booking and agenda contracts", () => {
 
     await expect(
       bookOwnerAppointment({ rpc } as never, {
-        barberServiceId: "barber-service-1",
+        professionalServiceId: "professional-service-1",
         customerId: "customer-1",
         notes: "Walk-in",
         startsAt: "2026-08-17T12:00:00Z",
@@ -47,7 +47,7 @@ describe("owner booking and agenda contracts", () => {
     ).resolves.toMatchObject({ id: "appointment-1", source: "owner" });
 
     expect(rpc).toHaveBeenCalledWith("book_appointment", {
-      barber_service_id: "barber-service-1",
+      professional_service_id: "professional-service-1",
       customer_id: "customer-1",
       notes: "Walk-in",
       source: "owner",
@@ -57,7 +57,7 @@ describe("owner booking and agenda contracts", () => {
 
   it("loads a bounded owner agenda page through its server-side query", async () => {
     const rpc = jest.fn().mockResolvedValue({
-      data: [{ ...appointmentRow, barber_name: "Barber", customer_name: "Customer" }],
+      data: [{ ...appointmentRow, professional_name: "Professional", customer_name: "Customer" }],
       error: null,
     });
 
@@ -70,7 +70,7 @@ describe("owner booking and agenda contracts", () => {
         shopId: "shop-1",
       }),
     ).resolves.toEqual([
-      expect.objectContaining({ barberName: "Barber", customerName: "Customer", id: "appointment-1" }),
+      expect.objectContaining({ professionalName: "Professional", customerName: "Customer", id: "appointment-1" }),
     ]);
 
     expect(rpc).toHaveBeenCalledWith("list_owner_agenda", {
@@ -84,7 +84,7 @@ describe("owner booking and agenda contracts", () => {
 
   it("loads only schedule overrides in the same owner agenda range", async () => {
     const rpc = jest.fn().mockResolvedValue({
-      data: [{ barber_id: "barber-1", barber_name: "Barber", end_time: null, id: "override-1", kind: "block", local_date: "2026-08-17", start_time: null }],
+      data: [{ professional_id: "professional-1", professional_name: "Professional", end_time: null, id: "override-1", kind: "block", local_date: "2026-08-17", start_time: null }],
       error: null,
     });
 
@@ -93,7 +93,7 @@ describe("owner booking and agenda contracts", () => {
       rangeStart: "2026-08-17",
       shopId: "shop-1",
     })).resolves.toEqual([{
-      barberId: "barber-1", barberName: "Barber", endTime: null, id: "override-1", kind: "block", localDate: "2026-08-17", startTime: null,
+      professionalId: "professional-1", professionalName: "Professional", endTime: null, id: "override-1", kind: "block", localDate: "2026-08-17", startTime: null,
     }]);
 
     expect(rpc).toHaveBeenCalledWith("list_owner_agenda_overrides", {

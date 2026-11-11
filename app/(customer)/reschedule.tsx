@@ -16,7 +16,7 @@ function param(value: string | string[] | undefined) {
 
 // The customer's reschedule: date › time › review, with the step bar on top (see RescheduleFlow).
 export default function RescheduleScreen() {
-  const params = useLocalSearchParams<{ appointmentId?: string; barberId?: string; barberServiceId?: string }>();
+  const params = useLocalSearchParams<{ appointmentId?: string; professionalId?: string; professionalServiceId?: string }>();
   const appointmentId = param(params.appointmentId);
   const router = useRouter();
   const back = useBack();
@@ -32,8 +32,8 @@ export default function RescheduleScreen() {
 
   return (
     <RescheduleFlow
-      barberId={param(params.barberId)}
-      barberServiceId={param(params.barberServiceId)}
+      professionalId={param(params.professionalId)}
+      professionalServiceId={param(params.professionalServiceId)}
       current={currentSlot}
       currentCard={cardProps ? <AppointmentCard {...cardProps} testID="reschedule-current" /> : null}
       onExit={back}
@@ -45,7 +45,7 @@ export default function RescheduleScreen() {
       submit={(startsAt) => rescheduleAppointment(supabase, appointmentId, startsAt)}
       summaryRows={[
         [t("book.summary.service"), cardProps?.serviceName ?? ""],
-        [t("book.summary.barber"), cardProps?.barberName ?? ""],
+        [t("book.summary.professional"), cardProps?.professionalName ?? ""],
       ]}
       testPrefix="reschedule"
     />

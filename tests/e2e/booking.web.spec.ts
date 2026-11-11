@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import {
-  appointmentRow, barberId, barberServiceId, customerId, customerUserId, json, mockCustomerRest, shopId, signInAsCustomer,
+  appointmentRow, professionalId, professionalServiceId, customerId, customerUserId, json, mockCustomerRest, shopId, signInAsCustomer,
 } from "./customer-helpers";
 
 const slot = { ends_at: "2026-08-17T12:30:00Z", local_date: "2026-08-17", local_time: "09:00:00", starts_at: "2026-08-17T12:00:00Z" };
@@ -14,9 +14,9 @@ function bookingRest(
 ) {
   return mockCustomerRest(page, async (route, url) => {
     if (extra && (await extra(route, url)) === true) return true;
-    if (url.pathname.endsWith("/barber_services")) {
+    if (url.pathname.endsWith("/professional_services")) {
       await json(route, [{
-        duration_override_minutes: null, id: barberServiceId, price_override_cents: null, service_id: "service-1",
+        duration_override_minutes: null, id: professionalServiceId, price_override_cents: null, service_id: "service-1",
         services: { duration_minutes: 30, name: "Browser Cut", price_cents: 4000 },
       }]);
       return true;
@@ -33,7 +33,7 @@ function bookingRest(
         return true;
       }
       await json(route, [{
-        barber_buffer_minutes_snapshot: 0, barber_id: barberId, barber_service_id: barberServiceId,
+        professional_buffer_minutes_snapshot: 0, professional_id: professionalId, professional_service_id: professionalServiceId,
         created_at: "2026-08-13T10:00:00Z", customer_id: customerId, ends_at: slot.ends_at, id: "appointment-1",
         notes: null, occupied_until: slot.ends_at, service_duration_minutes_snapshot: 30, service_id: "service-1",
         service_name_snapshot: "Browser Cut", service_price_cents_snapshot: 4000, shop_id: shopId, source: "customer",
@@ -49,8 +49,8 @@ const active = (page: import("@playwright/test").Page, testId: string) => page.l
 
 async function walkToReview(page: import("@playwright/test").Page) {
   await page.goto("/book");
-  // One shop: the picker is skipped and the barber list opens directly.
-  await page.getByRole("button", { name: "Browser Barber" }).click();
+  // One shop: the picker is skipped and the professional list opens directly.
+  await page.getByRole("button", { name: "Browser Professional" }).click();
   await page.getByRole("button", { name: "Browser Cut" }).click();
   await expect(page.getByTestId("month-calendar-title")).toBeVisible();
   await expect(page.getByTestId("month-calendar-prev")).toBeDisabled();
@@ -82,7 +82,7 @@ test("an authenticated customer can select a slot and submit a booking", async (
 
   // After confirming, the customer goes back to Home, where the confirmation is shown.
   await expect(page).toHaveURL(/\/home/);
-  await expect(page.getByText("Booked! Waiting for the barber to confirm.")).toBeVisible();
+  await expect(page.getByText("Booked! Waiting for the professional to confirm.")).toBeVisible();
   expect(bookingPayload).toMatchObject({ customer_id: customerId, source: "customer", starts_at: "2026-08-17T12:00:00Z" });
 });
 
@@ -101,7 +101,7 @@ test("a new booking appears on Home and Agenda without reloading", async ({ page
   await expect(page.getByText("No upcoming appointments")).toBeVisible();
 
   await page.getByTestId("tab-book").click();
-  await page.getByRole("button", { name: "Browser Barber" }).click();
+  await page.getByRole("button", { name: "Browser Professional" }).click();
   await page.getByRole("button", { name: "Browser Cut" }).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("button", { name: "09:00" }).click();
@@ -117,7 +117,7 @@ test("a new booking appears on Home and Agenda without reloading", async ({ page
 
   // The booking flow was reset: Book starts over instead of showing the old review screen.
   await page.getByTestId("tab-book").click();
-  await expect(page.getByRole("button", { name: "Browser Barber" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Browser Professional" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Confirm booking" })).not.toBeVisible();
 });
 
@@ -129,13 +129,13 @@ test("a customer sees an unavailable error when booking loses the slot", async (
   await walkToReview(page);
 
   await expect(page.getByText("That time is no longer available.")).toBeVisible();
-  await expect(page.getByText("Booked! Waiting for the barber to confirm.")).not.toBeVisible();
+  await expect(page.getByText("Booked! Waiting for the professional to confirm.")).not.toBeVisible();
   expect(bookingPayload).toMatchObject({ customer_id: customerId, source: "customer", starts_at: "2026-08-17T12:00:00Z" });
 });
 
 async function openReview(page: import("@playwright/test").Page) {
   await page.goto("/book");
-  await page.getByRole("button", { name: "Browser Barber" }).click();
+  await page.getByRole("button", { name: "Browser Professional" }).click();
   await page.getByRole("button", { name: "Browser Cut" }).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("button", { name: "09:00" }).click();
@@ -194,7 +194,7 @@ test("a new account is bootstrapped with ensure_my_customer before booking", asy
   });
 
   await page.goto("/book");
-  await expect(page.getByRole("button", { name: "Browser Barber" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Browser Professional" })).toBeVisible();
   expect(ensureCalls).toBe(1);
 });
 
@@ -230,9 +230,9 @@ test("the step indicator marks the current step and completed steps lead back", 
   await bookingRest(page, () => undefined);
 
   await page.goto("/book");
-  await expect(active(page, "step-label")).toHaveText("Step 1 of 6 · Barber");
-  await expect(active(page, "step-barber")).toHaveAttribute("aria-disabled", "true");
-  await page.getByRole("button", { name: "Browser Barber" }).click();
+  await expect(active(page, "step-label")).toHaveText("Step 1 of 6 · Professional");
+  await expect(active(page, "step-professional")).toHaveAttribute("aria-disabled", "true");
+  await page.getByRole("button", { name: "Browser Professional" }).click();
   await expect(active(page, "step-label")).toHaveText("Step 2 of 6 · Service");
   await page.getByRole("button", { name: "Browser Cut" }).click();
   await expect(active(page, "step-label")).toHaveText("Step 3 of 6 · Date");

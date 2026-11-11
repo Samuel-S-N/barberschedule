@@ -1,12 +1,12 @@
 import type { AvailableSlot } from "../availability/types";
 import { formatInstantInShopTime } from "../../lib/dates/shop-time";
-import type { BarberAgendaAppointment } from "./barber-agenda";
+import type { ProfessionalAgendaAppointment } from "./professional-agenda";
 
 export type DayEntry =
-  | { appointment: BarberAgendaAppointment; kind: "appointment"; time: string }
+  | { appointment: ProfessionalAgendaAppointment; kind: "appointment"; time: string }
   | { kind: "free"; slot: AvailableSlot; time: string };
 
-export function buildDayTimeline(appointments: BarberAgendaAppointment[], slots: AvailableSlot[], now = new Date()): DayEntry[] {
+export function buildDayTimeline(appointments: ProfessionalAgendaAppointment[], slots: AvailableSlot[], now = new Date()): DayEntry[] {
   const live = appointments.filter((appointment) => appointment.status !== "cancelled");
   // The server rejects bookings that start in the past, so those times are not offered.
   const free = slots.filter((slot) => new Date(slot.startsAt) > now && !live.some((a) => slot.startsAt >= a.startsAt && slot.startsAt < a.occupiedUntil));

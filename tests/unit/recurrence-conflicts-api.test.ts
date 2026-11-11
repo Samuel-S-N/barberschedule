@@ -1,13 +1,13 @@
 import { listOwnerRecurrenceConflicts, resolveRecurrenceConflict } from "../../src/features/recurrence/api";
 
-it("maps the barber and barber-service ids of a conflict", async () => {
+it("maps the professional and professional-service ids of a conflict", async () => {
   const rpc = jest.fn().mockResolvedValue({
-    data: [{ barber_id: "b1", barber_service_id: "bs1", customer_name: "Ana", customer_phone: null, id: "c1", local_start_time: "10:00:00", occurrence_date: "2026-11-09", reason: "SLOT_UNAVAILABLE", series_id: "s1", service_name: "Cut", status: "open" }],
+    data: [{ professional_id: "b1", professional_service_id: "bs1", customer_name: "Ana", customer_phone: null, id: "c1", local_start_time: "10:00:00", occurrence_date: "2026-11-09", reason: "SLOT_UNAVAILABLE", series_id: "s1", service_name: "Cut", status: "open" }],
     error: null,
   });
 
   expect(await listOwnerRecurrenceConflicts({ rpc } as never, "shop1")).toEqual([
-    { barberId: "b1", barberServiceId: "bs1", customerName: "Ana", customerPhone: null, id: "c1", localStartTime: "10:00", occurrenceDate: "2026-11-09", reason: "SLOT_UNAVAILABLE", seriesId: "s1", serviceName: "Cut", status: "open" },
+    { professionalId: "b1", professionalServiceId: "bs1", customerName: "Ana", customerPhone: null, id: "c1", localStartTime: "10:00", occurrenceDate: "2026-11-09", reason: "SLOT_UNAVAILABLE", seriesId: "s1", serviceName: "Cut", status: "open" },
   ]);
 });
 

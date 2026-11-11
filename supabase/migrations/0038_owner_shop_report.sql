@@ -39,11 +39,11 @@ begin
         group by 1
       ) d
     ), '[]'::jsonb),
-    'barbers', coalesce((
+    'professionals', coalesce((
       select jsonb_agg(to_jsonb(b) order by b.gross_cents desc, b.name)
       from (
         select
-          br.id as barber_id,
+          br.id as professional_id,
           br.name,
           br.compensation_type::text as compensation_type,
           (count(a.id) filter (where a.status = 'completed'))::int as completed,
@@ -52,15 +52,15 @@ begin
             when br.compensation_type = 'commission'
               then round(coalesce(sum(a.service_price_cents_snapshot) filter (where a.status = 'completed'), 0) * br.commission_percent / 100)
             else coalesce(sum(a.service_price_cents_snapshot) filter (where a.status = 'completed'), 0)
-          end)::int as barber_share_cents,
+          end)::int as professional_share_cents,
           (case
             when br.compensation_type = 'chair_rental'
               then round(br.chair_rental_amount_cents::numeric * period_days / (case when br.chair_rental_frequency = 'weekly' then 7 else 30 end))
             else 0
           end)::int as rent_estimate_cents
-        from public.barbers br
+        from public.professionals br
         left join public.appointments a
-          on a.barber_id = br.id and a.starts_at >= range_start and a.starts_at < range_end
+          on a.professional_id = br.id and a.starts_at >= range_start and a.starts_at < range_end
         where br.shop_id = sh.id
         group by br.id
         having br.active or count(a.id) > 0

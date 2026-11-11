@@ -16,7 +16,7 @@ export default function HomeScreen() {
   const [feedback, setFeedback] = useState<string | null>(null);
 
   if (profile?.role === "customer") return <Redirect href="/home" />;
-  if (profile?.role === "barber") return <Redirect href="/my-agenda" />;
+  if (profile?.role === "professional") return <Redirect href="/my-agenda" />;
   if (profile?.role === "owner") return <Redirect href="/agenda" />;
 
   // An account without a known role: nothing to show but a way out.

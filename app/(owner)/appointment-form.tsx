@@ -15,10 +15,10 @@ import { Input } from "../../src/components/ui/Input";
 import { Screen } from "../../src/components/ui/Screen";
 import { bookOwnerAppointment } from "../../src/features/appointments/owner-api";
 import { DateStep, TimeStep } from "../../src/features/availability/steps";
-import { listOwnerBarbers } from "../../src/features/barbers/api";
-import type { OwnerBarber } from "../../src/features/barbers/types";
+import { listOwnerProfessionals } from "../../src/features/professionals/api";
+import type { OwnerProfessional } from "../../src/features/professionals/types";
 import { listOwnerCustomers } from "../../src/features/customers/api";
-import { listOwnerBarberServices, listOwnerServices } from "../../src/features/services/api";
+import { listOwnerProfessionalServices, listOwnerServices } from "../../src/features/services/api";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
 import { errorMessage } from "../../src/i18n/errors";
 import { useLanguage } from "../../src/i18n/use-language";
@@ -48,7 +48,7 @@ export default function OwnerAppointmentFormScreen() {
   const [localDate, setLocalDate] = useState(today);
   const [notes, setNotes] = useState("");
   const [search, setSearch] = useState("");
-  const [selectedBarberServiceId, setSelectedBarberServiceId] = useState<string | null>(null);
+  const [selectedProfessionalServiceId, setSelectedProfessionalServiceId] = useState<string | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedStartsAt, setSelectedStartsAt] = useState<string | null>(null);
   const go = (next: Step) => setTrail((existing) => [...existing, next]);
@@ -58,16 +58,16 @@ export default function OwnerAppointmentFormScreen() {
     enabled: shopId !== null,
     queryFn: async () => {
       const id = shopId ?? "";
-      const [barbers, barberServices, customers, services] = await Promise.all([
-        listOwnerBarbers(supabase, id),
-        listOwnerBarberServices(supabase, id),
+      const [professionals, professionalServices, customers, services] = await Promise.all([
+        listOwnerProfessionals(supabase, id),
+        listOwnerProfessionalServices(supabase, id),
         listOwnerCustomers(supabase, id),
         listOwnerServices(supabase, id),
       ]);
 
       return {
-        barberServices: barberServices.filter((item) => item.active),
-        barbers: barbers.filter((barber: OwnerBarber) => barber.active),
+        professionalServices: professionalServices.filter((item) => item.active),
+        professionals: professionals.filter((professional: OwnerProfessional) => professional.active),
         customers: customers.filter((customer) => customer.active),
         services: services.filter((service) => service.active),
       };
@@ -79,26 +79,26 @@ export default function OwnerAppointmentFormScreen() {
     const data = catalog.data;
     if (!data) return [];
 
-    return data.barberServices
-      .map((barberService) => ({
-        barber: data.barbers.find((barber: OwnerBarber) => barber.id === barberService.barberId),
-        barberService,
-        service: data.services.find((service) => service.id === barberService.serviceId),
+    return data.professionalServices
+      .map((professionalService) => ({
+        professional: data.professionals.find((professional: OwnerProfessional) => professional.id === professionalService.professionalId),
+        professionalService,
+        service: data.services.find((service) => service.id === professionalService.serviceId),
       }))
-      .filter((choice) => choice.barber && choice.service);
+      .filter((choice) => choice.professional && choice.service);
   }, [catalog.data]);
 
   const term = search.trim().toLowerCase();
   const customers = (catalog.data?.customers ?? []).filter((customer) => !term || customer.fullName.toLowerCase().includes(term) || (customer.email ?? "").toLowerCase().includes(term));
   const customer = catalog.data?.customers.find((candidate) => candidate.id === selectedCustomerId) ?? null;
-  const choice = choices.find((candidate) => candidate.barberService.id === selectedBarberServiceId) ?? null;
+  const choice = choices.find((candidate) => candidate.professionalService.id === selectedProfessionalServiceId) ?? null;
   const chosen = selectedStartsAt ? formatInstantInShopTime(new Date(selectedStartsAt)) : null;
 
   const create = useMutation({
     mutationFn: () => {
-      if (!selectedBarberServiceId || !selectedCustomerId || !selectedStartsAt) throw new Error("INCOMPLETE");
+      if (!selectedProfessionalServiceId || !selectedCustomerId || !selectedStartsAt) throw new Error("INCOMPLETE");
 
-      return bookOwnerAppointment(supabase, { barberServiceId: selectedBarberServiceId, customerId: selectedCustomerId, notes: notes.trim() || null, startsAt: selectedStartsAt });
+      return bookOwnerAppointment(supabase, { professionalServiceId: selectedProfessionalServiceId, customerId: selectedCustomerId, notes: notes.trim() || null, startsAt: selectedStartsAt });
     },
     onError: (error) => {
       // The time may have been taken: go back to the times so the next pick is valid, then show why it failed.
@@ -145,15 +145,15 @@ export default function OwnerAppointmentFormScreen() {
 
             {step === "service" ? (
               <RadioBlock
-                items={choices.map(({ barber, barberService, service }) => ({
-                  key: barberService.id,
-                  label: `${barber?.name} · ${service?.name}`,
+                items={choices.map(({ professional, professionalService, service }) => ({
+                  key: professionalService.id,
+                  label: `${professional?.name} · ${service?.name}`,
                   onPress: () => {
-                    setSelectedBarberServiceId(barberService.id);
+                    setSelectedProfessionalServiceId(professionalService.id);
                     setSelectedStartsAt(null);
                     go("date");
                   },
-                  selected: barberService.id === selectedBarberServiceId,
+                  selected: professionalService.id === selectedProfessionalServiceId,
                 }))}
                 testID="owner-service-list"
               />
@@ -164,7 +164,7 @@ export default function OwnerAppointmentFormScreen() {
             ) : null}
 
             {step === "time" && choice ? (
-              <TimeStep barberId={choice.barberService.barberId} barberServiceId={choice.barberService.id} localDate={localDate} onContinue={() => go("review")} onSelect={setSelectedStartsAt} startsAt={selectedStartsAt} testID="owner-continue" />
+              <TimeStep professionalId={choice.professionalService.professionalId} professionalServiceId={choice.professionalService.id} localDate={localDate} onContinue={() => go("review")} onSelect={setSelectedStartsAt} startsAt={selectedStartsAt} testID="owner-continue" />
             ) : null}
 
             {step === "review" ? (
@@ -172,7 +172,7 @@ export default function OwnerAppointmentFormScreen() {
                 <View className="gap-2 rounded-[20px] bg-neutral-50 p-4" testID="owner-summary">
                   {[
                     [t("common.customer"), customer?.fullName ?? ""],
-                    [t("book.summary.barber"), choice?.barber?.name ?? ""],
+                    [t("book.summary.professional"), choice?.professional?.name ?? ""],
                     [t("book.summary.service"), choice?.service?.name ?? ""],
                     [t("book.summary.date"), chosen ? formatDateNumeric(chosen.localDate, language) : ""],
                     [t("book.summary.time"), chosen?.localTime ?? ""],

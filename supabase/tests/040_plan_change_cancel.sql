@@ -7,21 +7,21 @@ select plan(15);
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at)
 values
   ('00000000-0000-0000-0000-000000000000', 'f7000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'chg-owner@example.com', 'password-hash', now()),
-  ('00000000-0000-0000-0000-000000000000', 'f7000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'chg-barber@example.com', 'password-hash', now()),
+  ('00000000-0000-0000-0000-000000000000', 'f7000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'chg-professional@example.com', 'password-hash', now()),
   ('00000000-0000-0000-0000-000000000000', 'f7000000-0000-0000-0000-000000000003', 'authenticated', 'authenticated', 'chg-customer@example.com', 'password-hash', now()),
   ('00000000-0000-0000-0000-000000000000', 'f7000000-0000-0000-0000-000000000004', 'authenticated', 'authenticated', 'chg-other@example.com', 'password-hash', now());
 
 update public.profiles set role = 'owner' where user_id = 'f7000000-0000-0000-0000-000000000001';
-update public.profiles set role = 'barber' where user_id = 'f7000000-0000-0000-0000-000000000002';
+update public.profiles set role = 'professional' where user_id = 'f7000000-0000-0000-0000-000000000002';
 
 insert into public.shops (id, name, owner_user_id) values ('f7100000-0000-0000-0000-000000000001', 'Change Shop', 'f7000000-0000-0000-0000-000000000001');
 insert into public.customers (id, shop_id, user_id, full_name, email) values
   ('f7200000-0000-0000-0000-000000000001', 'f7100000-0000-0000-0000-000000000001', 'f7000000-0000-0000-0000-000000000003', 'Change Customer', 'chg-customer@shop.example'),
   ('f7200000-0000-0000-0000-000000000002', 'f7100000-0000-0000-0000-000000000001', 'f7000000-0000-0000-0000-000000000004', 'Other Customer', 'chg-other@shop.example');
-insert into public.barbers (id, shop_id, name, user_id) values ('f7300000-0000-0000-0000-000000000001', 'f7100000-0000-0000-0000-000000000001', 'Change Barber', 'f7000000-0000-0000-0000-000000000002');
+insert into public.professionals (id, shop_id, name, user_id) values ('f7300000-0000-0000-0000-000000000001', 'f7100000-0000-0000-0000-000000000001', 'Change Professional', 'f7000000-0000-0000-0000-000000000002');
 insert into public.services (id, shop_id, name, duration_minutes, price_cents) values ('f7400000-0000-0000-0000-000000000001', 'f7100000-0000-0000-0000-000000000001', 'Change Cut', 30, 3500);
-insert into public.barber_services (id, shop_id, barber_id, service_id) values ('f7500000-0000-0000-0000-000000000001', 'f7100000-0000-0000-0000-000000000001', 'f7300000-0000-0000-0000-000000000001', 'f7400000-0000-0000-0000-000000000001');
-insert into public.working_periods (shop_id, barber_id, weekday, start_time, end_time)
+insert into public.professional_services (id, shop_id, professional_id, service_id) values ('f7500000-0000-0000-0000-000000000001', 'f7100000-0000-0000-0000-000000000001', 'f7300000-0000-0000-0000-000000000001', 'f7400000-0000-0000-0000-000000000001');
+insert into public.working_periods (shop_id, professional_id, weekday, start_time, end_time)
 select 'f7100000-0000-0000-0000-000000000001', 'f7300000-0000-0000-0000-000000000001', day, '09:00', '18:00' from generate_series(1, 7) as day;
 
 create temporary table chg_dates as select date_trunc('week', current_date + 14)::date as monday;
@@ -35,7 +35,7 @@ select set_config('request.jwt.claim.sub', 'f7000000-0000-0000-0000-000000000001
 select public.save_recurrence_plan(null, 'f7400000-0000-0000-0000-000000000001', 1, 2500, 'Corte mensal', true);
 select public.save_recurrence_plan(null, 'f7400000-0000-0000-0000-000000000001', 2, 3000, 'Quinzenal', true);
 
--- customer A subscribes weekly; the barber accepts: series S1
+-- customer A subscribes weekly; the professional accepts: series S1
 select set_config('request.jwt.claim.sub', 'f7000000-0000-0000-0000-000000000003', true);
 select count(*) from public.request_recurrence('f7500000-0000-0000-0000-000000000001', 1, (select monday from chg_dates), '10:00');
 select set_config('request.jwt.claim.sub', 'f7000000-0000-0000-0000-000000000002', true);
@@ -53,7 +53,7 @@ select lives_ok(
 reset role;
 select ok((select active from public.recurrence_series where id = (select id from chg_ids where name = 's1')), 'the current series keeps running until the change is answered');
 
--- 3-4. the barber accepts the change: S1 ends, the new series starts
+-- 3-4. the professional accepts the change: S1 ends, the new series starts
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'f7000000-0000-0000-0000-000000000002', true);
 select count(*) from public.decide_recurrence_request((select id from public.list_recurrence_requests('f7100000-0000-0000-0000-000000000001') limit 1), true);
@@ -128,7 +128,7 @@ select is(
 select ok(
   exists (select 1 from public.notifications where user_id = 'f7000000-0000-0000-0000-000000000003' and kind = 'recurrence_cancel_accepted')
   and exists (select 1 from public.notifications where user_id = 'f7000000-0000-0000-0000-000000000002' and kind = 'recurrence_cancel_requested'),
-  'the barber is told about the request and the customer about the acceptance'
+  'the professional is told about the request and the customer about the acceptance'
 );
 
 select * from finish();

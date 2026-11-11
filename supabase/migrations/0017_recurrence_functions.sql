@@ -1,5 +1,5 @@
 create or replace function public.book_appointment_internal(
-  target_barber_service_id uuid,
+  target_professional_service_id uuid,
   target_customer_id uuid,
   target_starts_at timestamptz,
   target_source public.appointment_source,
@@ -37,9 +37,9 @@ begin
   select
     bs.id,
     bs.shop_id,
-    bs.barber_id,
+    bs.professional_id,
     bs.service_id,
-    b.active as barber_active,
+    b.active as professional_active,
     b.buffer_minutes,
     s.name as service_name,
     s.duration_minutes,
@@ -47,25 +47,25 @@ begin
     s.active as service_active,
     bs.duration_override_minutes,
     bs.price_override_cents,
-    bs.active as barber_service_active,
+    bs.active as professional_service_active,
     sh.timezone,
     c.active as customer_active,
     c.user_id as customer_user_id
   into target
-  from public.barber_services bs
-  join public.barbers b on b.id = bs.barber_id and b.shop_id = bs.shop_id
+  from public.professional_services bs
+  join public.professionals b on b.id = bs.professional_id and b.shop_id = bs.shop_id
   join public.services s on s.id = bs.service_id and s.shop_id = bs.shop_id
   join public.shops sh on sh.id = bs.shop_id
   join public.customers c on c.id = target_customer_id and c.shop_id = bs.shop_id
-  where bs.id = target_barber_service_id;
+  where bs.id = target_professional_service_id;
 
   if not found then
     raise exception using errcode = 'P0004', message = 'SERVICE_UNAVAILABLE';
   end if;
-  if not target.barber_active then
-    raise exception using errcode = 'P0005', message = 'BARBER_UNAVAILABLE';
+  if not target.professional_active then
+    raise exception using errcode = 'P0005', message = 'PROFESSIONAL_UNAVAILABLE';
   end if;
-  if not target.service_active or not target.barber_service_active then
+  if not target.service_active or not target.professional_service_active then
     raise exception using errcode = 'P0004', message = 'SERVICE_UNAVAILABLE';
   end if;
   if not target.customer_active then
@@ -103,7 +103,7 @@ begin
   end if;
 
   if not exists (
-    select 1 from public.get_available_slots(target.barber_id, local_day, target_barber_service_id) slot
+    select 1 from public.get_available_slots(target.professional_id, local_day, target_professional_service_id) slot
     where slot.starts_at = target_starts_at
   ) then
     raise exception using errcode = 'P0001', message = 'SLOT_UNAVAILABLE';
@@ -112,13 +112,13 @@ begin
   begin
     return query
     insert into public.appointments (
-      shop_id, barber_id, customer_id, barber_service_id, service_id,
+      shop_id, professional_id, customer_id, professional_service_id, service_id,
       starts_at, ends_at, occupied_until, status, source, notes,
       service_name_snapshot, service_duration_minutes_snapshot,
-      service_price_cents_snapshot, barber_buffer_minutes_snapshot,
+      service_price_cents_snapshot, professional_buffer_minutes_snapshot,
       recurrence_series_id, recurrence_occurrence_date
     ) values (
-      target.shop_id, target.barber_id, target_customer_id, target_barber_service_id, target.service_id,
+      target.shop_id, target.professional_id, target_customer_id, target_professional_service_id, target.service_id,
       target_starts_at,
       target_starts_at + coalesce(target.duration_override_minutes, target.duration_minutes) * interval '1 minute',
       target_starts_at + (coalesce(target.duration_override_minutes, target.duration_minutes) + target.buffer_minutes) * interval '1 minute',
@@ -134,7 +134,7 @@ end;
 $$;
 
 create or replace function public.book_appointment(
-  barber_service_id uuid,
+  professional_service_id uuid,
   customer_id uuid,
   starts_at timestamptz,
   source public.appointment_source,
@@ -152,14 +152,14 @@ begin
 
   return query
   select * from public.book_appointment_internal(
-    barber_service_id, customer_id, starts_at, source, notes, null, null, null
+    professional_service_id, customer_id, starts_at, source, notes, null, null, null
   );
 end;
 $$;
 
 create or replace function public.create_recurrence_series(
   target_customer_id uuid,
-  target_barber_service_id uuid,
+  target_professional_service_id uuid,
   target_local_start_date date,
   target_local_start_time time,
   target_interval_weeks integer,
@@ -173,12 +173,12 @@ as $$
 declare
   target_shop_id uuid;
 begin
-  select barber_services.shop_id into target_shop_id
-  from public.barber_services
+  select professional_services.shop_id into target_shop_id
+  from public.professional_services
   join public.customers
     on customers.id = target_customer_id
-   and customers.shop_id = barber_services.shop_id
-  where barber_services.id = target_barber_service_id;
+   and customers.shop_id = professional_services.shop_id
+  where professional_services.id = target_professional_service_id;
 
   if target_shop_id is null or not public.is_shop_owner(target_shop_id) then
     raise exception using errcode = 'P0010', message = 'APPOINTMENT_FORBIDDEN';
@@ -189,10 +189,10 @@ begin
 
   return query
   insert into public.recurrence_series (
-    shop_id, customer_id, barber_service_id, local_start_date, local_start_time,
+    shop_id, customer_id, professional_service_id, local_start_date, local_start_time,
     interval_weeks, special_price_cents
   ) values (
-    target_shop_id, target_customer_id, target_barber_service_id, target_local_start_date,
+    target_shop_id, target_customer_id, target_professional_service_id, target_local_start_date,
     target_local_start_time, target_interval_weeks, target_special_price_cents
   ) returning *;
 end;
@@ -387,7 +387,7 @@ begin
 
       begin
         perform public.book_appointment_internal(
-          series_row.barber_service_id,
+          series_row.professional_service_id,
           series_row.customer_id,
           occurrence_starts_at,
           'recurrence',
@@ -417,7 +417,7 @@ returns table (
   id uuid,
   customer_id uuid,
   customer_name text,
-  barber_service_id uuid,
+  professional_service_id uuid,
   local_start_date date,
   local_start_time time,
   interval_weeks smallint,
@@ -439,7 +439,7 @@ begin
   return query
   select
     recurrence_series.id, recurrence_series.customer_id, customers.full_name,
-    recurrence_series.barber_service_id, recurrence_series.local_start_date,
+    recurrence_series.professional_service_id, recurrence_series.local_start_date,
     recurrence_series.local_start_time, recurrence_series.interval_weeks,
     recurrence_series.special_price_cents, recurrence_series.ends_on,
     recurrence_series.active, recurrence_series.ended_at
@@ -485,12 +485,12 @@ begin
   join public.customers
     on customers.id = recurrence_series.customer_id
    and customers.shop_id = recurrence_series.shop_id
-  join public.barber_services
-    on barber_services.id = recurrence_series.barber_service_id
-   and barber_services.shop_id = recurrence_series.shop_id
+  join public.professional_services
+    on professional_services.id = recurrence_series.professional_service_id
+   and professional_services.shop_id = recurrence_series.shop_id
   join public.services
-    on services.id = barber_services.service_id
-   and services.shop_id = barber_services.shop_id
+    on services.id = professional_services.service_id
+   and services.shop_id = professional_services.shop_id
   where recurrence_series.shop_id = target_shop_id
   order by recurrence_conflicts.status, recurrence_conflicts.occurrence_date, recurrence_conflicts.id;
 end;

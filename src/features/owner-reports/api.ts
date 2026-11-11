@@ -18,19 +18,19 @@ export async function getShopReport(supabase: Pick<SupabaseClient, "rpc">, start
   if (error) {
     const domainError = toDomainError(error);
     throw domainError.code === "BOOKING_REQUEST_FAILED"
-      ? new DomainError("BARBER_REQUEST_FAILED", "Unable to complete the request.")
+      ? new DomainError("PROFESSIONAL_REQUEST_FAILED", "Unable to complete the request.")
       : domainError;
   }
 
   const payload = (data ?? {}) as {
-    barbers?: Array<{ barber_id: string; barber_share_cents: number; compensation_type: "chair_rental" | "commission"; completed: number; gross_cents: number; name: string; rent_estimate_cents: number; rent_paid_cents?: number }>;
+    professionals?: Array<{ professional_id: string; professional_share_cents: number; compensation_type: "chair_rental" | "commission"; completed: number; gross_cents: number; name: string; rent_estimate_cents: number; rent_paid_cents?: number }>;
     days?: Array<{ cancelled: number; completed: number; date: string; gross_cents: number; no_show: number; upcoming: number }>;
     services?: Array<{ completed: number; gross_cents: number; name: string; service_id: string }>;
   };
 
   return {
-    barbers: (payload.barbers ?? []).map((b) => ({
-      barberId: b.barber_id, barberShareCents: b.barber_share_cents, compensationType: b.compensation_type, completed: b.completed,
+    professionals: (payload.professionals ?? []).map((b) => ({
+      professionalId: b.professional_id, professionalShareCents: b.professional_share_cents, compensationType: b.compensation_type, completed: b.completed,
       grossCents: b.gross_cents, name: b.name, rentEstimateCents: b.rent_estimate_cents, rentPaidCents: b.rent_paid_cents ?? 0,
     })),
     days: (payload.days ?? []).map((d) => ({ cancelled: d.cancelled, completed: d.completed, date: d.date, grossCents: d.gross_cents, noShow: d.no_show, upcoming: d.upcoming })),

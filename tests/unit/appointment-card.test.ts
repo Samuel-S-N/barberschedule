@@ -6,7 +6,7 @@ import { shadows } from "../../src/lib/design/shadows";
 
 const baseProps = {
   serviceName: "Cut + Beard",
-  barberName: "João Silva",
+  professionalName: "João Silva",
   dateLabel: "Thu, Aug 18",
   timeLabel: "14:30",
   shopName: "Barbearia Alfa",
@@ -14,7 +14,7 @@ const baseProps = {
 };
 
 describe("AppointmentCard", () => {
-  it("renders the service, barber, date/time, shop, and status", async () => {
+  it("renders the service, professional, date/time, shop, and status", async () => {
     const view = await render(
       React.createElement(AppointmentCard, { ...baseProps, status: "confirmed", testID: "card" }),
     );

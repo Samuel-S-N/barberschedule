@@ -156,7 +156,7 @@ export default function OwnerAgendaScreen() {
                   onNoShow={() => update.mutate({ id: appointment.id, status: "no_show" })}
                   onOpen={() => setOpenId(appointment.id)}
                   status={appointment.status}
-                  subtitle={appointment.barberName}
+                  subtitle={appointment.professionalName}
                   testPrefix="owner"
                   timeLabel={`${formatDateNumeric(startsAt.localDate, language)} ${startsAt.localTime}`}
                 />
@@ -166,7 +166,7 @@ export default function OwnerAgendaScreen() {
             {overrides.map((override) => (
               <Card key={override.id} testID={`owner-override-${override.id}`} variant="outlined">
                 <View className="gap-1">
-                  <Text className="text-base font-sans-semibold text-ink">{override.barberName} · {override.kind === "opening" ? t("owner.schedule.kindOpening") : t("owner.schedule.kindBlock")}</Text>
+                  <Text className="text-base font-sans-semibold text-ink">{override.professionalName} · {override.kind === "opening" ? t("owner.schedule.kindOpening") : t("owner.schedule.kindBlock")}</Text>
                   <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>
                     {formatDateNumeric(override.localDate, language)} · {override.startTime ? `${override.startTime.slice(0, 5)}–${override.endTime?.slice(0, 5)}` : t("common.allDay")}
                   </Text>
@@ -176,7 +176,7 @@ export default function OwnerAgendaScreen() {
 
             <AppointmentSheet
               appointment={openAppointment && openStart ? {
-                barberName: openAppointment.barberName,
+                professionalName: openAppointment.professionalName,
                 customerName: openAppointment.customerName,
                 customerPhone: openAppointment.customerPhone,
                 dateLabel: formatDateNumeric(openStart.localDate, language),

@@ -25,16 +25,16 @@ export function DaySummaryCard({ earnedCents, summary, testID }: DaySummaryCardP
   return (
     <Card testID={testID}>
       <View className="gap-3">
-        <Text accessibilityRole="header" className="text-lg font-display-semibold text-ink">{t("barber.summary.title")}</Text>
+        <Text accessibilityRole="header" className="text-lg font-display-semibold text-ink">{t("professional.summary.title")}</Text>
         <View className="flex-row flex-wrap gap-3">
-          <Cell label={t("barber.summary.appointments")} sublabel={t("barber.summary.done", { count: summary.completed })} value={String(summary.total)} />
-          <Cell label={t("barber.summary.free")} value={String(summary.freeSlots)} />
+          <Cell label={t("professional.summary.appointments")} sublabel={t("professional.summary.done", { count: summary.completed })} value={String(summary.total)} />
+          <Cell label={t("professional.summary.free")} value={String(summary.freeSlots)} />
           <Cell
-            label={t("barber.summary.next")}
+            label={t("professional.summary.next")}
             sublabel={summary.next ? summary.next.customerName : undefined}
-            value={nextTime ?? t("barber.summary.nextNone")}
+            value={nextTime ?? t("professional.summary.nextNone")}
           />
-          {earnedCents !== null ? <Cell label={t("barber.summary.earned")} value={formatPriceBRL(earnedCents)} /> : null}
+          {earnedCents !== null ? <Cell label={t("professional.summary.earned")} value={formatPriceBRL(earnedCents)} /> : null}
         </View>
       </View>
     </Card>

@@ -12,8 +12,8 @@ import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { DateInput, TimeInput } from "../../src/components/ui/MaskedInputs";
 import { Screen } from "../../src/components/ui/Screen";
-import { listOwnerBarbers, listShopLunchBreaks } from "../../src/features/barbers/api";
-import type { OwnerBarber } from "../../src/features/barbers/types";
+import { listOwnerProfessionals, listShopLunchBreaks } from "../../src/features/professionals/api";
+import type { OwnerProfessional } from "../../src/features/professionals/types";
 import {
   createScheduleOverride,
   createWorkingPeriod,
@@ -45,7 +45,7 @@ export default function OwnerScheduleScreen() {
   const shop = useOwnerShopId();
   const shopId = shop.data ?? null;
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [selectedBarberId, setSelectedBarberId] = useState<string | null>(null);
+  const [selectedProfessionalId, setSelectedProfessionalId] = useState<string | null>(null);
   const [weekday, setWeekday] = useState(1);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("18:00");
@@ -59,30 +59,30 @@ export default function OwnerScheduleScreen() {
     enabled: shopId !== null,
     queryFn: async () => {
       const id = shopId ?? "";
-      const [barbers, periods, overrides] = await Promise.all([listOwnerBarbers(supabase, id), listOwnerWorkingPeriods(supabase, id), listOwnerScheduleOverrides(supabase, id)]);
+      const [professionals, periods, overrides] = await Promise.all([listOwnerProfessionals(supabase, id), listOwnerWorkingPeriods(supabase, id), listOwnerScheduleOverrides(supabase, id)]);
 
-      return { barbers, overrides, periods };
+      return { professionals, overrides, periods };
     },
     queryKey: ["owner-schedule", shopId],
   });
   const lunches = useQuery({ enabled: shopId !== null, queryFn: () => listShopLunchBreaks(supabase, shopId ?? ""), queryKey: ["owner-lunch", shopId] });
-  const barbers = data.data?.barbers ?? [];
+  const professionals = data.data?.professionals ?? [];
 
   useEffect(() => {
-    if (selectedBarberId === null && barbers.length > 0) setSelectedBarberId(barbers[0].id);
-  }, [barbers, selectedBarberId]);
+    if (selectedProfessionalId === null && professionals.length > 0) setSelectedProfessionalId(professionals[0].id);
+  }, [professionals, selectedProfessionalId]);
 
-  const selectedBarber = barbers.find((barber: OwnerBarber) => barber.id === selectedBarberId);
-  const selectedPeriods = (data.data?.periods ?? []).filter((period) => period.barberId === selectedBarberId);
-  const selectedOverrides = (data.data?.overrides ?? []).filter((override) => override.barberId === selectedBarberId);
-  const lunch = lunches.data?.find((item) => item.barberId === selectedBarberId) ?? null;
+  const selectedProfessional = professionals.find((professional: OwnerProfessional) => professional.id === selectedProfessionalId);
+  const selectedPeriods = (data.data?.periods ?? []).filter((period) => period.professionalId === selectedProfessionalId);
+  const selectedOverrides = (data.data?.overrides ?? []).filter((override) => override.professionalId === selectedProfessionalId);
+  const lunch = lunches.data?.find((item) => item.professionalId === selectedProfessionalId) ?? null;
   const showOverrideTimes = overrideKind === "opening" || !isAllDayBlock;
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["owner-schedule"] });
   const fail = (error: unknown, fallback: string) => setFeedback(errorMessage(error, t, fallback));
 
   const addPeriod = useMutation({
     mutationFn: () => {
-      const input = parseWorkingPeriodInput({ barberId: selectedBarberId ?? "", endTime, shopId: shopId ?? "", startTime, weekday });
+      const input = parseWorkingPeriodInput({ professionalId: selectedProfessionalId ?? "", endTime, shopId: shopId ?? "", startTime, weekday });
       assertNoOverlappingWorkingPeriod(input, selectedPeriods);
 
       return createWorkingPeriod(supabase, input);
@@ -94,7 +94,7 @@ export default function OwnerScheduleScreen() {
   const copyShopHours = useMutation({
     mutationFn: async () => {
       for (const period of await listShopHours(supabase, shopId ?? "")) {
-        await createWorkingPeriod(supabase, parseWorkingPeriodInput({ barberId: selectedBarberId ?? "", endTime: period.end, shopId: shopId ?? "", startTime: period.start, weekday: period.weekday }));
+        await createWorkingPeriod(supabase, parseWorkingPeriodInput({ professionalId: selectedProfessionalId ?? "", endTime: period.end, shopId: shopId ?? "", startTime: period.start, weekday: period.weekday }));
       }
     },
     onError: (error) => fail(error, t("owner.schedule.addPeriodError")),
@@ -104,7 +104,7 @@ export default function OwnerScheduleScreen() {
   const addOverride = useMutation({
     mutationFn: () =>
       createScheduleOverride(supabase, {
-        barberId: selectedBarberId ?? "",
+        professionalId: selectedProfessionalId ?? "",
         endTime: showOverrideTimes ? overrideEndTime : null,
         kind: overrideKind,
         localDate,
@@ -140,15 +140,15 @@ export default function OwnerScheduleScreen() {
             {shop.data === null ? <EmptyState title={t("common.noShop")} /> : null}
 
             <View className="flex-row flex-wrap gap-2">
-              {barbers.map((barber: OwnerBarber) => (
-                <Button key={barber.id} label={selectable(barber.name, barber.id === selectedBarberId)} onPress={() => setSelectedBarberId(barber.id)} size="sm" testID={`schedule-barber-${barber.id}`} variant={barber.id === selectedBarberId ? "dark" : "outline"} />
+              {professionals.map((professional: OwnerProfessional) => (
+                <Button key={professional.id} label={selectable(professional.name, professional.id === selectedProfessionalId)} onPress={() => setSelectedProfessionalId(professional.id)} size="sm" testID={`schedule-professional-${professional.id}`} variant={professional.id === selectedProfessionalId ? "dark" : "outline"} />
               ))}
             </View>
-            {data.data && !selectedBarber ? <Text className="text-sm font-sans text-neutral-600">{t("owner.schedule.noBarber")}</Text> : null}
+            {data.data && !selectedProfessional ? <Text className="text-sm font-sans text-neutral-600">{t("owner.schedule.noProfessional")}</Text> : null}
 
-            {selectedBarber ? (
+            {selectedProfessional ? (
               <>
-                <Text className="text-sm font-sans text-neutral-600">{t("owner.schedule.selectedBarber", { name: selectedBarber.name })}</Text>
+                <Text className="text-sm font-sans text-neutral-600">{t("owner.schedule.selectedProfessional", { name: selectedProfessional.name })}</Text>
 
                 <Card variant="outlined" testID="schedule-summary">
                   <View className="gap-2">
@@ -164,13 +164,13 @@ export default function OwnerScheduleScreen() {
                         </View>
                       );
                     })}
-                    {lunch ? <Text className="pt-1 text-sm font-sans text-neutral-600" testID="schedule-lunch">{t("barber.availability.lunchTitle")}: {lunch.start}–{lunch.end}</Text> : null}
+                    {lunch ? <Text className="pt-1 text-sm font-sans text-neutral-600" testID="schedule-lunch">{t("professional.availability.lunchTitle")}: {lunch.start}–{lunch.end}</Text> : null}
                   </View>
                 </Card>
                 {selectedPeriods.length === 0 ? (
                   <Button disabled={busy} label={t("owner.schedule.copyShopHours")} onPress={() => copyShopHours.mutate()} testID="schedule-copy-shop-hours" variant="outline" />
                 ) : null}
-                <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{t("owner.schedule.periodsTitle", { name: selectedBarber.name })}</Text>
+                <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{t("owner.schedule.periodsTitle", { name: selectedProfessional.name })}</Text>
                 <Card>
                   <View className="gap-3">
                     <Text className="text-sm font-sans-medium text-ink">{t("owner.schedule.weekdayLabel")}</Text>

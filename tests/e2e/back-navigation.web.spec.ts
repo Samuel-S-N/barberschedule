@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
-import { barberId, json, mockCustomerRest, shopId, signInAsCustomer } from "./customer-helpers";
+import { professionalId, json, mockCustomerRest, shopId, signInAsCustomer } from "./customer-helpers";
 
 // Earlier screens stay mounted (aria-hidden) in the navigators; click the active screen's back button.
 const back = (page: Page) => page.locator('[data-testid="back"]:not([aria-hidden="true"] *)').click();
@@ -20,17 +20,17 @@ async function signInAs(page: Page, id: string) {
   }, { userId: id });
 }
 
-async function mockStaff(page: Page, role: "barber" | "owner", extra?: (path: string, route: import("@playwright/test").Route) => Promise<boolean>) {
+async function mockStaff(page: Page, role: "professional" | "owner", extra?: (path: string, route: import("@playwright/test").Route) => Promise<boolean>) {
   await page.route("**/rest/v1/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
 
     if (extra && (await extra(path, route))) return;
     if (path.endsWith("/rpc/get_current_profile")) return json(route, [{ full_name: "Staff", role, user_id: staffUserId }]);
-    if (path.endsWith("/rpc/get_my_barber_profile")) {
-      return json(route, [{ avatar_url: null, bio: null, chair_rental_amount_cents: null, chair_rental_frequency: null, commission_percent: "40.00", compensation_type: "commission", id: barberId, name: "Browser Barber", shop_id: shopId }]);
+    if (path.endsWith("/rpc/get_my_professional_profile")) {
+      return json(route, [{ avatar_url: null, bio: null, chair_rental_amount_cents: null, chair_rental_frequency: null, commission_percent: "40.00", compensation_type: "commission", id: professionalId, name: "Browser Professional", shop_id: shopId }]);
     }
     if (path.endsWith("/shops")) return json(route, [{ id: shopId }]);
-    if (path.endsWith("/rpc/list_my_barber_agenda") || path.endsWith("/rpc/list_owner_barbers") || path.endsWith("/rpc/list_my_customers")) return json(route, []);
+    if (path.endsWith("/rpc/list_my_professional_agenda") || path.endsWith("/rpc/list_owner_professionals") || path.endsWith("/rpc/list_my_customers")) return json(route, []);
     await route.abort();
   });
 }
@@ -76,10 +76,10 @@ test.describe("customer", () => {
   });
 });
 
-test.describe("barber", () => {
+test.describe("professional", () => {
   test("profile sub-screens go back to the hub and nested ones one level", async ({ page }) => {
     await signInAs(page, staffUserId);
-    await mockStaff(page, "barber");
+    await mockStaff(page, "professional");
 
     await page.goto("/my-profile");
     await page.getByTestId("menu-security").click();
@@ -93,7 +93,7 @@ test.describe("barber", () => {
 
   test("a recurrence request opened from a notification goes back to the profile, not in circles", async ({ page }) => {
     await signInAs(page, staffUserId);
-    await mockStaff(page, "barber", async (path, route) => {
+    await mockStaff(page, "professional", async (path, route) => {
       if (path.endsWith("/rpc/count_unread_notifications")) return json(route, 1).then(() => true);
       if (path.endsWith("/notifications")) {
         return json(route, [{ appointment_id: null, created_at: "2026-10-20T10:00:00Z", id: "n1", kind: "recurrence_requested", params: { customer_name: "Ana", interval_weeks: 1, service_name: "Cut" }, read_at: null }]).then(() => true);
@@ -113,7 +113,7 @@ test.describe("barber", () => {
 
   test("a client opened from anywhere goes back to the full client list", async ({ page }) => {
     await signInAs(page, staffUserId);
-    await mockStaff(page, "barber");
+    await mockStaff(page, "professional");
 
     await page.goto("/my-agenda");
     await page.goto(`/clients/${clientId}`);
@@ -123,7 +123,7 @@ test.describe("barber", () => {
 });
 
 test.describe("owner", () => {
-  test("notifications, profile, barber profile and conflicts go back to their parents", async ({ page }) => {
+  test("notifications, profile, professional profile and conflicts go back to their parents", async ({ page }) => {
     await signInAs(page, staffUserId);
     await mockStaff(page, "owner");
 
@@ -137,9 +137,9 @@ test.describe("owner", () => {
     await back(page);
     await expect(page).toHaveURL(/\/settings$/);
 
-    await page.goto(`/barber-profile?id=${clientId}`);
+    await page.goto(`/professional-profile?id=${clientId}`);
     await back(page);
-    await expect(page).toHaveURL(/\/barbers$/);
+    await expect(page).toHaveURL(/\/professionals$/);
 
     await page.goto("/recurrence-conflicts");
     await back(page);

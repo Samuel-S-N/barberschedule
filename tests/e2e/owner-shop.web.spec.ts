@@ -36,7 +36,7 @@ async function mockOwnerRest(page: Page, calls: Record<string, unknown>) {
         { end_time: "18:00:00", start_time: "14:00:00", weekday: 1 },
       ]);
     }
-    if (path.endsWith("/rpc/list_owner_barbers")) {
+    if (path.endsWith("/rpc/list_owner_professionals")) {
       return json(route, [
         { active: true, archived_at: null, commission_percent: "0.00", compensation_type: "commission", id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1", name: "Ana", shop_id: shop, user_id: null },
         { active: true, archived_at: null, commission_percent: "0.00", compensation_type: "commission", id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2", name: "Bruno", shop_id: shop, user_id: null },
@@ -136,7 +136,7 @@ test("a day's hours can be copied to every other day or to Monday-Friday", async
   await expect(page.getByTestId("shop-day-7")).toContainText("Open");
 });
 
-test("the owner closes the shop on a date for every active barber and reopens it", async ({ page }) => {
+test("the owner closes the shop on a date for every active professional and reopens it", async ({ page }) => {
   const date = "2099-12-25";
   const calls: Record<string, unknown> = { deletes: [], inserts: [] };
 
@@ -150,14 +150,14 @@ test("the owner closes the shop on a date for every active barber and reopens it
   await page.getByTestId("shop-closed-add").click();
 
   await expect.poll(() => calls.inserts).toMatchObject([
-    { barber_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1", kind: "block", local_date: date, start_time: null },
-    { barber_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2", kind: "block", local_date: date, start_time: null },
+    { professional_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1", kind: "block", local_date: date, start_time: null },
+    { professional_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2", kind: "block", local_date: date, start_time: null },
   ]);
 });
 
-test("a date closed for every barber is listed and can be reopened", async ({ page }) => {
+test("a date closed for every professional is listed and can be reopened", async ({ page }) => {
   const date = "2099-12-25";
-  const row = (id: string, barberId: string) => ({ barber_id: barberId, end_time: null, id, kind: "block", local_date: date, shop_id: shop, start_time: null });
+  const row = (id: string, professionalId: string) => ({ professional_id: professionalId, end_time: null, id, kind: "block", local_date: date, shop_id: shop, start_time: null });
   const calls: Record<string, unknown> = { deletes: [], inserts: [], overrides: [row("o1", "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1"), row("o2", "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2")] };
 
   await signInAsOwner(page);

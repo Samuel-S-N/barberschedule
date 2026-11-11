@@ -1,4 +1,4 @@
--- A barber can read (not edit) their own weekly working hours; the owner still manages them.
+-- A professional can read (not edit) their own weekly working hours; the owner still manages them.
 create function public.list_my_working_periods()
 returns table (weekday smallint, start_time time, end_time time)
 language plpgsql
@@ -7,18 +7,18 @@ security definer
 set search_path = pg_catalog, public, pg_temp
 as $$
 declare
-  my_barber_id uuid;
+  my_professional_id uuid;
 begin
-  select b.id into my_barber_id from public.barbers b where b.user_id = auth.uid() and b.active;
+  select b.id into my_professional_id from public.professionals b where b.user_id = auth.uid() and b.active;
 
-  if my_barber_id is null then
-    raise exception using errcode = 'P0019', message = 'BARBER_NOT_LINKED';
+  if my_professional_id is null then
+    raise exception using errcode = 'P0019', message = 'PROFESSIONAL_NOT_LINKED';
   end if;
 
   return query
   select wp.weekday, wp.start_time, wp.end_time
   from public.working_periods wp
-  where wp.barber_id = my_barber_id
+  where wp.professional_id = my_professional_id
   order by wp.weekday, wp.start_time;
 end;
 $$;

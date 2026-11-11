@@ -29,12 +29,12 @@ const services = [
   { active: true, archived_at: null, description: "Classic fade", duration_minutes: 30, id: S1, is_standard: true, name: "Cut", price_cents: 2500, shop_id: shop },
   { active: true, archived_at: null, description: null, duration_minutes: 45, id: S2, is_standard: false, name: "Beard", price_cents: 4500, shop_id: shop },
 ];
-const barbers = [
-  { active: true, archived_at: null, id: B1, name: "Ana Barber", shop_id: shop, user_id: null },
-  { active: true, archived_at: null, id: B2, name: "Bruno Barber", shop_id: shop, user_id: null },
+const professionals = [
+  { active: true, archived_at: null, id: B1, name: "Ana Professional", shop_id: shop, user_id: null },
+  { active: true, archived_at: null, id: B2, name: "Bruno Professional", shop_id: shop, user_id: null },
 ];
-const barberServices = [
-  { active: true, archived_at: null, barber_id: B1, duration_override_minutes: null, id: BS1, price_override_cents: 3000, service_id: S1, shop_id: shop },
+const professionalServices = [
+  { active: true, archived_at: null, professional_id: B1, duration_override_minutes: null, id: BS1, price_override_cents: 3000, service_id: S1, shop_id: shop },
 ];
 
 async function mockOwnerRest(page: Page, calls: Record<string, unknown>) {
@@ -44,23 +44,23 @@ async function mockOwnerRest(page: Page, calls: Record<string, unknown>) {
 
     if (path.endsWith("/rpc/get_current_profile")) return json(route, [{ full_name: "Owner", role: "owner", user_id: ownerId }]);
     if (path.endsWith("/shops")) return json(route, [{ id: shop }]);
-    if (path.endsWith("/rpc/list_owner_barbers")) return json(route, barbers);
+    if (path.endsWith("/rpc/list_owner_professionals")) return json(route, professionals);
     if (path.endsWith("/services") && method === "GET") return json(route, services);
     if (path.endsWith("/services") && method === "POST") {
       calls.createService = route.request().postDataJSON();
 
       return json(route, { ...services[0], id: S3, name: "Shave" });
     }
-    if (path.endsWith("/barber_services") && method === "GET") return json(route, barberServices);
-    if (path.endsWith("/barber_services") && method === "POST") {
+    if (path.endsWith("/professional_services") && method === "GET") return json(route, professionalServices);
+    if (path.endsWith("/professional_services") && method === "POST") {
       calls.assign = route.request().postDataJSON();
 
-      return json(route, { active: true, archived_at: null, barber_id: B2, duration_override_minutes: null, id: BS2, price_override_cents: null, service_id: S1, shop_id: shop });
+      return json(route, { active: true, archived_at: null, professional_id: B2, duration_override_minutes: null, id: BS2, price_override_cents: null, service_id: S1, shop_id: shop });
     }
-    if (path.endsWith("/barber_services") && method === "PATCH") {
+    if (path.endsWith("/professional_services") && method === "PATCH") {
       calls.patch = route.request().postDataJSON();
 
-      return json(route, { ...barberServices[0], ...(calls.patch as object) });
+      return json(route, { ...professionalServices[0], ...(calls.patch as object) });
     }
     await route.abort();
   });
@@ -105,7 +105,7 @@ test("the owner adds a service typing the price in reais", async ({ page }) => {
   await expect(page).toHaveURL(/\/services/);
 });
 
-test("Edit opens the service form with its barbers, price overrides and a red Deactivate", async ({ page }) => {
+test("Edit opens the service form with its professionals, price overrides and a red Deactivate", async ({ page }) => {
   const calls: Record<string, unknown> = {};
 
   await signInAsOwner(page);
@@ -122,7 +122,7 @@ test("Edit opens the service form with its barbers, price overrides and a red De
   await expect(page.getByTestId(`assignment-${S1}-${B2}`)).toContainText("Not offered");
 
   await page.getByTestId(`assign-${S1}-${B2}`).click();
-  await expect.poll(() => calls.assign).toMatchObject({ barber_id: B2, service_id: S1, shop_id: shop, price_override_cents: null, duration_override_minutes: null });
+  await expect.poll(() => calls.assign).toMatchObject({ professional_id: B2, service_id: S1, shop_id: shop, price_override_cents: null, duration_override_minutes: null });
 
   await page.getByTestId(`override-edit-${S1}-${B1}`).click();
   await page.getByTestId("override-price").fill("32,00");

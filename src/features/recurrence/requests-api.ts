@@ -17,7 +17,7 @@ const time = (value: unknown) => String(value).slice(0, 5);
 const cents = (value: unknown) => (value === null || value === undefined ? null : Number(value));
 
 export type RecurrenceRequest = {
-  barberName: string;
+  professionalName: string;
   cancelRequestedAt: string | null;
   id: string;
   planName: string | null;
@@ -42,8 +42,8 @@ export function requestDisplayStatus(request: Pick<RecurrenceRequest, "cancelReq
 }
 
 export type StaffRecurrenceRequest = {
-  barberId: string;
-  barberName: string;
+  professionalId: string;
+  professionalName: string;
   customerName: string;
   customerPhone: string | null;
   id: string;
@@ -55,12 +55,12 @@ export type StaffRecurrenceRequest = {
   weeks: RecurrenceWeeks;
 };
 
-type SeriesInput = { barberServiceId: string; startDate: string; startTime: string; weeks: RecurrenceWeeks };
+type SeriesInput = { professionalServiceId: string; startDate: string; startTime: string; weeks: RecurrenceWeeks };
 type RequestInput = SeriesInput & { replacesRequestId?: string; replacesSeriesId?: string };
 
 export async function requestRecurrence(supabase: Client, input: RequestInput) {
   await call(supabase, "request_recurrence", {
-    target_barber_service_id: input.barberServiceId,
+    target_professional_service_id: input.professionalServiceId,
     target_interval_weeks: input.weeks,
     target_replaces_request_id: input.replacesRequestId ?? null,
     target_replaces_series_id: input.replacesSeriesId ?? null,
@@ -71,7 +71,7 @@ export async function requestRecurrence(supabase: Client, input: RequestInput) {
 
 export async function createRecurrenceForCustomer(supabase: Client, input: SeriesInput & { customerId: string }) {
   await call(supabase, "create_recurrence_for_customer", {
-    target_barber_service_id: input.barberServiceId,
+    target_professional_service_id: input.professionalServiceId,
     target_customer_id: input.customerId,
     target_interval_weeks: input.weeks,
     target_start_date: input.startDate,
@@ -87,7 +87,7 @@ export async function listMyRecurrenceRequests(supabase: Client): Promise<Recurr
   const rows = await call(supabase, "list_my_recurrence_requests");
 
   return rows.map((row) => ({
-    barberName: String(row.barber_name),
+    professionalName: String(row.professional_name),
     cancelRequestedAt: (row.cancel_requested_at as string | null) ?? null,
     id: String(row.id),
     planName: (row.plan_name as string | null) ?? null,
@@ -107,8 +107,8 @@ export async function listRecurrenceRequests(supabase: Client, shopId: string): 
   const rows = await call(supabase, "list_recurrence_requests", { target_shop_id: shopId });
 
   return rows.map((row) => ({
-    barberId: String(row.barber_id),
-    barberName: String(row.barber_name),
+    professionalId: String(row.professional_id),
+    professionalName: String(row.professional_name),
     customerName: String(row.customer_name),
     customerPhone: (row.customer_phone as string | null) ?? null,
     id: String(row.id),
@@ -130,7 +130,7 @@ export async function requestSeriesCancellation(supabase: Client, seriesId: stri
 }
 
 export type CancellationRequest = {
-  barberName: string;
+  professionalName: string;
   customerName: string;
   customerPhone: string | null;
   requestedAt: string;
@@ -143,7 +143,7 @@ export async function listCancellationRequests(supabase: Client, shopId: string)
   const rows = await call(supabase, "list_recurrence_cancellations", { target_shop_id: shopId });
 
   return rows.map((row) => ({
-    barberName: String(row.barber_name),
+    professionalName: String(row.professional_name),
     customerName: String(row.customer_name),
     customerPhone: (row.customer_phone as string | null) ?? null,
     requestedAt: String(row.requested_at),

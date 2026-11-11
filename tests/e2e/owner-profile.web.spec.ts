@@ -5,7 +5,7 @@ import { json } from "./customer-helpers";
 
 const ownerId = "55555555-5555-4555-8555-555555555555";
 const shop = "11111111-1111-4111-8111-111111111111";
-const myBarberId = "99999999-9999-4999-8999-999999999999";
+const myProfessionalId = "99999999-9999-4999-8999-999999999999";
 
 async function signInAsOwner(page: Page) {
   await page.addInitScript(({ id }) => {
@@ -25,25 +25,25 @@ async function mockOwnerRest(page: Page, state: { calls: Record<string, unknown>
 
     if (path.endsWith("/rpc/get_current_profile")) return json(route, [{ full_name: "Olivia Owner", nickname: "Liv", role: "owner", user_id: ownerId }]);
     if (path.endsWith("/shops")) return json(route, [{ id: shop }]);
-    if (path.endsWith("/rpc/list_owner_barbers")) {
-      return json(route, state.linked ? [{ active: true, archived_at: null, commission_percent: "0.00", compensation_type: "commission", id: myBarberId, name: "Liv", shop_id: shop, user_id: ownerId }] : []);
+    if (path.endsWith("/rpc/list_owner_professionals")) {
+      return json(route, state.linked ? [{ active: true, archived_at: null, commission_percent: "0.00", compensation_type: "commission", id: myProfessionalId, name: "Liv", shop_id: shop, user_id: ownerId }] : []);
     }
-    if (path.endsWith("/rpc/get_barber_account_status")) return json(route, true);
+    if (path.endsWith("/rpc/get_professional_account_status")) return json(route, true);
     if (path.endsWith("/rpc/update_my_staff_profile")) {
       state.calls.profile = route.request().postDataJSON();
 
       return json(route, null);
     }
-    if (path.endsWith("/barbers") && method === "POST") {
+    if (path.endsWith("/professionals") && method === "POST") {
       state.calls.create = route.request().postDataJSON();
       state.linked = true;
 
-      return json(route, { active: true, archived_at: null, id: myBarberId, name: "Liv", shop_id: shop });
+      return json(route, { active: true, archived_at: null, id: myProfessionalId, name: "Liv", shop_id: shop });
     }
-    if (path.endsWith("/barbers") && method === "PATCH") {
+    if (path.endsWith("/professionals") && method === "PATCH") {
       state.calls.patch = route.request().postDataJSON();
 
-      return json(route, { active: false, archived_at: "2026-10-01T00:00:00Z", id: myBarberId, name: "Liv", shop_id: shop });
+      return json(route, { active: false, archived_at: "2026-10-01T00:00:00Z", id: myProfessionalId, name: "Liv", shop_id: shop });
     }
     await route.abort();
   });
@@ -98,25 +98,25 @@ test("security opens the password screen and privacy explains the owner account"
   await expect(page.getByTestId("owner-privacy-note")).toContainText("cannot be deleted from the app");
 });
 
-test("Serve as a barber creates a barber linked to the owner and opens its profile; turning it off deactivates", async ({ page }) => {
+test("Serve as a professional creates a professional linked to the owner and opens its profile; turning it off deactivates", async ({ page }) => {
   const state = { calls: {} as Record<string, unknown>, linked: false };
 
   await signInAsOwner(page);
   await mockOwnerRest(page, state);
 
   await page.goto("/settings");
-  await page.getByTestId("owner-as-barber").click();
+  await page.getByTestId("owner-as-professional").click();
   await expect.poll(() => state.calls.create).toMatchObject({ name: "Liv", shop_id: shop, user_id: ownerId });
 
-  await page.getByTestId("menu-my-barber").click();
-  await expect(page).toHaveURL(new RegExp(`/barber-profile\\?id=${myBarberId}`));
+  await page.getByTestId("menu-my-professional").click();
+  await expect(page).toHaveURL(new RegExp(`/professional-profile\\?id=${myProfessionalId}`));
   await page.locator('[data-testid="back"]:not([aria-hidden="true"] *)').click();
-  // Fixed parent: a barber profile always goes back to the barber list, even when opened from the owner's account.
-  await expect(page).toHaveURL(/\/barbers/);
+  // Fixed parent: a professional profile always goes back to the professional list, even when opened from the owner's account.
+  await expect(page).toHaveURL(/\/professionals/);
   await page.goto("/settings");
-  // Wait for the barber row to load: toggling before it arrives would try to create another one.
-  await expect(page.getByTestId("menu-my-barber")).toBeVisible();
+  // Wait for the professional row to load: toggling before it arrives would try to create another one.
+  await expect(page.getByTestId("menu-my-professional")).toBeVisible();
 
-  await page.getByTestId("owner-as-barber").click();
+  await page.getByTestId("owner-as-professional").click();
   await expect.poll(() => (state.calls.patch as { active?: boolean } | undefined)?.active).toBe(false);
 });

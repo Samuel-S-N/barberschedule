@@ -4,14 +4,14 @@ import {
 } from "../../src/features/customers/api";
 import type { CustomerRow } from "../../src/features/customers/types";
 import {
-  listOwnerBarbers,
-  listPublicBarbers,
-  updateBarber,
-} from "../../src/features/barbers/api";
+  listOwnerProfessionals,
+  listPublicProfessionals,
+  updateProfessional,
+} from "../../src/features/professionals/api";
 import type {
-  OwnerBarberRow,
-  PublicBarberRow,
-} from "../../src/features/barbers/types";
+  OwnerProfessionalRow,
+  PublicProfessionalRow,
+} from "../../src/features/professionals/types";
 import { resolveEffectiveService } from "../../src/features/services/api";
 
 function createOrderBuilder<Row>(rows: Row[]) {
@@ -32,32 +32,32 @@ function createMaybeSingleBuilder<Row>(row: Row) {
 }
 
 describe("task 3 catalog and customer helpers", () => {
-  it("lists only the requested shop barbers and maps public rows", async () => {
+  it("lists only the requested shop professionals and maps public rows", async () => {
     const builder = createOrderBuilder([
       {
         active: true,
         archived_at: null,
-        id: "barber-1",
-        name: "Alice Barber",
+        id: "professional-1",
+        name: "Alice Professional",
         shop_id: "shop-1",
-      } satisfies PublicBarberRow,
+      } satisfies PublicProfessionalRow,
     ]);
     const from = jest.fn().mockReturnValue(builder);
 
     await expect(
-      listPublicBarbers({ from } as never, "shop-1"),
+      listPublicProfessionals({ from } as never, "shop-1"),
     ).resolves.toEqual([
       {
         active: true,
         archivedAt: null,
         avatarUrl: null,
-        id: "barber-1",
-        name: "Alice Barber",
+        id: "professional-1",
+        name: "Alice Professional",
         shopId: "shop-1",
       },
     ]);
 
-    expect(from).toHaveBeenCalledWith("barbers");
+    expect(from).toHaveBeenCalledWith("professionals");
     expect(builder.select).toHaveBeenCalledWith(
       "id, shop_id, name, active, archived_at, avatar_url",
     );
@@ -65,23 +65,23 @@ describe("task 3 catalog and customer helpers", () => {
     expect(builder.order).toHaveBeenCalledWith("name", { ascending: true });
   });
 
-  it("keeps owner-only barber reads on the internal columns", async () => {
+  it("keeps owner-only professional reads on the internal columns", async () => {
     const rpc = jest.fn().mockResolvedValue({
       data: [
         {
           active: true,
           archived_at: null,
-          id: "barber-1",
-          name: "Alice Barber",
+          id: "professional-1",
+          name: "Alice Professional",
           shop_id: "shop-1",
           user_id: "user-1",
-        } satisfies OwnerBarberRow,
+        } satisfies OwnerProfessionalRow,
       ],
       error: null,
     });
 
     await expect(
-      listOwnerBarbers({ rpc } as never, "shop-1"),
+      listOwnerProfessionals({ rpc } as never, "shop-1"),
     ).resolves.toEqual([
       {
         active: true,
@@ -89,15 +89,15 @@ describe("task 3 catalog and customer helpers", () => {
         avatarUrl: null,
         bio: null,
         compensation: { commissionPercent: 0, type: "commission" },
-        id: "barber-1",
+        id: "professional-1",
         invitedAt: null,
-        name: "Alice Barber",
+        name: "Alice Professional",
         shopId: "shop-1",
         userId: "user-1",
       },
     ]);
 
-    expect(rpc).toHaveBeenCalledWith("list_owner_barbers", {
+    expect(rpc).toHaveBeenCalledWith("list_owner_professionals", {
       target_shop_id: "shop-1",
     });
   });
@@ -107,9 +107,9 @@ describe("task 3 catalog and customer helpers", () => {
       data: [
         {
           active: true,
-          barber_id: "barber-1",
-          barber_name: "Alice Barber",
-          barber_service_id: "bs-1",
+          professional_id: "professional-1",
+          professional_name: "Alice Professional",
+          professional_service_id: "bs-1",
           duration_minutes: 75,
           price_cents: 6500,
           service_id: "service-1",
@@ -122,9 +122,9 @@ describe("task 3 catalog and customer helpers", () => {
 
     await expect(resolveEffectiveService({ rpc } as never, "bs-1")).resolves.toEqual({
       active: true,
-      barberId: "barber-1",
-      barberName: "Alice Barber",
-      barberServiceId: "bs-1",
+      professionalId: "professional-1",
+      professionalName: "Alice Professional",
+      professionalServiceId: "bs-1",
       durationMinutes: 75,
       priceCents: 6500,
       serviceId: "service-1",
@@ -133,7 +133,7 @@ describe("task 3 catalog and customer helpers", () => {
     });
 
     expect(rpc).toHaveBeenCalledWith("resolve_effective_service", {
-      target_barber_service_id: "bs-1",
+      target_professional_service_id: "bs-1",
     });
   });
 
@@ -190,29 +190,29 @@ describe("task 3 catalog and customer helpers", () => {
     });
   });
 
-  it("preserves an existing barber link when the edit omits userId", async () => {
+  it("preserves an existing professional link when the edit omits userId", async () => {
     const builder = createMaybeSingleBuilder({
       active: true,
       archived_at: null,
-      id: "barber-1",
-      name: "Renamed Barber",
+      id: "professional-1",
+      name: "Renamed Professional",
       shop_id: "shop-1",
-    } satisfies PublicBarberRow);
+    } satisfies PublicProfessionalRow);
     const from = jest.fn().mockReturnValue(builder);
 
     await expect(
-      updateBarber({ from } as never, "barber-1", { name: " Renamed Barber " }),
+      updateProfessional({ from } as never, "professional-1", { name: " Renamed Professional " }),
     ).resolves.toEqual({
       active: true,
       archivedAt: null,
       avatarUrl: null,
-      id: "barber-1",
-      name: "Renamed Barber",
+      id: "professional-1",
+      name: "Renamed Professional",
       shopId: "shop-1",
     });
 
     expect(builder.update).toHaveBeenCalledWith({
-      name: "Renamed Barber",
+      name: "Renamed Professional",
     });
   });
 

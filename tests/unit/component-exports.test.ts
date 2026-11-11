@@ -11,7 +11,7 @@ describe("component barrel exports", () => {
   it("exports every domain component", () => {
     expect(domain.StatusBadge).toBeDefined();
     expect(domain.RatingStars).toBeDefined();
-    expect(domain.BarberCard).toBeDefined();
+    expect(domain.ProfessionalCard).toBeDefined();
     expect(domain.ServiceCard).toBeDefined();
     expect(domain.CalendarStrip).toBeDefined();
     expect(domain.TimeSlotPicker).toBeDefined();

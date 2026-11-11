@@ -20,7 +20,7 @@ async function signInAsOwner(page: Page) {
 // Starts "now" so the shop-local date is today's, the agenda's default day.
 const agendaRow = (overrides: Record<string, unknown> = {}) => ({
   ...appointmentRow({ id: "appt-1", starts_at: new Date().toISOString(), ...overrides }),
-  barber_name: "Bruno Barber", customer_name: "Ana Customer",
+  professional_name: "Bruno Professional", customer_name: "Ana Customer",
 });
 
 async function mockOwnerRest(page: Page, state: { rows: unknown[]; calls: Record<string, unknown>; noOverrides?: boolean }) {
@@ -33,7 +33,7 @@ async function mockOwnerRest(page: Page, state: { rows: unknown[]; calls: Record
     if (path.endsWith("/rpc/list_owner_agenda_overrides")) {
       if (state.noOverrides) return json(route, []);
 
-      return json(route, [{ barber_id: "b1", barber_name: "Bruno Barber", end_time: "13:00:00", id: "ov-1", kind: "block", local_date: "2026-10-01", start_time: "12:00:00" }]);
+      return json(route, [{ professional_id: "b1", professional_name: "Bruno Professional", end_time: "13:00:00", id: "ov-1", kind: "block", local_date: "2026-10-01", start_time: "12:00:00" }]);
     }
     if (path.endsWith("/rpc/set_owner_appointment_status")) {
       state.calls.status = route.request().postDataJSON();
@@ -55,7 +55,7 @@ test("the owner agenda lists appointments and time off with status badges", asyn
   await expect(page.getByRole("heading", { name: "Day agenda" })).toBeVisible();
   const card = page.getByTestId("owner-appointment-appt-1");
   await expect(card).toContainText("Ana Customer");
-  await expect(card).toContainText("Bruno Barber");
+  await expect(card).toContainText("Bruno Professional");
   await expect(card).toContainText("Scheduled");
   await expect(card).not.toContainText("R$");
   await expect(page.getByTestId("owner-override-ov-1")).toContainText("12:00–13:00");

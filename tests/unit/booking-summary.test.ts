@@ -7,10 +7,10 @@ import i18n from "../../src/i18n";
 describe("BookingSummary", () => {
   beforeAll(async () => i18n.changeLanguage("en"));
 
-  it("shows barber, service, duration, price and date", async () => {
+  it("shows professional, service, duration, price and date", async () => {
     const view = await render(
       React.createElement(BookingSummary, {
-        barberName: "João",
+        professionalName: "João",
         dateLabel: "17/08/2026",
         durationMinutes: 45,
         priceCents: 5500,

@@ -1,5 +1,5 @@
--- Plans have no planned end: they stay active until the barber of the plan or the owner ends them.
--- The barber can now end (and list) the plans of their own customers; the optional end date is gone from the database.
+-- Plans have no planned end: they stay active until the professional of the plan or the owner ends them.
+-- The professional can now end (and list) the plans of their own customers; the optional end date is gone from the database.
 
 create or replace function public.end_recurrence_series(target_series_id uuid)
 returns setof public.recurrence_series
@@ -9,18 +9,18 @@ set search_path = pg_catalog, public, pg_temp
 as $$
 declare
   target_shop_id uuid;
-  series_barber_id uuid;
+  series_professional_id uuid;
   series_row public.recurrence_series%rowtype;
   target_timezone text;
 begin
   -- The ID is the only function input, so this lookup establishes the shop
   -- key and authorization before taking the same per-shop lock as generation.
-  select recurrence_series.shop_id, barber_services.barber_id into target_shop_id, series_barber_id
+  select recurrence_series.shop_id, professional_services.professional_id into target_shop_id, series_professional_id
   from public.recurrence_series
-  join public.barber_services on barber_services.id = recurrence_series.barber_service_id
+  join public.professional_services on professional_services.id = recurrence_series.professional_service_id
   where recurrence_series.id = target_series_id;
 
-  if not found or not (public.is_shop_owner(target_shop_id) or public.is_own_barber(series_barber_id)) then
+  if not found or not (public.is_shop_owner(target_shop_id) or public.is_own_professional(series_professional_id)) then
     raise exception using errcode = 'P0010', message = 'APPOINTMENT_FORBIDDEN';
   end if;
 
@@ -64,19 +64,19 @@ grant execute on function public.end_recurrence_series(uuid) to authenticated;
 
 create function public.list_my_recurrence_series()
 returns table (
-  id uuid, customer_id uuid, customer_name text, customer_phone text, barber_service_id uuid, service_name text,
+  id uuid, customer_id uuid, customer_name text, customer_phone text, professional_service_id uuid, service_name text,
   local_start_date date, local_start_time time, interval_weeks integer, special_price_cents integer,
   active boolean, ended_at timestamptz, cancel_requested_at timestamptz
 )
 language sql stable security definer set search_path = pg_catalog, public, pg_temp as $$
-  select rs.id, rs.customer_id, c.full_name, c.phone, rs.barber_service_id, s.name,
+  select rs.id, rs.customer_id, c.full_name, c.phone, rs.professional_service_id, s.name,
          rs.local_start_date, rs.local_start_time, rs.interval_weeks, rs.special_price_cents,
          rs.active, rs.ended_at, rs.cancel_requested_at
   from public.recurrence_series rs
   join public.customers c on c.id = rs.customer_id and c.shop_id = rs.shop_id
-  join public.barber_services bs on bs.id = rs.barber_service_id
+  join public.professional_services bs on bs.id = rs.professional_service_id
   join public.services s on s.id = bs.service_id
-  where auth.uid() is not null and public.is_own_barber(bs.barber_id)
+  where auth.uid() is not null and public.is_own_professional(bs.professional_id)
   order by rs.active desc, c.full_name, rs.local_start_date;
 $$;
 
@@ -192,7 +192,7 @@ begin
 
       begin
         perform public.book_appointment_internal(
-          series_row.barber_service_id,
+          series_row.professional_service_id,
           series_row.customer_id,
           occurrence_starts_at,
           'recurrence',
@@ -224,7 +224,7 @@ returns table (
   id uuid,
   customer_id uuid,
   customer_name text,
-  barber_service_id uuid,
+  professional_service_id uuid,
   local_start_date date,
   local_start_time time,
   interval_weeks smallint,
@@ -245,7 +245,7 @@ begin
   return query
   select
     recurrence_series.id, recurrence_series.customer_id, customers.full_name,
-    recurrence_series.barber_service_id, recurrence_series.local_start_date,
+    recurrence_series.professional_service_id, recurrence_series.local_start_date,
     recurrence_series.local_start_time, recurrence_series.interval_weeks,
     recurrence_series.special_price_cents,
     recurrence_series.active, recurrence_series.ended_at

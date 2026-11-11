@@ -1,23 +1,23 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { DomainError, toDomainError } from "../../lib/errors/domain-errors";
-import { daysBetween, type BarberReport } from "./build-report";
+import { daysBetween, type ProfessionalReport } from "./build-report";
 
 const MAX_REPORT_DAYS = 92;
 
-export async function getMyBarberReport(supabase: Pick<SupabaseClient, "rpc">, start: string, end: string): Promise<BarberReport> {
+export async function getMyProfessionalReport(supabase: Pick<SupabaseClient, "rpc">, start: string, end: string): Promise<ProfessionalReport> {
   const length = daysBetween(start, end);
 
   if (!(length >= 1 && length <= MAX_REPORT_DAYS)) {
     throw new DomainError("EARNINGS_INVALID_RANGE", "Choose a period of up to 92 days.");
   }
 
-  const { data, error } = await supabase.rpc("get_my_barber_report", { period_end: end, period_start: start });
+  const { data, error } = await supabase.rpc("get_my_professional_report", { period_end: end, period_start: start });
 
   if (error) {
     const domainError = toDomainError(error);
     throw domainError.code === "BOOKING_REQUEST_FAILED"
-      ? new DomainError("BARBER_REQUEST_FAILED", "Unable to complete the barber request.")
+      ? new DomainError("PROFESSIONAL_REQUEST_FAILED", "Unable to complete the professional request.")
       : domainError;
   }
 

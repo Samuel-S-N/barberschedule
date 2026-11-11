@@ -1,12 +1,12 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
-import { barberId, barberServiceId, json, mockCustomerRest, signInAsCustomer } from "./customer-helpers";
+import { professionalId, professionalServiceId, json, mockCustomerRest, signInAsCustomer } from "./customer-helpers";
 
 const slot = { ends_at: "2099-01-04T12:30:00Z", local_date: "2099-01-04", local_time: "09:00:00", starts_at: "2099-01-04T12:00:00Z" };
 
 const row = (overrides: Record<string, unknown>) => ({
-  barber_name: "Browser Barber", cancel_requested_at: null, id: "rq1", interval_weeks: 1, local_start_date: "2026-10-23", local_start_time: "16:30:00", plan_name: "Corte mensal",
+  professional_name: "Browser Professional", cancel_requested_at: null, id: "rq1", interval_weeks: 1, local_start_date: "2026-10-23", local_start_time: "16:30:00", plan_name: "Corte mensal",
   recurrence_cents: 2500, series_active: true, series_ended_at: null, series_id: "series-1", service_name: "Browser Cut", status: "accepted", ...overrides,
 });
 
@@ -16,10 +16,10 @@ async function openPlans(page: Page, initial: unknown[]) {
 
   await signInAsCustomer(page);
   await mockCustomerRest(page, async (route, url) => {
-    if (url.pathname.endsWith("/rpc/list_recurrence_plans_for_barber")) {
+    if (url.pathname.endsWith("/rpc/list_recurrence_plans_for_professional")) {
       await json(route, [
-        { barber_service_id: barberServiceId, interval_weeks: 1, name: "Corte mensal", normal_cents: 3500, plan_id: "plan-w1", price_cents: 2500, service_name: "Browser Cut" },
-        { barber_service_id: barberServiceId, interval_weeks: 2, name: "Quinzenal", normal_cents: 3500, plan_id: "plan-w2", price_cents: 3000, service_name: "Browser Cut" },
+        { professional_service_id: professionalServiceId, interval_weeks: 1, name: "Corte mensal", normal_cents: 3500, plan_id: "plan-w1", price_cents: 2500, service_name: "Browser Cut" },
+        { professional_service_id: professionalServiceId, interval_weeks: 2, name: "Quinzenal", normal_cents: 3500, plan_id: "plan-w2", price_cents: 3000, service_name: "Browser Cut" },
       ]);
       return true;
     }
@@ -48,9 +48,9 @@ async function openPlans(page: Page, initial: unknown[]) {
   return calls;
 }
 
-async function pickPlanBarberDayTime(page: Page, planId: string) {
+async function pickPlanProfessionalDayTime(page: Page, planId: string) {
   await page.getByTestId(`offer-${planId}`).click();
-  await page.getByTestId(`offer-barber-${barberId}`).click();
+  await page.getByTestId(`offer-professional-${professionalId}`).click();
   await page.getByTestId("weekday-1").click();
   await page.getByRole("button", { name: "09:00" }).click();
   await page.getByTestId("recurrence-time-continue").click();
@@ -73,10 +73,10 @@ test("Change plan runs the same flow and the request replaces the running series
   await page.getByTestId("plan-change").click();
   await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 6 · Plan");
   await expect(page.getByTestId("plans-bottom-bar")).toHaveCount(0);
-  await pickPlanBarberDayTime(page, "plan-w2");
+  await pickPlanProfessionalDayTime(page, "plan-w2");
 
   await expect.poll(() => calls.request).toEqual({
-    target_barber_service_id: barberServiceId, target_interval_weeks: 2, target_replaces_request_id: null, target_replaces_series_id: "series-1", target_start_date: "2099-01-04", target_start_time: "09:00",
+    target_professional_service_id: professionalServiceId, target_interval_weeks: 2, target_replaces_request_id: null, target_replaces_series_id: "series-1", target_start_date: "2099-01-04", target_start_time: "09:00",
   });
   await expect(page.getByText("Change requested. Your current plan stays until it is confirmed.")).toBeVisible();
   await expect(page.getByTestId("my-request-status-rq1")).toHaveText("Active");
@@ -88,7 +88,7 @@ test("changing a plan that is still pending replaces the pending request", async
   await expect(page.getByTestId("my-request-status-rq-pending")).toHaveText("Waiting for plan confirmation");
   await expect(page.getByTestId("recurrence-request")).toHaveCount(0);
   await page.getByTestId("plan-change").click();
-  await pickPlanBarberDayTime(page, "plan-w2");
+  await pickPlanProfessionalDayTime(page, "plan-w2");
 
   await expect.poll(() => calls.request).toMatchObject({ target_replaces_request_id: "rq-pending", target_replaces_series_id: null });
 });

@@ -1,28 +1,28 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
-import { openBarberCard } from "./agenda-helpers";
-import { appointmentRow, barberId, isHistoryQuery, json, mockCustomerRest, shopId, signInAsCustomer } from "./customer-helpers";
+import { openProfessionalCard } from "./agenda-helpers";
+import { appointmentRow, professionalId, isHistoryQuery, json, mockCustomerRest, shopId, signInAsCustomer } from "./customer-helpers";
 import type { RestHandler } from "./customer-helpers";
 
-const barberUserId = "66666666-6666-4666-8666-666666666666";
+const professionalUserId = "66666666-6666-4666-8666-666666666666";
 const newStart = new Date(Date.now() + 3 * 60 * 60 * 1000);
 const slotRow = { ends_at: new Date(newStart.getTime() + 30 * 60 * 1000).toISOString(), local_date: "2026-10-01", local_time: "10:30:00", starts_at: newStart.toISOString() };
 
-type Role = "barber" | "customer";
+type Role = "professional" | "customer";
 type Calls = { moves: Array<Record<string, unknown>> };
 
-function barberRow() {
+function professionalRow() {
   const start = new Date();
   const end = new Date(start.getTime() + 30 * 60 * 1000);
 
   return {
     ...appointmentRow({ ends_at: end.toISOString(), id: "appt-1", occupied_until: end.toISOString(), starts_at: start.toISOString() }),
-    barber_name: "Browser Barber", customer_name: "Ana Customer",
+    professional_name: "Browser Professional", customer_name: "Ana Customer",
   };
 }
 
-async function signInBarber(page: Page) {
+async function signInProfessional(page: Page) {
   await page.addInitScript(({ id }) => {
     const now = Math.floor(Date.now() / 1000);
     const header = btoa(JSON.stringify({ alg: "none" })).replace(/=+$/, "");
@@ -30,10 +30,10 @@ async function signInBarber(page: Page) {
     const session = JSON.stringify({ access_token: token, expires_at: now + 3600, expires_in: 3600, refresh_token: "e2e-refresh-token", token_type: "bearer", user: { id } });
     localStorage.setItem("sb-example-auth-token", session);
     localStorage.setItem("sb-127-auth-token", session);
-  }, { id: barberUserId });
+  }, { id: professionalUserId });
 }
 
-// Opens the reschedule (customer) / move (barber) flow of one appointment. `failMove` makes the database refuse the new time.
+// Opens the reschedule (customer) / move (professional) flow of one appointment. `failMove` makes the database refuse the new time.
 async function openFlow(page: Page, role: Role, failMove = false): Promise<Calls> {
   const calls: Calls = { moves: [] };
   const rpc: RestHandler = async (route, url) => {
@@ -59,30 +59,30 @@ async function openFlow(page: Page, role: Role, failMove = false): Promise<Calls
     await page.getByTestId("appointment-card-appointment-upcoming").click();
     await page.getByTestId("appointment-reschedule-appointment-upcoming").click();
   } else {
-    await signInBarber(page);
+    await signInProfessional(page);
     await page.route("**/rest/v1/**", async (route) => {
       const url = new URL(route.request().url());
       const path = url.pathname;
 
       if ((await rpc(route, url)) === true) return;
-      if (path.endsWith("/rpc/get_current_profile")) return json(route, [{ full_name: "Browser Barber", role: "barber", user_id: barberUserId }]);
-      if (path.endsWith("/rpc/get_my_barber_profile")) {
-        return json(route, [{ avatar_url: null, bio: null, chair_rental_amount_cents: null, chair_rental_frequency: null, commission_percent: "40.00", compensation_type: "commission", id: barberId, name: "Browser Barber", shop_id: shopId }]);
+      if (path.endsWith("/rpc/get_current_profile")) return json(route, [{ full_name: "Browser Professional", role: "professional", user_id: professionalUserId }]);
+      if (path.endsWith("/rpc/get_my_professional_profile")) {
+        return json(route, [{ avatar_url: null, bio: null, chair_rental_amount_cents: null, chair_rental_frequency: null, commission_percent: "40.00", compensation_type: "commission", id: professionalId, name: "Browser Professional", shop_id: shopId }]);
       }
-      if (path.endsWith("/rpc/list_my_barber_services")) return json(route, [{ active: true, barber_service_id: "bs1", duration_minutes: 30, price_cents: 4000, service_id: "s1", service_name: "Browser Cut" }]);
-      if (path.endsWith("/rpc/list_my_barber_agenda")) return json(route, [barberRow()]);
+      if (path.endsWith("/rpc/list_my_professional_services")) return json(route, [{ active: true, professional_service_id: "bs1", duration_minutes: 30, price_cents: 4000, service_id: "s1", service_name: "Browser Cut" }]);
+      if (path.endsWith("/rpc/list_my_professional_agenda")) return json(route, [professionalRow()]);
       if (path.endsWith("/schedule_overrides") && route.request().method() === "GET") return json(route, []);
       await route.abort();
     });
     await page.goto("/my-agenda");
-    await openBarberCard(page);
-    await page.getByTestId("barber-move-appt-1").click();
+    await openProfessionalCard(page);
+    await page.getByTestId("professional-move-appt-1").click();
   }
 
   return calls;
 }
 
-for (const role of ["customer", "barber"] as const) {
+for (const role of ["customer", "professional"] as const) {
   const prefix = role === "customer" ? "reschedule" : "move";
   const parent = role === "customer" ? /\/appointments/ : /\/my-agenda/;
 
@@ -104,7 +104,7 @@ for (const role of ["customer", "barber"] as const) {
       const summary = page.getByTestId(`${prefix}-summary`);
 
       await expect(summary).toContainText("Browser Cut");
-      await expect(summary).toContainText(role === "customer" ? "Browser Barber" : "Ana Customer");
+      await expect(summary).toContainText(role === "customer" ? "Browser Professional" : "Ana Customer");
       await expect(summary).toContainText("Current time");
       await expect(summary).toContainText("New time");
       await page.getByTestId(`${prefix}-confirm`).click();

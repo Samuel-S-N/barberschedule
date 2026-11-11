@@ -1,4 +1,4 @@
--- Barbers can delete their account and export their data; notifications can be deleted.
+-- Professionals can delete their account and export their data; notifications can be deleted.
 create or replace function public.prepare_account_deletion()
 returns void
 language plpgsql
@@ -8,10 +8,10 @@ as $$
 declare
   actor uuid := auth.uid();
   actor_role text;
-  my_barber uuid;
+  my_professional uuid;
 begin
   select role::text into actor_role from public.profiles where user_id = actor;
-  if actor is null or coalesce(actor_role, '') not in ('customer', 'barber') then
+  if actor is null or coalesce(actor_role, '') not in ('customer', 'professional') then
     raise exception using errcode = '42501', message = 'FORBIDDEN';
   end if;
 
@@ -36,24 +36,24 @@ begin
     return;
   end if;
 
-  select id into my_barber from public.barbers where user_id = actor;
-  if my_barber is not null and (
+  select id into my_professional from public.professionals where user_id = actor;
+  if my_professional is not null and (
     exists (
       select 1 from public.appointments a
-      where a.barber_id = my_barber and a.status in ('scheduled', 'confirmed') and a.starts_at > clock_timestamp()
+      where a.professional_id = my_professional and a.status in ('scheduled', 'confirmed') and a.starts_at > clock_timestamp()
     ) or exists (
       select 1 from public.recurrence_series s
-      join public.barber_services bs on bs.id = s.barber_service_id
-      where bs.barber_id = my_barber and s.active
+      join public.professional_services bs on bs.id = s.professional_service_id
+      where bs.professional_id = my_professional and s.active
     )
   ) then
     raise exception using errcode = 'P0018', message = 'ACCOUNT_DELETION_BLOCKED';
   end if;
 
-  update public.barbers
+  update public.professionals
   set name = 'Barbeiro removido', user_id = null, active = false, bio = null, avatar_url = null,
       archived_at = coalesce(archived_at, clock_timestamp()), updated_at = clock_timestamp()
-  where id = my_barber;
+  where id = my_professional;
 end;
 $$;
 
@@ -75,7 +75,7 @@ begin
     'account_email', (select email from auth.users where id = actor),
     'profile', (select to_jsonb(p) from public.profiles p where p.user_id = actor),
     'customers', coalesce((select jsonb_agg(to_jsonb(c)) from public.customers c where c.user_id = actor), '[]'::jsonb),
-    'barbers', coalesce((select jsonb_agg(to_jsonb(b)) from public.barbers b where b.user_id = actor), '[]'::jsonb),
+    'professionals', coalesce((select jsonb_agg(to_jsonb(b)) from public.professionals b where b.user_id = actor), '[]'::jsonb),
     'appointments', coalesce((
       select jsonb_agg(to_jsonb(a) order by a.starts_at)
       from public.appointments a

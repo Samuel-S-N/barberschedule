@@ -1,7 +1,7 @@
 export type ScheduleOverrideKind = "block" | "opening";
 
 export type WorkingPeriod = {
-  barberId: string;
+  professionalId: string;
   endTime: string;
   id: string;
   shopId: string;
@@ -12,7 +12,7 @@ export type WorkingPeriod = {
 export type WorkingPeriodInput = Omit<WorkingPeriod, "id">;
 
 export type WorkingPeriodRow = {
-  barber_id: string;
+  professional_id: string;
   end_time: string;
   id: string;
   shop_id: string;
@@ -21,7 +21,7 @@ export type WorkingPeriodRow = {
 };
 
 export type ScheduleOverride = {
-  barberId: string;
+  professionalId: string;
   endTime: string | null;
   id: string;
   kind: ScheduleOverrideKind;
@@ -36,7 +36,7 @@ export type ScheduleOverrideInput = Omit<ScheduleOverride, "endTime" | "id" | "s
 };
 
 export type ScheduleOverrideRow = {
-  barber_id: string;
+  professional_id: string;
   end_time: string | null;
   id: string;
   kind: ScheduleOverrideKind;

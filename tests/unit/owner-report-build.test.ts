@@ -1,10 +1,10 @@
-import { barberRows, sumShopReport, topByValue, type ShopReport } from "../../src/features/owner-reports/build";
+import { professionalRows, sumShopReport, topByValue, type ShopReport } from "../../src/features/owner-reports/build";
 
 const report: ShopReport = {
-  barbers: [
-    { barberId: "a", barberShareCents: 4400, compensationType: "commission", completed: 3, grossCents: 11000, name: "Ana", rentEstimateCents: 0, rentPaidCents: 0 },
-    { barberId: "b", barberShareCents: 5000, compensationType: "chair_rental", completed: 1, grossCents: 5000, name: "Bruno", rentEstimateCents: 7000, rentPaidCents: 5000 },
-    { barberId: "d", barberShareCents: 0, compensationType: "chair_rental", completed: 0, grossCents: 0, name: "Davi", rentEstimateCents: 7000, rentPaidCents: 0 },
+  professionals: [
+    { professionalId: "a", professionalShareCents: 4400, compensationType: "commission", completed: 3, grossCents: 11000, name: "Ana", rentEstimateCents: 0, rentPaidCents: 0 },
+    { professionalId: "b", professionalShareCents: 5000, compensationType: "chair_rental", completed: 1, grossCents: 5000, name: "Bruno", rentEstimateCents: 7000, rentPaidCents: 5000 },
+    { professionalId: "d", professionalShareCents: 0, compensationType: "chair_rental", completed: 0, grossCents: 0, name: "Davi", rentEstimateCents: 7000, rentPaidCents: 0 },
   ],
   days: [
     { cancelled: 0, completed: 3, date: "2026-09-29", grossCents: 12000, noShow: 0, upcoming: 0 },
@@ -16,19 +16,19 @@ const report: ShopReport = {
 describe("sumShopReport", () => {
   it("adds up revenue, shares, rent and shop income (paid rent only)", () => {
     expect(sumShopReport(report)).toEqual({
-      barberShareCents: 9400, cancelled: 1, cancellationRate: 0.333_333_333_333_333_3, completed: 4,
+      professionalShareCents: 9400, cancelled: 1, cancellationRate: 0.333_333_333_333_333_3, completed: 4,
       grossCents: 16000, noShow: 1, rentEstimateCents: 14000, rentPaidCents: 5000, shopIncomeCents: 11600,
     });
   });
 
   it("has no cancellation rate when nothing was closed", () => {
-    expect(sumShopReport({ barbers: [], days: [], services: [] }).cancellationRate).toBeNull();
+    expect(sumShopReport({ professionals: [], days: [], services: [] }).cancellationRate).toBeNull();
   });
 });
 
-describe("barberRows", () => {
-  it("adds each barber's shop share: revenue minus their share plus the rent already paid", () => {
-    expect(barberRows(report).map((r) => [r.name, r.shopShareCents])).toEqual([["Ana", 6600], ["Bruno", 5000], ["Davi", 0]]);
+describe("professionalRows", () => {
+  it("adds each professional's shop share: revenue minus their share plus the rent already paid", () => {
+    expect(professionalRows(report).map((r) => [r.name, r.shopShareCents])).toEqual([["Ana", 6600], ["Bruno", 5000], ["Davi", 0]]);
   });
 });
 

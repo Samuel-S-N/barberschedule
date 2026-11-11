@@ -1,4 +1,4 @@
-import { listPlansForBarber, listRecurrencePlans, planTitle, saveRecurrencePlan } from "../../src/features/recurrence/plans-api";
+import { listPlansForProfessional, listRecurrencePlans, planTitle, saveRecurrencePlan } from "../../src/features/recurrence/plans-api";
 
 
 it("lists plans for the owner", async () => {
@@ -17,11 +17,11 @@ it("saves a plan (create and edit)", async () => {
   expect(rpc).toHaveBeenLastCalledWith("save_recurrence_plan", { target_active: false, target_interval_weeks: 2, target_name: "Corte + Barba", target_plan_id: "p1", target_price_cents: 0, target_service_id: "s1" });
 });
 
-it("lists a barber's plans for customers", async () => {
-  const rpc = jest.fn().mockResolvedValue({ data: [{ barber_service_id: "bs1", interval_weeks: 1, name: "Corte mensal", normal_cents: 3500, plan_id: "p1", price_cents: 2500, service_name: "Cut" }], error: null });
+it("lists a professional's plans for customers", async () => {
+  const rpc = jest.fn().mockResolvedValue({ data: [{ professional_service_id: "bs1", interval_weeks: 1, name: "Corte mensal", normal_cents: 3500, plan_id: "p1", price_cents: 2500, service_name: "Cut" }], error: null });
 
-  expect(await listPlansForBarber({ rpc } as never, "b1")).toEqual([{ barberServiceId: "bs1", name: "Corte mensal", normalCents: 3500, planId: "p1", priceCents: 2500, serviceName: "Cut", weeks: 1 }]);
-  expect(rpc).toHaveBeenCalledWith("list_recurrence_plans_for_barber", { target_barber_id: "b1" });
+  expect(await listPlansForProfessional({ rpc } as never, "b1")).toEqual([{ professionalServiceId: "bs1", name: "Corte mensal", normalCents: 3500, planId: "p1", priceCents: 2500, serviceName: "Cut", weeks: 1 }]);
+  expect(rpc).toHaveBeenCalledWith("list_recurrence_plans_for_professional", { target_professional_id: "b1" });
 });
 
 it("a plan's title is its name", () => {

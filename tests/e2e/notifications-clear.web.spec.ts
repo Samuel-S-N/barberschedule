@@ -8,7 +8,7 @@ const notification = (id: string, overrides: Record<string, unknown> = {}) => ({
   created_at: "2026-10-20T10:00:00Z",
   id,
   kind: "appointment_confirmed",
-  params: { barber_name: "Browser Barber", customer_name: "Ana", service_name: "Browser Cut", starts_at: "2026-10-21T13:00:00Z" },
+  params: { professional_name: "Browser Professional", customer_name: "Ana", service_name: "Browser Cut", starts_at: "2026-10-21T13:00:00Z" },
   read_at: "2026-10-20T11:00:00Z",
   ...overrides,
 });

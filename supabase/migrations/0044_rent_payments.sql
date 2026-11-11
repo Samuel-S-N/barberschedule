@@ -2,19 +2,19 @@
 create table public.chair_rent_payments (
   id uuid primary key default gen_random_uuid(),
   shop_id uuid not null,
-  barber_id uuid not null,
+  professional_id uuid not null,
   amount_cents integer not null check (amount_cents > 0),
   paid_on date not null,
   note text check (note is null or char_length(note) <= 200),
   created_at timestamptz not null default now(),
-  constraint chair_rent_payments_barber_fk foreign key (shop_id, barber_id) references public.barbers (shop_id, id) on delete restrict
+  constraint chair_rent_payments_professional_fk foreign key (shop_id, professional_id) references public.professionals (shop_id, id) on delete restrict
 );
 create index chair_rent_payments_shop_paid_on_idx on public.chair_rent_payments (shop_id, paid_on);
 alter table public.chair_rent_payments enable row level security;
 revoke all on public.chair_rent_payments from public, anon, authenticated;
 
 create function public.record_rent_payment(
-  target_barber_id uuid,
+  target_professional_id uuid,
   payment_amount_cents integer,
   payment_paid_on date,
   payment_note text default null
@@ -37,15 +37,15 @@ begin
   if payment_amount_cents is null or payment_amount_cents <= 0 or payment_paid_on is null
     or (clean_note is not null and char_length(clean_note) > 200)
     or not exists (
-      select 1 from public.barbers b
-      where b.id = target_barber_id and b.shop_id = sh.id and b.compensation_type = 'chair_rental'
+      select 1 from public.professionals b
+      where b.id = target_professional_id and b.shop_id = sh.id and b.compensation_type = 'chair_rental'
     )
   then
     raise exception using errcode = 'P0030', message = 'RENT_PAYMENT_INVALID';
   end if;
 
-  insert into public.chair_rent_payments (shop_id, barber_id, amount_cents, paid_on, note)
-  values (sh.id, target_barber_id, payment_amount_cents, payment_paid_on, clean_note)
+  insert into public.chair_rent_payments (shop_id, professional_id, amount_cents, paid_on, note)
+  values (sh.id, target_professional_id, payment_amount_cents, payment_paid_on, clean_note)
   returning * into result;
 
   return result;
@@ -53,7 +53,7 @@ end;
 $$;
 
 create function public.list_rent_payments(period_start date, period_end date)
-returns table (id uuid, barber_id uuid, barber_name text, amount_cents integer, paid_on date, note text)
+returns table (id uuid, professional_id uuid, professional_name text, amount_cents integer, paid_on date, note text)
 language plpgsql
 stable
 security definer
@@ -71,9 +71,9 @@ begin
   end if;
 
   return query
-  select p.id, p.barber_id, b.name, p.amount_cents, p.paid_on, p.note
+  select p.id, p.professional_id, b.name, p.amount_cents, p.paid_on, p.note
   from public.chair_rent_payments p
-  join public.barbers b on b.id = p.barber_id and b.shop_id = p.shop_id
+  join public.professionals b on b.id = p.professional_id and b.shop_id = p.shop_id
   where p.shop_id = sh.id and p.paid_on between period_start and period_end
   order by p.paid_on desc, p.created_at desc;
 end;
@@ -148,11 +148,11 @@ begin
         group by 1
       ) d
     ), '[]'::jsonb),
-    'barbers', coalesce((
+    'professionals', coalesce((
       select jsonb_agg(to_jsonb(b) order by b.gross_cents desc, b.name)
       from (
         select
-          br.id as barber_id,
+          br.id as professional_id,
           br.name,
           br.compensation_type::text as compensation_type,
           (count(a.id) filter (where a.status = 'completed'))::int as completed,
@@ -161,7 +161,7 @@ begin
             when br.compensation_type = 'commission'
               then round(coalesce(sum(a.service_price_cents_snapshot) filter (where a.status = 'completed'), 0) * br.commission_percent / 100)
             else coalesce(sum(a.service_price_cents_snapshot) filter (where a.status = 'completed'), 0)
-          end)::int as barber_share_cents,
+          end)::int as professional_share_cents,
           (case
             when br.compensation_type = 'chair_rental'
               then round(br.chair_rental_amount_cents::numeric * period_days / (case when br.chair_rental_frequency = 'weekly' then 7 else 30 end))
@@ -169,11 +169,11 @@ begin
           end)::int as rent_estimate_cents,
           coalesce((
             select sum(p.amount_cents) from public.chair_rent_payments p
-            where p.barber_id = br.id and p.paid_on between period_start and period_end
+            where p.professional_id = br.id and p.paid_on between period_start and period_end
           ), 0)::int as rent_paid_cents
-        from public.barbers br
+        from public.professionals br
         left join public.appointments a
-          on a.barber_id = br.id and a.starts_at >= range_start and a.starts_at < range_end
+          on a.professional_id = br.id and a.starts_at >= range_start and a.starts_at < range_end
         where br.shop_id = sh.id
         group by br.id
         having br.active or count(a.id) > 0

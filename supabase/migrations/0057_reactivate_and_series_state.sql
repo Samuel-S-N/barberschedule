@@ -5,7 +5,7 @@ drop function public.list_my_recurrence_requests();
 create function public.list_my_recurrence_requests()
 returns table (
   id uuid, status public.recurrence_request_status, interval_weeks smallint, local_start_date date, local_start_time time,
-  barber_name text, service_name text, recurrence_cents integer,
+  professional_name text, service_name text, recurrence_cents integer,
   series_id uuid, series_active boolean, series_ended_at timestamptz, plan_name text
 )
 language sql stable security definer set search_path = pg_catalog, public, pg_temp as $$
@@ -15,8 +15,8 @@ language sql stable security definer set search_path = pg_catalog, public, pg_te
          (select pl.name from public.recurrence_plans pl where pl.service_id = s.id and pl.interval_weeks = r.interval_weeks order by pl.active desc, pl.created_at desc limit 1)
   from public.recurrence_requests r
   join public.customers c on c.id = r.customer_id and c.user_id = auth.uid()
-  join public.barbers b on b.id = r.barber_id
-  join public.barber_services bs on bs.id = r.barber_service_id
+  join public.professionals b on b.id = r.professional_id
+  join public.professional_services bs on bs.id = r.professional_service_id
   join public.services s on s.id = bs.service_id
   left join public.recurrence_series rs on rs.id = r.series_id
   order by r.created_at desc limit 20;

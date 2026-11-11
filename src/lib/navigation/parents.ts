@@ -17,8 +17,8 @@ export const ROOT_ROUTES = new Set([
 export const HISTORY_ROUTES = new Set(["/legal", "/reset-password"]);
 
 const bookingIds = (params: RouteParams) => ({
-  barberId: text(params.barberId),
-  barberServiceId: text(params.barberServiceId),
+  professionalId: text(params.professionalId),
+  professionalServiceId: text(params.professionalServiceId),
   localDate: text(params.localDate),
   shopId: text(params.shopId),
 });
@@ -29,8 +29,8 @@ export const ROUTE_PARENTS: Record<string, Parent> = {
   "/signup": "/login",
 
   // customer
-  "/book/barber": "/home",
-  "/book/service": (params) => stepHref("barber", bookingIds(params)),
+  "/book/professional": "/home",
+  "/book/service": (params) => stepHref("professional", bookingIds(params)),
   "/book/date": (params) => stepHref("service", bookingIds(params)),
   "/book/time": (params) => stepHref("date", bookingIds(params)),
   "/book/review": (params) => stepHref("time", bookingIds(params)),
@@ -45,10 +45,10 @@ export const ROUTE_PARENTS: Record<string, Parent> = {
   "/me/about": "/profile",
   "/me/recurrence": "/profile",
 
-  // barber
+  // professional
   "/clients/[id]": "/clients",
   "/move-appointment": "/my-agenda",
-  "/barber-notifications": "/my-agenda",
+  "/professional-notifications": "/my-agenda",
   "/my-profile/account": "/my-profile",
   "/my-profile/availability": "/my-profile",
   "/my-profile/compensation": "/my-profile",
@@ -63,13 +63,13 @@ export const ROUTE_PARENTS: Record<string, Parent> = {
 
   // owner
   "/owner-notifications": "/agenda",
-  "/my-barber-agenda": "/agenda",
+  "/my-professional-agenda": "/agenda",
   "/appointment-form": "/agenda",
   "/recurrence-plans": "/manage",
   "/recurrence-plan-form": "/recurrence-plans",
-  "/barbers": "/manage",
-  "/barber-new": "/barbers",
-  "/barber-profile": "/barbers",
+  "/professionals": "/manage",
+  "/professional-new": "/professionals",
+  "/professional-profile": "/professionals",
   "/services": "/manage",
   "/service-form": "/services",
   "/customers": "/manage",
@@ -90,7 +90,7 @@ export const ROUTE_PARENTS: Record<string, Parent> = {
   "/owner-profile/about": "/settings",
 };
 
-// "/clients/[id]" from the segments the router reports: groups ("(barber)") and a trailing "index" are not part of the URL.
+// "/clients/[id]" from the segments the router reports: groups ("(professional)") and a trailing "index" are not part of the URL.
 export function routePattern(segments: string[]) {
   const parts = segments.filter((segment) => !/^\(.*\)$/.test(segment));
   if (parts[parts.length - 1] === "index") parts.pop();

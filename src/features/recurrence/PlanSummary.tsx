@@ -2,7 +2,7 @@ import { Text, View } from "react-native";
 
 // The plan as people read it: title (and periodicity) on the left, the plan's value highlighted on the right, then what the
 // value covers and the regular price. Every part but the title is optional, so the staff cards can drop what they do not know.
-// Used by the customer plan card and checkout, and by the barber and owner plan, request and series cards.
+// Used by the customer plan card and checkout, and by the professional and owner plan, request and series cards.
 export function PlanSummary({ amountText, caption, normalText, periodicity, title }: { amountText?: string; caption?: string; normalText?: string; periodicity?: string; title: string }) {
   return (
     <View className="gap-1">

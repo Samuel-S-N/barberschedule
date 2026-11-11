@@ -33,8 +33,8 @@ export function DateStep({ children, localDate, onChange, onContinue, testID, to
 }
 
 type TimeStepProps = {
-  barberId: string;
-  barberServiceId: string;
+  professionalId: string;
+  professionalServiceId: string;
   localDate: string;
   onContinue: () => void;
   onSelect: (startsAt: string | null) => void;
@@ -42,13 +42,13 @@ type TimeStepProps = {
   testID: string;
 };
 
-export function TimeStep({ barberId, barberServiceId, localDate, onContinue, onSelect, startsAt, testID }: TimeStepProps) {
+export function TimeStep({ professionalId, professionalServiceId, localDate, onContinue, onSelect, startsAt, testID }: TimeStepProps) {
   const { t } = useTranslation();
   const language = useLanguage();
   const { supabase } = useSupabaseSession();
   const availability = useQuery({
-    ...getAvailableSlotsQueryOptions(supabase, { barberId, barberServiceId, localDate }),
-    enabled: Boolean(barberId && barberServiceId),
+    ...getAvailableSlotsQueryOptions(supabase, { professionalId, professionalServiceId, localDate }),
+    enabled: Boolean(professionalId && professionalServiceId),
   });
   const slots: TimeSlot[] = (availability.data ?? []).map((slot: AvailableSlot) => ({ status: slot.startsAt === startsAt ? "selected" : "free", time: slot.localTime.slice(0, 5) }));
 

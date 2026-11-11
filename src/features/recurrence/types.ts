@@ -1,6 +1,6 @@
 export type RecurrenceSeriesRow = {
   active: boolean;
-  barber_service_id: string;
+  professional_service_id: string;
   customer_id: string;
   customer_name?: string;
   ended_at: string | null;
@@ -13,7 +13,7 @@ export type RecurrenceSeriesRow = {
 
 export type RecurrenceSeries = {
   active: boolean;
-  barberServiceId: string;
+  professionalServiceId: string;
   customerId: string;
   customerName: string;
   endedAt: string | null;
@@ -25,8 +25,8 @@ export type RecurrenceSeries = {
 };
 
 export type RecurrenceConflict = {
-  barberId: string;
-  barberServiceId: string;
+  professionalId: string;
+  professionalServiceId: string;
   customerName: string;
   customerPhone: string | null;
   id: string;
@@ -39,7 +39,7 @@ export type RecurrenceConflict = {
 };
 
 export type RecurrenceSeriesInput = {
-  barberServiceId: string;
+  professionalServiceId: string;
   customerId: string;
   intervalWeeks: number;
   localStartDate: string;

@@ -17,11 +17,11 @@ values ('71000000-0000-0000-0000-000000000001', 'T11 Shop', '70000000-0000-0000-
 
 select set_config('t11.shop', (select id::text from public.shops order by created_at, id limit 1), false);
 
-insert into public.barbers (id, shop_id, name)
-values ('72000000-0000-0000-0000-000000000001', current_setting('t11.shop')::uuid, 'T11 Barber');
+insert into public.professionals (id, shop_id, name)
+values ('72000000-0000-0000-0000-000000000001', current_setting('t11.shop')::uuid, 'T11 Professional');
 insert into public.services (id, shop_id, name, duration_minutes, price_cents)
 values ('73000000-0000-0000-0000-000000000001', current_setting('t11.shop')::uuid, 'T11 Cut', 30, 4000);
-insert into public.barber_services (id, shop_id, barber_id, service_id)
+insert into public.professional_services (id, shop_id, professional_id, service_id)
 values ('74000000-0000-0000-0000-000000000001', current_setting('t11.shop')::uuid, '72000000-0000-0000-0000-000000000001', '73000000-0000-0000-0000-000000000001');
 
 -- customer
@@ -71,9 +71,9 @@ select throws_ok($$ select public.update_my_profile('   ', null) $$, 'P0017', nu
 -- appointment fixture (superuser)
 reset role;
 insert into public.appointments (
-  id, shop_id, barber_id, customer_id, barber_service_id, service_id,
+  id, shop_id, professional_id, customer_id, professional_service_id, service_id,
   starts_at, ends_at, occupied_until, service_name_snapshot,
-  service_duration_minutes_snapshot, service_price_cents_snapshot, barber_buffer_minutes_snapshot
+  service_duration_minutes_snapshot, service_price_cents_snapshot, professional_buffer_minutes_snapshot
 )
 select '75000000-0000-0000-0000-000000000001', shop_id, '72000000-0000-0000-0000-000000000001', id,
   '74000000-0000-0000-0000-000000000001', '73000000-0000-0000-0000-000000000001',
@@ -96,7 +96,7 @@ select is(jsonb_array_length(public.export_my_data() -> 'appointments'), 0, 'exp
 -- deletion after cancelling
 reset role;
 update public.appointments set status = 'cancelled' where id = '75000000-0000-0000-0000-000000000001';
-insert into public.recurrence_series (id, shop_id, customer_id, barber_service_id, local_start_date, local_start_time, interval_weeks)
+insert into public.recurrence_series (id, shop_id, customer_id, professional_service_id, local_start_date, local_start_time, interval_weeks)
 select '76000000-0000-0000-0000-000000000001', shop_id, id, '74000000-0000-0000-0000-000000000001', current_date + 7, '10:00', 1
 from public.customers where user_id = '70000000-0000-0000-0000-000000000002';
 set local role authenticated;

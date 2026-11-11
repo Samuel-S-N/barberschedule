@@ -5,7 +5,7 @@ import type { Appointment } from "../../src/features/appointments/types";
 
 function appointment(id: string, startsAt: string): Appointment {
   return {
-    barberBufferMinutesSnapshot: 0, barberId: "b", barberServiceId: "bs", createdAt: startsAt,
+    professionalBufferMinutesSnapshot: 0, professionalId: "b", professionalServiceId: "bs", createdAt: startsAt,
     customerId: "c", endsAt: startsAt, id, notes: null, occupiedUntil: startsAt,
     serviceDurationMinutesSnapshot: 30, serviceId: "s", serviceNameSnapshot: "Cut",
     servicePriceCentsSnapshot: 4000, shopId: "shop", source: "customer", startsAt,

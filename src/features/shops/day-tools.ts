@@ -12,17 +12,17 @@ export function copyDayToOthers(days: Record<number, DayDraft>, fromWeekday: num
   return next;
 }
 
-type Override = { barberId: string; kind: string; localDate: string; startTime: string | null };
+type Override = { professionalId: string; kind: string; localDate: string; startTime: string | null };
 
-// Dates (today or later) on which every active barber has an all-day block, i.e. the shop is closed.
-export function closedDates(overrides: Override[], activeBarberIds: string[], today: string) {
-  if (activeBarberIds.length === 0) return [];
+// Dates (today or later) on which every active professional has an all-day block, i.e. the shop is closed.
+export function closedDates(overrides: Override[], activeProfessionalIds: string[], today: string) {
+  if (activeProfessionalIds.length === 0) return [];
   const byDate = new Map<string, Set<string>>();
 
   for (const override of overrides) {
     if (override.kind !== "block" || override.startTime !== null || override.localDate < today) continue;
-    byDate.set(override.localDate, (byDate.get(override.localDate) ?? new Set()).add(override.barberId));
+    byDate.set(override.localDate, (byDate.get(override.localDate) ?? new Set()).add(override.professionalId));
   }
 
-  return [...byDate].filter(([, ids]) => activeBarberIds.every((id) => ids.has(id))).map(([date]) => date).sort();
+  return [...byDate].filter(([, ids]) => activeProfessionalIds.every((id) => ids.has(id))).map(([date]) => date).sort();
 }

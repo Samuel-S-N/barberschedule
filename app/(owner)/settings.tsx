@@ -10,7 +10,7 @@ import { Toast } from "../../src/components/domain/Toast";
 import { Screen } from "../../src/components/ui/Screen";
 import { useMyProfile } from "../../src/features/account/use-my-profile";
 import { signOut } from "../../src/features/auth/api";
-import { useOwnerAsBarber } from "../../src/features/barbers/owner/use-owner-as-barber";
+import { useOwnerAsProfessional } from "../../src/features/professionals/owner/use-owner-as-professional";
 import { errorMessage } from "../../src/i18n/errors";
 import { colors } from "../../src/lib/design/colors";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
@@ -20,7 +20,7 @@ export default function OwnerSettingsScreen() {
   const router = useRouter();
   const { profile: sessionProfile, session, supabase } = useSupabaseSession();
   const profile = useMyProfile();
-  const asBarber = useOwnerAsBarber();
+  const asProfessional = useOwnerAsProfessional();
   const [error, setError] = useState<string | null>(null);
   const name = profile.data?.nickname || profile.data?.fullName || sessionProfile?.fullName || t("owner.settings.ownerFallback");
 
@@ -46,21 +46,21 @@ export default function OwnerSettingsScreen() {
             <View className="gap-2 rounded-[20px] border border-neutral-200 bg-surface p-4">
               <View className="flex-row items-center gap-3">
                 <Scissors color={colors.primary[600]} size={22} />
-                <Text className="flex-1 text-base font-sans-medium text-ink">{t("owner.profile.asBarber")}</Text>
+                <Text className="flex-1 text-base font-sans-medium text-ink">{t("owner.profile.asProfessional")}</Text>
                 <Switch
-                  accessibilityLabel={t("owner.profile.asBarber")}
-                  disabled={asBarber.isLoading || asBarber.toggle.isPending}
-                  onValueChange={(on) => asBarber.toggle.mutate(on, { onError: (caught) => setError(errorMessage(caught, t, t("owner.barbers.updateError"))) })}
-                  testID="owner-as-barber"
+                  accessibilityLabel={t("owner.profile.asProfessional")}
+                  disabled={asProfessional.isLoading || asProfessional.toggle.isPending}
+                  onValueChange={(on) => asProfessional.toggle.mutate(on, { onError: (caught) => setError(errorMessage(caught, t, t("owner.professionals.updateError"))) })}
+                  testID="owner-as-professional"
                   thumbColor="#ffffff"
                   trackColor={{ false: colors.neutral[200], true: colors.primary[400] }}
-                  value={asBarber.active}
+                  value={asProfessional.active}
                 />
               </View>
-              <Text className="text-xs font-sans text-neutral-600">{t("owner.profile.asBarberHint")}</Text>
+              <Text className="text-xs font-sans text-neutral-600">{t("owner.profile.asProfessionalHint")}</Text>
             </View>
-            {asBarber.active && asBarber.barberId ? (
-              <MenuBlock items={[{ icon: Scissors, key: "my-barber", label: t("owner.profile.myBarber"), onPress: () => router.push({ params: { id: asBarber.barberId ?? "" }, pathname: "/barber-profile" }) }]} />
+            {asProfessional.active && asProfessional.professionalId ? (
+              <MenuBlock items={[{ icon: Scissors, key: "my-professional", label: t("owner.profile.myProfessional"), onPress: () => router.push({ params: { id: asProfessional.professionalId ?? "" }, pathname: "/professional-profile" }) }]} />
             ) : null}
 
             <MenuBlock

@@ -30,7 +30,7 @@ function singleRow<T>(data: T | T[] | null, error: { code?: string } | null): T 
 function toRecurrenceSeries(row: RecurrenceSeriesRow): RecurrenceSeries {
   return {
     active: row.active,
-    barberServiceId: row.barber_service_id,
+    professionalServiceId: row.professional_service_id,
     customerId: row.customer_id,
     customerName: row.customer_name ?? "",
     endedAt: row.ended_at,
@@ -52,7 +52,7 @@ export async function createRecurrenceSeries(
     local_start_date: parsed.localStartDate,
     local_start_time: parsed.localStartTime,
     special_price_cents: parsed.specialPriceCents,
-    target_barber_service_id: parsed.barberServiceId,
+    target_professional_service_id: parsed.professionalServiceId,
     target_customer_id: parsed.customerId,
   });
 
@@ -61,7 +61,7 @@ export async function createRecurrenceSeries(
 
 export type MyRecurrenceSeries = {
   active: boolean;
-  barberServiceId: string;
+  professionalServiceId: string;
   cancelRequested: boolean;
   customerId: string;
   customerName: string;
@@ -75,14 +75,14 @@ export type MyRecurrenceSeries = {
   specialPriceCents: number | null;
 };
 
-// The plans of the signed-in barber's own customers (active ones first).
+// The plans of the signed-in professional's own customers (active ones first).
 export async function listMyRecurrenceSeries(supabase: RecurrenceSupabaseClient): Promise<MyRecurrenceSeries[]> {
   const { data, error } = await supabase.rpc("list_my_recurrence_series");
   if (error) throw toRecurrenceError(error);
 
   return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
     active: Boolean(row.active),
-    barberServiceId: String(row.barber_service_id),
+    professionalServiceId: String(row.professional_service_id),
     cancelRequested: row.cancel_requested_at !== null && row.cancel_requested_at !== undefined,
     customerId: String(row.customer_id),
     customerName: String(row.customer_name ?? ""),
@@ -100,11 +100,11 @@ export async function listMyRecurrenceSeries(supabase: RecurrenceSupabaseClient)
 export async function editRecurrenceSeries(
   supabase: RecurrenceSupabaseClient,
   seriesId: string,
-  input: Omit<RecurrenceSeriesInput, "barberServiceId" | "customerId" | "localStartDate">,
+  input: Omit<RecurrenceSeriesInput, "professionalServiceId" | "customerId" | "localStartDate">,
 ) {
   const parsed = parseRecurrenceSeriesInput({
     ...input,
-    barberServiceId: "00000000-0000-0000-0000-000000000000",
+    professionalServiceId: "00000000-0000-0000-0000-000000000000",
     customerId: "00000000-0000-0000-0000-000000000000",
     localStartDate: "2000-01-01",
   });
@@ -181,8 +181,8 @@ export async function listOwnerRecurrenceConflicts(supabase: RecurrenceSupabaseC
 
   return (data ?? []).map((row: unknown) => {
     const conflict = row as {
-      barber_id: string;
-      barber_service_id: string;
+      professional_id: string;
+      professional_service_id: string;
       customer_name: string;
       customer_phone: string | null;
       id: string;
@@ -194,8 +194,8 @@ export async function listOwnerRecurrenceConflicts(supabase: RecurrenceSupabaseC
       status: "open" | "resolved";
     };
     return {
-      barberId: conflict.barber_id,
-      barberServiceId: conflict.barber_service_id,
+      professionalId: conflict.professional_id,
+      professionalServiceId: conflict.professional_service_id,
       customerName: conflict.customer_name,
       customerPhone: conflict.customer_phone,
       id: conflict.id,

@@ -1,5 +1,5 @@
 import { parseSignupInput } from "../../src/features/auth/validation";
-import { parseBarberInput } from "../../src/features/barbers/validation";
+import { parseProfessionalInput } from "../../src/features/professionals/validation";
 import { parseCustomerInput } from "../../src/features/customers/validation";
 import { parseServiceInput } from "../../src/features/services/validation";
 import { en } from "../../src/i18n/locales/en";
@@ -26,9 +26,9 @@ describe("text limits", () => {
     expect(() => parseCustomerInput({ fullName: "Ana", phone: "1".repeat(31), shopId })).toThrow("30");
   });
 
-  it("barbers cap the name at 80", () => {
-    expect(() => parseBarberInput({ name: "b".repeat(80), shopId })).not.toThrow();
-    expect(() => parseBarberInput({ name: "b".repeat(81), shopId })).toThrow();
+  it("professionals cap the name at 80", () => {
+    expect(() => parseProfessionalInput({ name: "b".repeat(80), shopId })).not.toThrow();
+    expect(() => parseProfessionalInput({ name: "b".repeat(81), shopId })).toThrow();
   });
 
   it("services cap name 80 and description 500", () => {

@@ -19,7 +19,7 @@ import { StatTile } from "../../src/components/domain/StatTile";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Screen } from "../../src/components/ui/Screen";
-import { barberRows, sumShopReport, topByValue } from "../../src/features/owner-reports/build";
+import { professionalRows, sumShopReport, topByValue } from "../../src/features/owner-reports/build";
 import { getShopReport } from "../../src/features/owner-reports/api";
 import { ownerReportCsv } from "../../src/features/reports/csv";
 import { useCsvLabels } from "../../src/features/reports/use-csv-labels";
@@ -59,7 +59,7 @@ export default function OwnerRevenueScreen() {
 
   const queryClient = useQueryClient();
   const payments = useQuery({ queryFn: () => listRentPayments(supabase, range.start, range.end), queryKey: ["rent-payments", range.start, range.end] });
-  // Rent payment form: one barber at a time; remove needs a second tap on the same payment.
+  // Rent payment form: one professional at a time; remove needs a second tap on the same payment.
   const [payingFor, setPayingFor] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [paidOn, setPaidOn] = useState(today);
@@ -71,7 +71,7 @@ export default function OwnerRevenueScreen() {
     void queryClient.invalidateQueries({ queryKey: ["rent-payments"] });
   };
   const savePayment = useMutation({
-    mutationFn: (input: { amountCents: number; barberId: string }) => recordRentPayment(supabase, { ...input, note, paidOn }),
+    mutationFn: (input: { amountCents: number; professionalId: string }) => recordRentPayment(supabase, { ...input, note, paidOn }),
     onError: (error) => setFeedback({ message: errorMessage(error, t, t("owner.revenue.loadError")), variant: "error" }),
     onSuccess: () => {
       setPayingFor(null);
@@ -88,18 +88,18 @@ export default function OwnerRevenueScreen() {
       refreshRent();
     },
   });
-  const openPayment = (barberId: string, owedCents: number) => {
-    setPayingFor(barberId);
+  const openPayment = (professionalId: string, owedCents: number) => {
+    setPayingFor(professionalId);
     setAmount((Math.max(owedCents, 0) / 100).toFixed(2).replace(".", ","));
     setPaidOn(today);
     setNote("");
   };
-  const submitPayment = (barberId: string) => {
+  const submitPayment = (professionalId: string) => {
     const cents = parseReaisToCents(amount);
 
     if (cents === null) return setFeedback({ message: t("owner.revenue.invalidAmount"), variant: "error" });
     if (!/^\d{4}-\d{2}-\d{2}$/.test(paidOn)) return setFeedback({ message: t("owner.revenue.invalidDate"), variant: "error" });
-    savePayment.mutate({ amountCents: cents, barberId });
+    savePayment.mutate({ amountCents: cents, professionalId });
   };
 
   const csvLabels = useCsvLabels();
@@ -118,11 +118,11 @@ export default function OwnerRevenueScreen() {
   const delta = (now: number, was: number | undefined) => {
     const change = was === undefined ? null : percentChange(now, was);
 
-    return change === null ? t("barber.reports.noPrevious") : `${change > 0 ? "+" : ""}${change}% ${t("barber.reports.vsPrevious")}`;
+    return change === null ? t("professional.reports.noPrevious") : `${change > 0 ? "+" : ""}${change}% ${t("professional.reports.vsPrevious")}`;
   };
-  // Per-barber and per-service change against the previous period (null when there is nothing to compare).
-  const barberDelta = (barberId: string, now: number) => {
-    const was = before.data?.barbers.find((b) => b.barberId === barberId)?.grossCents;
+  // Per-professional and per-service change against the previous period (null when there is nothing to compare).
+  const professionalDelta = (professionalId: string, now: number) => {
+    const was = before.data?.professionals.find((b) => b.professionalId === professionalId)?.grossCents;
 
     return delta(now, was);
   };
@@ -140,11 +140,11 @@ export default function OwnerRevenueScreen() {
     label: grouped ? `${p.from.slice(8)}/${p.from.slice(5, 7)}` : series.length <= 8 ? formatWeekdayShort(p.from, language) : p.from.slice(8),
     value: p.value,
   }));
-  const rows = report ? barberRows(report) : [];
+  const rows = report ? professionalRows(report) : [];
   const donutColor = (key: string, index: number) => (key === "other" ? colors.neutral[500] : SERVICE_SLICE_COLORS[index % SERVICE_SLICE_COLORS.length]);
-  const barberItems = report ? topByValue(report.barbers.map((b) => ({ key: b.barberId, name: b.name, value: b.grossCents }))) : [];
+  const professionalItems = report ? topByValue(report.professionals.map((b) => ({ key: b.professionalId, name: b.name, value: b.grossCents }))) : [];
   const serviceItems = report ? topByValue(report.services.map((s) => ({ key: s.serviceId, name: s.name, value: s.grossCents }))) : [];
-  const label = (item: { key: string; name: string }) => (item.key === "other" ? t("barber.reports.other") : item.name);
+  const label = (item: { key: string; name: string }) => (item.key === "other" ? t("professional.reports.other") : item.name);
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
@@ -155,7 +155,7 @@ export default function OwnerRevenueScreen() {
             {(["week", "month", "quarter"] as const).map((key) => (
               <Button
                 key={key}
-                label={t(`barber.reports.period${key === "week" ? "Week" : key === "month" ? "Month" : "Quarter"}`)}
+                label={t(`professional.reports.period${key === "week" ? "Week" : key === "month" ? "Month" : "Quarter"}`)}
                 onPress={() => setPeriod(key)}
                 size="sm"
                 testID={`revenue-period-${key}`}
@@ -173,30 +173,30 @@ export default function OwnerRevenueScreen() {
                 <View className="flex-row flex-wrap gap-3">
                   <StatTile label={t("owner.revenue.revenue")} sublabel={delta(totals.grossCents, previousTotals?.grossCents)} testID="stat-revenue" value={money(totals.grossCents)} />
                   <StatTile label={t("owner.revenue.shopIncome")} sublabel={t("owner.revenue.shopIncomeHint")} testID="stat-shop-income" value={money(totals.shopIncomeCents)} />
-                  <StatTile label={t("barber.reports.completed")} sublabel={delta(totals.completed, previousTotals?.completed)} testID="stat-completed" value={String(totals.completed)} />
+                  <StatTile label={t("professional.reports.completed")} sublabel={delta(totals.completed, previousTotals?.completed)} testID="stat-completed" value={String(totals.completed)} />
                   <StatTile
-                    label={t("barber.reports.cancellationRate")}
-                    sublabel={t("barber.reports.cancellationHint", { count: totals.cancelled + totals.noShow })}
+                    label={t("professional.reports.cancellationRate")}
+                    sublabel={t("professional.reports.cancellationHint", { count: totals.cancelled + totals.noShow })}
                     testID="stat-cancellation"
                     value={totals.cancellationRate === null ? "—" : `${Math.round(totals.cancellationRate * 100)}%`}
                   />
                 </View>
 
-                {!hasActivity ? <EmptyState title={t("barber.reports.empty")} /> : null}
+                {!hasActivity ? <EmptyState title={t("professional.reports.empty")} /> : null}
                 {hasActivity ? (
                   <>
                     <ChartSection rows={revenueData.filter((d) => d.value > 0).map((d) => ({ label: d.label, value: money(d.value) }))} testID="section-revenue" title={t(grouped ? "owner.revenue.byWeek" : "owner.revenue.byDay")}>
                       <ColumnChart accessibilityLabel={t("owner.revenue.revenue")} data={revenueData} formatTick={(v) => (v === 0 ? "0" : String(Math.round(v / 100)))} formatValue={money} testID="chart-revenue" />
                     </ChartSection>
 
-                    {barberItems.length > 0 ? (
-                      <ChartSection rows={barberItems.map((i) => ({ label: label(i), value: `${money(i.value)}${i.key === "other" ? "" : shortDelta(i.value, before.data?.barbers.find((x) => x.barberId === i.key)?.grossCents)}` }))} testID="section-barbers" title={t("owner.revenue.byBarber")}>
+                    {professionalItems.length > 0 ? (
+                      <ChartSection rows={professionalItems.map((i) => ({ label: label(i), value: `${money(i.value)}${i.key === "other" ? "" : shortDelta(i.value, before.data?.professionals.find((x) => x.professionalId === i.key)?.grossCents)}` }))} testID="section-professionals" title={t("owner.revenue.byProfessional")}>
                         <DonutChart
                           centerLabel={t("owner.revenue.revenue")}
                           centerValue={money(totals.grossCents)}
                           formatValue={money}
-                          slices={barberItems.map((i, index) => ({ color: donutColor(i.key, index), key: i.key, label: label(i), value: i.value }))}
-                          testID="donut-barbers"
+                          slices={professionalItems.map((i, index) => ({ color: donutColor(i.key, index), key: i.key, label: label(i), value: i.value }))}
+                          testID="donut-professionals"
                         />
                       </ChartSection>
                     ) : null}
@@ -215,20 +215,20 @@ export default function OwnerRevenueScreen() {
 
                     <ChartSection
                       rows={[
-                        { label: t("barber.reports.outcomeCompleted"), value: String(totals.completed) },
-                        { label: t("barber.reports.outcomeCancelled"), value: String(totals.cancelled) },
-                        { label: t("barber.reports.outcomeNoShow"), value: String(totals.noShow) },
+                        { label: t("professional.reports.outcomeCompleted"), value: String(totals.completed) },
+                        { label: t("professional.reports.outcomeCancelled"), value: String(totals.cancelled) },
+                        { label: t("professional.reports.outcomeNoShow"), value: String(totals.noShow) },
                       ]}
                       testID="section-outcome"
-                      title={t("barber.reports.byOutcome")}
+                      title={t("professional.reports.byOutcome")}
                     >
                       <DonutChart
-                        centerLabel={t("barber.reports.total")}
+                        centerLabel={t("professional.reports.total")}
                         centerValue={String(totals.completed + totals.cancelled + totals.noShow)}
                         slices={[
-                          { color: colors.success[500], icon: CheckCircle2, key: "completed", label: t("barber.reports.outcomeCompleted"), value: totals.completed },
-                          { color: colors.danger[500], icon: XCircle, key: "cancelled", label: t("barber.reports.outcomeCancelled"), value: totals.cancelled },
-                          { color: colors.warning[500], icon: UserX, key: "no_show", label: t("barber.reports.outcomeNoShow"), value: totals.noShow },
+                          { color: colors.success[500], icon: CheckCircle2, key: "completed", label: t("professional.reports.outcomeCompleted"), value: totals.completed },
+                          { color: colors.danger[500], icon: XCircle, key: "cancelled", label: t("professional.reports.outcomeCancelled"), value: totals.cancelled },
+                          { color: colors.warning[500], icon: UserX, key: "no_show", label: t("professional.reports.outcomeNoShow"), value: totals.noShow },
                         ]}
                         testID="donut-outcome"
                       />
@@ -236,9 +236,9 @@ export default function OwnerRevenueScreen() {
                   </>
                 ) : null}
 
-                <Text accessibilityRole="header" className="pt-2 text-lg font-display-semibold text-ink">{t("owner.revenue.barbersTable")}</Text>
+                <Text accessibilityRole="header" className="pt-2 text-lg font-display-semibold text-ink">{t("owner.revenue.professionalsTable")}</Text>
                 {rows.map((row) => (
-                  <Card key={row.barberId} testID={`barber-row-${row.barberId}`} variant="outlined">
+                  <Card key={row.professionalId} testID={`professional-row-${row.professionalId}`} variant="outlined">
                     <View className="gap-2">
                       <View className="flex-row items-center justify-between">
                         <Text className="text-base font-sans-semibold text-ink">{row.name}</Text>
@@ -248,10 +248,10 @@ export default function OwnerRevenueScreen() {
                         <Text className="text-sm font-sans text-neutral-600">{t("owner.revenue.colRevenue")}</Text>
                         <Text className="text-sm font-sans-medium text-ink">{money(row.grossCents)}</Text>
                       </View>
-                      <Text className="text-right text-xs font-sans text-neutral-500" testID={`barber-delta-${row.barberId}`}>{barberDelta(row.barberId, row.grossCents)}</Text>
+                      <Text className="text-right text-xs font-sans text-neutral-500" testID={`professional-delta-${row.professionalId}`}>{professionalDelta(row.professionalId, row.grossCents)}</Text>
                       <View className="flex-row justify-between">
-                        <Text className="text-sm font-sans text-neutral-600">{t("owner.revenue.colBarberShare")}</Text>
-                        <Text className="text-sm font-sans-medium text-ink">{money(row.barberShareCents)}</Text>
+                        <Text className="text-sm font-sans text-neutral-600">{t("owner.revenue.colProfessionalShare")}</Text>
+                        <Text className="text-sm font-sans-medium text-ink">{money(row.professionalShareCents)}</Text>
                       </View>
                       {row.rentEstimateCents > 0 ? (
                         <View className="flex-row justify-between">
@@ -269,16 +269,16 @@ export default function OwnerRevenueScreen() {
                         <Text className="text-sm font-sans-semibold text-ink">{t("owner.revenue.colShopShare")}</Text>
                         <Text className="text-sm font-sans-semibold text-ink">{money(row.shopShareCents)}</Text>
                       </View>
-                      {row.compensationType === "chair_rental" && payingFor !== row.barberId ? (
-                        <Button label={t("owner.revenue.recordPayment")} onPress={() => openPayment(row.barberId, row.rentEstimateCents - row.rentPaidCents)} size="sm" testID={`rent-pay-${row.barberId}`} variant="outline" />
+                      {row.compensationType === "chair_rental" && payingFor !== row.professionalId ? (
+                        <Button label={t("owner.revenue.recordPayment")} onPress={() => openPayment(row.professionalId, row.rentEstimateCents - row.rentPaidCents)} size="sm" testID={`rent-pay-${row.professionalId}`} variant="outline" />
                       ) : null}
-                      {payingFor === row.barberId ? (
+                      {payingFor === row.professionalId ? (
                         <View className="gap-2">
                           <Input label={t("owner.revenue.paymentAmount")} onChangeText={setAmount} placeholder={t("examples.money")} testID="rent-amount" value={amount} />
                           <DateInput label={t("owner.revenue.paymentDate")} onChangeValue={setPaidOn} testID="rent-date" value={paidOn} />
                           <Input label={t("owner.revenue.paymentNote")} onChangeText={setNote} placeholder={t("examples.note")} testID="rent-note" value={note} />
                           <View className="flex-row gap-2">
-                            <Button disabled={savePayment.isPending} label={t("owner.revenue.savePayment")} onPress={() => submitPayment(row.barberId)} size="sm" testID="rent-pay-save" />
+                            <Button disabled={savePayment.isPending} label={t("owner.revenue.savePayment")} onPress={() => submitPayment(row.professionalId)} size="sm" testID="rent-pay-save" />
                             <Button label={t("owner.revenue.cancelPayment")} onPress={() => setPayingFor(null)} size="sm" variant="outline" />
                           </View>
                         </View>
@@ -295,7 +295,7 @@ export default function OwnerRevenueScreen() {
                       <Card key={payment.id} testID={`rent-payment-${payment.id}`} variant="outlined">
                         <View className="flex-row items-center justify-between gap-2">
                           <View className="flex-1 gap-0.5">
-                            <Text className="text-base font-sans-semibold text-ink">{payment.barberName}</Text>
+                            <Text className="text-base font-sans-semibold text-ink">{payment.professionalName}</Text>
                             <Text className="text-sm font-sans text-neutral-600" style={{ fontVariant: ["tabular-nums"] }}>
                               {payment.paidOn} · {money(payment.amountCents)}
                             </Text>

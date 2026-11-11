@@ -16,7 +16,7 @@ function param(value: string | string[] | undefined) {
 
 // Reschedule one conflicted occurrence of a recurring plan with the same steps as every other booking (see RescheduleFlow).
 export default function ConflictRescheduleScreen() {
-  const params = useLocalSearchParams<{ barberId?: string; barberServiceId?: string; conflictId?: string; customerName?: string; localStartTime?: string; occurrenceDate?: string; serviceName?: string }>();
+  const params = useLocalSearchParams<{ professionalId?: string; professionalServiceId?: string; conflictId?: string; customerName?: string; localStartTime?: string; occurrenceDate?: string; serviceName?: string }>();
   const occurrenceDate = param(params.occurrenceDate);
   const localStartTime = param(params.localStartTime);
   const customerName = param(params.customerName);
@@ -29,8 +29,8 @@ export default function ConflictRescheduleScreen() {
 
   return (
     <RescheduleFlow
-      barberId={param(params.barberId)}
-      barberServiceId={param(params.barberServiceId)}
+      professionalId={param(params.professionalId)}
+      professionalServiceId={param(params.professionalServiceId)}
       current={{ localDate: occurrenceDate, localTime: localStartTime }}
       currentCard={(
         <Card testID="conflict-current">

@@ -16,8 +16,8 @@ it("never copies a day onto itself", () => {
   expect(copyDayToOthers({ 1: day, 2: closed }, 1, [1, 2])[1]).toBe(day);
 });
 
-it("a date is closed when every active barber has an all-day block", () => {
-  const o = (barberId: string, localDate: string, startTime: string | null = null, kind = "block") => ({ barberId, kind, localDate, startTime });
+it("a date is closed when every active professional has an all-day block", () => {
+  const o = (professionalId: string, localDate: string, startTime: string | null = null, kind = "block") => ({ professionalId, kind, localDate, startTime });
 
   expect(closedDates([o("a", "2026-12-25"), o("b", "2026-12-25"), o("a", "2026-12-26"), o("b", "2026-12-24"), o("a", "2026-12-24", "10:00")], ["a", "b"], "2026-12-01")).toEqual(["2026-12-25"]);
   expect(closedDates([o("a", "2026-11-01"), o("b", "2026-11-01")], ["a", "b"], "2026-12-01")).toEqual([]);

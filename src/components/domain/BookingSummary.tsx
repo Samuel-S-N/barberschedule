@@ -4,7 +4,7 @@ import { Text, View } from "react-native";
 import { formatPriceBRL } from "./ServiceCard";
 
 export type BookingSummaryProps = {
-  barberName: string;
+  professionalName: string;
   dateLabel: string;
   timeLabel?: string;
   durationMinutes: number;
@@ -12,10 +12,10 @@ export type BookingSummaryProps = {
   serviceName: string;
 };
 
-export function BookingSummary({ barberName, dateLabel, timeLabel, durationMinutes, priceCents, serviceName }: BookingSummaryProps) {
+export function BookingSummary({ professionalName, dateLabel, timeLabel, durationMinutes, priceCents, serviceName }: BookingSummaryProps) {
   const { t } = useTranslation();
   const rows: Array<[string, string]> = [
-    [t("book.summary.barber"), barberName],
+    [t("book.summary.professional"), professionalName],
     [t("book.summary.service"), serviceName],
     [t("book.summary.duration"), `${durationMinutes} min`],
     [t("book.summary.price"), formatPriceBRL(priceCents)],

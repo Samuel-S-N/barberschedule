@@ -1,7 +1,7 @@
-import { needsCommissionChoice } from "../../src/features/barbers/commission-change";
+import { needsCommissionChoice } from "../../src/features/professionals/commission-change";
 
 describe("needsCommissionChoice", () => {
-  it("asks when a commission barber gets a different percent", () => {
+  it("asks when a commission professional gets a different percent", () => {
     expect(needsCommissionChoice({ commissionPercent: 40, type: "commission" }, { commissionPercent: 50, type: "commission" })).toBe(true);
   });
 

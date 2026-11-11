@@ -5,16 +5,16 @@ import { Text } from "react-native";
 
 jest.mock("../../src/providers/AppProviders", () => ({ useSupabaseSession: () => ({ supabase: {} }) }));
 jest.mock("../../src/features/shops/api", () => ({ listPublicShops: jest.fn() }));
-jest.mock("../../src/features/barbers/api", () => ({ listPublicBarbers: jest.fn() }));
+jest.mock("../../src/features/professionals/api", () => ({ listPublicProfessionals: jest.fn() }));
 
 import type { Appointment } from "../../src/features/appointments/types";
 import { useAppointmentCards } from "../../src/features/appointments/use-appointment-cards";
-import { listPublicBarbers } from "../../src/features/barbers/api";
+import { listPublicProfessionals } from "../../src/features/professionals/api";
 import { listPublicShops } from "../../src/features/shops/api";
 import i18n from "../../src/i18n";
 
 const appointment = {
-  barberId: "b1", serviceNameSnapshot: "Corte", shopId: "s1", startsAt: "2026-08-17T12:00:00Z", status: "scheduled",
+  professionalId: "b1", serviceNameSnapshot: "Corte", shopId: "s1", startsAt: "2026-08-17T12:00:00Z", status: "scheduled",
 } as Appointment;
 
 function Probe() {
@@ -37,25 +37,25 @@ describe("useAppointmentCards", () => {
     await i18n.changeLanguage("en");
   });
 
-  it("uses translated fallbacks while shop and barber names are unknown", async () => {
+  it("uses translated fallbacks while shop and professional names are unknown", async () => {
     jest.mocked(listPublicShops).mockRejectedValue(new Error("offline"));
-    jest.mocked(listPublicBarbers).mockRejectedValue(new Error("offline"));
+    jest.mocked(listPublicProfessionals).mockRejectedValue(new Error("offline"));
     await i18n.changeLanguage("pt");
 
     const read = await renderProbe();
 
-    expect(read()).toMatchObject({ barberName: "Barbeiro", shopName: "Barbearia" });
+    expect(read()).toMatchObject({ professionalName: "Profissional", shopName: "Estabelecimento" });
   });
 
   it("formats the date in the current language and keeps real names", async () => {
     jest.mocked(listPublicShops).mockResolvedValue([{ address: null, id: "s1", name: "Barbearia Alfa", phone: null, whatsapp: null }]);
-    jest.mocked(listPublicBarbers).mockResolvedValue([{ id: "b1", name: "João" }] as never);
+    jest.mocked(listPublicProfessionals).mockResolvedValue([{ id: "b1", name: "João" }] as never);
     await i18n.changeLanguage("pt");
 
     const read = await renderProbe();
 
     await waitFor(() => expect(read().shopName).toBe("Barbearia Alfa"));
-    expect(read()).toMatchObject({ barberName: "João", timeLabel: "09:00" });
+    expect(read()).toMatchObject({ professionalName: "João", timeLabel: "09:00" });
     expect(read().dateLabel).toMatch(/^seg.*17.*ago/i);
   });
 });

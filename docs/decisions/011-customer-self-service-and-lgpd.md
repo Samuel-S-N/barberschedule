@@ -34,4 +34,4 @@ A newly signed-up account could not book: booking requires a `customers` row bou
 
 ## Email claim flag (migration 0039)
 
-`ensure_my_customer` links a barber-created customer to a signup by email only when `app_settings.email_claim_enabled` is true (default false). With confirmations off, `email_confirmed_at` is stamped at signup and proves nothing. Before enabling the flag on a hosted project, run `node scripts/assert-hosted-auth.mjs` (needs `SUPABASE_URL`, `SUPABASE_ANON_KEY`); it fails while `mailer_autoconfirm` is true. Enable with `update public.app_settings set email_claim_enabled = true;` as service role.
+`ensure_my_customer` links a professional-created customer to a signup by email only when `app_settings.email_claim_enabled` is true (default false). With confirmations off, `email_confirmed_at` is stamped at signup and proves nothing. Before enabling the flag on a hosted project, run `node scripts/assert-hosted-auth.mjs` (needs `SUPABASE_URL`, `SUPABASE_ANON_KEY`); it fails while `mailer_autoconfirm` is true. Enable with `update public.app_settings set email_claim_enabled = true;` as service role.

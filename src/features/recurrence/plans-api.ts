@@ -6,7 +6,7 @@ type Client = Pick<SupabaseClient, "rpc">;
 type Row = Record<string, unknown>;
 
 export type RecurrencePlan = { active: boolean; id: string; name: string; normalCents: number; priceCents: number; serviceId: string; serviceName: string; weeks: number };
-export type BarberPlan = { barberServiceId: string; name: string; normalCents: number; planId: string; priceCents: number; serviceName: string; weeks: number };
+export type ProfessionalPlan = { professionalServiceId: string; name: string; normalCents: number; planId: string; priceCents: number; serviceName: string; weeks: number };
 
 async function call(supabase: Client, name: string, args: Record<string, unknown>) {
   const { data, error } = await supabase.rpc(name, args);
@@ -41,11 +41,11 @@ export async function saveRecurrencePlan(supabase: Client, input: { active: bool
   });
 }
 
-export async function listPlansForBarber(supabase: Client, barberId: string): Promise<BarberPlan[]> {
-  const rows = await call(supabase, "list_recurrence_plans_for_barber", { target_barber_id: barberId });
+export async function listPlansForProfessional(supabase: Client, professionalId: string): Promise<ProfessionalPlan[]> {
+  const rows = await call(supabase, "list_recurrence_plans_for_professional", { target_professional_id: professionalId });
 
   return rows.map((row) => ({
-    barberServiceId: String(row.barber_service_id),
+    professionalServiceId: String(row.professional_service_id),
     name: String(row.name),
     normalCents: Number(row.normal_cents),
     planId: String(row.plan_id),

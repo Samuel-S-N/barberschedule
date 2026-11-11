@@ -56,13 +56,13 @@ test("on the booking date step a drag changes the month, not the tab", async ({ 
   await pinMidMonth(page);
   await signInAsCustomer(page);
   await mockCustomerRest(page, async (route, url) => {
-    if (url.pathname.endsWith("/barber_services")) {
+    if (url.pathname.endsWith("/professional_services")) {
       await json(route, [{ duration_override_minutes: null, id: "33333333-3333-4333-8333-333333333333", price_override_cents: null, service_id: "s", services: { duration_minutes: 30, name: "Corte", price_cents: 4000 } }]);
       return true;
     }
   });
   await page.goto("/book");
-  await page.getByRole("button", { name: "Browser Barber" }).click();
+  await page.getByRole("button", { name: "Browser Professional" }).click();
   await page.getByRole("button", { name: "Corte" }).click();
   await expect(page.getByTestId("month-calendar-title")).toBeVisible();
   // gesture-handler defaults to `touch-action: none` on web, which would stop a touch browser from scrolling the page.
@@ -87,13 +87,13 @@ async function openDateStep(page: import("@playwright/test").Page) {
   await pinMidMonth(page);
   await signInAsCustomer(page);
   await mockCustomerRest(page, async (route, url) => {
-    if (url.pathname.endsWith("/barber_services")) {
+    if (url.pathname.endsWith("/professional_services")) {
       await json(route, [{ duration_override_minutes: null, id: "33333333-3333-4333-8333-333333333333", price_override_cents: null, service_id: "s", services: { duration_minutes: 30, name: "Corte", price_cents: 4000 } }]);
       return true;
     }
   });
   await page.goto("/book");
-  await page.getByRole("button", { name: "Browser Barber" }).click();
+  await page.getByRole("button", { name: "Browser Professional" }).click();
   await page.getByRole("button", { name: "Corte" }).click();
   await expect(page.getByTestId("month-calendar-title")).toBeVisible();
 }

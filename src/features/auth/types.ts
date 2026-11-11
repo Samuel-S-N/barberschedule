@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type AppRole = "barber" | "customer" | "owner";
+export type AppRole = "professional" | "customer" | "owner";
 
 export type Profile = {
   avatarPath?: string | null;

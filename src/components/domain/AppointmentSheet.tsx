@@ -13,7 +13,7 @@ import { StatusBadge } from "./StatusBadge";
 import type { AppointmentStatus } from "./StatusBadge";
 
 export type SheetAppointment = {
-  barberName?: string;
+  professionalName?: string;
   customerName: string;
   customerPhone: string | null;
   dateLabel: string;
@@ -33,7 +33,7 @@ export type AppointmentSheetProps = {
   onMove?: () => void;
   onOpenCustomer?: () => void;
   remindUrl?: string | null;
-  testPrefix: "barber" | "owner";
+  testPrefix: "professional" | "owner";
 };
 
 export function AppointmentSheet({ appointment, busy, onCancel, onClose, onMove, onOpenCustomer, remindUrl, testPrefix }: AppointmentSheetProps) {
@@ -78,25 +78,25 @@ export function AppointmentSheet({ appointment, busy, onCancel, onClose, onMove,
 
           <View className="gap-1">
             <Text className="text-base font-sans-medium text-ink">{appointment.serviceName} · {formatPriceBRL(appointment.priceCents)}</Text>
-            {appointment.barberName ? <Text className="text-sm font-sans text-neutral-600">{t("agendaCard.barber")}: {appointment.barberName}</Text> : null}
+            {appointment.professionalName ? <Text className="text-sm font-sans text-neutral-600">{t("agendaCard.professional")}: {appointment.professionalName}</Text> : null}
             {appointment.notes ? <Text className="text-sm font-sans text-neutral-600">{t("agendaCard.notes")}: {appointment.notes}</Text> : null}
           </View>
 
           <View className="flex-row gap-3">
-            <ContactLink icon={MessageCircle} testID={`${testPrefix}-appt-whatsapp-${id}`} url={whatsappUrl(appointment.customerPhone)}>{t("barber.clients.whatsapp")}</ContactLink>
-            <ContactLink icon={Phone} testID={`${testPrefix}-appt-call-${id}`} url={telUrl(appointment.customerPhone)}>{t("barber.clients.call")}</ContactLink>
+            <ContactLink icon={MessageCircle} testID={`${testPrefix}-appt-whatsapp-${id}`} url={whatsappUrl(appointment.customerPhone)}>{t("professional.clients.whatsapp")}</ContactLink>
+            <ContactLink icon={Phone} testID={`${testPrefix}-appt-call-${id}`} url={telUrl(appointment.customerPhone)}>{t("professional.clients.call")}</ContactLink>
           </View>
           {remindUrl ? (
             <View className="flex-row">
-              <ContactLink icon={MessageCircle} testID={`${testPrefix}-remind-${id}`} url={remindUrl}>{t("barber.agenda.remind")}</ContactLink>
+              <ContactLink icon={MessageCircle} testID={`${testPrefix}-remind-${id}`} url={remindUrl}>{t("professional.agenda.remind")}</ContactLink>
             </View>
           ) : null}
 
-          {open && onMove ? <Button disabled={busy} label={t("barber.agenda.moveAppointment")} onPress={onMove} testID={`${testPrefix}-move-${id}`} variant="outline" /> : null}
+          {open && onMove ? <Button disabled={busy} label={t("professional.agenda.moveAppointment")} onPress={onMove} testID={`${testPrefix}-move-${id}`} variant="outline" /> : null}
           {open ? (
             <Button
               disabled={busy}
-              label={confirmingCancel ? t("barber.agenda.cancelConfirm") : t("barber.agenda.cancelAppointment")}
+              label={confirmingCancel ? t("professional.agenda.cancelConfirm") : t("professional.agenda.cancelAppointment")}
               onPress={() => (confirmingCancel ? onCancel() : setConfirmingCancel(true))}
               testID={`${testPrefix}-cancel-${id}`}
               variant="danger"

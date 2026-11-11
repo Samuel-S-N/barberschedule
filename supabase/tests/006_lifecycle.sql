@@ -17,8 +17,8 @@ where user_id = '60000000-0000-0000-0000-000000000001';
 insert into public.shops (id, name, owner_user_id)
 values ('61000000-0000-0000-0000-000000000001', 'Task 7 Shop', '60000000-0000-0000-0000-000000000001');
 
-insert into public.barbers (id, shop_id, name, buffer_minutes)
-values ('62000000-0000-0000-0000-000000000001', '61000000-0000-0000-0000-000000000001', 'Task 7 Barber', 10);
+insert into public.professionals (id, shop_id, name, buffer_minutes)
+values ('62000000-0000-0000-0000-000000000001', '61000000-0000-0000-0000-000000000001', 'Task 7 Professional', 10);
 
 insert into public.customers (id, shop_id, user_id, full_name, email)
 values
@@ -28,7 +28,7 @@ values
 insert into public.services (id, shop_id, name, duration_minutes, price_cents)
 values ('64000000-0000-0000-0000-000000000001', '61000000-0000-0000-0000-000000000001', 'Task 7 Cut', 30, 4000);
 
-insert into public.barber_services (id, shop_id, barber_id, service_id)
+insert into public.professional_services (id, shop_id, professional_id, service_id)
 values ('65000000-0000-0000-0000-000000000001', '61000000-0000-0000-0000-000000000001', '62000000-0000-0000-0000-000000000001', '64000000-0000-0000-0000-000000000001');
 
 create temp table lifecycle_times on commit drop as
@@ -48,15 +48,15 @@ select set_config(
   false
 );
 
-insert into public.working_periods (shop_id, barber_id, weekday, start_time, end_time)
+insert into public.working_periods (shop_id, professional_id, weekday, start_time, end_time)
 select '61000000-0000-0000-0000-000000000001', '62000000-0000-0000-0000-000000000001', weekday, '00:00', '23:59'
 from generate_series(1, 7) as weekday;
 
 insert into public.appointments (
-  id, shop_id, barber_id, customer_id, barber_service_id, service_id,
+  id, shop_id, professional_id, customer_id, professional_service_id, service_id,
   starts_at, ends_at, occupied_until, service_name_snapshot,
   service_duration_minutes_snapshot, service_price_cents_snapshot,
-  barber_buffer_minutes_snapshot
+  professional_buffer_minutes_snapshot
 )
 select
   '66000000-0000-0000-0000-000000000001', '61000000-0000-0000-0000-000000000001',
@@ -127,10 +127,10 @@ select is(
 );
 
 insert into public.appointments (
-  id, shop_id, barber_id, customer_id, barber_service_id, service_id,
+  id, shop_id, professional_id, customer_id, professional_service_id, service_id,
   starts_at, ends_at, occupied_until, service_name_snapshot,
   service_duration_minutes_snapshot, service_price_cents_snapshot,
-  barber_buffer_minutes_snapshot
+  professional_buffer_minutes_snapshot
 )
 select
   '66000000-0000-0000-0000-000000000002', '61000000-0000-0000-0000-000000000001',
@@ -152,10 +152,10 @@ select throws_ok(
 
 reset role;
 insert into public.appointments (
-  id, shop_id, barber_id, customer_id, barber_service_id, service_id,
+  id, shop_id, professional_id, customer_id, professional_service_id, service_id,
   starts_at, ends_at, occupied_until, service_name_snapshot,
   service_duration_minutes_snapshot, service_price_cents_snapshot,
-  barber_buffer_minutes_snapshot
+  professional_buffer_minutes_snapshot
 )
 select
   '66000000-0000-0000-0000-000000000003', '61000000-0000-0000-0000-000000000001',
@@ -191,10 +191,10 @@ set status = 'cancelled'
 where id = '66000000-0000-0000-0000-000000000002';
 
 insert into public.appointments (
-  id, shop_id, barber_id, customer_id, barber_service_id, service_id,
+  id, shop_id, professional_id, customer_id, professional_service_id, service_id,
   starts_at, ends_at, occupied_until, service_name_snapshot,
   service_duration_minutes_snapshot, service_price_cents_snapshot,
-  barber_buffer_minutes_snapshot
+  professional_buffer_minutes_snapshot
 )
 select
   '66000000-0000-0000-0000-000000000004', '61000000-0000-0000-0000-000000000001',
@@ -227,10 +227,10 @@ select is(
 );
 
 insert into public.appointments (
-  id, shop_id, barber_id, customer_id, barber_service_id, service_id,
+  id, shop_id, professional_id, customer_id, professional_service_id, service_id,
   starts_at, ends_at, occupied_until, service_name_snapshot,
   service_duration_minutes_snapshot, service_price_cents_snapshot,
-  barber_buffer_minutes_snapshot
+  professional_buffer_minutes_snapshot
 )
 select
   '66000000-0000-0000-0000-000000000005', '61000000-0000-0000-0000-000000000001',
@@ -241,10 +241,10 @@ select
 from lifecycle_times;
 
 insert into public.appointments (
-  id, shop_id, barber_id, customer_id, barber_service_id, service_id,
+  id, shop_id, professional_id, customer_id, professional_service_id, service_id,
   starts_at, ends_at, occupied_until, service_name_snapshot,
   service_duration_minutes_snapshot, service_price_cents_snapshot,
-  barber_buffer_minutes_snapshot
+  professional_buffer_minutes_snapshot
 )
 select
   '66000000-0000-0000-0000-000000000006', '61000000-0000-0000-0000-000000000001',
@@ -272,10 +272,10 @@ select is(
 );
 
 insert into public.appointments (
-  id, shop_id, barber_id, customer_id, barber_service_id, service_id,
+  id, shop_id, professional_id, customer_id, professional_service_id, service_id,
   starts_at, ends_at, occupied_until, service_name_snapshot,
   service_duration_minutes_snapshot, service_price_cents_snapshot,
-  barber_buffer_minutes_snapshot
+  professional_buffer_minutes_snapshot
 )
 select
   '66000000-0000-0000-0000-000000000007', '61000000-0000-0000-0000-000000000001',
@@ -286,10 +286,10 @@ select
 from lifecycle_times;
 
 insert into public.appointments (
-  id, shop_id, barber_id, customer_id, barber_service_id, service_id,
+  id, shop_id, professional_id, customer_id, professional_service_id, service_id,
   starts_at, ends_at, occupied_until, service_name_snapshot,
   service_duration_minutes_snapshot, service_price_cents_snapshot,
-  barber_buffer_minutes_snapshot
+  professional_buffer_minutes_snapshot
 )
 select
   '66000000-0000-0000-0000-000000000008', '61000000-0000-0000-0000-000000000001',

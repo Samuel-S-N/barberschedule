@@ -6,16 +6,16 @@ create type public.appointment_status as enum (
   'no_show'
 );
 
-alter table public.barbers
+alter table public.professionals
 add column buffer_minutes integer not null default 0
-constraint barbers_buffer_minutes_non_negative check (buffer_minutes >= 0);
+constraint professionals_buffer_minutes_non_negative check (buffer_minutes >= 0);
 
 create table public.appointments (
   id uuid primary key default gen_random_uuid(),
   shop_id uuid not null references public.shops (id) on delete restrict,
-  barber_id uuid not null,
+  professional_id uuid not null,
   customer_id uuid not null,
-  barber_service_id uuid not null references public.barber_services (id) on delete restrict,
+  professional_service_id uuid not null references public.professional_services (id) on delete restrict,
   service_id uuid not null,
   starts_at timestamptz not null,
   ends_at timestamptz not null,
@@ -24,12 +24,12 @@ create table public.appointments (
   service_name_snapshot text not null,
   service_duration_minutes_snapshot integer not null,
   service_price_cents_snapshot integer not null,
-  barber_buffer_minutes_snapshot integer not null,
+  professional_buffer_minutes_snapshot integer not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint appointments_barber_fk
-    foreign key (shop_id, barber_id)
-    references public.barbers (shop_id, id)
+  constraint appointments_professional_fk
+    foreign key (shop_id, professional_id)
+    references public.professionals (shop_id, id)
     on delete restrict,
   constraint appointments_customer_fk
     foreign key (shop_id, customer_id)
@@ -47,10 +47,10 @@ create table public.appointments (
     check (service_duration_minutes_snapshot > 0),
   constraint appointments_service_price_snapshot_non_negative
     check (service_price_cents_snapshot >= 0),
-  constraint appointments_barber_buffer_snapshot_non_negative
-    check (barber_buffer_minutes_snapshot >= 0),
-  constraint appointments_active_barber_occupancy exclude using gist (
-    barber_id with =,
+  constraint appointments_professional_buffer_snapshot_non_negative
+    check (professional_buffer_minutes_snapshot >= 0),
+  constraint appointments_active_professional_occupancy exclude using gist (
+    professional_id with =,
     tstzrange(starts_at, occupied_until, '[)') with &&
   ) where (status in ('scheduled', 'confirmed'))
 );
@@ -58,8 +58,8 @@ create table public.appointments (
 create index appointments_shop_starts_at_idx
 on public.appointments (shop_id, starts_at);
 
-create index appointments_barber_starts_at_idx
-on public.appointments (barber_id, starts_at);
+create index appointments_professional_starts_at_idx
+on public.appointments (professional_id, starts_at);
 
 create index appointments_customer_starts_at_idx
 on public.appointments (customer_id, starts_at);

@@ -18,10 +18,10 @@ values
   ('71000000-0000-0000-0000-000000000001', 'Task 8 Shop', '70000000-0000-0000-0000-000000000001'),
   ('71000000-0000-0000-0000-000000000002', 'Other Shop', '70000000-0000-0000-0000-000000000003');
 
-insert into public.barbers (id, shop_id, name)
+insert into public.professionals (id, shop_id, name)
 values
-  ('72000000-0000-0000-0000-000000000001', '71000000-0000-0000-0000-000000000001', 'Task 8 Barber'),
-  ('72000000-0000-0000-0000-000000000002', '71000000-0000-0000-0000-000000000002', 'Other Barber');
+  ('72000000-0000-0000-0000-000000000001', '71000000-0000-0000-0000-000000000001', 'Task 8 Professional'),
+  ('72000000-0000-0000-0000-000000000002', '71000000-0000-0000-0000-000000000002', 'Other Professional');
 
 insert into public.customers (id, shop_id, user_id, full_name, email)
 values
@@ -33,12 +33,12 @@ values
   ('74000000-0000-0000-0000-000000000001', '71000000-0000-0000-0000-000000000001', 'Task 8 Cut', 30, 4000),
   ('74000000-0000-0000-0000-000000000002', '71000000-0000-0000-0000-000000000002', 'Other Cut', 30, 4000);
 
-insert into public.barber_services (id, shop_id, barber_id, service_id)
+insert into public.professional_services (id, shop_id, professional_id, service_id)
 values
   ('75000000-0000-0000-0000-000000000001', '71000000-0000-0000-0000-000000000001', '72000000-0000-0000-0000-000000000001', '74000000-0000-0000-0000-000000000001'),
   ('75000000-0000-0000-0000-000000000002', '71000000-0000-0000-0000-000000000002', '72000000-0000-0000-0000-000000000002', '74000000-0000-0000-0000-000000000002');
 
-insert into public.working_periods (shop_id, barber_id, weekday, start_time, end_time)
+insert into public.working_periods (shop_id, professional_id, weekday, start_time, end_time)
 select '71000000-0000-0000-0000-000000000001', '72000000-0000-0000-0000-000000000001', weekday, '00:00', '23:59'
 from generate_series(1, 7) as weekday;
 
@@ -62,7 +62,7 @@ select lives_ok(
   'owner can create a second appointment on the same shop-local day'
 );
 
-insert into public.schedule_overrides (shop_id, barber_id, local_date, kind)
+insert into public.schedule_overrides (shop_id, professional_id, local_date, kind)
 values (
   '71000000-0000-0000-0000-000000000001',
   '72000000-0000-0000-0000-000000000001',

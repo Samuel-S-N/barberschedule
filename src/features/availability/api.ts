@@ -62,8 +62,8 @@ export async function getAvailableSlots(
   input: AvailableSlotsInput,
 ) {
   const { data, error } = await supabase.rpc("get_available_slots", {
-    barber_id: input.barberId,
-    barber_service_id: input.barberServiceId,
+    professional_id: input.professionalId,
+    professional_service_id: input.professionalServiceId,
     local_date: input.localDate,
   });
 

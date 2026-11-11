@@ -11,9 +11,9 @@ create or replace function public.list_owner_agenda(
 returns table (
   id uuid,
   shop_id uuid,
-  barber_id uuid,
+  professional_id uuid,
   customer_id uuid,
-  barber_service_id uuid,
+  professional_service_id uuid,
   service_id uuid,
   starts_at timestamptz,
   ends_at timestamptz,
@@ -24,10 +24,10 @@ returns table (
   service_name_snapshot text,
   service_duration_minutes_snapshot integer,
   service_price_cents_snapshot integer,
-  barber_buffer_minutes_snapshot integer,
+  professional_buffer_minutes_snapshot integer,
   created_at timestamptz,
   updated_at timestamptz,
-  barber_name text,
+  professional_name text,
   customer_name text,
   customer_phone text
 )
@@ -60,9 +60,9 @@ begin
   select
     appointments.id,
     appointments.shop_id,
-    appointments.barber_id,
+    appointments.professional_id,
     appointments.customer_id,
-    appointments.barber_service_id,
+    appointments.professional_service_id,
     appointments.service_id,
     appointments.starts_at,
     appointments.ends_at,
@@ -73,16 +73,16 @@ begin
     appointments.service_name_snapshot,
     appointments.service_duration_minutes_snapshot,
     appointments.service_price_cents_snapshot,
-    appointments.barber_buffer_minutes_snapshot,
+    appointments.professional_buffer_minutes_snapshot,
     appointments.created_at,
     appointments.updated_at,
-    barbers.name,
+    professionals.name,
     customers.full_name,
     customers.phone
   from public.appointments
-  join public.barbers
-    on barbers.id = appointments.barber_id
-   and barbers.shop_id = appointments.shop_id
+  join public.professionals
+    on professionals.id = appointments.professional_id
+   and professionals.shop_id = appointments.shop_id
   join public.customers
     on customers.id = appointments.customer_id
    and customers.shop_id = appointments.shop_id

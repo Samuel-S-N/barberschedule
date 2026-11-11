@@ -3,20 +3,20 @@ create type public.schedule_override_kind as enum ('block', 'opening');
 create table public.working_periods (
   id uuid primary key default gen_random_uuid(),
   shop_id uuid not null references public.shops (id) on delete restrict,
-  barber_id uuid not null,
+  professional_id uuid not null,
   weekday smallint not null,
   start_time time not null,
   end_time time not null,
   created_at timestamptz not null default now(),
-  constraint working_periods_barber_fk
-    foreign key (shop_id, barber_id)
-    references public.barbers (shop_id, id)
+  constraint working_periods_professional_fk
+    foreign key (shop_id, professional_id)
+    references public.professionals (shop_id, id)
     on delete restrict,
   constraint working_periods_weekday_valid check (weekday between 1 and 7),
   constraint working_periods_valid_interval check (start_time < end_time),
-  constraint working_periods_no_duplicate unique (shop_id, barber_id, weekday, start_time, end_time),
+  constraint working_periods_no_duplicate unique (shop_id, professional_id, weekday, start_time, end_time),
   constraint working_periods_no_overlap exclude using gist (
-    barber_id with =,
+    professional_id with =,
     weekday with =,
     tsrange(
       timestamp '2000-01-03' + start_time,
@@ -29,15 +29,15 @@ create table public.working_periods (
 create table public.schedule_overrides (
   id uuid primary key default gen_random_uuid(),
   shop_id uuid not null references public.shops (id) on delete restrict,
-  barber_id uuid not null,
+  professional_id uuid not null,
   local_date date not null,
   kind public.schedule_override_kind not null,
   start_time time,
   end_time time,
   created_at timestamptz not null default now(),
-  constraint schedule_overrides_barber_fk
-    foreign key (shop_id, barber_id)
-    references public.barbers (shop_id, id)
+  constraint schedule_overrides_professional_fk
+    foreign key (shop_id, professional_id)
+    references public.professionals (shop_id, id)
     on delete restrict,
   constraint schedule_overrides_valid_interval check (
     (kind = 'block' and start_time is null and end_time is null)
