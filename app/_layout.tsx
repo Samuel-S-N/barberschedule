@@ -18,7 +18,8 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { resolveAuthRedirect } from "../src/features/auth/session";
-import { AppThemeProvider, useColors } from "../src/lib/design/theme/ThemeProvider";
+import { ShopThemeProvider } from "../src/features/shops/ShopThemeProvider";
+import { useColors } from "../src/lib/design/theme/ThemeProvider";
 import { AppProviders } from "../src/providers/AppProviders";
 import { useSupabaseSession } from "../src/providers/AppProviders";
 
@@ -77,9 +78,9 @@ export default function RootLayout() {
     // Native gestures (MonthCalendar's swipe) need this root; JS responders are cancelled inside the Android pager.
     <GestureHandlerRootView style={styles.root}>
       <AppProviders>
-        <AppThemeProvider>
+        <ShopThemeProvider>
           <RootNavigator />
-        </AppThemeProvider>
+        </ShopThemeProvider>
       </AppProviders>
     </GestureHandlerRootView>
   );
