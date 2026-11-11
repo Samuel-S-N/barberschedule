@@ -13,10 +13,11 @@ import { useMyProfile } from "../../../src/features/account/use-my-profile";
 import { signOut } from "../../../src/features/auth/api";
 import { listMyCustomers } from "../../../src/features/customers/api";
 import { errorMessage } from "../../../src/i18n/errors";
-import { colors } from "../../../src/lib/design/colors";
+import { useColors } from "../../../src/lib/design/theme/ThemeProvider";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 
 export default function CustomerProfileScreen() {
+  const colors = useColors();
   const router = useRouter();
   const { t } = useTranslation();
   const { session, supabase } = useSupabaseSession();

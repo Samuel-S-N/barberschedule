@@ -14,10 +14,11 @@ import { signUpCustomer } from "../../src/features/auth/api";
 import { parseSignupInput } from "../../src/features/auth/validation";
 import { errorMessage } from "../../src/i18n/errors";
 import { formatPhone } from "../../src/features/account/phone";
-import { colors } from "../../src/lib/design/colors";
+import { useColors } from "../../src/lib/design/theme/ThemeProvider";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 export default function SignupScreen() {
+  const colors = useColors();
   const router = useRouter();
   const { t } = useTranslation();
   const field = useFieldChain(6);

@@ -22,7 +22,7 @@ import { useCsvLabels } from "../../src/features/reports/use-csv-labels";
 import { saveExportFile } from "../../src/features/account/export-file";
 import { errorMessage } from "../../src/i18n/errors";
 import { useLanguage } from "../../src/i18n/use-language";
-import { colors } from "../../src/lib/design/colors";
+import { useColors } from "../../src/lib/design/theme/ThemeProvider";
 import { addLocalDays } from "../../src/lib/dates/calendar-strip-days";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { formatWeekdayShort } from "../../src/lib/i18n/format";
@@ -41,6 +41,7 @@ function rangeFor(period: Period, today: string) {
 const WEEKDAY_REFERENCE = ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04", "2024-01-05", "2024-01-06", "2024-01-07"]; // Monday to Sunday
 
 export default function ProfessionalReportsScreen() {
+  const colors = useColors();
   const { t } = useTranslation();
   const pull = useRefreshAll();
   const language = useLanguage();
