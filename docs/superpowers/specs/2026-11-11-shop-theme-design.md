@@ -84,7 +84,9 @@ Tokens: `primary-50…900`, `accent`, `on-accent`, `on-primary`, `canvas`, `surf
 `t = (L400,padrão − L_k,padrão) / (L400,padrão − L900,padrão)` (A = L do âncora; extremos fixos, sempre
 monótona). Matiz = o da cor escolhida; `C_k = C_k,padrão · clamp(C_âncora / 0.137, 0.25, 2)`, reduzida ao gamut.
 Depois: baixar `L_600` (e `L_700`) até contraste ≥ 4.5 contra `canvas` efetivo e garantir L estritamente
-decrescente de 400 a 900 com folga mínima de 0.02.
+decrescente de 400 a 900 com folga mínima de 0.02. No preto puro os degraus 800 e 900 podem
+cair no mesmo hex (resolução de 8 bits); o contrato testado é estrito até o 600 e não crescente depois. Uma cor sem
+matiz (preto, cinza, branco; C < 0.01) gera escala neutra, com intensidade zero.
 
 **Base:** matiz da cor escolhida; `C_k = C_k,padrão · clamp(C_escolhida / 0.008, 0, 2)` para `neutral-*`, `canvas`,
 `surface` e `mist`; L de cada token fixo (tabela acima). Cinza ou branco escolhidos geram neutros sem tom.
