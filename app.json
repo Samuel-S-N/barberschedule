@@ -1,18 +1,18 @@
 {
   "expo": {
-    "name": "Barberschedule",
-    "slug": "barberschedule",
+    "name": "Zenc",
+    "slug": "zenc",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "scheme": "barberschedule",
+    "scheme": "zenc",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.example.barberschedule"
+      "bundleIdentifier": "com.zencpro.app"
     },
     "android": {
-      "package": "com.example.barberschedule",
+      "package": "com.zencpro.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -33,7 +33,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Barberschedule to access your photos to set your profile picture."
+          "photosPermission": "Allow Zenc to access your photos to set your profile picture."
         }
       ],
       "expo-notifications",

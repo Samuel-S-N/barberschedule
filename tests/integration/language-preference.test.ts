@@ -44,7 +44,7 @@ describe("language preference", () => {
   });
 
   it("applies a saved language although the device language differs", async () => {
-    mockStore.set("barberschedule.language", "pt");
+    mockStore.set("zenc.language", "pt");
     const i18n = freshI18n();
 
     await i18n.loadLanguagePreference();
@@ -68,7 +68,7 @@ describe("language preference", () => {
   });
 
   it("ignores a saved value it does not know", async () => {
-    mockStore.set("barberschedule.language", "klingon");
+    mockStore.set("zenc.language", "klingon");
     const i18n = freshI18n();
 
     await i18n.loadLanguagePreference();
@@ -83,7 +83,7 @@ describe("language preference", () => {
 
     expect(i18n.getCurrentLanguage()).toBe("es");
     expect(i18n.default.t("tabs.home")).toBe("Inicio");
-    expect(mockStore.get("barberschedule.language")).toBe("es");
+    expect(mockStore.get("zenc.language")).toBe("es");
   });
 
   it("still applies the choice for this session when saving fails", async () => {
@@ -105,7 +105,7 @@ describe("language preference", () => {
 
     await i18n.setLanguagePreference("device");
     expect(i18n.getCurrentLanguage()).toBe("es");
-    expect(mockStore.get("barberschedule.language")).toBe("device");
+    expect(mockStore.get("zenc.language")).toBe("device");
 
     setDevice("fr");
     await i18n.syncLanguage();

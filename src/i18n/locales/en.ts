@@ -27,7 +27,7 @@ export const en = {
   common: {
     activate: "Activate",
     allDay: "all day",
-    appName: "Barberschedule",
+    appName: "Zenc",
     archived: "(archived)",
     back: "Back",
     cancel: "Cancel",
@@ -62,7 +62,7 @@ export const en = {
       forgot: "Forgot password?",
       passwordReset: "Password reset. Sign in with your new password.",
       submit: "Sign in",
-      subtitle: "Use the same Barberschedule account on Web, iOS, or Android.",
+      subtitle: "Use the same Zenc account on Web, iOS, or Android.",
       title: "Sign in",
     },
     reset: {
@@ -393,7 +393,7 @@ export const en = {
       manageServices: "Manage services",
       settings: "Owner settings",
       signedInAs: "Signed in as {{role}}.",
-      title: "Barberschedule MVP",
+      title: "Zenc",
     },
     revenue: {
       professionalsTable: "By professional",

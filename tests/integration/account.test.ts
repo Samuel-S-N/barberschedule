@@ -65,7 +65,7 @@ describe("account api", () => {
 
     expect(file).toEqual({
       content: JSON.stringify({ a: 1 }, null, 2),
-      filename: "barberschedule-my-data-2026-09-23.json",
+      filename: "zenc-my-data-2026-09-23.json",
       mimeType: "application/json",
     });
   });

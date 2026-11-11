@@ -91,7 +91,7 @@ async function main() {
   const baseURL = getE2EWebBaseUrl(webPort);
   const env = {
     ...process.env,
-    BARBERSCHEDULE_E2E_WEB_PORT: String(webPort),
+    ZENC_E2E_WEB_PORT: String(webPort),
     CI: process.env.CI ?? "1",
     EXPO_NO_DOTENV: "1",
     EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
