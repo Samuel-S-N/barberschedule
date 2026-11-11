@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { AlertTriangle, Clock, Contact, Repeat, Scissors, Store, Tags, Users } from "lucide-react-native";
+import { AlertTriangle, Clock, Contact, Palette, Repeat, Scissors, Store, Tags, Users } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
 
@@ -30,6 +30,7 @@ export default function OwnerManageScreen() {
               items={[
                 { icon: Clock, key: "schedule", label: t("owner.hub.manageSchedule"), onPress: go("/schedule") },
                 { icon: Store, key: "shop", label: t("owner.settings.shopLink"), onPress: go("/shop") },
+                { icon: Palette, key: "appearance", label: t("owner.settings.appearanceLink"), onPress: go("/appearance") },
                 { icon: AlertTriangle, key: "recurrence-conflicts", label: t("owner.manage.conflicts"), onPress: go("/recurrence-conflicts") },
               ]}
             />
