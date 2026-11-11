@@ -2,7 +2,7 @@ import React from "react";
 import { render } from "@testing-library/react-native";
 
 import { RatingStars } from "../../src/components/domain/RatingStars";
-import { colors } from "../../src/lib/design/colors";
+import { DEFAULT_COLORS } from "../../src/lib/design/colors";
 
 function getStarSvgs(view: Awaited<ReturnType<typeof render>>) {
   return view.root!.queryAll((node) => node.type === "RNSVGSvgView");
@@ -16,12 +16,12 @@ describe("RatingStars", () => {
     expect(stars).toHaveLength(5);
 
     for (let index = 0; index < 4; index += 1) {
-      expect(stars[index].props.fill).toBe(colors.warning[400]);
-      expect(stars[index].props.stroke).toBe(colors.warning[400]);
+      expect(stars[index].props.fill).toBe(DEFAULT_COLORS.warning[400]);
+      expect(stars[index].props.stroke).toBe(DEFAULT_COLORS.warning[400]);
     }
 
     expect(stars[4].props.fill).toBe("none");
-    expect(stars[4].props.stroke).toBe(colors.neutral[300]);
+    expect(stars[4].props.stroke).toBe(DEFAULT_COLORS.neutral[300]);
   });
 
   it("exposes the rating as an accessibility label", async () => {

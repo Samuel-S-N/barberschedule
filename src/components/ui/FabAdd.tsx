@@ -11,12 +11,12 @@ export function FabAdd({ label, onPress, testID = "fab-add" }: { label: string; 
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
-      className="absolute bottom-6 right-5 h-14 w-14 items-center justify-center rounded-full bg-primary-400"
+      className="absolute bottom-6 right-5 h-14 w-14 items-center justify-center rounded-full bg-accent"
       onPress={onPress}
       style={shadows.level2}
       testID={testID}
     >
-      <Plus color={colors.ink} size={28} />
+      <Plus color={colors.onAccent} size={28} />
     </Pressable>
   );
 }

@@ -63,6 +63,3 @@ export function colorsToVars(colors: Colors): Record<string, string> {
   }
   return vars;
 }
-
-// Temporary alias while screens move to useColors(); removed once none import it.
-export const colors = DEFAULT_COLORS;

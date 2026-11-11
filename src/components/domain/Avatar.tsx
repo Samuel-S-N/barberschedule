@@ -44,7 +44,7 @@ export function Avatar({ name, uri, size = 96, onPress, busy = false, accessibil
     <Pressable accessibilityLabel={accessibilityLabel} accessibilityRole="button" disabled={busy} onPress={onPress} testID={testID}>
       {body}
       <View className="absolute bottom-0 right-0 h-9 w-9 items-center justify-center rounded-full border-2 border-canvas bg-primary-400">
-        <Camera color={colors.ink} size={18} />
+        <Camera color={colors.onPrimary} size={18} />
       </View>
     </Pressable>
   );

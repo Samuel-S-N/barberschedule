@@ -87,7 +87,7 @@ export default function SignupScreen() {
               testID="signup-accept-terms"
             >
               <View className={`h-6 w-6 items-center justify-center rounded-md border ${acceptedTerms ? "border-primary-400 bg-primary-400" : "border-neutral-300 bg-surface"}`}>
-                {acceptedTerms ? <Check color={colors.ink} size={16} /> : null}
+                {acceptedTerms ? <Check color={colors.onPrimary} size={16} /> : null}
               </View>
               <Text className="flex-1 text-sm font-sans text-neutral-700">{t("auth.signup.acceptTerms")}</Text>
             </Pressable>
