@@ -263,8 +263,8 @@ Expected: o corpo da requisição usa `professionalId`, o nome da RPC bate com a
 
 - [ ] **Step 2: Servir e chamar sem token**
 
-Run: `npx supabase functions serve invite-professional --no-verify-jwt` (em outro terminal) e `curl -s -X POST http://127.0.0.1:54321/functions/v1/invite-professional -H 'content-type: application/json' -d '{}'`
-Expected: resposta de validação (4xx, "professionalId" ausente), não 404.
+Run: `npx supabase functions serve --no-verify-jwt` (em outro terminal; o CLI atual não aceita o nome da função) e `curl -s -X POST http://127.0.0.1:55421/functions/v1/invite-professional -H 'content-type: application/json' -d '{}'`
+Expected: `{"code":"UNAUTHENTICATED"}` com HTTP 401 (a função checa a sessão antes do corpo), e `invite-barber` responde 404. Verificado em 2026-11-11.
 
 - [ ] **Step 3: Commit** só se houve correção.
 
