@@ -1,6 +1,6 @@
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, waitFor } from "@testing-library/react-native";
+import { act, render, waitFor } from "@testing-library/react-native";
 
 jest.mock("../../src/providers/AppProviders", () => ({ useSupabaseSession: jest.fn() }));
 jest.mock("../../src/features/shops/theme", () => ({
@@ -10,7 +10,7 @@ jest.mock("../../src/features/shops/theme", () => ({
 }));
 
 import { getShopTheme, readCachedTheme, writeCachedTheme } from "../../src/features/shops/theme";
-import { ShopThemeProvider } from "../../src/features/shops/ShopThemeProvider";
+import { ShopThemeProvider, THEME_WAIT_MS } from "../../src/features/shops/ShopThemeProvider";
 import { DEFAULT_COLORS } from "../../src/lib/design/colors";
 import { deriveTheme } from "../../src/lib/design/theme/derive";
 import { useColors } from "../../src/lib/design/theme/ThemeProvider";
@@ -29,9 +29,9 @@ function Probe({ onColors }: { onColors: (colors: Colors) => void }) {
   return null;
 }
 
-async function renderProvider(onColors: (colors: Colors) => void) {
+async function renderProvider(onColors: (colors: Colors) => void, queries: { retry?: number | boolean } = { retry: false }) {
   // gcTime 0: react-query's default 5-minute GC timer would keep the Jest process alive after the tests finish.
-  const client = new QueryClient({ defaultOptions: { queries: { gcTime: 0, retry: false } } });
+  const client = new QueryClient({ defaultOptions: { queries: { gcTime: 0, ...queries } } });
 
   return render(
     React.createElement(
@@ -91,5 +91,37 @@ describe("ShopThemeProvider", () => {
 
     await waitFor(() => expect(seen.length).toBeGreaterThan(0));
     expect(seen[seen.length - 1]).toBe(DEFAULT_COLORS);
+  });
+
+  it("does not hold the app behind the spinner while a failed request would be retried with backoff", async () => {
+    signedIn();
+    fetchTheme.mockRejectedValue(new Error("offline"));
+    const seen: Colors[] = [];
+
+    // The app's QueryClient keeps react-query's default retry (3 with growing delays): the theme query must opt out.
+    await renderProvider((colors) => seen.push(colors), {});
+
+    await waitFor(() => expect(seen.length).toBeGreaterThan(0), { timeout: 900 });
+    expect(fetchTheme).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens the app with the default theme when the request hangs", async () => {
+    jest.useFakeTimers();
+    try {
+      signedIn();
+      fetchTheme.mockReturnValue(new Promise(() => undefined));
+      const seen: Colors[] = [];
+
+      await renderProvider((colors) => seen.push(colors));
+      expect(seen).toHaveLength(0);
+
+      await act(async () => {
+        jest.advanceTimersByTime(THEME_WAIT_MS);
+      });
+
+      expect(seen[seen.length - 1]).toBe(DEFAULT_COLORS);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });
