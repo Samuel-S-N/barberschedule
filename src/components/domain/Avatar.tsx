@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { avatarInitial } from "../../features/account/avatar";
-import { colors } from "../../lib/design/colors";
+import { useColors } from "../../lib/design/theme/ThemeProvider";
 
 export type AvatarProps = {
   name?: string | null;
@@ -16,6 +16,7 @@ export type AvatarProps = {
 };
 
 export function Avatar({ name, uri, size = 96, onPress, busy = false, accessibilityLabel, testID }: AvatarProps) {
+  const colors = useColors();
   const [failed, setFailed] = useState(false);
   const circle = { borderRadius: size / 2, height: size, width: size };
 

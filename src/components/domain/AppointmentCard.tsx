@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Pressable, Text, View } from "react-native";
 import { Calendar, Clock, Scissors } from "lucide-react-native";
 
-import { colors } from "../../lib/design/colors";
+import { useColors } from "../../lib/design/theme/ThemeProvider";
 import { shadows } from "../../lib/design/shadows";
 import { StatusBadge } from "./StatusBadge";
 import type { AppointmentStatus } from "./StatusBadge";
@@ -30,6 +30,7 @@ export function AppointmentCard({
   onPress,
   testID,
 }: AppointmentCardProps) {
+  const colors = useColors();
   const cancelled = status === "cancelled";
   const { t } = useTranslation();
   const accessibilityLabel = t("appointments.cardLabel", {

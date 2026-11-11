@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import Svg, { G, Line, Path, Text as SvgText } from "react-native-svg";
 
-import { colors } from "../../lib/design/colors";
+import { useColors } from "../../lib/design/theme/ThemeProvider";
 import { barPath, labelPlacement, niceMax, yTicks } from "./geometry";
 
 export type ColumnDatum = { key: string; label: string; value: number };
@@ -23,7 +23,9 @@ const RIGHT = 4;
 const TOP = 18;
 const BOTTOM = 22;
 
-export function ColumnChart({ accessibilityLabel, color = colors.primary[400], data, formatTick = String, formatValue, height = 160, mutedColor, testID }: Props) {
+export function ColumnChart({ accessibilityLabel, color: colorProp, data, formatTick = String, formatValue, height = 160, mutedColor, testID }: Props) {
+  const colors = useColors();
+  const color = colorProp ?? colors.primary[400];
   const [width, setWidth] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const max = niceMax(Math.max(0, ...data.map((d) => d.value)));

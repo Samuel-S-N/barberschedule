@@ -1,7 +1,7 @@
 import { Pressable, Text, View } from "react-native";
 import { Clock, Scissors } from "lucide-react-native";
 
-import { colors } from "../../lib/design/colors";
+import { useColors } from "../../lib/design/theme/ThemeProvider";
 
 export type ServiceCardProps = {
   name: string;
@@ -29,6 +29,7 @@ export function ServiceCard({
   onPress,
   testID,
 }: ServiceCardProps) {
+  const colors = useColors();
   return (
     <Pressable
       accessibilityLabel={name}

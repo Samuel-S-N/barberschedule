@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react-native";
 import { Text, View } from "react-native";
 import Svg, { Circle, G, Path } from "react-native-svg";
 
-import { colors } from "../../lib/design/colors";
+import { useColors } from "../../lib/design/theme/ThemeProvider";
 import { centerFontSize, donutArcs } from "./geometry";
 
 export type DonutSlice = { color: string; icon?: LucideIcon; key: string; label: string; value: number };
@@ -10,6 +10,7 @@ export type DonutSlice = { color: string; icon?: LucideIcon; key: string; label:
 type Props = { centerLabel: string; centerValue: string; formatValue?: (value: number) => string; size?: number; slices: DonutSlice[]; testID: string };
 
 export function DonutChart({ centerLabel, centerValue, formatValue = String, size = 180, slices, testID }: Props) {
+  const colors = useColors();
   const total = slices.reduce((sum, s) => sum + s.value, 0);
   const outer = size / 2 - 2;
   const inner = outer * 0.62;

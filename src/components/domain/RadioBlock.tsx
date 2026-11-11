@@ -1,13 +1,14 @@
 import { Check } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
 
-import { colors } from "../../lib/design/colors";
+import { useColors } from "../../lib/design/theme/ThemeProvider";
 
 export type RadioOption = { key: string; label: string; selected: boolean; onPress: () => void };
 
 export type RadioBlockProps = { items: RadioOption[]; testID?: string };
 
 export function RadioBlock({ items, testID }: RadioBlockProps) {
+  const colors = useColors();
   return (
     <View accessibilityRole="radiogroup" className="overflow-hidden rounded-[20px] border border-neutral-200 bg-surface" testID={testID}>
       {items.map((item, index) => (
