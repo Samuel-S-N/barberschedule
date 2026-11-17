@@ -81,6 +81,7 @@ export const ROUTE_PARENTS: Record<string, Parent> = {
   "/my-profile/recurrence-manual": "/my-profile/recurrence",
   "/schedule": "/manage",
   "/shop": "/manage",
+  "/appearance": "/manage",
   "/owner-profile/account": "/settings",
   "/owner-profile/security": "/settings",
   "/owner-profile/security/password": "/owner-profile/security",
