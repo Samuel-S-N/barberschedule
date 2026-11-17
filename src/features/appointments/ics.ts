@@ -15,10 +15,10 @@ export function buildAppointmentIcs(input: IcsInput, now = new Date()) {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Barberschedule//EN",
+    "PRODID:-//Zenc//EN",
     "CALSCALE:GREGORIAN",
     "BEGIN:VEVENT",
-    `UID:${input.id}@barberschedule`,
+    `UID:${input.id}@zencpro.app`,
     `DTSTAMP:${utc(now.toISOString())}`,
     `DTSTART:${utc(input.startsAt)}`,
     `DTEND:${utc(input.endsAt)}`,

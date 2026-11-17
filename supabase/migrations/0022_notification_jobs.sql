@@ -169,8 +169,8 @@ begin
   if exists (select 1 from pg_available_extensions where name = 'pg_cron') then
     execute 'create extension if not exists pg_cron with schema extensions';
     if to_regnamespace('cron') is not null then
-      execute $sql$select cron.schedule('barberschedule-notification-reminders', '*/15 * * * *', 'select public.enqueue_notification_reminders();')$sql$;
-      execute $sql$select cron.schedule('barberschedule-materialize-recurrence', '0 * * * *', 'select public.materialize_recurrence_job();')$sql$;
+      execute $sql$select cron.schedule('zenc-notification-reminders', '*/15 * * * *', 'select public.enqueue_notification_reminders();')$sql$;
+      execute $sql$select cron.schedule('zenc-materialize-recurrence', '0 * * * *', 'select public.materialize_recurrence_job();')$sql$;
     end if;
   end if;
 end

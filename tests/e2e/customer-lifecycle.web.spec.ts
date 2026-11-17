@@ -222,7 +222,7 @@ test("a customer can download their data as a JSON file", async ({ page }) => {
   await page.goto("/me/privacy");
   const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId("profile-export").click()]);
 
-  expect(download.suggestedFilename()).toMatch(/^barberschedule-my-data-\d{4}-\d{2}-\d{2}\.json$/);
+  expect(download.suggestedFilename()).toMatch(/^zenc-my-data-\d{4}-\d{2}-\d{2}\.json$/);
 });
 
 test("deleting the account is blocked while appointments are upcoming", async ({ page }) => {

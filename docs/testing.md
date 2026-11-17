@@ -1,6 +1,6 @@
 # Testing
 
-Task 1 establishes the persistent baseline gate for the Barberschedule MVP:
+Task 1 establishes the persistent baseline gate for the Zenc MVP:
 
 - `npm run typecheck`
 - `npm run lint`

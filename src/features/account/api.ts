@@ -51,7 +51,7 @@ export async function exportMyData(supabase: RpcClient) {
 export function buildExportFile(data: Record<string, unknown>, now = new Date()) {
   return {
     content: JSON.stringify(data, null, 2),
-    filename: `barberschedule-my-data-${now.toISOString().slice(0, 10)}.json`,
+    filename: `zenc-my-data-${now.toISOString().slice(0, 10)}.json`,
     mimeType: "application/json",
   };
 }

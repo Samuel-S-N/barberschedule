@@ -17,6 +17,6 @@ jest.mock("react-native-reanimated", () => require("./__mocks__/react-native-rea
 
 (
   globalThis as typeof globalThis & {
-    __BARBERSCHEDULE_TEST_SETUP__?: boolean;
+    __ZENC_TEST_SETUP__?: boolean;
   }
-).__BARBERSCHEDULE_TEST_SETUP__ = true;
+).__ZENC_TEST_SETUP__ = true;

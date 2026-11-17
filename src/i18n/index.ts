@@ -25,7 +25,7 @@ export function getCurrentLanguage(): Language {
   return resolveLanguage(i18n.language);
 }
 
-const PREFERENCE_KEY = "barberschedule.language";
+const PREFERENCE_KEY = "zenc.language";
 const storage = createKeyValueStorage();
 let preference: LanguagePreference = "device";
 

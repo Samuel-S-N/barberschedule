@@ -12,24 +12,24 @@ import {
 } from "../../src/lib/testing/e2e-web";
 
 describe("task 1 review fixes", () => {
-  const originalEnv = process.env.BARBERSCHEDULE_E2E_WEB_PORT;
+  const originalEnv = process.env.ZENC_E2E_WEB_PORT;
 
   afterEach(() => {
     if (originalEnv === undefined) {
-      delete process.env.BARBERSCHEDULE_E2E_WEB_PORT;
+      delete process.env.ZENC_E2E_WEB_PORT;
     } else {
-      process.env.BARBERSCHEDULE_E2E_WEB_PORT = originalEnv;
+      process.env.ZENC_E2E_WEB_PORT = originalEnv;
     }
   });
 
   it("uses a deterministic default web e2e port and supports env override", () => {
-    delete process.env.BARBERSCHEDULE_E2E_WEB_PORT;
+    delete process.env.ZENC_E2E_WEB_PORT;
     expect(getE2EWebPort()).toBe(DEFAULT_E2E_WEB_PORT);
     expect(getE2EWebBaseUrl()).toBe(
       `http://127.0.0.1:${DEFAULT_E2E_WEB_PORT}`,
     );
 
-    process.env.BARBERSCHEDULE_E2E_WEB_PORT = "4411";
+    process.env.ZENC_E2E_WEB_PORT = "4411";
     expect(getE2EWebPort()).toBe(4411);
     expect(getE2EWebBaseUrl()).toBe("http://127.0.0.1:4411");
   });
@@ -51,7 +51,7 @@ describe("task 1 review fixes", () => {
         preferredPort: DEFAULT_E2E_WEB_PORT,
       }),
     ).rejects.toThrow(
-      `No free localhost port found for BARBERSCHEDULE_E2E_WEB_PORT starting at ${DEFAULT_E2E_WEB_PORT}`,
+      `No free localhost port found for ZENC_E2E_WEB_PORT starting at ${DEFAULT_E2E_WEB_PORT}`,
     );
   });
 

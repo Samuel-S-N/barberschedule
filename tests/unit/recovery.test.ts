@@ -2,7 +2,7 @@ import { clearRecovery, hasRecovery, markRecovery, parseRecoveryUrl, resolveReco
 
 describe("parseRecoveryUrl", () => {
   it("reads tokens from a deep link fragment", () => {
-    expect(parseRecoveryUrl("barberschedule://reset-password#access_token=a&refresh_token=r&type=recovery")).toEqual({
+    expect(parseRecoveryUrl("zenc://reset-password#access_token=a&refresh_token=r&type=recovery")).toEqual({
       accessToken: "a", kind: "tokens", refreshToken: "r",
     });
   });
@@ -15,11 +15,11 @@ describe("parseRecoveryUrl", () => {
 
   it("reports an expired or invalid link", () => {
     expect(parseRecoveryUrl("http://localhost:8081/reset-password#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid")).toEqual({ kind: "error" });
-    expect(parseRecoveryUrl("barberschedule://reset-password?error=access_denied")).toEqual({ kind: "error" });
+    expect(parseRecoveryUrl("zenc://reset-password?error=access_denied")).toEqual({ kind: "error" });
   });
 
   it("ignores anything that is not a recovery link", () => {
-    for (const url of [null, undefined, "", "barberschedule://reset-password", "x://y#access_token=a&refresh_token=r&type=signup"]) {
+    for (const url of [null, undefined, "", "zenc://reset-password", "x://y#access_token=a&refresh_token=r&type=signup"]) {
       expect(parseRecoveryUrl(url)).toEqual({ kind: "none" });
     }
   });

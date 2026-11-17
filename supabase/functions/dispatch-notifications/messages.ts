@@ -182,7 +182,7 @@ export function buildMessage(
   const catalog = APPOINTMENT_EVENTS[eventType];
 
   if (!catalog) {
-    return { body: UNKNOWN[language], title: "Barberschedule" };
+    return { body: UNKNOWN[language], title: "Zenc" };
   }
 
   const template = catalog[language];

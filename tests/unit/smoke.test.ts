@@ -10,9 +10,9 @@ describe("task 1 baseline", () => {
     expect(
       (
         globalThis as typeof globalThis & {
-          __BARBERSCHEDULE_TEST_SETUP__?: boolean;
+          __ZENC_TEST_SETUP__?: boolean;
         }
-      ).__BARBERSCHEDULE_TEST_SETUP__,
+      ).__ZENC_TEST_SETUP__,
     ).toBe(true);
   });
 

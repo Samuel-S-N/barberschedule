@@ -26,7 +26,7 @@ export const es: DeepStringRecord<typeof en> = {
   common: {
     activate: "Activar",
     allDay: "todo el día",
-    appName: "Barberschedule",
+    appName: "Zenc",
     archived: "(archivado)",
     back: "Volver",
     cancel: "Cancelar",
@@ -61,7 +61,7 @@ export const es: DeepStringRecord<typeof en> = {
       forgot: "¿Olvidaste tu contraseña?",
       passwordReset: "Contraseña restablecida. Inicia sesión con la nueva contraseña.",
       submit: "Iniciar sesión",
-      subtitle: "Usa la misma cuenta de Barberschedule en la Web, iOS o Android.",
+      subtitle: "Usa la misma cuenta de Zenc en la Web, iOS o Android.",
       title: "Iniciar sesión",
     },
     reset: {
@@ -392,7 +392,7 @@ export const es: DeepStringRecord<typeof en> = {
       manageServices: "Gestionar servicios",
       settings: "Ajustes del propietario",
       signedInAs: "Sesión iniciada como {{role}}.",
-      title: "Barberschedule MVP",
+      title: "Zenc",
     },
     revenue: {
       professionalsTable: "Por profesional",
