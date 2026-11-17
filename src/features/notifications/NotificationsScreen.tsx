@@ -16,7 +16,7 @@ import { Card } from "../../components/ui/Card";
 import { Screen } from "../../components/ui/Screen";
 import { errorMessage } from "../../i18n/errors";
 import { useLanguage } from "../../i18n/use-language";
-import { colors } from "../../lib/design/colors";
+import { useColors } from "../../lib/design/theme/ThemeProvider";
 import { formatInstantInShopTime } from "../../lib/dates/shop-time";
 import { formatDateNumeric } from "../../lib/i18n/format";
 import { useBack } from "../../lib/navigation/use-back";
@@ -29,6 +29,7 @@ import { inboxRoute } from "./inbox-route";
 import { inboxText } from "./inbox-text";
 
 export default function NotificationsScreen() {
+  const colors = useColors();
   const { t } = useTranslation();
   const language = useLanguage();
   const pull = useRefreshAll();

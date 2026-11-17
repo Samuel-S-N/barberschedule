@@ -1,7 +1,7 @@
 import { View } from "react-native";
 import { Star } from "lucide-react-native";
 
-import { colors } from "../../lib/design/colors";
+import { useColors } from "../../lib/design/theme/ThemeProvider";
 
 export type RatingStarsProps = {
   rating: number;
@@ -10,6 +10,7 @@ export type RatingStarsProps = {
 };
 
 export function RatingStars({ rating, size = 16, testID }: RatingStarsProps) {
+  const colors = useColors();
   const filledCount = Math.max(0, Math.min(5, Math.round(rating)));
 
   return (

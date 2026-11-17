@@ -30,7 +30,7 @@ import { errorMessage } from "../../src/i18n/errors";
 import { useLanguage } from "../../src/i18n/use-language";
 import { addLocalDays } from "../../src/lib/dates/calendar-strip-days";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
-import { colors } from "../../src/lib/design/colors";
+import { useColors } from "../../src/lib/design/theme/ThemeProvider";
 import { formatWeekdayShort } from "../../src/lib/i18n/format";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
@@ -45,6 +45,7 @@ function rangeFor(period: Period, today: string) {
 }
 
 export default function OwnerRevenueScreen() {
+  const colors = useColors();
   const { t } = useTranslation();
   const pull = useRefreshAll();
   const language = useLanguage();

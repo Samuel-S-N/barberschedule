@@ -5,11 +5,12 @@ import { useTranslation } from "react-i18next";
 
 import { BottomTabBar } from "../../../src/components/domain/BottomTabBar";
 import { Screen } from "../../../src/components/ui/Screen";
-import { colors } from "../../../src/lib/design/colors";
+import { useColors } from "../../../src/lib/design/theme/ThemeProvider";
 import { selectTab } from "../../../src/lib/navigation/select-tab";
 import { isTabSwipeEnabled } from "../../../src/lib/navigation/tab-swipe";
 
 export default function TabsLayout() {
+  const colors = useColors();
   const { t } = useTranslation();
   const pathname = usePathname();
   const items = [

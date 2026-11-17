@@ -12,12 +12,13 @@ import { Card } from "../../../src/components/ui/Card";
 import { Screen } from "../../../src/components/ui/Screen";
 import { listMyServiceOptions, setMyServiceEnabled } from "../../../src/features/professionals/api";
 import { errorMessage } from "../../../src/i18n/errors";
-import { colors } from "../../../src/lib/design/colors";
+import { useColors } from "../../../src/lib/design/theme/ThemeProvider";
 import { useBack } from "../../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../../src/lib/use-refresh";
 
 export default function ProfessionalServicesScreen() {
+  const colors = useColors();
   const { t } = useTranslation();
   const pull = useRefreshAll();
   const back = useBack();

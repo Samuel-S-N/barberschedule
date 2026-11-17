@@ -5,10 +5,11 @@ import { Pressable, Text, View } from "react-native";
 
 import { notificationsPath } from "../../features/notifications/inbox-route";
 import { useUnreadCount } from "../../features/notifications/use-unread";
-import { colors } from "../../lib/design/colors";
+import { useColors } from "../../lib/design/theme/ThemeProvider";
 import { useSupabaseSession } from "../../providers/AppProviders";
 
 export function NotificationBell() {
+  const colors = useColors();
   const { t } = useTranslation();
   const router = useRouter();
   const { profile } = useSupabaseSession();

@@ -1,13 +1,14 @@
 import { ChevronRight, type LucideIcon } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
 
-import { colors } from "../../lib/design/colors";
+import { useColors } from "../../lib/design/theme/ThemeProvider";
 
 export type MenuRowItem = { key: string; label: string; icon: LucideIcon; onPress: () => void };
 
 export type MenuBlockProps = { items: MenuRowItem[]; testID?: string };
 
 export function MenuBlock({ items, testID }: MenuBlockProps) {
+  const colors = useColors();
   return (
     <View className="overflow-hidden rounded-[20px] border border-neutral-200 bg-surface" testID={testID}>
       {items.map((item, index) => {

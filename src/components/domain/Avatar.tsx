@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { avatarInitial } from "../../features/account/avatar";
-import { colors } from "../../lib/design/colors";
+import { useColors } from "../../lib/design/theme/ThemeProvider";
 
 export type AvatarProps = {
   name?: string | null;
@@ -16,6 +16,7 @@ export type AvatarProps = {
 };
 
 export function Avatar({ name, uri, size = 96, onPress, busy = false, accessibilityLabel, testID }: AvatarProps) {
+  const colors = useColors();
   const [failed, setFailed] = useState(false);
   const circle = { borderRadius: size / 2, height: size, width: size };
 
@@ -43,7 +44,7 @@ export function Avatar({ name, uri, size = 96, onPress, busy = false, accessibil
     <Pressable accessibilityLabel={accessibilityLabel} accessibilityRole="button" disabled={busy} onPress={onPress} testID={testID}>
       {body}
       <View className="absolute bottom-0 right-0 h-9 w-9 items-center justify-center rounded-full border-2 border-canvas bg-primary-400">
-        <Camera color={colors.ink} size={18} />
+        <Camera color={colors.onPrimary} size={18} />
       </View>
     </Pressable>
   );

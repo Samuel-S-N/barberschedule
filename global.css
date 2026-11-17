@@ -1,3 +1,34 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Default Zenc palette as "R G B" triplets. A shop theme overrides these at runtime (see ThemeProvider). */
+:root {
+  --c-primary-50: 253 246 236;
+  --c-primary-100: 250 232 204;
+  --c-primary-200: 243 206 143;
+  --c-primary-300: 234 177 87;
+  --c-primary-400: 219 154 52;
+  --c-primary-500: 189 128 32;
+  --c-primary-600: 156 104 25;
+  --c-primary-700: 120 79 20;
+  --c-primary-800: 86 56 14;
+  --c-primary-900: 57 37 9;
+  --c-accent: 219 154 52;
+  --c-on-accent: 23 20 18;
+  --c-on-primary: 23 20 18;
+  --c-ink: 23 20 18;
+  --c-canvas: 247 243 238;
+  --c-surface: 255 253 250;
+  --c-mist: 236 230 222;
+  --c-neutral-50: 250 248 245;
+  --c-neutral-100: 242 238 232;
+  --c-neutral-200: 228 221 211;
+  --c-neutral-300: 203 191 175;
+  --c-neutral-400: 156 142 123;
+  --c-neutral-500: 115 101 85;
+  --c-neutral-600: 86 74 61;
+  --c-neutral-700: 61 51 39;
+  --c-neutral-800: 42 35 26;
+  --c-neutral-900: 23 20 18;
+}

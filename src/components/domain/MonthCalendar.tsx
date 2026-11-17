@@ -11,7 +11,7 @@ import type { Language } from "../../i18n/language";
 import { rubberBand, settleIndex, SWIPE_CLAIM_PX, SWIPE_FAIL_Y_PX } from "../../lib/gestures/swipe";
 import { addLocalDays } from "../../lib/dates/calendar-strip-days";
 import { BOOKING_DAYS_AHEAD, buildMonthGrid, isDateBookable, monthRange } from "../../lib/dates/month-calendar";
-import { colors } from "../../lib/design/colors";
+import { useColors } from "../../lib/design/theme/ThemeProvider";
 import { formatDateLabel } from "../../lib/i18n/format";
 
 const SETTLE_MS = 220;
@@ -81,6 +81,7 @@ function MonthGrid({ active, language, maxDaysAhead, month, onSelectDate, select
 }
 
 export function MonthCalendar({ maxDaysAhead = BOOKING_DAYS_AHEAD, onSelectDate, selectedDate, testID, today }: MonthCalendarProps) {
+  const colors = useColors();
   const { t } = useTranslation();
   const language = useLanguage();
   const firstMonth = today.slice(0, 7);

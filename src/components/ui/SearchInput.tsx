@@ -2,7 +2,7 @@ import { X } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { Pressable, View } from "react-native";
 
-import { colors } from "../../lib/design/colors";
+import { useColors } from "../../lib/design/theme/ThemeProvider";
 import { Input } from "./Input";
 import type { InputProps } from "./Input";
 
@@ -10,6 +10,7 @@ type SearchInputProps = Pick<InputProps, "label" | "value" | "onChangeText" | "t
 
 // A text field with an X on the right (shown once there is text) that clears it.
 export function SearchInput({ label, value, onChangeText, testID, placeholder }: SearchInputProps) {
+  const colors = useColors();
   const { t } = useTranslation();
 
   return (

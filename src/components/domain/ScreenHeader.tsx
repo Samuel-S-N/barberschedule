@@ -2,11 +2,12 @@ import { ChevronLeft } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
 
-import { colors } from "../../lib/design/colors";
+import { useColors } from "../../lib/design/theme/ThemeProvider";
 
 export type ScreenHeaderProps = { title: string; onBack: () => void; backLabel: string; right?: ReactNode; testID?: string };
 
 export function ScreenHeader({ title, onBack, backLabel, right, testID }: ScreenHeaderProps) {
+  const colors = useColors();
   return (
     <View className="flex-row items-center gap-2" testID={testID}>
       <Pressable

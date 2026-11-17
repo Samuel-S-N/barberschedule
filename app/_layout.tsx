@@ -18,15 +18,18 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { resolveAuthRedirect } from "../src/features/auth/session";
-import { colors } from "../src/lib/design/colors";
+import { AppThemeProvider, useColors } from "../src/lib/design/theme/ThemeProvider";
 import { AppProviders } from "../src/providers/AppProviders";
 import { useSupabaseSession } from "../src/providers/AppProviders";
 
-// The navigators paint their own scene background from this theme; the default grey showed between pages.
-const theme = { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: colors.canvas } };
-
 export function RootNavigator() {
   const router = useRouter();
+  const colors = useColors();
+  // The navigators paint their own scene background from this theme; the default grey showed between pages.
+  const navigationTheme = useMemo(
+    () => ({ ...DefaultTheme, colors: { ...DefaultTheme.colors, background: colors.canvas } }),
+    [colors.canvas],
+  );
   const segments = useSegments();
   const { isLoading, profile, session } = useSupabaseSession();
   const [fontsLoaded] = useFonts({
@@ -63,7 +66,7 @@ export function RootNavigator() {
   }
 
   return (
-    <ThemeProvider value={theme}>
+    <ThemeProvider value={navigationTheme}>
       <Stack screenOptions={{ headerShown: false }} />
     </ThemeProvider>
   );
@@ -74,7 +77,9 @@ export default function RootLayout() {
     // Native gestures (MonthCalendar's swipe) need this root; JS responders are cancelled inside the Android pager.
     <GestureHandlerRootView style={styles.root}>
       <AppProviders>
-        <RootNavigator />
+        <AppThemeProvider>
+          <RootNavigator />
+        </AppThemeProvider>
       </AppProviders>
     </GestureHandlerRootView>
   );

@@ -2,7 +2,7 @@ import type { ComponentType } from "react";
 import { Text, View } from "react-native";
 import { Scissors } from "lucide-react-native";
 
-import { colors } from "../../lib/design/colors";
+import { useColors } from "../../lib/design/theme/ThemeProvider";
 import { Button } from "../ui/Button";
 
 export type EmptyStateProps = {
@@ -22,6 +22,7 @@ export function EmptyState({
   onAction,
   testID,
 }: EmptyStateProps) {
+  const colors = useColors();
   return (
     <View className="items-center gap-3 p-8" testID={testID}>
       <View className="h-24 w-24 items-center justify-center rounded-full bg-neutral-100">

@@ -20,7 +20,7 @@ import { draftToPeriods, periodsToDraft, weekdayLabel } from "../../src/features
 import type { DayDraft, ShopPeriod } from "../../src/features/shops/hours";
 import { errorMessage } from "../../src/i18n/errors";
 import { useLanguage } from "../../src/i18n/use-language";
-import { colors } from "../../src/lib/design/colors";
+import { useColors } from "../../src/lib/design/theme/ThemeProvider";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { formatDateNumeric } from "../../src/lib/i18n/format";
 import { useBack } from "../../src/lib/navigation/use-back";
@@ -31,6 +31,7 @@ const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
 const CONTACT_EXAMPLE = { address: "examples.address", phone: "examples.phone", whatsapp: "examples.phone" } as const;
 
 export default function OwnerShopScreen() {
+  const colors = useColors();
   const { t } = useTranslation();
   const pull = useRefreshAll();
   const language = useLanguage();
