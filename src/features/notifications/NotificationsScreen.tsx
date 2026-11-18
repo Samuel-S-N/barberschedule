@@ -47,12 +47,13 @@ export default function NotificationsScreen() {
     void queryClient.invalidateQueries({ queryKey: ["notifications"] });
     void queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
   };
-  const read = useMutation({ mutationFn: (ids?: string[]) => markRead(supabase, ids, shopId), onSuccess: refresh });
+  // Specific ids need no shop; "all" is limited to the current shop (plus the unscoped rows).
+  const read = useMutation({ mutationFn: (ids?: string[]) => markRead(supabase, ids, ids ? undefined : shopId), onSuccess: refresh });
   const [confirmAll, setConfirmAll] = useState(false);
   const [target, setTarget] = useState<InboxItem | null>(null);
   const [deleteFailed, setDeleteFailed] = useState(false);
   const remove = useMutation({
-    mutationFn: (ids?: string[]) => deleteNotifications(supabase, ids, shopId),
+    mutationFn: (ids?: string[]) => deleteNotifications(supabase, ids, ids ? undefined : shopId),
     onError: () => setDeleteFailed(true),
     onSettled: () => {
       setConfirmAll(false);

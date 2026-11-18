@@ -16,9 +16,10 @@ export async function getMyShop(supabase: Pick<SupabaseClient, "rpc">): Promise<
   return row ? { shopId: row.shop_id, slug: row.slug } : null;
 }
 
+// No retries: the gate treats a failed lookup as "no staff shop" and lets the app through, instead of holding it behind a spinner.
 export function useMyShop() {
   const { profile, supabase } = useSupabaseSession();
   const staff = profile?.role === "owner" || profile?.role === "professional";
 
-  return useQuery({ enabled: staff, queryFn: () => getMyShop(supabase), queryKey: ["my-shop", profile?.userId], staleTime: 5 * 60_000 });
+  return useQuery({ enabled: staff, queryFn: () => getMyShop(supabase), queryKey: ["my-shop", profile?.userId], retry: false, staleTime: 5 * 60_000 });
 }

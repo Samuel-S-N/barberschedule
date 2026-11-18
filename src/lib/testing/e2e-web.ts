@@ -21,7 +21,14 @@ export function getE2EWebPort() {
   return DEFAULT_E2E_WEB_PORT;
 }
 
+// The browser opens the app on a shop's address (Chrome resolves *.localhost to the loopback with no DNS setup): the slug is
+// the first label of the host. The server itself still listens on 127.0.0.1 (see getE2EWebProbeUrl).
 export function getE2EWebBaseUrl(port = getE2EWebPort()) {
+  return `http://shop-a.localhost:${port}`;
+}
+
+// Where scripts (not the browser) check that the server answers.
+export function getE2EWebProbeUrl(port = getE2EWebPort()) {
   return `http://127.0.0.1:${port}`;
 }
 

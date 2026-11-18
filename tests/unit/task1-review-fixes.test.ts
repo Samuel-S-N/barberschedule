@@ -26,12 +26,12 @@ describe("task 1 review fixes", () => {
     delete process.env.ZENC_E2E_WEB_PORT;
     expect(getE2EWebPort()).toBe(DEFAULT_E2E_WEB_PORT);
     expect(getE2EWebBaseUrl()).toBe(
-      `http://127.0.0.1:${DEFAULT_E2E_WEB_PORT}`,
+      `http://shop-a.localhost:${DEFAULT_E2E_WEB_PORT}`,
     );
 
     process.env.ZENC_E2E_WEB_PORT = "4411";
     expect(getE2EWebPort()).toBe(4411);
-    expect(getE2EWebBaseUrl()).toBe("http://127.0.0.1:4411");
+    expect(getE2EWebBaseUrl()).toBe("http://shop-a.localhost:4411");
   });
 
   it("chooses the next free port when the preferred port is occupied", async () => {
