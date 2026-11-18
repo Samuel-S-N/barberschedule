@@ -24,6 +24,17 @@ per shop. The app is light-only; the status colours must mean the same everywher
 - JS code that needs a colour calls `useColors()`; danger/success/warning/white, chart colours, status bar, splash and
   icon are fixed. The dark `ink` surface (selected day, dark button) stays tied to the base.
 
+## Shop colours and the owner screen
+
+- Colours live in `shops.theme_primary`, `theme_accent` and `theme_base` (migration `0066`: `#RRGGBB` check, readable
+  by everyone, writable only by the owner through `shops_update_owner`). Null means the Zenc default.
+- `ShopThemeProvider` (`src/features/shops`) fetches the current shop's colours after sign-in (single-shop MVP: the first
+  shop) and keeps the root loading screen until they are known or cached. The last theme is cached per user
+  (`zenc.shop-theme.<userId>`) so the next launch starts in the right colours.
+- The owner edits them in **Manage > App appearance** (`app/(owner)/appearance.tsx`): swatches plus a hex field, a live
+  preview inside a `ThemeScope`, Save and "Back to the Zenc default". Any owner screen must also be declared in
+  `app/(owner)/_layout.tsx` (a test guards this: since SDK 58 an undeclared route redirects to the first tab).
+
 ## Consequences
 
 - No dark mode per shop (separate project). No logo upload. The theme applies after sign-in; the pre-sign-in theme per

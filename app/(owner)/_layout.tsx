@@ -10,7 +10,7 @@ import { useHardwareBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 // Screens reached from the Manage menu: not tabs themselves, and they keep "Manage" highlighted.
-const MANAGE_SCREENS = ["appointment-form", "professional-new", "professional-profile", "professionals", "conflict-reschedule", "customer-form", "customers", "monthly-customers", "recurrence-conflicts", "recurrence-manual", "recurrence-plan-form", "recurrence-plans", "schedule", "service-form", "services", "shop"] as const;
+const MANAGE_SCREENS = ["appointment-form", "professional-new", "professional-profile", "professionals", "conflict-reschedule", "customer-form", "customers", "monthly-customers", "recurrence-conflicts", "recurrence-manual", "recurrence-plan-form", "recurrence-plans", "schedule", "service-form", "services", "shop", "appearance"] as const;
 // Reached from the Agenda tab (the bell).
 const AGENDA_SCREENS = ["my-professional-agenda", "owner-notifications"] as const;
 // Reached from the Account tab.
