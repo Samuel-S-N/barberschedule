@@ -32,7 +32,7 @@ import {
   cancelMyRecurrenceRequest, listMyRecurrenceRequests, requestDisplayStatus, requestRecurrence, requestSeriesCancellation,
 } from "../../../src/features/recurrence/requests-api";
 import type { RecurrenceRequest } from "../../../src/features/recurrence/requests-api";
-import { listPublicShops } from "../../../src/features/shops/api";
+import { useCurrentShop } from "../../../src/features/shops/CurrentShopProvider";
 import { errorMessage } from "../../../src/i18n/errors";
 import { useLanguage } from "../../../src/i18n/use-language";
 import { formatInstantInShopTime } from "../../../src/lib/dates/shop-time";
@@ -68,8 +68,7 @@ export default function CustomerRecurrenceScreen() {
   const go = (next: Step) => setTrail((existing) => [...existing, next]);
   const goBack = () => (trail.length > 1 ? setTrail((existing) => existing.slice(0, -1)) : back());
 
-  const shops = useQuery({ queryFn: () => listPublicShops(supabase), queryKey: ["public-shops"] });
-  const shopId = shops.data?.[0]?.id ?? "";
+  const shopId = useCurrentShop().shop?.id ?? "";
   const professionals = useQuery({ enabled: Boolean(shopId), queryFn: () => listPublicProfessionals(supabase, shopId), queryKey: ["public-professionals", shopId] });
   const requests = useQuery({ queryFn: () => listMyRecurrenceRequests(supabase), queryKey: ["my-recurrence-requests"] });
 

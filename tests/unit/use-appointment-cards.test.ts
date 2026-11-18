@@ -4,13 +4,13 @@ import React from "react";
 import { Text } from "react-native";
 
 jest.mock("../../src/providers/AppProviders", () => ({ useSupabaseSession: () => ({ supabase: {} }) }));
-jest.mock("../../src/features/shops/api", () => ({ listPublicShops: jest.fn() }));
+jest.mock("../../src/features/shops/CurrentShopProvider", () => ({ useCurrentShop: jest.fn() }));
 jest.mock("../../src/features/professionals/api", () => ({ listPublicProfessionals: jest.fn() }));
 
 import type { Appointment } from "../../src/features/appointments/types";
 import { useAppointmentCards } from "../../src/features/appointments/use-appointment-cards";
 import { listPublicProfessionals } from "../../src/features/professionals/api";
-import { listPublicShops } from "../../src/features/shops/api";
+import { useCurrentShop } from "../../src/features/shops/CurrentShopProvider";
 import i18n from "../../src/i18n";
 
 const appointment = {
@@ -38,7 +38,7 @@ describe("useAppointmentCards", () => {
   });
 
   it("uses translated fallbacks while shop and professional names are unknown", async () => {
-    jest.mocked(listPublicShops).mockRejectedValue(new Error("offline"));
+    jest.mocked(useCurrentShop).mockReturnValue({ retry: jest.fn(), shop: null, slug: "alfa", status: "loading" });
     jest.mocked(listPublicProfessionals).mockRejectedValue(new Error("offline"));
     await i18n.changeLanguage("pt");
 
@@ -48,7 +48,7 @@ describe("useAppointmentCards", () => {
   });
 
   it("formats the date in the current language and keeps real names", async () => {
-    jest.mocked(listPublicShops).mockResolvedValue([{ address: null, id: "s1", name: "Barbearia Alfa", phone: null, slug: "alfa", whatsapp: null }]);
+    jest.mocked(useCurrentShop).mockReturnValue({ retry: jest.fn(), shop: { address: null, id: "s1", name: "Barbearia Alfa", phone: null, slug: "alfa", whatsapp: null }, slug: "alfa", status: "ready" });
     jest.mocked(listPublicProfessionals).mockResolvedValue([{ id: "b1", name: "João" }] as never);
     await i18n.changeLanguage("pt");
 
