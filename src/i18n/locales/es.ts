@@ -439,7 +439,6 @@ export const es: DeepStringRecord<typeof en> = {
       reopen: "Reabrir",
       closedAdded: "Establecimiento cerrado en esa fecha.",
       closedError: "No se pudo cambiar la fecha.",
-      address: "Dirección",
       cep: "CEP (código postal)", cepNotFound: "CEP no encontrado, completa la dirección.", cepUnavailable: "No se pudo consultar el CEP, completa la dirección.",
       city: "Ciudad", complement: "Complemento", district: "Barrio", number: "Número", state: "Estado (UF)", street: "Calle",
       addBreak: "Agregar pausa",

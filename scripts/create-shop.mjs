@@ -7,6 +7,15 @@ import { pathToFileURL } from "node:url";
 import { buildShopUrl, DEFAULT_SHOP_URL_TEMPLATE } from "../supabase/functions/_shared/shop-url.ts";
 import { RESERVED_SLUGS, SLUG_PATTERN } from "../src/features/shops/resolve-slug.ts";
 
+const validTimezone = (zone) => {
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: zone });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export function parseArgs(argv) {
   const values = {};
 
@@ -15,6 +24,7 @@ export function parseArgs(argv) {
   if (!SLUG_PATTERN.test(values.slug)) throw new Error("Invalid slug: use 3 to 32 lowercase letters, digits or hyphens, no hyphen at either end.");
   if (RESERVED_SLUGS.includes(values.slug)) throw new Error(`The slug "${values.slug}" is reserved.`);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.owner)) throw new Error("Invalid --owner e-mail.");
+  if (values.timezone !== undefined && !validTimezone(values.timezone)) throw new Error(`Invalid --timezone "${values.timezone}".`);
 
   return { name: values.name.trim(), owner: values.owner.trim(), slug: values.slug, timezone: values.timezone };
 }
@@ -35,33 +45,69 @@ export async function run({ argv, env, fetch: send, log }) {
   const template = env.SHOP_URL_TEMPLATE || DEFAULT_SHOP_URL_TEMPLATE;
   const redirectTo = buildShopUrl(template, args.slug, "/reset-password");
 
-  const invited = await send(`${base}/auth/v1/invite?redirect_to=${encodeURIComponent(redirectTo)}`, { body: JSON.stringify({ email: args.owner }), headers, method: "POST" });
-  if (!invited.ok) {
-    log(invited.status === 422 || invited.status === 409
-      ? `${args.owner} already has an account. Promoting existing accounts is not supported: use another e-mail.`
-      : `Could not invite ${args.owner} (HTTP ${invited.status}).`);
+  try {
+    // The likeliest failure is a taken slug: find out before an invite e-mail goes out (its link would die with the undo).
+    const existing = await send(`${base}/rest/v1/shops?slug=eq.${encodeURIComponent(args.slug)}&select=id`, { headers });
+    if (existing.ok && ((await existing.json().catch(() => [])) ?? []).length > 0) {
+      log(`The slug "${args.slug}" is taken or not allowed. Nothing was sent.`);
+      return 1;
+    }
+
+    const invited = await send(`${base}/auth/v1/invite?redirect_to=${encodeURIComponent(redirectTo)}`, { body: JSON.stringify({ email: args.owner }), headers, method: "POST" });
+    if (!invited.ok) {
+      const failure = await invited.json().catch(() => ({}));
+
+      log(failure.error_code === "email_exists"
+        ? `${args.owner} already has an account. Promoting existing accounts is not supported: use another e-mail.`
+        : `Could not invite ${args.owner} (HTTP ${invited.status}).`);
+      return 1;
+    }
+    const { id: userId } = await invited.json().catch(() => ({}));
+    if (!userId) {
+      log("The invite answered without a user id; check the Auth users list before retrying.");
+      return 1;
+    }
+
+    // From here on the invited user must be removed if the business cannot be created.
+    const undo = async (reason) => {
+      let deleted;
+
+      try {
+        deleted = (await send(`${base}/auth/v1/admin/users/${userId}`, { headers, method: "DELETE" })).ok;
+      } catch {
+        deleted = false;
+      }
+      log(deleted ? `${reason} The invite was undone.` : `${reason} Could not delete the invited user ${userId}: delete it in the Auth users list.`);
+
+      return 1;
+    };
+
+    let created;
+
+    try {
+      created = await send(`${base}/rest/v1/rpc/create_shop`, {
+        body: JSON.stringify({ p_name: args.name, p_owner_user_id: userId, p_slug: args.slug, p_timezone: args.timezone ?? "America/Sao_Paulo" }),
+        headers,
+        method: "POST",
+      });
+    } catch {
+      return undo("create_shop could not be reached.");
+    }
+    if (!created.ok) {
+      const failure = await created.json().catch(() => ({}));
+
+      return undo(failure.code === "P0041" ? `The slug "${args.slug}" is taken or not allowed.`
+        : failure.code === "P0042" ? "That account cannot own a new business."
+        : `create_shop failed (HTTP ${created.status}).`);
+    }
+
+    log(`Business created: ${buildShopUrl(template, args.slug)}`);
+    log(`Invite sent to ${args.owner}. Generate the QR code from that link and send it to the business.`);
+    return 0;
+  } catch (error) {
+    log(`Request failed: ${error.message}`);
     return 1;
   }
-  const { id: userId } = await invited.json();
-
-  const created = await send(`${base}/rest/v1/rpc/create_shop`, {
-    body: JSON.stringify({ p_name: args.name, p_owner_user_id: userId, p_slug: args.slug, p_timezone: args.timezone ?? "America/Sao_Paulo" }),
-    headers,
-    method: "POST",
-  });
-  if (!created.ok) {
-    const failure = await created.json().catch(() => ({}));
-
-    await send(`${base}/auth/v1/admin/users/${userId}`, { headers, method: "DELETE" });
-    log(failure.code === "P0041" ? `The slug "${args.slug}" is taken or not allowed. The invite was undone.`
-      : failure.code === "P0042" ? "That account cannot own a new business. The invite was undone."
-      : `create_shop failed (HTTP ${created.status}). The invite was undone.`);
-    return 1;
-  }
-
-  log(`Business created: ${buildShopUrl(template, args.slug)}`);
-  log(`Invite sent to ${args.owner}. Generate the QR code from that link and send it to the business.`);
-  return 0;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

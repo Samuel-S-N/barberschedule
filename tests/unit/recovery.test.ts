@@ -1,4 +1,4 @@
-import { clearRecovery, hasRecovery, isInvite, isInviteUrl, markInvite, markRecovery, parseRecoveryUrl, resolveRecoveryStatus } from "../../src/features/auth/recovery";
+import { clearRecovery, hasRecovery, inviteTokenFromUrl, isInvite, markInvite, promoteInvite, rememberInviteToken, markRecovery, parseRecoveryUrl, resolveRecoveryStatus } from "../../src/features/auth/recovery";
 
 describe("parseRecoveryUrl", () => {
   it("reads tokens from a deep link fragment", () => {
@@ -65,10 +65,32 @@ describe("invite links", () => {
     });
   });
 
-  it("recognises an invite URL from the hash", () => {
-    expect(isInviteUrl("https://alfa.zencpro.app/reset-password#access_token=a&refresh_token=r&type=invite")).toBe(true);
-    expect(isInviteUrl("https://alfa.zencpro.app/reset-password#access_token=a&refresh_token=r&type=recovery")).toBe(false);
-    expect(isInviteUrl(null)).toBe(false);
+  it("reads the invite token from the URL hash only", () => {
+    expect(inviteTokenFromUrl("https://alfa.zencpro.app/reset-password#access_token=tok&refresh_token=r&type=invite")).toBe("tok");
+    expect(inviteTokenFromUrl("https://alfa.zencpro.app/reset-password?access_token=tok&type=invite")).toBeNull();
+    expect(inviteTokenFromUrl("https://alfa.zencpro.app/reset-password#access_token=tok&refresh_token=r&type=recovery")).toBeNull();
+    expect(inviteTokenFromUrl(null)).toBeNull();
+  });
+
+  it("only a session carrying the captured token becomes an invite session", () => {
+    clearRecovery();
+    rememberInviteToken("tok");
+    promoteInvite({ access_token: "someone-elses-token" } as never);
+    promoteInvite(null);
+    expect(isInvite()).toBe(false);
+
+    promoteInvite({ access_token: "tok" } as never);
+    expect(isInvite()).toBe(true);
+    expect(hasRecovery()).toBe(true);
+  });
+
+  it("a bogus invite link next to an existing session never grants the proof", () => {
+    clearRecovery();
+    rememberInviteToken("forged");
+    promoteInvite({ access_token: "the-real-existing-session-token" } as never);
+
+    expect(isInvite()).toBe(false);
+    expect(hasRecovery()).toBe(false);
   });
 
   it("an invite proof counts as recovery proof and is cleared with it", () => {

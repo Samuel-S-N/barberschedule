@@ -30,13 +30,30 @@ export function parseRecoveryUrl(url: string | null | undefined): RecoveryLink {
   return { kind: "none" };
 }
 
-// An invite link signs the user in with a plain SIGNED_IN event (no PASSWORD_RECOVERY), and supabase-js removes the hash as soon as
-// it consumes it, so the web app captures this before the client is created.
-export function isInviteUrl(url: string | null | undefined): boolean {
-  if (!url) return false;
-  const params = linkParams(url);
+// An invite link signs the user in with a plain SIGNED_IN event (no PASSWORD_RECOVERY), and supabase-js removes the hash as soon as it
+// consumes it, so the web app captures the link's token before the client is created. supabase-js only reads the hash, so only the hash
+// counts here too.
+export function inviteTokenFromUrl(url: string | null | undefined): string | null {
+  const hash = url?.split("#")[1];
+  if (!hash) return null;
+  const params = new URLSearchParams(hash);
 
-  return params.get("type") === "invite" && Boolean(params.get("access_token"));
+  return params.get("type") === "invite" ? params.get("access_token") : null;
+}
+
+let pendingInviteToken: string | null = null;
+
+export const rememberInviteToken = (token: string) => {
+  pendingInviteToken = token;
+};
+
+// The invite proof is granted only to the session the invite link really created: the one carrying the captured token. A forged
+// `#access_token=x&type=invite` next to an existing session creates no session, so nothing matches and no proof is set.
+export function promoteInvite(session: { access_token: string } | null | undefined) {
+  if (pendingInviteToken && session?.access_token === pendingInviteToken) {
+    pendingInviteToken = null;
+    markInvite();
+  }
 }
 
 // Proof that the current session came from a recovery or invite link (set by the provider on web, by startRecoverySession on
@@ -56,6 +73,7 @@ export const isInvite = () => inviteProof;
 export const clearRecovery = () => {
   recoveryProof = false;
   inviteProof = false;
+  pendingInviteToken = null;
 };
 
 export type RecoveryStatus = "checking" | "ready" | "invalid";

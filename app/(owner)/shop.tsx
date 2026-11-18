@@ -51,6 +51,7 @@ export default function OwnerShopScreen() {
   });
   const [contact, setContact] = useState<{ address: ShopAddress; phone: string; whatsapp: string }>({ address: EMPTY_ADDRESS, phone: "", whatsapp: "" });
   const numberRef = useRef<ComponentRef<typeof TextInput>>(null);
+  const latestCep = useRef("");
   const [days, setDays] = useState<Record<number, DayDraft>>({});
   const [feedback, setFeedback] = useState<{ message: string; variant: "error" | "success" } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -132,17 +133,20 @@ export default function OwnerShopScreen() {
   const field = (key: "phone" | "whatsapp", label: string) => (
     <Input label={label} onChangeText={(value) => setContact((current) => ({ ...current, [key]: value }))} placeholder={t(CONTACT_EXAMPLE[key])} testID={`shop-${key}`} value={contact[key]} />
   );
-  const patchAddress = (patch: Partial<ShopAddress>) => setContact((current) => ({ ...current, address: { ...current.address, ...patch } }));
+  // Editing the city by hand invalidates the IBGE code the lookup filled in.
+  const patchAddress = (patch: Partial<ShopAddress>) => setContact((current) => ({ ...current, address: { ...current.address, ...patch, ...("city" in patch ? { cityIbge: "" } : {}) } }));
   const changeCep = (cep: string) => {
     patchAddress({ cep });
     const digits = cep.replace(/\D/g, "");
+    latestCep.current = digits;
     if (digits.length !== 8) return;
 
     void lookupCep(digits).then((result) => {
       if (result.status === "found") {
         // Ignore an answer for a CEP the owner has already changed.
         setContact((current) => (current.address.cep.replace(/\D/g, "") === digits ? { ...current, address: mergeCepResult(current.address, result.address) } : current));
-        numberRef.current?.focus();
+        // Only a still-current answer moves the focus (a late one must not steal it).
+        if (latestCep.current === digits) numberRef.current?.focus();
       } else {
         setFeedback({ message: t(result.status === "not-found" ? "owner.shop.cepNotFound" : "owner.shop.cepUnavailable"), variant: "error" });
       }

@@ -71,7 +71,8 @@ Deno.serve(async (request) => {
 
   // The invite link lands on the professional's own shop (its subdomain), where they create their password.
   const shopResponse = await fetch(`${url}/rest/v1/shops?id=eq.${professional.shop_id}&select=slug`, { headers: service });
-  const [shop] = (await shopResponse.json().catch(() => [])) as Array<{ slug: string }>;
+  const shops = shopResponse.ok ? ((await shopResponse.json().catch(() => [])) as Array<{ slug: string }>) : [];
+  const [shop] = Array.isArray(shops) ? shops : [];
   if (!shop) return json(500, { code: "INVITE_FAILED" });
   const redirectTo = buildShopUrl(Deno.env.get("SHOP_URL_TEMPLATE") ?? DEFAULT_SHOP_URL_TEMPLATE, shop.slug, "/reset-password");
 

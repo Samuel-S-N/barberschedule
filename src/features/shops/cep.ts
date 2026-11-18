@@ -43,7 +43,8 @@ export function mergeCepResult(current: ShopAddress, found: Found): ShopAddress 
   return {
     ...current,
     city: pick(found.city, current.city),
-    cityIbge: pick(found.cityIbge, current.cityIbge),
+    // Replaced outright: a code the lookup does not know (BrasilAPI has none) must not stay next to a different city.
+    cityIbge: found.cityIbge,
     district: pick(found.district, current.district),
     state: pick(found.state, current.state),
     street: pick(found.street, current.street),

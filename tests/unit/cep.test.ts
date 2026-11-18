@@ -64,6 +64,13 @@ describe("mergeCepResult", () => {
     });
   });
 
+  it("replaces the IBGE code outright: a lookup that does not know it (BrasilAPI) must not leave another city's code behind", () => {
+    const merged = mergeCepResult({ ...EMPTY_ADDRESS, city: "Recife", cityIbge: "2611606" }, { ...found, cityIbge: "" });
+
+    expect(merged.city).toBe("São Paulo");
+    expect(merged.cityIbge).toBe("");
+  });
+
   it("keeps what the owner typed where the CEP has no value (a city-wide CEP has no street)", () => {
     const merged = mergeCepResult({ ...EMPTY_ADDRESS, street: "Rua que digitei" }, { ...found, district: "", street: "" });
 

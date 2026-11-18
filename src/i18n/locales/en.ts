@@ -440,7 +440,6 @@ export const en = {
       reopen: "Reopen",
       closedAdded: "Shop closed on that date.",
       closedError: "Unable to change the date.",
-      address: "Address",
       cep: "Postal code (CEP)", cepNotFound: "CEP not found, fill in the address.", cepUnavailable: "Could not look up the CEP, fill in the address.",
       city: "City", complement: "Complement", district: "District", number: "Number", state: "State (UF)", street: "Street",
       addBreak: "Add break",
