@@ -15,7 +15,8 @@ function routeFiles(dir: string): string[] {
 
 const patterns = routeFiles(appDir)
   .map((path) => relative(appDir, path))
-  .filter((file) => file.endsWith(".tsx") && !file.split("/").pop()!.startsWith("_layout"))
+  // `_layout` files and Expo Router's special `+html` document are not screens.
+  .filter((file) => file.endsWith(".tsx") && !/^(_layout|\+)/.test(file.split("/").pop()!))
   .map((file) => routePattern(file.replace(/\.tsx$/, "").split("/")));
 
 const known = new Set([...patterns, ...ROOT_ROUTES]);

@@ -19,6 +19,7 @@ import { inviteTokenFromUrl, markRecovery, promoteInvite, rememberInviteToken } 
 import i18n, { loadLanguagePreference, syncLanguage } from "../i18n";
 import type { Profile } from "../features/auth/types";
 import { getSupabaseBrowserClient } from "../lib/supabase/client";
+import { registerServiceWorker } from "../lib/pwa/register-sw";
 import { bindQueryFocusToAppState } from "../lib/query-focus";
 
 type SessionContextValue = {
@@ -33,6 +34,9 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 export function AppProviders({ children }: PropsWithChildren) {
   const queryClient = useMemo(() => new QueryClient(), []);
   useEffect(() => bindQueryFocusToAppState(AppState), []);
+  useEffect(() => {
+    void registerServiceWorker();
+  }, []);
   const supabase = useMemo(() => {
     // supabase-js consumes (and removes) the URL hash when the client is created, so note an invite link's token first; it becomes
     // the invite proof only when the session it creates arrives (see promoteInvite).

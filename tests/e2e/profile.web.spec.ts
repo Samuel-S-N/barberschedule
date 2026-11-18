@@ -1,6 +1,7 @@
 import { expect, test } from "./fixtures";
 
 import { json, mockCustomerRest, signInAsCustomer } from "./customer-helpers";
+import { stubInstallPrompt } from "./install-helpers";
 
 test("the profile tab is a hub of blocks that open each inner screen", async ({ page }) => {
   await signInAsCustomer(page);
@@ -185,4 +186,16 @@ test("leaving the language screen without confirming keeps the language", async 
 
   await page.getByTestId("menu-language").click();
   await expect(page.getByTestId("option-device")).toHaveAttribute("aria-checked", "true");
+});
+
+test("the profile hub offers to install the app and calls the browser prompt", async ({ page }) => {
+  await stubInstallPrompt(page);
+  await signInAsCustomer(page);
+  await mockCustomerRest(page);
+
+  await page.goto("/profile");
+  await expect(page.getByText("Install the app")).toBeVisible();
+  await page.getByTestId("install-button").click();
+
+  expect(await page.evaluate(() => (window as unknown as Record<string, unknown>).__installPrompted)).toBe(true);
 });
