@@ -9,13 +9,13 @@ security definer
 set search_path = pg_catalog, public, pg_temp
 as $$
   select id, slug from (
-    select s.id, s.slug, 1 as rank from public.shops s where s.owner_user_id = auth.uid()
+    select s.id, s.slug, 1 as rank, s.created_at from public.shops s where s.owner_user_id = auth.uid()
     union all
-    select s.id, s.slug, 2 from public.professionals p
+    select s.id, s.slug, 2, s.created_at from public.professionals p
     join public.shops s on s.id = p.shop_id
     where p.user_id = auth.uid() and p.active and p.archived_at is null
   ) mine
-  order by rank
+  order by rank, created_at, id
   limit 1;
 $$;
 

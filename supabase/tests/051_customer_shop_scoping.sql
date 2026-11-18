@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(10);
+select plan(11);
 
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at)
 values
@@ -55,12 +55,16 @@ select is((select shop_id from public.notifications where event_key = 't51-owner
 select is((select shop_id from public.notifications where event_key = 't51-pro'), 'fb100000-0000-0000-0000-000000000001'::uuid, 'a professional notification gets their shop');
 select is((select shop_id from public.notifications where event_key = 't51-customer'), null::uuid, 'a customer notification with no appointment stays unscoped');
 
--- list_my_recurrence_requests filter
+-- list_my_recurrence_requests filter: one request in shop A is listed for A (and unfiltered), never for B
+insert into public.recurrence_requests (shop_id, customer_id, professional_id, professional_service_id, interval_weeks, local_start_date, local_start_time)
+values ('fb100000-0000-0000-0000-000000000001', 'fb110000-0000-0000-0000-000000000001', 'fb200000-0000-0000-0000-000000000001', 'fb400000-0000-0000-0000-000000000001', 2, current_date + 7, '10:00');
+
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'fb000000-0000-0000-0000-000000000002', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
-select is((select count(*)::int from public.list_my_recurrence_requests()), 0, 'no argument still works');
-select is((select count(*)::int from public.list_my_recurrence_requests('fb100000-0000-0000-0000-000000000001')), 0, 'a shop id filters');
+select is((select count(*)::int from public.list_my_recurrence_requests()), 1, 'no argument lists every shop''s requests');
+select is((select count(*)::int from public.list_my_recurrence_requests('fb100000-0000-0000-0000-000000000001')), 1, 'shop A lists its request');
+select is((select count(*)::int from public.list_my_recurrence_requests('fb100000-0000-0000-0000-000000000002')), 0, 'shop B does not');
 reset role;
 
 -- count / mark read / delete are scoped to one shop (plus the unscoped rows) when a shop is given

@@ -66,6 +66,14 @@ describe("createCookieStorage", () => {
     await expect(storage.getItem("k")).resolves.toBe("short");
   });
 
+  it("treats a corrupt cookie as no session instead of throwing", async () => {
+    const { cookies, jar } = fakeJar();
+
+    cookies.set("k.0", "%E0%A4%A");
+
+    await expect(createCookieStorage(jar, { secure: true }).getItem("k")).resolves.toBeNull();
+  });
+
   it("removes every chunk", async () => {
     const { cookies, jar } = fakeJar();
     const storage = createCookieStorage(jar, { secure: true });

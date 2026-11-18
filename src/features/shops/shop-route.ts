@@ -10,6 +10,8 @@ export type ShopRoute =
   | { kind: "redirect"; slug: string };
 
 type Input = {
+  // Only the web can move to another address; native (Expo Go, development) has no subdomains.
+  canRedirect: boolean;
   currentSlug: string | null;
   // undefined while the staff lookup is loading, null when the account has no staff shop.
   mySlug: string | null | undefined;
@@ -19,11 +21,11 @@ type Input = {
 };
 
 // Which page a visitor may see on this host. Staff always belong to their own shop's subdomain; customers to the shop in the host.
-export function resolveShopRoute({ currentSlug, mySlug, role, signedIn, status }: Input): ShopRoute {
+export function resolveShopRoute({ canRedirect, currentSlug, mySlug, role, signedIn, status }: Input): ShopRoute {
   const staff = signedIn && (role === "owner" || role === "professional");
 
   if (staff && mySlug === undefined) return { kind: "wait" };
-  if (staff && mySlug && mySlug !== currentSlug) return { kind: "redirect", slug: mySlug };
+  if (canRedirect && staff && mySlug && mySlug !== currentSlug) return { kind: "redirect", slug: mySlug };
   if (status === "loading") return { kind: "wait" };
   if (status === "no-slug") return signedIn ? { kind: "bare" } : { kind: "app" };
   if (status === "not-found") return { kind: "not-found" };

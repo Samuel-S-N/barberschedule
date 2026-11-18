@@ -8,7 +8,7 @@ export const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{1,30}[a-z0-9]$/;
 
 // "barbeariadojoao.zencpro.app" -> "barbeariadojoao"; the bare domain, reserved names, nested subdomains and other hosts -> null.
 export function resolveShopSlug(host: string, baseDomain: string): string | null {
-  const hostname = host.trim().toLowerCase().replace(/:\d+$/, "");
+  const hostname = host.trim().toLowerCase().replace(/:\d+$/, "").replace(/\.$/, "");
   const base = baseDomain.trim().toLowerCase();
   if (!hostname || !base || !hostname.endsWith(`.${base}`)) return null;
 
@@ -18,7 +18,7 @@ export function resolveShopSlug(host: string, baseDomain: string): string | null
   return (RESERVED_SLUGS as readonly string[]).includes(label) ? null : label;
 }
 
-const bareHost = (host: string) => host.trim().toLowerCase().replace(/:\d+$/, "");
+const bareHost = (host: string) => host.trim().toLowerCase().replace(/:\d+$/, "").replace(/\.$/, "");
 
 // A slug that follows the database rules (format and reserved names), or null. Trims and lower-cases.
 export function validShopSlug(value: string | null | undefined): string | null {

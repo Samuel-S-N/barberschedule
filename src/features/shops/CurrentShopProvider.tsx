@@ -18,7 +18,9 @@ export function CurrentShopProvider({ children }: PropsWithChildren) {
   const slug = useMemo(() => currentShopSlug(), []);
   const query = useQuery({ enabled: slug !== null, queryFn: () => getShopBySlug(supabase, slug!), queryKey: ["current-shop", slug], retry: false, staleTime: 5 * 60_000 });
 
-  const status: CurrentShopStatus = slug === null ? "no-slug" : query.isError ? "error" : query.isSuccess ? (query.data ? "ready" : "not-found") : "loading";
+  // Data first: a failed background refetch (tab refocus during a network blip) keeps the shop we already have.
+  const status: CurrentShopStatus =
+    slug === null ? "no-slug" : query.data !== undefined ? (query.data ? "ready" : "not-found") : query.isError ? "error" : "loading";
   const value = useMemo<CurrentShopValue>(() => ({ retry: () => void query.refetch(), shop: query.data ?? null, slug, status }), [query.data, query.refetch, slug, status]);
 
   return <CurrentShopContext.Provider value={value}>{children}</CurrentShopContext.Provider>;

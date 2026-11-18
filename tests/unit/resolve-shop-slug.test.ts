@@ -5,6 +5,7 @@ describe("resolveShopSlug", () => {
     ["barbeariadojoao.zencpro.app", "zencpro.app", "barbeariadojoao"],
     ["Barbeariadojoao.ZencPro.app", "zencpro.app", "barbeariadojoao"],
     ["barbeariadojoao.zencpro.app:443", "zencpro.app", "barbeariadojoao"],
+    ["barbeariadojoao.zencpro.app.", "zencpro.app", "barbeariadojoao"],
     ["shop-a.localhost:8081", "localhost", "shop-a"],
     ["shop-a.localhost", "localhost", "shop-a"],
   ])("%s -> %s", (host, base, slug) => {

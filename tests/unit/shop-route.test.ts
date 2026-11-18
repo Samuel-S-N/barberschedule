@@ -1,6 +1,6 @@
 import { resolveShopRoute } from "../../src/features/shops/shop-route";
 
-const base = { currentSlug: "alfa", mySlug: null, role: null, signedIn: false, status: "ready" } as const;
+const base = { canRedirect: true, currentSlug: "alfa", mySlug: null, role: null, signedIn: false, status: "ready" } as const;
 
 describe("resolveShopRoute", () => {
   it.each([
@@ -16,6 +16,8 @@ describe("resolveShopRoute", () => {
     ["owner of another shop", { ...base, mySlug: "beta", role: "owner", signedIn: true }, { kind: "redirect", slug: "beta" }],
     ["professional on the bare domain", { ...base, currentSlug: null, mySlug: "beta", role: "professional", signedIn: true, status: "no-slug" }, { kind: "redirect", slug: "beta" }],
     ["owner on an unknown shop host", { ...base, mySlug: "beta", role: "owner", signedIn: true, status: "not-found" }, { kind: "redirect", slug: "beta" }],
+    ["native: staff of another shop cannot be redirected, they get the app", { ...base, canRedirect: false, mySlug: "beta", role: "owner", signedIn: true }, { kind: "app" }],
+    ["native: staff with no dev slug at all", { ...base, canRedirect: false, currentSlug: null, mySlug: "beta", role: "owner", signedIn: true, status: "no-slug" }, { kind: "bare" }],
     ["owner with no shop yet", { ...base, mySlug: null, role: "owner", signedIn: true }, { kind: "app" }],
   ] as const)("%s", (_name, input, expected) => {
     expect(resolveShopRoute(input as never)).toEqual(expected);

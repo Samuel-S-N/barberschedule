@@ -40,7 +40,14 @@ export function createCookieStorage(jar: CookieJar, { domain, legacy = null, sec
 
       for (let index = 0; all.has(`${key}.${index}`); index += 1) parts.push(all.get(`${key}.${index}`)!);
 
-      return parts.length > 0 ? decodeURIComponent(parts.join("")) : (legacy?.getItem(key) ?? null);
+      if (parts.length === 0) return legacy?.getItem(key) ?? null;
+
+      try {
+        return decodeURIComponent(parts.join(""));
+      } catch {
+        // A corrupt cookie is no session; the client signs the user out instead of crashing.
+        return null;
+      }
     },
     async removeItem(key: string): Promise<void> {
       clearCookies(key);

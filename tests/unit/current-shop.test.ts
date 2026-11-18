@@ -39,6 +39,26 @@ describe("CurrentShopProvider", () => {
     expect(getShopBySlug).toHaveBeenCalledWith({}, "alfa");
   });
 
+  it("keeps the shop when a later refetch fails (a network blip must not drop the app to the error page)", async () => {
+    jest.mocked(currentShopSlug).mockReturnValue("alfa");
+    jest.mocked(getShopBySlug).mockResolvedValueOnce(shop).mockRejectedValue(new Error("offline"));
+    let retry: () => void = () => undefined;
+    function Capture() {
+      retry = useCurrentShop().retry;
+
+      return null;
+    }
+    const client = new QueryClient({ defaultOptions: { queries: { gcTime: 0, retry: false } } });
+    const view = await render(React.createElement(QueryClientProvider, { client }, React.createElement(CurrentShopProvider, null, React.createElement(Probe), React.createElement(Capture))));
+
+    await waitFor(() => expect(view.getByTestId("probe").props.children).toBe("ready:alfa:Barbearia Alfa"));
+    retry();
+    await waitFor(() => expect(getShopBySlug).toHaveBeenCalledTimes(2));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(view.getByTestId("probe").props.children).toBe("ready:alfa:Barbearia Alfa");
+  });
+
   it("reports not-found for an unknown slug", async () => {
     jest.mocked(currentShopSlug).mockReturnValue("ghost");
     jest.mocked(getShopBySlug).mockResolvedValue(null);

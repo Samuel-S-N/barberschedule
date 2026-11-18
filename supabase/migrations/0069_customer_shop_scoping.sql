@@ -100,7 +100,7 @@ begin
   return changed;
 end;
 $$;
-revoke all on function public.mark_notifications_read(uuid[], uuid) from public;
+revoke all on function public.mark_notifications_read(uuid[], uuid) from public, anon;
 grant execute on function public.mark_notifications_read(uuid[], uuid) to authenticated;
 
 drop function public.delete_notifications(uuid[]);

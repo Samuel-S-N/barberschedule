@@ -34,6 +34,7 @@ export function ShopGate({ children }: PropsWithChildren) {
   const mine = useMyShop();
   const staff = profile?.role === "owner" || profile?.role === "professional";
   const route = resolveShopRoute({
+    canRedirect: Platform.OS === "web",
     currentSlug: slug,
     // Staff whose lookup failed or has no shop must not hang on the spinner: treat both as "no staff shop".
     mySlug: !staff ? null : mine.isPending ? undefined : mine.data?.slug ?? null,
@@ -43,7 +44,7 @@ export function ShopGate({ children }: PropsWithChildren) {
   });
 
   useEffect(() => {
-    if (route.kind === "redirect" && Platform.OS === "web") window.location.replace(shopUrl(route.slug, shopBaseDomain(), window.location));
+    if (route.kind === "redirect") window.location.replace(shopUrl(route.slug, shopBaseDomain(), window.location));
   }, [route]);
 
   if (route.kind === "wait" || route.kind === "redirect") {

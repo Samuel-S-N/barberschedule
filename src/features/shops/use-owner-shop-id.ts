@@ -11,8 +11,9 @@ export async function getOwnerShopId(supabase: Pick<SupabaseClient, "rpc">): Pro
 }
 
 // The owner's shop id, from the get_my_shop RPC. `null` data means the owner has no shop yet.
+// Same query key as useMyShop (the ShopGate), so the RPC runs once and both read the same cache entry.
 export function useOwnerShopId() {
   const { profile, supabase } = useSupabaseSession();
 
-  return useQuery({ queryFn: () => getOwnerShopId(supabase), queryKey: ["owner-shop-id", profile?.userId] });
+  return useQuery({ queryFn: () => getMyShop(supabase), queryKey: ["my-shop", profile?.userId], select: (shop) => shop?.shopId ?? null, staleTime: 5 * 60_000 });
 }
