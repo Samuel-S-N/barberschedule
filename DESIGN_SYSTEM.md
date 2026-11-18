@@ -1,10 +1,10 @@
 # Design System — Zenc
 
-App de agendamento para barbearias. Stack: **React Native · Expo · TypeScript · NativeWind v4 · Tailwind v3**.
+App de agendamento para estabelecimentos de beleza (barbearias, salões, nail e lash designers, trancistas e similares). Stack: **React Native · Expo · TypeScript · NativeWind v4 · Tailwind v3**.
 
 Este documento é a **fonte de verdade da marca e dos tokens visuais**, seguindo a mesma convenção/estrutura usada no FitBrother (tokens NativeWind, tipografia dupla display/corpo, ícones via lucide, motion via Reanimated).
 
-**Direção de marca:** barbearia clássica revisitada — couro, aço escovado, latão. Âmbar/dourado como cor de ação sobre uma âncora quase-preta quente (carvão), com uma segunda cor de assinatura (vinho) para toques pontuais que remetem ao barber pole. Tipografia condensada em caps para headers (placa de barbearia), corpo neutro e legível.
+**Direção de marca:** o nome é o logo. `ZENC.` em Oswald Bold, com o ponto em vinho (identidade padrão por enquanto; decisão 017). Tinta quase-preta e creme como base; o vinho existe só no ponto do logo; o âmbar é a cor de ação do produto (padrão do tema, que cada estabelecimento pode trocar; decisão 016). Tipografia condensada em caps para títulos, corpo neutro e legível. A direção anterior, "barbearia clássica", foi substituída em 2026-11-17.
 
 ---
 
@@ -48,7 +48,7 @@ Preço, duração, horário e contadores usam `fontVariant: ["tabular-nums"]` pa
 ```
 
 ### 1.3 Cores via tokens
-Proibido `#hex` inline em JSX. Exceção: `react-native-svg`/Reanimated → importar de `@/lib/colors.ts`.
+Proibido `#hex` inline em JSX. Em `className` use os tokens (`bg-primary-400`, `bg-accent`, `text-ink`...): eles leem variáveis CSS e seguem o tema do estabelecimento (decisão 016). No JS (ícones, `react-native-svg`, Reanimated, `ActivityIndicator`) use o hook `useColors()` de `src/lib/design/theme/ThemeProvider`, nunca uma importação estática de cores. Cores de status (`danger`, `success`, `warning`), `white` e a paleta dos gráficos são fixas e não mudam por loja.
 
 ### 1.4 Hit target mínimo
 `min-w-[44px] min-h-[44px]` ou `hitSlop={8}`.
@@ -62,7 +62,7 @@ Base 4px, escala Tailwind padrão. Nada de valores soltos fora do theme.
 
 ### 2.1 Marca — Âmbar (primary)
 
-Dourado quente, remete a latão polido e navalha — CTAs, preços, ícones ativos, anel de avatar do profissional em destaque.
+Dourado quente, remete a latão polido e navalha. A escala `primary` é a **identidade**: aba ativa, preços, links, item selecionado, foco de campo, ícones ativos, anel de avatar do profissional em destaque. Os botões de ação preenchidos usam o token `accent` (por padrão, o mesmo âmbar `primary-400`).
 
 | Escala | HEX | Uso |
 |---|---|---|
@@ -91,15 +91,14 @@ Dourado quente, remete a latão polido e navalha — CTAs, preços, ícones ativ
 | `surface` | `#FFFDFA` | Cards |
 | `mist` | `#ECE6DE` | Seções/fills alternados, skeleton base |
 
-### 2.3 Assinatura — Vinho (accent, uso pontual)
+### 2.3 Assinatura — Vinho (só na marca)
 
-Segunda cor de marca — referência ao vermelho do barber pole, usada com moderação: badge "Popular", indicador de profissional em destaque, detalhe decorativo. **Não usar como CTA principal** (isso é papel do âmbar).
+O vinho é a cor de assinatura do **logo**: o ponto de `ZENC.`. Não é mais um token de interface: `wine-*` saiu do Tailwind e do `colors.ts`, porque nenhuma tela o usava. Os valores abaixo valem para a marca e não têm classe Tailwind. Sobre fundo escuro o vinho comum quase some (1,8:1 sobre `ink`), então o ponto passa para o vinho claro (3,8:1). Ver a decisão 017.
 
-| Token | HEX | Uso |
+| Nome | HEX | Uso |
 |---|---|---|
-| `wine-500` | `#7A1F2B` | Badge "Popular"/"Top", ring de destaque |
-| `wine-100` | `#F4DBDD` | Background do badge |
-| `wine-50` | `#FBEEEF` | Surface |
+| Vinho | `#7A1F2B` | Ponto do logo sobre fundo claro |
+| Vinho claro | `#C4455A` | Ponto do logo sobre fundo escuro |
 
 ### 2.4 Neutros (stone — tom quente)
 
@@ -151,7 +150,7 @@ Segunda cor de marca — referência ao vermelho do barber pole, usada com moder
 
 ### 3.1 Famílias
 
-- **Oswald** — **display**: headings, nome de barbearia/profissional em destaque, preços, título de tela. Condensada, remete a placa de barbearia/tipografia de sinalização vintage.
+- **Oswald** — **display**: headings, nome do estabelecimento/profissional em destaque, preços, título de tela, e a fonte do logo `ZENC.`. Condensada e retilínea.
 - **Inter** — **corpo**: parágrafos, labels, inputs, metadados (mesma escolha do FitBrother — mantém consistência e legibilidade entre produtos).
 
 ```bash
@@ -174,7 +173,7 @@ import {
 } from "@expo-google-fonts/inter";
 ```
 
-**Mapa de papéis:** `font-display-*` (Oswald) para títulos, nome de profissional/barbearia e preços; `font-sans-*` (Inter) para corpo. Pegadinha do §1.1 vale para ambas.
+**Mapa de papéis:** `font-display-*` (Oswald) para títulos, nome de profissional/estabelecimento e preços; `font-sans-*` (Inter) para corpo. Pegadinha do §1.1 vale para ambas.
 
 ### 3.2 Escala
 
@@ -187,7 +186,7 @@ import {
 | `text-xl`   | 20 | 28 | Título menor de tela |
 | `text-2xl`  | 24 | 32 | Preço de destaque em card |
 | `text-3xl`  | 28 | 36 | Heading de onboarding/tela |
-| `text-4xl`  | 32 | 40 | Heading grande (nome da barbearia no perfil) |
+| `text-4xl`  | 32 | 40 | Heading grande (nome do estabelecimento no perfil) |
 | `text-5xl`  | 40 | 48 | Hero number (ex.: horário selecionado em destaque) |
 
 ### 3.3 Pesos
@@ -199,7 +198,7 @@ import {
 | `font-sans-semibold` | 600 | Botões, labels de campo |
 | `font-sans-bold` | 700 | Headings de card, preços |
 | `font-display-semibold` | 600 | Títulos de tela |
-| `font-display-bold` | 700 | Nome de barbearia, hero |
+| `font-display-bold` | 700 | Nome do estabelecimento, hero, logo |
 
 ---
 
@@ -311,7 +310,7 @@ Cor sempre via prop `color`, importada de `@/lib/colors.ts`.
 
 ## 10. Dark Mode
 
-Fora do MVP, mesma decisão do FitBrother. Não usar `dark:` em código inicialmente.
+Fora do MVP, mesma decisão do FitBrother. Não usar `dark:` em código inicialmente. O tema por estabelecimento também não tem modo escuro (decisão 016): a base é um tom das superfícies claras.
 
 ---
 
@@ -323,7 +322,7 @@ Mesmos componentes-base do FitBrother (`Button`, `Input`, `Card`, `Checkbox`, ba
 
 | Variante | Fundo | Texto | Borda |
 |---|---|---|---|
-| `primary` | `primary-400` | `ink` (não branco — melhor contraste no âmbar) | — |
+| `primary` | `accent` (padrão: âmbar `primary-400`) | `on-accent` (automático: no padrão `ink`, não branco — melhor contraste no âmbar) | — |
 | `dark` | `ink` | white | — |
 | `outline` | transparent | `neutral-800` | `neutral-200` |
 | `ghost` | transparent | `primary-600` | — |
@@ -347,7 +346,7 @@ Tamanhos: `sm` 44px, `md` 52px (padrão), `lg` 60px. `rounded-full · px-6 · fo
 
 ---
 
-## 12. Componentes do Domínio Barbearia
+## 12. Componentes do Domínio
 
 > Specs para os componentes específicos deste produto.
 
@@ -512,4 +511,27 @@ import { Scissors, Clock, Calendar, User, Star } from "lucide-react-native";
 
 ---
 
+## 13. Marca e tema por estabelecimento
+
+**Tema por estabelecimento** (decisão 016). Três cores opcionais por loja, nulas = padrão Zenc:
+
+| Cor | O que pinta | Tokens |
+|---|---|---|
+| Principal | Identidade: aba ativa, preços, links, item selecionado, foco, progresso | `primary-50…900` |
+| Destaque | Botões de ação preenchidos (`Button` primário, `FabAdd`); nulo = usa a principal | `accent`, `on-accent` |
+| Base | Tom claro dos fundos e do texto | `canvas`, `surface`, `mist`, `neutral-*`, `ink` |
+
+`deriveTheme` (`src/lib/design/theme/derive.ts`) gera as escalas e garante o contraste: rótulo sobre preenchimento
+≥ 4,5:1, `primary-600` sobre `canvas` ≥ 4,5:1, `neutral-500…900` e `ink` sobre `canvas`/`surface` ≥ 4,5:1. O dono
+escolhe em Gerenciar > Aparência do app. Fixos para todos: status, `white`, gráficos, barra de status, splash e ícone.
+Lacuna conhecida do padrão atual: `primary-600` sobre `canvas` mede 4,31:1.
+
+**Marca** (decisão 017). Logo `ZENC.` (Oswald Bold, ponto em vinho; vinho claro `#C4455A` sobre fundo escuro),
+ícone do app com o nome em uma linha sobre `ink`, e `Z.` abaixo de ~64 px (favicon, notificação). Respiro de meia
+altura da letra, mínimo ~56 px de largura. Arquivos em `assets/`; a fonte de verdade é a page Logo do Figma.
+
+---
+
 *v1 — design system inicial do Zenc, seguindo a mesma convenção de tokens/estrutura do FitBrother (NativeWind v4, tipografia dupla display/corpo, ícones lucide, motion via Reanimated), com paleta e componentes de domínio próprios (âmbar/carvão/vinho, agendamento em vez de nutrição).*
+
+*v2 — 2026-11-17: identidade `ZENC.`, tema por estabelecimento e `useColors()`; tokens `wine-*` removidos.*
