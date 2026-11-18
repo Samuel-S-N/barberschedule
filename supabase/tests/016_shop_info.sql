@@ -24,12 +24,12 @@ select throws_ok($$ select public.set_shop_hours('[{"weekday":2,"start":"09:00",
 select is((select count(*)::int from public.shop_hours), 2, 'a rejected call leaves the previous hours untouched');
 select throws_ok($$ select public.set_shop_hours('[{"weekday":9,"start":"09:00","end":"12:00"}]'::jsonb) $$, 'P0023', null, 'a weekday outside 1..7 is rejected');
 select throws_ok($$ select public.set_shop_hours('[{"weekday":1,"start":"18:00","end":"09:00"}]'::jsonb) $$, 'P0023', null, 'an end before the start is rejected');
-select lives_ok($$ update public.shops set address = 'Rua A, 10', phone = '(11) 3000-0000', whatsapp = '(11) 99999-0000' where id = '94000000-0000-0000-0000-000000000001' $$, 'owner updates contact info');
+select lives_ok($$ update public.shops set address_street = 'Rua A, 10', phone = '(11) 3000-0000', whatsapp = '(11) 99999-0000' where id = '94000000-0000-0000-0000-000000000001' $$, 'owner updates contact info');
 
 -- customer can read, cannot write
 select set_config('request.jwt.claim.sub', '93000000-0000-0000-0000-000000000002', true);
 select is((select count(*)::int from public.shop_hours), 2, 'a customer can read the hours');
-select is((select address from public.shops where id = '94000000-0000-0000-0000-000000000001'), 'Rua A, 10', 'a customer can read the address');
+select is((select address_street from public.shops where id = '94000000-0000-0000-0000-000000000001'), 'Rua A, 10', 'a customer can read the address');
 select throws_ok($$ select public.set_shop_hours('[]'::jsonb) $$, '42501', null, 'a non-owner cannot set hours');
 
 -- anonymous can read too
