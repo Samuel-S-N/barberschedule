@@ -1,4 +1,5 @@
 import { TERMS_VERSION } from "../account/legal";
+import { unsubscribeWebPush } from "../notifications/web-push";
 import { clearRecovery, markInvite, markRecovery } from "./recovery";
 import type { RecoveryFlow } from "./recovery";
 import type { AuthSupabaseClient, Profile } from "./types";
@@ -89,7 +90,10 @@ export async function signUpCustomer(
   return { needsEmailConfirmation: !data.session };
 }
 
-export async function signOut(supabase: Pick<AuthSupabaseClient, "auth">) {
+export async function signOut(supabase: Pick<AuthSupabaseClient, "auth" | "rpc">) {
+  // Web only and best effort: this browser stops receiving the signed-out user's notifications, and a failure must not keep them signed in.
+  await unsubscribeWebPush(supabase).catch(() => undefined);
+
   const { error } = await supabase.auth.signOut();
   throwIfError(error);
 }
