@@ -25,3 +25,10 @@ export function formatTimeInput(input: string) {
 
   return d.length <= 2 ? d : `${d.slice(0, 2)}:${d.slice(2)}`;
 }
+
+// 8 digits shown as 00000-000.
+export function formatCepInput(input: string) {
+  const d = digits(input).slice(0, 8);
+
+  return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
+}

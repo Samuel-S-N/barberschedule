@@ -4,6 +4,7 @@ import type { DomainErrorCode } from "../../lib/errors/domain-errors";
 
 export const en = {
   examples: {
+    cep: "01310-100", city: "São Paulo", complement: "Suite 2", district: "Downtown", number: "123", state: "SP", street: "Flower Street",
     address: "123 Flower Street",
     bio: "Fades and classic cuts since 2015",
     date: "2026-10-25",
@@ -441,6 +442,8 @@ export const en = {
       closedAdded: "Shop closed on that date.",
       closedError: "Unable to change the date.",
       address: "Address",
+      cep: "Postal code (CEP)", cepNotFound: "CEP not found, fill in the address.", cepUnavailable: "Could not look up the CEP, fill in the address.",
+      city: "City", complement: "Complement", district: "District", number: "Number", state: "State (UF)", street: "Street",
       addBreak: "Add break",
       breakEnd: "Break end",
       breakStart: "Break start",

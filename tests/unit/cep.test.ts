@@ -1,0 +1,73 @@
+import { lookupCep, mergeCepResult } from "../../src/features/shops/cep";
+import { EMPTY_ADDRESS } from "../../src/features/shops/address";
+import { formatCepInput } from "../../src/lib/input-masks";
+
+const viaCep = { bairro: "Bela Vista", cep: "01310-100", complemento: "", ibge: "3550308", localidade: "São Paulo", logradouro: "Avenida Paulista", uf: "SP" };
+const respond = (status: number, body: unknown) => new Response(JSON.stringify(body), { headers: { "Content-Type": "application/json" }, status });
+
+describe("formatCepInput", () => {
+  it.each([["0131", "0131"], ["01310100", "01310-100"], ["01310-100", "01310-100"], ["0131010099", "01310-100"], ["ab12", "12"], ["", ""]])("%j -> %j", (input, expected) => {
+    expect(formatCepInput(input)).toBe(expected);
+  });
+});
+
+describe("lookupCep", () => {
+  it("returns the ViaCEP address", async () => {
+    const fetchFn = jest.fn().mockResolvedValue(respond(200, viaCep));
+
+    await expect(lookupCep("01310100", fetchFn)).resolves.toEqual({
+      address: { city: "São Paulo", cityIbge: "3550308", district: "Bela Vista", state: "SP", street: "Avenida Paulista" },
+      status: "found",
+    });
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(fetchFn).toHaveBeenCalledWith("https://viacep.com.br/ws/01310100/json/");
+  });
+
+  it("reports not-found without trying the fallback when ViaCEP says erro", async () => {
+    const fetchFn = jest.fn().mockResolvedValue(respond(200, { erro: true }));
+
+    await expect(lookupCep("99999999", fetchFn)).resolves.toEqual({ status: "not-found" });
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+  });
+
+  it("falls back to BrasilAPI on a network error (no IBGE code there)", async () => {
+    const fetchFn = jest.fn()
+      .mockRejectedValueOnce(new TypeError("network"))
+      .mockResolvedValueOnce(respond(200, { city: "São Paulo", cep: "01310100", neighborhood: "Bela Vista", state: "SP", street: "Avenida Paulista" }));
+
+    await expect(lookupCep("01310100", fetchFn)).resolves.toEqual({
+      address: { city: "São Paulo", cityIbge: "", district: "Bela Vista", state: "SP", street: "Avenida Paulista" },
+      status: "found",
+    });
+    expect(fetchFn).toHaveBeenLastCalledWith("https://brasilapi.com.br/api/cep/v2/01310100");
+  });
+
+  it("falls back on a 5xx and treats a BrasilAPI 404 as not-found", async () => {
+    const fetchFn = jest.fn().mockResolvedValueOnce(respond(503, {})).mockResolvedValueOnce(respond(404, { message: "CEP não encontrado" }));
+
+    await expect(lookupCep("99999999", fetchFn)).resolves.toEqual({ status: "not-found" });
+  });
+
+  it("is unavailable when both services are down", async () => {
+    const fetchFn = jest.fn().mockRejectedValue(new TypeError("network"));
+
+    await expect(lookupCep("01310100", fetchFn)).resolves.toEqual({ status: "unavailable" });
+  });
+});
+
+describe("mergeCepResult", () => {
+  const found = { city: "São Paulo", cityIbge: "3550308", district: "Bela Vista", state: "SP", street: "Avenida Paulista" };
+
+  it("fills the lookup fields and never touches number or complement", () => {
+    expect(mergeCepResult({ ...EMPTY_ADDRESS, cep: "01310-100", complement: "Sala 2", number: "1000" }, found)).toEqual({
+      cep: "01310-100", city: "São Paulo", cityIbge: "3550308", complement: "Sala 2", district: "Bela Vista", number: "1000", state: "SP", street: "Avenida Paulista",
+    });
+  });
+
+  it("keeps what the owner typed where the CEP has no value (a city-wide CEP has no street)", () => {
+    const merged = mergeCepResult({ ...EMPTY_ADDRESS, street: "Rua que digitei" }, { ...found, district: "", street: "" });
+
+    expect(merged.street).toBe("Rua que digitei");
+    expect(merged.city).toBe("São Paulo");
+  });
+});

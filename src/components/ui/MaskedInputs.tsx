@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { useLanguage } from "../../i18n/use-language";
 import { formatDateNumeric } from "../../lib/i18n/format";
-import { formatDateInput, formatTimeInput, parseDateInput } from "../../lib/input-masks";
+import { formatCepInput, formatDateInput, formatTimeInput, parseDateInput } from "../../lib/input-masks";
 import { Input } from "./Input";
 import type { InputProps } from "./Input";
 
@@ -36,4 +36,10 @@ export function TimeInput({ value, onChangeValue, placeholder, ...rest }: Masked
   const { t } = useTranslation();
 
   return <Input {...rest} keyboardType="number-pad" onChangeText={(text) => onChangeValue(formatTimeInput(text))} placeholder={placeholder ?? t("examples.time")} value={value} />;
+}
+
+export function CepInput({ value, onChangeValue, placeholder, ...rest }: MaskedProps) {
+  const { t } = useTranslation();
+
+  return <Input {...rest} keyboardType="number-pad" onChangeText={(text) => onChangeValue(formatCepInput(text))} placeholder={placeholder ?? t("examples.cep")} value={value} />;
 }

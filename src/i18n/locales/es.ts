@@ -3,6 +3,7 @@ import type { DeepStringRecord } from "./types";
 
 export const es: DeepStringRecord<typeof en> = {
   examples: {
+    cep: "01310-100", city: "São Paulo", complement: "Oficina 2", district: "Centro", number: "123", state: "SP", street: "Calle de las Flores",
     address: "Calle de las Flores, 123",
     bio: "Degradados y cortes clásicos desde 2015",
     date: "25/10/2026",
@@ -440,6 +441,8 @@ export const es: DeepStringRecord<typeof en> = {
       closedAdded: "Establecimiento cerrado en esa fecha.",
       closedError: "No se pudo cambiar la fecha.",
       address: "Dirección",
+      cep: "CEP (código postal)", cepNotFound: "CEP no encontrado, completa la dirección.", cepUnavailable: "No se pudo consultar el CEP, completa la dirección.",
+      city: "Ciudad", complement: "Complemento", district: "Barrio", number: "Número", state: "Estado (UF)", street: "Calle",
       addBreak: "Agregar pausa",
       breakEnd: "Fin de la pausa",
       breakStart: "Inicio de la pausa",
