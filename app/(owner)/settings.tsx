@@ -14,6 +14,7 @@ import { useOwnerAsProfessional } from "../../src/features/professionals/owner/u
 import { errorMessage } from "../../src/i18n/errors";
 import { useColors } from "../../src/lib/design/theme/ThemeProvider";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { InstallPrompt } from "../../src/features/install/InstallPrompt";
 
 export default function OwnerSettingsScreen() {
   const colors = useColors();
@@ -71,6 +72,8 @@ export default function OwnerSettingsScreen() {
                 { icon: Info, key: "about", label: t("profile.menu.about"), onPress: () => router.push("/owner-profile/about") },
               ]}
             />
+
+            <InstallPrompt />
 
             <Pressable
               accessibilityRole="button"

@@ -16,6 +16,7 @@ import { errorMessage } from "../../../src/i18n/errors";
 import { useColors } from "../../../src/lib/design/theme/ThemeProvider";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../../src/lib/use-refresh";
+import { InstallPrompt } from "../../../src/features/install/InstallPrompt";
 
 export default function ProfessionalProfileHub() {
   const colors = useColors();
@@ -67,6 +68,8 @@ export default function ProfessionalProfileHub() {
                 { icon: Info, key: "about", label: t("profile.menu.about"), onPress: () => router.push("/my-profile/about") },
               ]}
             />
+
+            <InstallPrompt />
 
             <Pressable
               accessibilityRole="button"

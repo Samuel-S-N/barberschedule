@@ -9,5 +9,7 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL ?? getE2EWebBaseUrl(),
     // The app follows the browser language; pin English so the existing specs stay deterministic.
     locale: "en-US",
+    // A registered service worker can interfere with the page.route mocks every spec relies on; only pwa.web.spec.ts opts in.
+    serviceWorkers: "block",
   },
 });
