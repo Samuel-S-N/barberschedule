@@ -1,4 +1,4 @@
-import { act, renderHook } from "@testing-library/react-native";
+import { act, renderHook, waitFor } from "@testing-library/react-native";
 
 jest.mock("../../src/features/install/environment", () => ({ readInstallEnvironment: jest.fn() }));
 
@@ -42,6 +42,18 @@ describe("useInstallPrompt", () => {
 
     await act(async () => fake.emit("appinstalled", {}));
     expect(result.current).toEqual({ status: "installed" });
+  });
+
+  it("picks up an event the head script stored between the first render and the effect", async () => {
+    const event = { prompt: jest.fn(), userChoice: Promise.resolve({ outcome: "accepted" }) };
+    jest.mocked(readInstallEnvironment)
+      .mockReturnValueOnce(base) // the useState initializer
+      .mockReturnValue({ ...base, capturedPrompt: event as never }); // the effect
+    const fake = fakeWindow();
+    Object.defineProperty(globalThis, "window", { configurable: true, value: fake.target });
+    const { result } = await renderHook(() => useInstallPrompt());
+
+    await waitFor(() => expect(result.current).toEqual({ promptEvent: event, status: "installable-chrome" }));
   });
 
   it("removes its listeners on unmount", async () => {

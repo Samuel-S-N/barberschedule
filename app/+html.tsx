@@ -18,6 +18,7 @@ export default function Root({ children }: PropsWithChildren) {
         <meta content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" name="viewport" />
         <link href="/manifest.json" rel="manifest" />
         <meta content="#171412" name="theme-color" />
+        <meta content="yes" name="mobile-web-app-capable" />
         <meta content="yes" name="apple-mobile-web-app-capable" />
         <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style" />
         <meta content="Zenc" name="apple-mobile-web-app-title" />

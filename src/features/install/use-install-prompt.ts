@@ -12,6 +12,8 @@ export function useInstallPrompt(): InstallState {
   useEffect(() => {
     const environment = readInstallEnvironment();
     if (!environment.isWeb || environment.standalone) return undefined;
+    // An event the head script stored between the first render and now would otherwise never reach the state.
+    if (environment.capturedPrompt) setState(resolveInstallState(environment));
 
     const onPrompt = (event: Event) => {
       event.preventDefault();

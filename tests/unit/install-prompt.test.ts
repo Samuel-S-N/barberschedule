@@ -1,4 +1,4 @@
-import { fireEvent, render } from "@testing-library/react-native";
+import { act, fireEvent, render } from "@testing-library/react-native";
 import React from "react";
 
 jest.mock("../../src/features/install/use-install-prompt", () => ({ useInstallPrompt: jest.fn() }));
@@ -29,6 +29,17 @@ describe("InstallPrompt", () => {
     await fireEvent.press(view.getByTestId("install-button"));
 
     expect(prompt).toHaveBeenCalledTimes(1);
+  });
+
+  it("hides the card once the browser prompt was used (it can be used only once), whatever the user chose", async () => {
+    const prompt = jest.fn().mockResolvedValue(undefined);
+    state({ promptEvent: { prompt, userChoice: Promise.resolve({ outcome: "dismissed" }) }, status: "installable-chrome" });
+    const view = await render(React.createElement(InstallPrompt));
+
+    await act(async () => fireEvent.press(view.getByTestId("install-button")));
+
+    expect(prompt).toHaveBeenCalledTimes(1);
+    expect(view.queryByTestId("install-card")).toBeNull();
   });
 
   it("opens the Chrome-iOS guide with the menu as the first step", async () => {

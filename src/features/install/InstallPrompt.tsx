@@ -17,8 +17,10 @@ export function InstallPrompt() {
   const { t } = useTranslation();
   const install = useInstallPrompt();
   const [guideOpen, setGuideOpen] = useState(false);
+  // A browser install prompt can be shown only once per event: after it was used the card has nothing left to offer.
+  const [promptUsed, setPromptUsed] = useState(false);
 
-  if (install.status === "native" || install.status === "installed" || install.status === "unsupported") return null;
+  if (promptUsed || install.status === "native" || install.status === "installed" || install.status === "unsupported") return null;
 
   if (install.status === "installable-chrome") {
     const { promptEvent } = install;
@@ -31,7 +33,16 @@ export function InstallPrompt() {
         </View>
         <Button
           label={t("install.chromeButton")}
-          onPress={() => void promptEvent.prompt().then(() => promptEvent.userChoice).catch(() => undefined)}
+          onPress={() =>
+            void promptEvent
+              .prompt()
+              .then(() => promptEvent.userChoice)
+              .catch(() => undefined)
+              .finally(() => {
+                window.__zencInstallPromptEvent = null;
+                setPromptUsed(true);
+              })
+          }
           size="sm"
           testID="install-button"
         />
