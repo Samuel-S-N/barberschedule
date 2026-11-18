@@ -93,6 +93,16 @@ describe("notificationclick", () => {
     expect(self.clients.openWindow).not.toHaveBeenCalled();
   });
 
+  it("never opens a foreign site: a url on another origin falls back to the worker's own root", async () => {
+    const { listeners, self } = load();
+    const event = click("https://evil.example/phish");
+
+    listeners.notificationclick(event);
+    await (event.waitUntil.mock.calls[0][0] as Promise<unknown>);
+
+    expect(self.clients.openWindow).toHaveBeenCalledWith("https://shop-a.zencpro.app/");
+  });
+
   it("falls back to the root when the notification has no url", async () => {
     const { listeners, self } = load();
     const event = click();

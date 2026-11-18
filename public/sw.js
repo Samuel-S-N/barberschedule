@@ -38,7 +38,9 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const target = new URL((event.notification.data && event.notification.data.url) || "/", self.location.origin).href;
+  // Only this worker's own origin is ever opened: a url that points elsewhere falls back to the root.
+  const requested = new URL((event.notification.data && event.notification.data.url) || "/", self.location.origin);
+  const target = requested.origin === self.location.origin ? requested.href : new URL("/", self.location.origin).href;
 
   event.waitUntil(
     self.clients.matchAll({ includeUncontrolled: true, type: "window" }).then((windows) => {
