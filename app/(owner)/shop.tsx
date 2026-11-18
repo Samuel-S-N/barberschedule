@@ -15,7 +15,8 @@ import { listOwnerProfessionals } from "../../src/features/professionals/api";
 import type { OwnerProfessional } from "../../src/features/professionals/types";
 import { createScheduleOverride, deleteScheduleOverride, listOwnerScheduleOverrides } from "../../src/features/schedule/api";
 import { closedDates, copyDayToOthers } from "../../src/features/shops/day-tools";
-import { listPublicShops, listShopHours, saveShopHours, updateShopContact } from "../../src/features/shops/api";
+import { listShopHours, saveShopHours, updateShopContact } from "../../src/features/shops/api";
+import { useCurrentShop } from "../../src/features/shops/CurrentShopProvider";
 import { draftToPeriods, periodsToDraft, weekdayLabel } from "../../src/features/shops/hours";
 import type { DayDraft, ShopPeriod } from "../../src/features/shops/hours";
 import { errorMessage } from "../../src/i18n/errors";
@@ -37,8 +38,8 @@ export default function OwnerShopScreen() {
   const language = useLanguage();
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
-  const shops = useQuery({ queryFn: () => listPublicShops(supabase), queryKey: ["public-shops"] });
-  const shop = shops.data?.[0];
+  // The owner is always on their own shop's address (ShopGate redirects any other host).
+  const { shop } = useCurrentShop();
   const hours = useQuery({
     enabled: Boolean(shop),
     queryFn: () => listShopHours(supabase, shop!.id),
@@ -113,7 +114,7 @@ export default function OwnerShopScreen() {
     try {
       await saveShopHours(supabase, periods);
       if (shop) await updateShopContact(supabase, shop.id, contact);
-      await queryClient.invalidateQueries({ queryKey: ["public-shops"] });
+      await queryClient.invalidateQueries({ queryKey: ["current-shop"] });
       await queryClient.invalidateQueries({ queryKey: ["shop-hours"] });
       setFeedback({ message: t("owner.shop.saved"), variant: "success" });
     } catch (error) {
