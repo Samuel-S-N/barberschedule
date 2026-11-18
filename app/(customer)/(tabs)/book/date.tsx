@@ -11,17 +11,18 @@ import { formatInstantInShopTime } from "../../../../src/lib/dates/shop-time";
 import { Screen } from "../../../../src/components/ui/Screen";
 import { useBack } from "../../../../src/lib/navigation/use-back";
 import { useNow } from "../../../../src/lib/use-now";
+import { useBookingShopId } from "../../../../src/features/booking/use-booking-shop-id";
 
 function param(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";
 }
 
 export default function BookDateScreen() {
-  const params = useLocalSearchParams<{ professionalId?: string; professionalServiceId?: string; shopId?: string }>();
+  const params = useLocalSearchParams<{ professionalId?: string; professionalServiceId?: string }>();
   const router = useRouter();
   const professionalId = param(params.professionalId);
   const professionalServiceId = param(params.professionalServiceId);
-  const shopId = param(params.shopId);
+  const shopId = useBookingShopId();
   const { t } = useTranslation();
   const back = useBack();
   const today = formatInstantInShopTime(useNow()).localDate;

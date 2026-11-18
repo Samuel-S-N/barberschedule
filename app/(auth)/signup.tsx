@@ -1,4 +1,5 @@
-import { useRouter } from "expo-router";
+import * as Linking from "expo-linking";
+import { Redirect, useRouter } from "expo-router";
 import { Check } from "lucide-react-native";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -12,6 +13,7 @@ import { Input, useFieldChain } from "../../src/components/ui/Input";
 import { Screen } from "../../src/components/ui/Screen";
 import { signUpCustomer } from "../../src/features/auth/api";
 import { parseSignupInput } from "../../src/features/auth/validation";
+import { useCurrentShop } from "../../src/features/shops/CurrentShopProvider";
 import { errorMessage } from "../../src/i18n/errors";
 import { formatPhone } from "../../src/features/account/phone";
 import { useColors } from "../../src/lib/design/theme/ThemeProvider";
@@ -23,6 +25,7 @@ export default function SignupScreen() {
   const { t } = useTranslation();
   const field = useFieldChain(6);
   const { supabase } = useSupabaseSession();
+  const { status: shopStatus } = useCurrentShop();
   const [form, setForm] = useState({ confirmPassword: "", email: "", fullName: "", nickname: "", password: "", phone: "" });
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
@@ -43,7 +46,7 @@ export default function SignupScreen() {
     setServerError(null);
     setIsSubmitting(true);
     try {
-      const { needsEmailConfirmation } = await signUpCustomer(supabase, parsed.value);
+      const { needsEmailConfirmation } = await signUpCustomer(supabase, parsed.value, Linking.createURL("/"));
       setConfirmationSent(needsEmailConfirmation);
     } catch (caught) {
       setServerError(errorMessage(caught, t, t("auth.signup.error")));
@@ -51,6 +54,9 @@ export default function SignupScreen() {
       setIsSubmitting(false);
     }
   };
+
+  // No shop on the bare domain: nothing to sign up to.
+  if (shopStatus === "no-slug") return <Redirect href="/login" />;
 
   if (confirmationSent) {
     return (

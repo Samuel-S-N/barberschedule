@@ -8,17 +8,29 @@ export type PublicShop = {
   id: string;
   name: string;
   phone: string | null;
+  slug: string;
   whatsapp: string | null;
 };
 
+const PUBLIC_SHOP_COLUMNS = "id, name, slug, address, phone, whatsapp";
+
 export async function listPublicShops(supabase: Pick<SupabaseClient, "from">) {
-  const { data, error } = await supabase.from("shops").select("id, name, address, phone, whatsapp").order("name");
+  const { data, error } = await supabase.from("shops").select(PUBLIC_SHOP_COLUMNS).order("name");
 
   if (error) {
     throw error;
   }
 
   return (data ?? []) as PublicShop[];
+}
+
+// `.limit(1)` and an array (not `.maybeSingle()`): one shop per slug, and the e2e mocks answer with plain arrays.
+export async function getShopBySlug(supabase: Pick<SupabaseClient, "from">, slug: string): Promise<PublicShop | null> {
+  const { data, error } = await supabase.from("shops").select(PUBLIC_SHOP_COLUMNS).eq("slug", slug).limit(1);
+
+  if (error) throw error;
+
+  return ((data ?? []) as PublicShop[])[0] ?? null;
 }
 
 export async function listShopHours(supabase: Pick<SupabaseClient, "from">, shopId: string): Promise<ShopPeriod[]> {

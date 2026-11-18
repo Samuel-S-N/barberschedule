@@ -1,8 +1,11 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import type { Page } from "@playwright/test";
 
 import { deriveTheme } from "../../src/lib/design/theme/derive";
 import { json } from "./customer-helpers";
+
+// This spec changes the shop row while it runs, so it answers the shop lookups itself instead of using the fixture's fixed shop.
+test.use({ interceptShops: false });
 
 const ownerId = "55555555-5555-4555-8555-555555555555";
 const shop = "11111111-1111-4111-8111-111111111111";

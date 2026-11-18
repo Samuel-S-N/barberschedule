@@ -6,6 +6,7 @@ import { pathToFileURL } from "node:url";
 
 import {
   getE2EWebBaseUrl,
+  getE2EWebProbeUrl,
   selectE2EWebPort,
 } from "../src/lib/testing/e2e-web.ts";
 
@@ -94,6 +95,7 @@ async function main() {
     ZENC_E2E_WEB_PORT: String(webPort),
     CI: process.env.CI ?? "1",
     EXPO_NO_DOTENV: "1",
+    EXPO_PUBLIC_SHOP_BASE_DOMAIN: "localhost",
     EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
       process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
       "test-publishable-key",
@@ -142,7 +144,7 @@ async function main() {
   process.once("SIGTERM", handleSigterm);
 
   try {
-    await waitForHttpReady(baseURL, expo);
+    await waitForHttpReady(getE2EWebProbeUrl(webPort), expo);
 
     const playwright = spawnLogged(
       "npx",

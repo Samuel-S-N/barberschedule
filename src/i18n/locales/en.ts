@@ -375,6 +375,14 @@ export const en = {
   },
   shop: { call: "Call", contactToChange: "To change this appointment, contact the shop.", whatsapp: "WhatsApp" },
   layout: { bootstrapError: "Unable to set up your account." },
+  shopGate: {
+    bareBody: "Zenc works through each business's own link or QR code. Ask your business for it.",
+    bareTitle: "Open the link your business sent you",
+    errorBody: "We could not load this business.",
+    notFoundBody: "Check the link you opened or ask the business for a new one.",
+    notFoundTitle: "Business not found",
+    staffLoginHint: "Staff: sign in below.",
+  },
   legal: {
     sections: {
       collect: {

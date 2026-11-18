@@ -42,10 +42,12 @@ function namesLabel(names: string[], count: number) {
   return `${names.join(", ")}${extra > 0 ? ` +${extra}` : ""}`;
 }
 
-export async function listNotifications(supabase: Client, limit = 50): Promise<InboxItem[]> {
+// The shop's rows plus the unscoped ones (customer recurrence events carry no shop and show on every shop).
+export async function listNotifications(supabase: Client, shopId: string, limit = 50): Promise<InboxItem[]> {
   const { data, error } = await supabase
     .from("notifications")
     .select("id, kind, appointment_id, params, read_at, created_at")
+    .or(`shop_id.eq.${shopId},shop_id.is.null`)
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error) throw error;
@@ -69,22 +71,22 @@ export async function listNotifications(supabase: Client, limit = 50): Promise<I
   }));
 }
 
-export async function countUnread(supabase: Pick<SupabaseClient, "rpc">) {
-  const { data, error } = await supabase.rpc("count_unread_notifications");
+export async function countUnread(supabase: Pick<SupabaseClient, "rpc">, shopId: string) {
+  const { data, error } = await supabase.rpc("count_unread_notifications", { p_shop_id: shopId });
   if (error) throw error;
 
   return Number(data ?? 0);
 }
 
-export async function markRead(supabase: Pick<SupabaseClient, "rpc">, ids?: string[]) {
-  const { data, error } = await supabase.rpc("mark_notifications_read", { target_ids: ids ?? null });
+export async function markRead(supabase: Pick<SupabaseClient, "rpc">, ids?: string[], shopId?: string) {
+  const { data, error } = await supabase.rpc("mark_notifications_read", { p_shop_id: shopId ?? null, target_ids: ids ?? null });
   if (error) throw error;
 
   return Number(data ?? 0);
 }
 
-export async function deleteNotifications(supabase: Pick<SupabaseClient, "rpc">, ids?: string[]) {
-  const { data, error } = await supabase.rpc("delete_notifications", { target_ids: ids ?? null });
+export async function deleteNotifications(supabase: Pick<SupabaseClient, "rpc">, ids?: string[], shopId?: string) {
+  const { data, error } = await supabase.rpc("delete_notifications", { p_shop_id: shopId ?? null, target_ids: ids ?? null });
   if (error) throw error;
 
   return Number(data ?? 0);

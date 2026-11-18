@@ -20,9 +20,9 @@ describe("payout notifications in the inbox", () => {
       ],
       error: null,
     }) });
-    const supabase = { from: () => ({ select: () => ({ order }) }) };
+    const supabase = { from: () => ({ select: () => ({ or: () => ({ order }) }) }) };
 
-    const items = await listNotifications(supabase as never);
+    const items = await listNotifications(supabase as never, "s1");
 
     expect(items[0].params).toMatchObject({ professionalNames: "Ana, Caio +2" });
     expect(items[1].params).toMatchObject({ amountCents: 7000, paidOn: "2026-10-27" });

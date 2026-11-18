@@ -60,12 +60,13 @@ export const HISTORY_PAGE_SIZE = 20;
 
 export async function listMyAppointments(
   supabase: Pick<LifecycleSupabaseClient, "from">,
+  shopId: string,
   history = false,
   now = new Date(),
   range?: { from: number; to: number },
 ): Promise<Appointment[]> {
   const nowIso = now.toISOString();
-  const query = supabase.from("appointments").select(appointmentColumns);
+  const query = supabase.from("appointments").select(appointmentColumns).eq("shop_id", shopId);
   // Finished appointments nobody closed (still scheduled/confirmed) belong to history, not "upcoming".
   const ordered = (history
     ? query.or(`status.in.(cancelled,completed,no_show),and(status.in.(scheduled,confirmed),ends_at.lt.${nowIso})`)

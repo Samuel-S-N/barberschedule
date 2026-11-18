@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 import { json, mockCustomerRest, signInAsCustomer } from "./customer-helpers";
 
@@ -40,7 +40,7 @@ test("the bell shows the unread count, opens the list, marks as read and opens t
   await expect(page.getByTestId("notification-n2")).toContainText("Appointment cancelled");
 
   await page.getByTestId("notification-n1").click();
-  await expect.poll(() => calls).toEqual([{ target_ids: ["n1"] }]);
+  await expect.poll(() => calls).toEqual([{ p_shop_id: null, target_ids: ["n1"] }]);
   await expect(page).toHaveURL(/\/appointments/);
 });
 

@@ -41,10 +41,12 @@ export async function listOwnerCustomers(
   return (data ?? []).map((row) => toCustomer(row as CustomerRow));
 }
 
-export async function listMyCustomers(supabase: CustomerSupabaseClient) {
+// The signed-in customer's own row in one shop (an account has one customer row per shop it uses).
+export async function listMyCustomers(supabase: CustomerSupabaseClient, shopId: string) {
   const { data, error } = await supabase
     .from("customers")
     .select(customerColumns)
+    .eq("shop_id", shopId)
     .order("full_name", { ascending: true });
   throwIfError(error);
 

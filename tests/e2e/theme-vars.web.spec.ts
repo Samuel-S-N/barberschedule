@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("the default palette is amber and a CSS variable on <html> repaints the sign-in button", async ({ page }) => {
   await page.goto("/");

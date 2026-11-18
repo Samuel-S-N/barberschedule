@@ -14,8 +14,8 @@ update public.profiles
 set role = 'owner', full_name = 'Seed Owner'
 where user_id = 'a0000000-0000-0000-0000-000000000001';
 
-insert into public.shops (id, name, timezone, owner_user_id)
-values ('a1000000-0000-0000-0000-000000000001', 'Seed Shop', 'America/Sao_Paulo', 'a0000000-0000-0000-0000-000000000001')
+insert into public.shops (id, name, slug, timezone, owner_user_id)
+values ('a1000000-0000-0000-0000-000000000001', 'Seed Shop', 'seed-shop', 'America/Sao_Paulo', 'a0000000-0000-0000-0000-000000000001')
 on conflict (id) do nothing;
 
 insert into public.professionals (id, shop_id, name, active, archived_at)

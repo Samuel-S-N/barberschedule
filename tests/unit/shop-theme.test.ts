@@ -43,9 +43,10 @@ function fakeClient(result: { data?: unknown; error?: unknown }) {
     calls.update = payload;
     return builder;
   };
+  // `.eq(...)` ends an update (awaited as is) and continues a select (`.eq(...).limit(1)`).
   builder.eq = (column: string, value: string) => {
     calls.eq = [column, value];
-    return Promise.resolve(result);
+    return Object.assign(Promise.resolve(result), { limit: () => Promise.resolve(result) });
   };
 
   return {
@@ -60,20 +61,21 @@ function fakeClient(result: { data?: unknown; error?: unknown }) {
 }
 
 describe("getShopTheme", () => {
-  it("reads the id and the three colours of the first shop", async () => {
+  it("reads the id and the three colours of the shop with that slug", async () => {
     const { calls, client } = fakeClient({ data: [{ id: "s1", theme_accent: null, theme_base: "#EEF3F8", theme_primary: "#2F6FDB" }] });
 
-    await expect(getShopTheme(client)).resolves.toEqual({ input: { accent: null, base: "#EEF3F8", primary: "#2F6FDB" }, shopId: "s1" });
+    await expect(getShopTheme(client, "alfa")).resolves.toEqual({ input: { accent: null, base: "#EEF3F8", primary: "#2F6FDB" }, shopId: "s1" });
     expect(calls.table).toBe("shops");
+    expect(calls.eq).toEqual(["slug", "alfa"]);
     expect(calls.select).toBe("id, theme_primary, theme_accent, theme_base");
   });
 
   it("returns null when there is no shop", async () => {
-    await expect(getShopTheme(fakeClient({ data: [] }).client)).resolves.toBeNull();
+    await expect(getShopTheme(fakeClient({ data: [] }).client, "alfa")).resolves.toBeNull();
   });
 
   it("throws the database error", async () => {
-    await expect(getShopTheme(fakeClient({ error: new Error("boom") }).client)).rejects.toThrow("boom");
+    await expect(getShopTheme(fakeClient({ error: new Error("boom") }).client, "alfa")).rejects.toThrow("boom");
   });
 });
 
@@ -96,16 +98,16 @@ describe("updateShopTheme", () => {
 });
 
 describe("cached theme", () => {
-  it("round-trips per user and returns null when nothing is cached", async () => {
-    await writeCachedTheme("u1", { accent: null, base: null, primary: "#2F6FDB" });
+  it("round-trips per shop slug and returns null when nothing is cached", async () => {
+    await writeCachedTheme("alfa", { accent: null, base: null, primary: "#2F6FDB" });
 
-    await expect(readCachedTheme("u1")).resolves.toEqual({ accent: null, base: null, primary: "#2F6FDB" });
-    await expect(readCachedTheme("u2")).resolves.toBeNull();
+    await expect(readCachedTheme("alfa")).resolves.toEqual({ accent: null, base: null, primary: "#2F6FDB" });
+    await expect(readCachedTheme("beta")).resolves.toBeNull();
   });
 
   it("drops invalid stored colours instead of trusting them", async () => {
-    await writeCachedTheme("u3", { accent: "javascript:alert(1)", base: null, primary: "#2F6FDB" });
+    await writeCachedTheme("gama", { accent: "javascript:alert(1)", base: null, primary: "#2F6FDB" });
 
-    await expect(readCachedTheme("u3")).resolves.toEqual({ accent: null, base: null, primary: "#2F6FDB" });
+    await expect(readCachedTheme("gama")).resolves.toEqual({ accent: null, base: null, primary: "#2F6FDB" });
   });
 });

@@ -8,9 +8,9 @@ it("maps rows", async () => {
     error: null,
   });
   const order = jest.fn().mockReturnValue({ limit });
-  const supabase = { from: jest.fn().mockReturnValue({ select: jest.fn().mockReturnValue({ order }) }) };
+  const supabase = { from: jest.fn().mockReturnValue({ select: jest.fn().mockReturnValue({ or: jest.fn().mockReturnValue({ order }) }) }) };
 
-  const [item] = await listNotifications(supabase as never);
+  const [item] = await listNotifications(supabase as never, "s1");
 
   expect(item).toEqual({
     appointmentId: "a1", createdAt: "2026-10-20T10:00:00Z", id: "n1", kind: "appointment_cancelled",
@@ -22,9 +22,9 @@ it("maps rows", async () => {
 it("counts and marks", async () => {
   const rpc = jest.fn().mockResolvedValueOnce({ data: 3, error: null }).mockResolvedValueOnce({ data: 2, error: null });
 
-  expect(await countUnread({ rpc } as never)).toBe(3);
+  expect(await countUnread({ rpc } as never, "s1")).toBe(3);
   expect(await markRead({ rpc } as never, ["n1"])).toBe(2);
-  expect(rpc).toHaveBeenLastCalledWith("mark_notifications_read", { target_ids: ["n1"] });
+  expect(rpc).toHaveBeenLastCalledWith("mark_notifications_read", { p_shop_id: null, target_ids: ["n1"] });
 });
 
 it("has text keys for every kind", () => {

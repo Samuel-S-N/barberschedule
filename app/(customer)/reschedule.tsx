@@ -9,6 +9,7 @@ import { useAppointmentCards } from "../../src/features/appointments/use-appoint
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
+import { useCurrentShop } from "../../src/features/shops/CurrentShopProvider";
 
 function param(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";
@@ -24,7 +25,8 @@ export default function RescheduleScreen() {
   const { t } = useTranslation();
   const { supabase } = useSupabaseSession();
 
-  const upcoming = useQuery({ queryFn: () => listMyAppointments(supabase), queryKey: ["my-appointments", "upcoming"] });
+  const shopId = useCurrentShop().shop?.id ?? "";
+  const upcoming = useQuery({ enabled: Boolean(shopId), queryFn: () => listMyAppointments(supabase, shopId), queryKey: ["my-appointments", shopId, "upcoming"] });
   const current = upcoming.data?.find((appointment) => appointment.id === appointmentId);
   const toCardProps = useAppointmentCards(current ? [current] : []);
   const cardProps = current ? toCardProps(current) : null;

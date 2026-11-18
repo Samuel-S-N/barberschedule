@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 import { customerRow, customerUserId, json, mockCustomerRest, signInAsCustomer } from "./customer-helpers";
 
@@ -85,8 +85,12 @@ test("a visitor can request a password reset", async ({ page }) => {
 test("a visitor can create an account and is asked to confirm their email", async ({ page }) => {
   let signUpPayload: Record<string, unknown> | null = null;
 
-  await page.route("**/auth/v1/signup", async (route) => {
+  let signUpRedirect: string | null = null;
+
+  // The confirmation link must come back to this shop's address: supabase-js sends it as `redirect_to`.
+  await page.route("**/auth/v1/signup**", async (route) => {
     signUpPayload = route.request().postDataJSON() as Record<string, unknown>;
+    signUpRedirect = new URL(route.request().url()).searchParams.get("redirect_to");
     await json(route, {
       app_metadata: {}, aud: "authenticated", created_at: "2026-09-23T10:00:00Z",
       email: "ana@example.test", id: "new-user", user_metadata: {},
@@ -108,6 +112,7 @@ test("a visitor can create an account and is asked to confirm their email", asyn
   await page.getByRole("button", { name: "Create account" }).click();
 
   await expect(page.getByText("Check your email")).toBeVisible();
+  expect(signUpRedirect).toBe(new URL(page.url()).origin);
   expect(signUpPayload).toMatchObject({
     data: { accepted_terms_version: "2026-09-23", full_name: "Ana Silva", nickname: "Aninha", phone: "(11)90000-0000" },
     email: "ana@example.test",

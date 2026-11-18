@@ -10,15 +10,16 @@ import { StepIndicator } from "../../../../src/components/domain/StepIndicator";
 import { useProfessionalServices } from "../../../../src/features/services/use-professional-services";
 import { Screen } from "../../../../src/components/ui/Screen";
 import { useBack } from "../../../../src/lib/navigation/use-back";
+import { useBookingShopId } from "../../../../src/features/booking/use-booking-shop-id";
 
 function param(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";
 }
 
 export default function BookServiceScreen() {
-  const { professionalId: rawProfessionalId, shopId: rawShopId } = useLocalSearchParams<{ professionalId?: string; shopId?: string }>();
+  const { professionalId: rawProfessionalId } = useLocalSearchParams<{ professionalId?: string }>();
   const professionalId = param(rawProfessionalId);
-  const shopId = param(rawShopId);
+  const shopId = useBookingShopId();
   const router = useRouter();
   const { t } = useTranslation();
   const back = useBack();

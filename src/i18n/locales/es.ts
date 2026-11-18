@@ -374,6 +374,14 @@ export const es: DeepStringRecord<typeof en> = {
   },
   shop: { call: "Llamar", contactToChange: "Para cambiar esta cita, contacta al establecimiento.", whatsapp: "WhatsApp" },
   layout: { bootstrapError: "No se pudo configurar tu cuenta." },
+  shopGate: {
+    bareBody: "Zenc funciona con el enlace o código QR de cada negocio. Pídelo a tu negocio.",
+    bareTitle: "Abre el enlace que te envió tu negocio",
+    errorBody: "No pudimos cargar este negocio.",
+    notFoundBody: "Revisa el enlace que abriste o pide uno nuevo al negocio.",
+    notFoundTitle: "Negocio no encontrado",
+    staffLoginHint: "Equipo: ingresa abajo.",
+  },
   legal: {
     sections: {
       collect: {

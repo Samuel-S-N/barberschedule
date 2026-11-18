@@ -18,9 +18,8 @@ export function normalizeThemeColor(value: string): { ok: true; value: string | 
   return match ? { ok: true, value: `#${match[1].toUpperCase()}` } : { ok: false };
 }
 
-// Single-shop MVP, like the other shop screens: the first shop is the current one.
-export async function getShopTheme(supabase: Pick<SupabaseClient, "from">): Promise<{ input: ShopThemeValues; shopId: string } | null> {
-  const { data, error } = await supabase.from("shops").select("id, theme_primary, theme_accent, theme_base").order("name").limit(1);
+export async function getShopTheme(supabase: Pick<SupabaseClient, "from">, slug: string): Promise<{ input: ShopThemeValues; shopId: string } | null> {
+  const { data, error } = await supabase.from("shops").select("id, theme_primary, theme_accent, theme_base").eq("slug", slug).limit(1);
 
   if (error) throw error;
   const shop = (data as Array<{ id: string; theme_accent: string | null; theme_base: string | null; theme_primary: string | null }> | null)?.[0];
@@ -41,11 +40,11 @@ export async function updateShopTheme(supabase: Pick<SupabaseClient, "from">, sh
   if (error) throw toDomainError(error);
 }
 
-const cacheKey = (userId: string) => `zenc.shop-theme.${userId}`;
+const cacheKey = (slug: string) => `zenc.shop-theme.${slug}`;
 
-export async function readCachedTheme(userId: string): Promise<ThemeInput | null> {
+export async function readCachedTheme(slug: string): Promise<ThemeInput | null> {
   try {
-    const raw = await createKeyValueStorage().getItem(cacheKey(userId));
+    const raw = await createKeyValueStorage().getItem(cacheKey(slug));
     const parsed = raw ? (JSON.parse(raw) as Record<string, unknown>) : null;
     const pick = (key: string) => (typeof parsed?.[key] === "string" && STRICT_HEX.test(parsed[key] as string) ? (parsed[key] as string) : null);
 
@@ -55,9 +54,9 @@ export async function readCachedTheme(userId: string): Promise<ThemeInput | null
   }
 }
 
-export async function writeCachedTheme(userId: string, input: ThemeInput) {
+export async function writeCachedTheme(slug: string, input: ThemeInput) {
   try {
-    await createKeyValueStorage().setItem(cacheKey(userId), JSON.stringify(input));
+    await createKeyValueStorage().setItem(cacheKey(slug), JSON.stringify(input));
   } catch {
     // The cache only avoids a flash of the default colours; losing it is harmless.
   }

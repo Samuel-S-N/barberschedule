@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import type { Page } from "@playwright/test";
 
 import { openProfessionalCard } from "./agenda-helpers";
@@ -35,6 +35,8 @@ async function mockOwnerRest(page: Page, serves: boolean, calls: Record<string, 
 
     if (path.endsWith("/rpc/get_current_profile")) return json(route, [{ full_name: "Owner", role: "owner", user_id: ownerId }]);
     if (path.endsWith("/shops")) return json(route, [{ id: shopId }]);
+    // This spec also opens a second page of the context (outside the fixture), so it answers the staff-shop lookup itself.
+    if (path.endsWith("/rpc/get_my_shop")) return json(route, [{ shop_id: shopId, slug: "shop-a" }]);
     if (path.endsWith("/rpc/list_owner_professionals")) {
       return json(route, serves ? [{ active: true, archived_at: null, id: professionalId, name: "Owner Cuts", shop_id: shopId, user_id: ownerId }] : []);
     }

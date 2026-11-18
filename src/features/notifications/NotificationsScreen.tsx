@@ -24,6 +24,7 @@ import { formatDayMonth } from "../payouts/format";
 import { useBack } from "../../lib/navigation/use-back";
 import { pullToRefresh, useRefreshAll } from "../../lib/use-refresh";
 import { useSupabaseSession } from "../../providers/AppProviders";
+import { useCurrentShop } from "../shops/CurrentShopProvider";
 import { deleteNotifications, listNotifications, markRead } from "./inbox-api";
 import type { InboxItem } from "./inbox-api";
 import { recurrenceLabel } from "../recurrence/pricing";
@@ -40,17 +41,19 @@ export default function NotificationsScreen() {
   const { profile, supabase } = useSupabaseSession();
   const role = profile?.role ?? "customer";
   const back = useBack();
-  const items = useQuery({ queryFn: () => listNotifications(supabase), queryKey: ["notifications", profile?.userId] });
+  const shopId = useCurrentShop().shop?.id ?? "";
+  const items = useQuery({ enabled: Boolean(shopId), queryFn: () => listNotifications(supabase, shopId), queryKey: ["notifications", profile?.userId, shopId] });
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: ["notifications"] });
     void queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
   };
-  const read = useMutation({ mutationFn: (ids?: string[]) => markRead(supabase, ids), onSuccess: refresh });
+  // Specific ids need no shop; "all" is limited to the current shop (plus the unscoped rows).
+  const read = useMutation({ mutationFn: (ids?: string[]) => markRead(supabase, ids, ids ? undefined : shopId), onSuccess: refresh });
   const [confirmAll, setConfirmAll] = useState(false);
   const [target, setTarget] = useState<InboxItem | null>(null);
   const [deleteFailed, setDeleteFailed] = useState(false);
   const remove = useMutation({
-    mutationFn: (ids?: string[]) => deleteNotifications(supabase, ids),
+    mutationFn: (ids?: string[]) => deleteNotifications(supabase, ids, ids ? undefined : shopId),
     onError: () => setDeleteFailed(true),
     onSettled: () => {
       setConfirmAll(false);

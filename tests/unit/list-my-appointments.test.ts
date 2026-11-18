@@ -6,7 +6,7 @@ function fakeClient() {
   const calls: unknown[][] = [];
   const settled = { data: [], error: null };
   const chain: Record<string, jest.Mock> = {};
-  for (const name of ["select", "in", "gte", "or", "order"]) {
+  for (const name of ["select", "eq", "in", "gte", "or", "order"]) {
     chain[name] = jest.fn((...args: unknown[]) => {
       calls.push([name, ...args]);
       if (name !== "order") return chain;
@@ -26,7 +26,7 @@ describe("listMyAppointments", () => {
   it("lists only active appointments that have not ended yet as upcoming", async () => {
     const { calls, client } = fakeClient();
 
-    await listMyAppointments(client, false, now);
+    await listMyAppointments(client, "s1", false, now);
 
     expect(calls).toContainEqual(["in", "status", ["scheduled", "confirmed"]]);
     expect(calls).toContainEqual(["gte", "ends_at", now.toISOString()]);
@@ -36,7 +36,7 @@ describe("listMyAppointments", () => {
   it("puts finished appointments nobody closed in history next to terminal ones", async () => {
     const { calls, client } = fakeClient();
 
-    await listMyAppointments(client, true, now);
+    await listMyAppointments(client, "s1", true, now);
 
     expect(calls).toContainEqual([
       "or",
@@ -48,7 +48,7 @@ describe("listMyAppointments", () => {
   it("fetches one page of history when given a range", async () => {
     const { calls, client } = fakeClient();
 
-    await listMyAppointments(client, true, now, { from: 20, to: 39 });
+    await listMyAppointments(client, "s1", true, now, { from: 20, to: 39 });
 
     expect(calls).toContainEqual(["range", 20, 39]);
   });
@@ -56,7 +56,7 @@ describe("listMyAppointments", () => {
   it("does not page when no range is given", async () => {
     const { calls, client } = fakeClient();
 
-    await listMyAppointments(client, true, now);
+    await listMyAppointments(client, "s1", true, now);
 
     expect(calls.some(([name]) => name === "range")).toBe(false);
   });

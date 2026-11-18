@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { RefreshControl, ScrollView, Text, View } from "react-native";
 
@@ -12,14 +12,10 @@ import { listPublicProfessionals } from "../../../../src/features/professionals/
 import { useRefresh } from "../../../../src/lib/use-refresh";
 import { useSupabaseSession } from "../../../../src/providers/AppProviders";
 import { Screen } from "../../../../src/components/ui/Screen";
-
-function param(value: string | string[] | undefined) {
-  return typeof value === "string" ? value : "";
-}
+import { useBookingShopId } from "../../../../src/features/booking/use-booking-shop-id";
 
 export default function BookProfessionalScreen() {
-  const { shopId: rawShopId } = useLocalSearchParams<{ shopId?: string }>();
-  const shopId = param(rawShopId);
+  const shopId = useBookingShopId();
   const router = useRouter();
   const { t } = useTranslation();
   const { supabase } = useSupabaseSession();

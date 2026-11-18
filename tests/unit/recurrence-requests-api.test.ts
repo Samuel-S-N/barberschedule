@@ -40,7 +40,7 @@ it("maps my requests with the series state and the plan title", async () => {
     error: null,
   });
 
-  expect(await listMyRecurrenceRequests({ rpc } as never)).toEqual([
+  expect(await listMyRecurrenceRequests({ rpc } as never, "s1")).toEqual([
     { professionalName: "Bia", cancelRequestedAt: null, id: "r1", planName: "Corte mensal", recurrenceCents: 2500, seriesActive: false, seriesEndedAt: "2026-10-21T12:12:00Z", seriesId: "s1", serviceName: "Cut", startDate: "2026-10-23", startTime: "16:30", status: "accepted", weeks: 1 },
   ]);
 });

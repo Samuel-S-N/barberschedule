@@ -17,7 +17,7 @@ values ('81000000-0000-0000-0000-000000000001', 'T14 Shop', '80000000-0000-0000-
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '80000000-0000-0000-0000-000000000002', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
-select public.ensure_my_customer();
+select public.ensure_my_customer('81000000-0000-0000-0000-000000000001');
 
 select is(
   (select avatar_path from public.set_my_avatar('80000000-0000-0000-0000-000000000002/avatar-1.jpg')),

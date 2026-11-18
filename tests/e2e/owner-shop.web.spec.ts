@@ -1,7 +1,10 @@
-import { expect, test } from "@playwright/test";
+import { defaultShop, expect, test } from "./fixtures";
 import type { Page } from "@playwright/test";
 
 import { json } from "./customer-helpers";
+
+// The shop the screen reads comes from the current-shop lookup (answered by the fixture).
+test.use({ shop: { ...defaultShop, address: "Rua A, 10", phone: "1133334444", whatsapp: null } });
 
 const ownerId = "55555555-5555-4555-8555-555555555555";
 const shop = "11111111-1111-4111-8111-111111111111";

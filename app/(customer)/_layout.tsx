@@ -10,6 +10,7 @@ import { usePushRegistration } from "../../src/features/notifications/use-push-r
 import { useHardwareBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { Screen } from "../../src/components/ui/Screen";
+import { useCurrentShop } from "../../src/features/shops/CurrentShopProvider";
 
 // A cold start or web refresh on /reschedule still gets the tabs underneath, so back has somewhere to go.
 export const unstable_settings = { initialRouteName: "(tabs)" };
@@ -18,10 +19,11 @@ export default function CustomerLayout() {
   const { t } = useTranslation();
   useHardwareBack();
   const { profile, supabase } = useSupabaseSession();
+  const shopId = useCurrentShop().shop?.id ?? "";
   const bootstrap = useQuery({
-    enabled: profile?.role === "customer",
-    queryFn: () => ensureMyCustomer(supabase),
-    queryKey: ["ensure-my-customer", profile?.userId],
+    enabled: profile?.role === "customer" && Boolean(shopId),
+    queryFn: () => ensureMyCustomer(supabase, shopId),
+    queryKey: ["ensure-my-customer", profile?.userId, shopId],
     staleTime: Infinity,
   });
 

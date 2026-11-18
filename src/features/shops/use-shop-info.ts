@@ -1,18 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { useSupabaseSession } from "../../providers/AppProviders";
-import { listPublicShops, listShopHours } from "./api";
+import { listShopHours } from "./api";
+import { useCurrentShop } from "./CurrentShopProvider";
 
-// Single-shop MVP, like useAppointmentCards.
+// The business of the current subdomain and its opening hours.
 export function useShopInfo() {
   const { supabase } = useSupabaseSession();
-  const shops = useQuery({ queryFn: () => listPublicShops(supabase), queryKey: ["public-shops"] });
-  const shop = shops.data?.[0];
+  const { shop } = useCurrentShop();
   const hours = useQuery({
     enabled: Boolean(shop),
     queryFn: () => listShopHours(supabase, shop!.id),
     queryKey: ["shop-hours", shop?.id],
   });
 
-  return { hours: hours.data ?? [], shop };
+  return { hours: hours.data ?? [], shop: shop ?? undefined };
 }

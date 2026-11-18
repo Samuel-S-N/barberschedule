@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render, waitFor } from "@testing-library/react-native";
 
 jest.mock("../../src/providers/AppProviders", () => ({ useSupabaseSession: jest.fn() }));
+jest.mock("../../src/features/shops/CurrentShopProvider", () => ({ useCurrentShop: jest.fn() }));
 jest.mock("../../src/features/shops/theme", () => ({
   getShopTheme: jest.fn(),
   readCachedTheme: jest.fn(),
@@ -14,9 +15,11 @@ import { ShopThemeProvider, THEME_WAIT_MS } from "../../src/features/shops/ShopT
 import { DEFAULT_COLORS } from "../../src/lib/design/colors";
 import { deriveTheme } from "../../src/lib/design/theme/derive";
 import { useColors } from "../../src/lib/design/theme/ThemeProvider";
+import { useCurrentShop } from "../../src/features/shops/CurrentShopProvider";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 const session = jest.mocked(useSupabaseSession);
+const currentShop = jest.mocked(useCurrentShop);
 const fetchTheme = jest.mocked(getShopTheme);
 const cached = jest.mocked(readCachedTheme);
 const saved = jest.mocked(writeCachedTheme);
@@ -43,21 +46,35 @@ async function renderProvider(onColors: (colors: Colors) => void, queries: { ret
 }
 
 const signedIn = () => session.mockReturnValue({ isLoading: false, profile: { userId: "u1" }, session: { user: { id: "u1" } }, supabase: {} } as never);
+const onShop = (slug: string | null) => currentShop.mockReturnValue({ retry: jest.fn(), shop: null, slug, status: slug ? "ready" : "no-slug" } as never);
 
 describe("ShopThemeProvider", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     cached.mockResolvedValue(null);
+    onShop("alfa");
   });
 
-  it("shows the default theme and does not fetch without a session", async () => {
+  it("shows the default theme and does not fetch without a shop (bare domain)", async () => {
     session.mockReturnValue({ isLoading: false, profile: null, session: null, supabase: {} } as never);
+    onShop(null);
     const seen: Colors[] = [];
 
     await renderProvider((colors) => seen.push(colors));
 
     expect(seen[0]).toBe(DEFAULT_COLORS);
     expect(fetchTheme).not.toHaveBeenCalled();
+  });
+
+  it("a signed-out visitor on a shop's address still gets that shop's colours", async () => {
+    session.mockReturnValue({ isLoading: false, profile: null, session: null, supabase: {} } as never);
+    fetchTheme.mockResolvedValue({ input: { accent: null, base: null, primary: "#2F6FDB" }, shopId: "s1" });
+    const seen: Colors[] = [];
+
+    await renderProvider((colors) => seen.push(colors));
+
+    await waitFor(() => expect(seen[seen.length - 1].primary[400]).toBe(deriveTheme({ primary: "#2F6FDB" }).colors.primary[400]));
+    expect(fetchTheme).toHaveBeenCalledWith({}, "alfa");
   });
 
   it("applies the shop colours after sign-in and caches them for the next launch", async () => {
@@ -68,7 +85,7 @@ describe("ShopThemeProvider", () => {
     await renderProvider((colors) => seen.push(colors));
 
     await waitFor(() => expect(seen[seen.length - 1].primary[400]).toBe(deriveTheme({ primary: "#2F6FDB" }).colors.primary[400]));
-    expect(saved).toHaveBeenCalledWith("u1", { accent: null, base: null, primary: "#2F6FDB" });
+    expect(saved).toHaveBeenCalledWith("alfa", { accent: null, base: null, primary: "#2F6FDB" });
   });
 
   it("starts from the cached colours while the request is still running", async () => {

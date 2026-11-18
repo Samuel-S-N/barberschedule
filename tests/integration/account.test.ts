@@ -18,10 +18,10 @@ describe("account api", () => {
   it("ensureMyCustomer calls the RPC and maps the row", async () => {
     const rpc = jest.fn().mockResolvedValue({ data: customerRow, error: null });
 
-    await expect(ensureMyCustomer({ rpc } as never)).resolves.toMatchObject({
+    await expect(ensureMyCustomer({ rpc } as never, "s1")).resolves.toMatchObject({
       fullName: "Ana", id: "customer-1", userId: "user-1",
     });
-    expect(rpc).toHaveBeenCalledWith("ensure_my_customer");
+    expect(rpc).toHaveBeenCalledWith("ensure_my_customer", { p_shop_id: "s1" });
   });
 
   it("updateMyProfile sends p_-prefixed parameters", async () => {
@@ -50,7 +50,7 @@ describe("account api", () => {
   it("maps other RPC failures to ACCOUNT_REQUEST_FAILED, not a booking error", async () => {
     const rpc = jest.fn().mockResolvedValue({ data: null, error: { code: "XX000" } });
 
-    await expect(ensureMyCustomer({ rpc } as never)).rejects.toMatchObject({ code: "ACCOUNT_REQUEST_FAILED" });
+    await expect(ensureMyCustomer({ rpc } as never, "s1")).rejects.toMatchObject({ code: "ACCOUNT_REQUEST_FAILED" });
   });
 
   it("exportMyData returns the JSON document", async () => {

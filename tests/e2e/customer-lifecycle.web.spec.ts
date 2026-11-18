@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 import {
   appointmentRow, customerRow, customerUserId, isHistoryQuery, json, mockCustomerRest, signInAsCustomer,

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import type { Page } from "@playwright/test";
 
 import { json, mockCustomerRest, signInAsCustomer } from "./customer-helpers";
@@ -55,7 +55,7 @@ test("the X at the top right asks for confirmation and clears every notification
 
   await page.getByTestId("notifications-clear").click();
   await page.getByTestId("confirm-dialog-confirm").click();
-  await expect.poll(() => deletes).toEqual([{ target_ids: null }]);
+  await expect.poll(() => deletes).toEqual([{ p_shop_id: "11111111-1111-4111-8111-111111111111", target_ids: null }]);
   await expect(page.getByText("No notifications yet")).toBeVisible();
   await expect(page.getByTestId("notifications-clear")).toHaveCount(0);
 });
@@ -75,7 +75,7 @@ test("holding a notification opens a pop-up to delete just that one", async ({ p
   await expect(page.getByTestId("notification-sheet")).toBeVisible();
   await expect(page).toHaveURL(/\/notifications/);
   await page.getByTestId("notification-sheet-delete").click();
-  await expect.poll(() => deletes).toEqual([{ target_ids: ["n1"] }]);
+  await expect.poll(() => deletes).toEqual([{ p_shop_id: null, target_ids: ["n1"] }]);
   await expect(page.getByTestId("notification-n1")).toHaveCount(0);
   await expect(page.getByTestId("notification-n2")).toBeVisible();
 });
