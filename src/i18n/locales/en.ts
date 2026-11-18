@@ -379,6 +379,18 @@ export const en = {
   },
   shop: { call: "Call", contactToChange: "To change this appointment, contact the shop.", whatsapp: "WhatsApp" },
   layout: { bootstrapError: "Unable to set up your account." },
+  webPush: {
+    body: "Get booking and reminder alerts on this device.",
+    button: "Turn on",
+    deniedBody: "Allow notifications for this site in your browser settings, then reload the page.",
+    deniedTitle: "Notifications are blocked",
+    error: "Could not turn on notifications. Try again.",
+    iosBody: "On iPhone, notifications only work for the app added to your Home Screen.",
+    iosTitle: "Add Zenc to your Home Screen first",
+    onBody: "You will get booking and reminder alerts on this device.",
+    onTitle: "Notifications are on",
+    title: "Turn on notifications",
+  },
   install: {
     chromeBody: "Open Zenc straight from your home screen.",
     chromeButton: "Install",

@@ -11,6 +11,7 @@ module.exports = tseslint.config(
       "coverage/**",
       "dist/**",
       "node_modules/**",
+      "supabase/.temp/**",
       "playwright-report/**",
       "test-results/**",
     ],

@@ -28,3 +28,26 @@ export async function registerNotificationToken(
   if (!row) throw new Error("Unable to register notification token.");
   return row as NotificationToken;
 }
+
+export type WebSubscriptionJson = { endpoint: string; keys: { auth: string; p256dh: string } };
+
+export async function registerWebPushSubscription(
+  supabase: NotificationsSupabaseClient,
+  subscription: WebSubscriptionJson,
+  origin: string,
+  locale: Language | null = null,
+) {
+  const { error } = await supabase.rpc("register_web_push_subscription", {
+    target_locale: locale,
+    target_origin: origin,
+    target_subscription: subscription,
+  });
+
+  if (error) throw error;
+}
+
+export async function deactivateMyWebSubscription(supabase: NotificationsSupabaseClient, endpoint: string) {
+  const { error } = await supabase.rpc("deactivate_my_web_subscription", { target_endpoint: endpoint });
+
+  if (error) throw error;
+}

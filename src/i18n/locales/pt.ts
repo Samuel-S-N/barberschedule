@@ -378,6 +378,18 @@ export const pt: DeepStringRecord<typeof en> = {
   },
   shop: { call: "Ligar", contactToChange: "Para alterar este agendamento, fale com o estabelecimento.", whatsapp: "WhatsApp" },
   layout: { bootstrapError: "Não foi possível configurar sua conta." },
+  webPush: {
+    body: "Receba avisos de agendamentos e lembretes neste aparelho.",
+    button: "Ativar",
+    deniedBody: "Permita as notificações deste site nas configurações do navegador e recarregue a página.",
+    deniedTitle: "As notificações estão bloqueadas",
+    error: "Não foi possível ativar as notificações. Tente de novo.",
+    iosBody: "No iPhone, as notificações só funcionam no app adicionado à Tela de Início.",
+    iosTitle: "Adicione o Zenc à Tela de Início primeiro",
+    onBody: "Você receberá avisos de agendamentos e lembretes neste aparelho.",
+    onTitle: "As notificações estão ativas",
+    title: "Ativar notificações",
+  },
   install: {
     chromeBody: "Abra o Zenc direto da tela inicial do seu celular.",
     chromeButton: "Instalar",
