@@ -5,7 +5,7 @@ import { Linking } from "react-native";
 import { ShopContactButtons, ShopInfoCard } from "../../src/components/domain/ShopInfoCard";
 import i18n from "../../src/i18n";
 
-const shop = { address: "Rua A, 10", id: "s1", name: "Shop", phone: "(11) 3000-0000", whatsapp: "(11) 99999-0000" };
+const shop = { address: "Rua A, 10", id: "s1", name: "Shop", phone: "(11) 3000-0000", slug: "alfa", whatsapp: "(11) 99999-0000" };
 const hours = [
   { end: "12:00", start: "09:00", weekday: 1 },
   { end: "18:00", start: "13:00", weekday: 1 },

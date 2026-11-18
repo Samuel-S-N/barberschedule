@@ -48,7 +48,7 @@ describe("useAppointmentCards", () => {
   });
 
   it("formats the date in the current language and keeps real names", async () => {
-    jest.mocked(listPublicShops).mockResolvedValue([{ address: null, id: "s1", name: "Barbearia Alfa", phone: null, whatsapp: null }]);
+    jest.mocked(listPublicShops).mockResolvedValue([{ address: null, id: "s1", name: "Barbearia Alfa", phone: null, slug: "alfa", whatsapp: null }]);
     jest.mocked(listPublicProfessionals).mockResolvedValue([{ id: "b1", name: "João" }] as never);
     await i18n.changeLanguage("pt");
 
