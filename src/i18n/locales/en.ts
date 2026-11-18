@@ -969,6 +969,8 @@ export const en = {
       PAYOUT_INVALID: "Enter a valid amount for a commission professional.",
       PAYOUT_SCHEDULE_INVALID: "Check the payout schedule and days.",
       REPORT_FORBIDDEN: "Only the shop owner can see this report.",
+      SHOP_SLUG_INVALID: "That business link is taken or not allowed.",
+      SHOP_OWNER_INVALID: "This account cannot own a new business.",
       SERVICE_STANDARD_LOCKED: "This service is standard and cannot be turned off.",
       COMPENSATION_INVALID: "Enter a valid commission or chair rental.",
       EARNINGS_INVALID_RANGE: "Choose a period of up to 92 days.",

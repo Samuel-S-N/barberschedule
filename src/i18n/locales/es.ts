@@ -968,6 +968,8 @@ export const es: DeepStringRecord<typeof en> = {
       PAYOUT_INVALID: "Ingresa un monto válido para un profesional por comisión.",
       PAYOUT_SCHEDULE_INVALID: "Revisa la agenda y los días del pago.",
       REPORT_FORBIDDEN: "Solo el dueño del establecimiento puede ver este informe.",
+      SHOP_SLUG_INVALID: "Ese enlace del negocio está en uso o no es válido.",
+      SHOP_OWNER_INVALID: "Esta cuenta no puede ser dueña de un nuevo negocio.",
       SERVICE_STANDARD_LOCKED: "Este servicio es estándar y no se puede desactivar.",
       COMPENSATION_INVALID: "Ingresa una comisión o alquiler de silla válidos.",
       EARNINGS_INVALID_RANGE: "Elige un período de hasta 92 días.",

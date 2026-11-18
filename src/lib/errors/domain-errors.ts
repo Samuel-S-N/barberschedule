@@ -42,7 +42,9 @@ export type DomainErrorCode =
   | "RENT_PAYMENT_INVALID"
   | "PAYOUT_INVALID"
   | "PAYOUT_SCHEDULE_INVALID"
-  | "REPORT_FORBIDDEN";
+  | "REPORT_FORBIDDEN"
+  | "SHOP_SLUG_INVALID"
+  | "SHOP_OWNER_INVALID";
 
 export class DomainError extends Error {
   constructor(
@@ -149,6 +151,10 @@ export function toDomainError(error: { code?: string; message?: string }): Domai
       return new DomainError("PAYOUT_SCHEDULE_INVALID", "Check the payout schedule and days.");
     case "P0040":
       return new DomainError("PAYOUT_INVALID", "Enter a valid payout for a commission professional.");
+    case "P0041":
+      return new DomainError("SHOP_SLUG_INVALID", "That business link is taken or not allowed.");
+    case "P0042":
+      return new DomainError("SHOP_OWNER_INVALID", "This account cannot own a new business.");
     case "P0029":
       return new DomainError("REPORT_FORBIDDEN", "Only the shop owner can see this report.");
     default:
