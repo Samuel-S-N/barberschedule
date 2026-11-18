@@ -9,6 +9,7 @@ import { Button } from "../../src/components/ui/Button";
 import { Input, useFieldChain } from "../../src/components/ui/Input";
 import { Screen } from "../../src/components/ui/Screen";
 import { signInWithPassword } from "../../src/features/auth/api";
+import { useCurrentShop } from "../../src/features/shops/CurrentShopProvider";
 import { errorMessage } from "../../src/i18n/errors";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
@@ -17,6 +18,8 @@ export default function LoginScreen() {
   const { notice } = useLocalSearchParams<{ notice?: string }>();
   const { t } = useTranslation();
   const { isLoading, supabase } = useSupabaseSession();
+  // On the bare domain there is no shop: staff can still sign in, but there is nothing to sign up to.
+  const bare = useCurrentShop().status === "no-slug";
   const field = useFieldChain(2);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,7 +50,7 @@ export default function LoginScreen() {
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <Text accessibilityRole="header" className="text-3xl leading-[44px] font-display-bold text-ink">{t("auth.login.title")}</Text>
-            <Text className="text-base font-sans text-neutral-600">{t("auth.login.subtitle")}</Text>
+            <Text className="text-base font-sans text-neutral-600">{bare ? `${t("shopGate.bareTitle")}. ${t("shopGate.staffLoginHint")}` : t("auth.login.subtitle")}</Text>
             <Input {...field(0)} autoCapitalize="none" autoComplete="email" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" label={t("common.email")} onChangeText={setEmail} placeholder={t("examples.email")} testID="login-email" value={email} />
             <Input {...field(1)} autoComplete="current-password" label={t("common.password")} onChangeText={setPassword} onSubmitEditing={submitFromKeyboard} returnKeyType="go" textContentType="password" secureTextEntry testID="login-password" value={password} />
             <Toast message={t("auth.login.passwordReset")} onDismiss={() => setNoticeDismissed(true)} variant="success" visible={notice === "password-reset" && !noticeDismissed} />
@@ -59,7 +62,7 @@ export default function LoginScreen() {
               size="lg"
             />
             <Button label={t("auth.login.forgot")} onPress={() => router.push("/forgot-password")} variant="ghost" />
-            <Button label={t("auth.login.createAccount")} onPress={() => router.push("/signup")} variant="outline" />
+            {bare ? null : <Button label={t("auth.login.createAccount")} onPress={() => router.push("/signup")} variant="outline" />}
           </View>
         </View>
       </KeyboardAwareScrollView>
