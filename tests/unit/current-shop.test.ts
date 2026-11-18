@@ -31,10 +31,13 @@ describe("CurrentShopProvider", () => {
 
   it("is loading, then ready with the shop", async () => {
     jest.mocked(currentShopSlug).mockReturnValue("alfa");
-    jest.mocked(getShopBySlug).mockResolvedValue(shop);
+    // Held open until the "loading" assertion: RNTL's async render can otherwise flush an already-resolved mock first (flaky in CI).
+    let resolveShop: (value: typeof shop) => void = () => undefined;
+    jest.mocked(getShopBySlug).mockReturnValue(new Promise((resolve) => { resolveShop = resolve; }));
     const view = await renderProvider();
 
     expect(view.getByTestId("probe").props.children).toBe("loading:alfa:");
+    resolveShop(shop);
     await waitFor(() => expect(view.getByTestId("probe").props.children).toBe("ready:alfa:Barbearia Alfa"));
     expect(getShopBySlug).toHaveBeenCalledWith({}, "alfa");
   });
