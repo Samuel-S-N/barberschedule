@@ -50,7 +50,7 @@ describe("useInstallPrompt", () => {
     jest.mocked(readInstallEnvironment).mockReturnValue(base);
     const { unmount } = await renderHook(() => useInstallPrompt());
 
-    unmount();
+    await act(async () => unmount());
 
     expect(fake.listeners.beforeinstallprompt).toEqual([]);
     expect(fake.listeners.appinstalled).toEqual([]);
