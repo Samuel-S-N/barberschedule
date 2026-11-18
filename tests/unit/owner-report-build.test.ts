@@ -1,4 +1,4 @@
-import { professionalRows, sumShopReport, topByValue, type ShopReport } from "../../src/features/owner-reports/build";
+import { professionalRows, payoutsPaidByProfessional, sumShopReport, topByValue, type ShopReport } from "../../src/features/owner-reports/build";
 
 const report: ShopReport = {
   professionals: [
@@ -47,5 +47,17 @@ describe("topByValue", () => {
 
   it("ignores zero-value items and adds no other slice when everything fits", () => {
     expect(topByValue([{ key: "a", name: "A", value: 5 }, { key: "z", name: "Z", value: 0 }], 4).map((i) => i.key)).toEqual(["a"]);
+  });
+});
+
+describe("payoutsPaidByProfessional", () => {
+  it("adds up the payouts of each professional", () => {
+    const paid = payoutsPaidByProfessional([{ amountCents: 3000, professionalId: "a" }, { amountCents: 2000, professionalId: "a" }, { amountCents: 500, professionalId: "c" }]);
+
+    expect(paid).toEqual({ a: 5000, c: 500 });
+  });
+
+  it("is empty without payouts", () => {
+    expect(payoutsPaidByProfessional([])).toEqual({});
   });
 });
