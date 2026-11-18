@@ -1,3 +1,5 @@
+import { buildShopUrl, DEFAULT_SHOP_URL_TEMPLATE } from "../_shared/shop-url.ts";
+
 declare const Deno: {
   env: { get(name: string): string | undefined };
   serve(handler: (request: Request) => Response | Promise<Response>): void;
@@ -67,7 +69,13 @@ Deno.serve(async (request) => {
 
   if (professional.user_id || !professional.active) return json(409, { code: "PROFESSIONAL_INVITE_CONFLICT" });
 
-  const invited = await fetch(`${url}/auth/v1/invite`, {
+  // The invite link lands on the professional's own shop (its subdomain), where they create their password.
+  const shopResponse = await fetch(`${url}/rest/v1/shops?id=eq.${professional.shop_id}&select=slug`, { headers: service });
+  const [shop] = (await shopResponse.json().catch(() => [])) as Array<{ slug: string }>;
+  if (!shop) return json(500, { code: "INVITE_FAILED" });
+  const redirectTo = buildShopUrl(Deno.env.get("SHOP_URL_TEMPLATE") ?? DEFAULT_SHOP_URL_TEMPLATE, shop.slug, "/reset-password");
+
+  const invited = await fetch(`${url}/auth/v1/invite?redirect_to=${encodeURIComponent(redirectTo)}`, {
     body: JSON.stringify({ email }),
     headers: service,
     method: "POST",
