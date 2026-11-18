@@ -83,8 +83,8 @@ export async function cancelMyRecurrenceRequest(supabase: Client, id: string) {
   await call(supabase, "cancel_my_recurrence_request", { target_request_id: id });
 }
 
-export async function listMyRecurrenceRequests(supabase: Client): Promise<RecurrenceRequest[]> {
-  const rows = await call(supabase, "list_my_recurrence_requests");
+export async function listMyRecurrenceRequests(supabase: Client, shopId: string): Promise<RecurrenceRequest[]> {
+  const rows = await call(supabase, "list_my_recurrence_requests", { p_shop_id: shopId });
 
   return rows.map((row) => ({
     professionalName: String(row.professional_name),

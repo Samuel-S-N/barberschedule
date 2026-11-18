@@ -70,7 +70,7 @@ export default function CustomerRecurrenceScreen() {
 
   const shopId = useCurrentShop().shop?.id ?? "";
   const professionals = useQuery({ enabled: Boolean(shopId), queryFn: () => listPublicProfessionals(supabase, shopId), queryKey: ["public-professionals", shopId] });
-  const requests = useQuery({ queryFn: () => listMyRecurrenceRequests(supabase), queryKey: ["my-recurrence-requests"] });
+  const requests = useQuery({ enabled: Boolean(shopId), queryFn: () => listMyRecurrenceRequests(supabase, shopId), queryKey: ["my-recurrence-requests", shopId] });
 
   // Plan-first: every professional's plans merged, so one plan lists the professionals that offer it.
   const professionalList = professionals.data ?? [];

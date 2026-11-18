@@ -26,6 +26,7 @@ import { useNow } from "../../../src/lib/use-now";
 import { useRefresh } from "../../../src/lib/use-refresh";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 import { Screen } from "../../../src/components/ui/Screen";
+import { useCurrentShop } from "../../../src/features/shops/CurrentShopProvider";
 
 export default function AgendaScreen() {
   const router = useRouter();
@@ -40,12 +41,14 @@ export default function AgendaScreen() {
   const [feedback, setFeedback] = useState<{ message: string; variant: "success" | "error" } | null>(null);
   const [pickedDate, setPickedDate] = useState<string | null>(null);
 
-  const upcoming = useQuery({ queryFn: () => listMyAppointments(supabase), queryKey: ["my-appointments", "upcoming"] });
+  const shopId = useCurrentShop().shop?.id ?? "";
+  const upcoming = useQuery({ enabled: Boolean(shopId), queryFn: () => listMyAppointments(supabase, shopId), queryKey: ["my-appointments", shopId, "upcoming"] });
   const history = useInfiniteQuery({
     getNextPageParam: (last: Appointment[], all: Appointment[][]) => (last.length === HISTORY_PAGE_SIZE ? all.length * HISTORY_PAGE_SIZE : undefined),
     initialPageParam: 0,
-    queryFn: ({ pageParam }) => listMyAppointments(supabase, true, new Date(), { from: pageParam, to: pageParam + HISTORY_PAGE_SIZE - 1 }),
-    queryKey: ["my-appointments", "history"],
+    enabled: Boolean(shopId),
+    queryFn: ({ pageParam }) => listMyAppointments(supabase, shopId, true, new Date(), { from: pageParam, to: pageParam + HISTORY_PAGE_SIZE - 1 }),
+    queryKey: ["my-appointments", shopId, "history"],
   });
   const historyItems = useMemo(() => history.data?.pages.flat() ?? [], [history.data]);
   const { shop } = useShopInfo();

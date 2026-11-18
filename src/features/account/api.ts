@@ -27,8 +27,8 @@ async function callRpc(supabase: RpcClient, name: string, args?: Record<string, 
   return data;
 }
 
-export async function ensureMyCustomer(supabase: RpcClient) {
-  return toCustomer((await callRpc(supabase, "ensure_my_customer")) as CustomerRow);
+export async function ensureMyCustomer(supabase: RpcClient, shopId: string) {
+  return toCustomer((await callRpc(supabase, "ensure_my_customer", { p_shop_id: shopId })) as CustomerRow);
 }
 
 export async function updateMyProfile(

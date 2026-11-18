@@ -20,6 +20,7 @@ import { listMyCustomers } from "../../../src/features/customers/api";
 import { useRefresh } from "../../../src/lib/use-refresh";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 import { Screen } from "../../../src/components/ui/Screen";
+import { useCurrentShop } from "../../../src/features/shops/CurrentShopProvider";
 
 export default function CustomerHomeScreen() {
   const router = useRouter();
@@ -32,8 +33,9 @@ export default function CustomerHomeScreen() {
   useEffect(() => {
     if (booked) setConfirmed(true);
   }, [booked]);
-  const customers = useQuery({ queryFn: () => listMyCustomers(supabase), queryKey: ["my-customers"] });
-  const upcoming = useQuery({ queryFn: () => listMyAppointments(supabase), queryKey: ["my-appointments", "upcoming"] });
+  const shopId = useCurrentShop().shop?.id ?? "";
+  const customers = useQuery({ enabled: Boolean(shopId), queryFn: () => listMyCustomers(supabase, shopId), queryKey: ["my-customers", shopId] });
+  const upcoming = useQuery({ enabled: Boolean(shopId), queryFn: () => listMyAppointments(supabase, shopId), queryKey: ["my-appointments", shopId, "upcoming"] });
   const toCardProps = useAppointmentCards(upcoming.data ?? []);
   const next = upcoming.data?.[0];
   const profile = useMyProfile();

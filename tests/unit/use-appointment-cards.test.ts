@@ -54,7 +54,8 @@ describe("useAppointmentCards", () => {
 
     const read = await renderProbe();
 
-    await waitFor(() => expect(read().shopName).toBe("Barbearia Alfa"));
+    expect(read().shopName).toBe("Barbearia Alfa");
+    await waitFor(() => expect(read().professionalName).toBe("João"));
     expect(read()).toMatchObject({ professionalName: "João", timeLabel: "09:00" });
     expect(read().dateLabel).toMatch(/^seg.*17.*ago/i);
   });

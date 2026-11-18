@@ -56,9 +56,9 @@ export default function BookReviewScreen() {
   const option = services.data?.find((candidate) => candidate.professionalServiceId === professionalServiceId);
   const professional = professionals.data?.find((candidate) => candidate.id === professionalId);
   const customers = useQuery({
-    enabled: profile?.role === "customer",
-    queryFn: () => listMyCustomers(supabase),
-    queryKey: ["my-customers"],
+    enabled: profile?.role === "customer" && Boolean(shopId),
+    queryFn: () => listMyCustomers(supabase, shopId),
+    queryKey: ["my-customers", shopId],
   });
   const customer = customers.data?.find(
     (candidate) => candidate.active && candidate.userId === profile?.userId,

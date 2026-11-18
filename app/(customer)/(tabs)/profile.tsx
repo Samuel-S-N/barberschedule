@@ -15,6 +15,7 @@ import { listMyCustomers } from "../../../src/features/customers/api";
 import { errorMessage } from "../../../src/i18n/errors";
 import { useColors } from "../../../src/lib/design/theme/ThemeProvider";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
+import { useCurrentShop } from "../../../src/features/shops/CurrentShopProvider";
 
 export default function CustomerProfileScreen() {
   const colors = useColors();
@@ -22,7 +23,8 @@ export default function CustomerProfileScreen() {
   const { t } = useTranslation();
   const { session, supabase } = useSupabaseSession();
   const profile = useMyProfile();
-  const customers = useQuery({ queryFn: () => listMyCustomers(supabase), queryKey: ["my-customers"] });
+  const shopId = useCurrentShop().shop?.id ?? "";
+  const customers = useQuery({ enabled: Boolean(shopId), queryFn: () => listMyCustomers(supabase, shopId), queryKey: ["my-customers", shopId] });
   const name = profile.data?.nickname || customers.data?.[0]?.fullName || profile.data?.fullName || "";
   const [error, setError] = useState<string | null>(null);
 

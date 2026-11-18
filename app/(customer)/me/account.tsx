@@ -21,6 +21,7 @@ import { listMyCustomers } from "../../../src/features/customers/api";
 import { errorMessage } from "../../../src/i18n/errors";
 import { useBack } from "../../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
+import { useCurrentShop } from "../../../src/features/shops/CurrentShopProvider";
 
 type Feedback = { message: string; variant: "error" | "success" };
 
@@ -31,7 +32,8 @@ export default function AccountScreen() {
   const queryClient = useQueryClient();
   const { session, supabase } = useSupabaseSession();
   const profile = useMyProfile();
-  const customers = useQuery({ queryFn: () => listMyCustomers(supabase), queryKey: ["my-customers"] });
+  const shopId = useCurrentShop().shop?.id ?? "";
+  const customers = useQuery({ enabled: Boolean(shopId), queryFn: () => listMyCustomers(supabase, shopId), queryKey: ["my-customers", shopId] });
   const customer = customers.data?.[0];
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
