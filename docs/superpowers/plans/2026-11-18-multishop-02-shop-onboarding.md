@@ -1492,3 +1492,12 @@ Set `Status:` of `docs/superpowers/specs/2026-11-18-shop-onboarding-design.md` t
 git add docs
 git commit -m "docs: shop onboarding implemented"
 ```
+
+---
+
+## Execution deviations
+
+- **Task 1:** `052_create_shop.sql` reads `profiles` and `shops` columns as the test owner (`reset role` / `set local role service_role` around those assertions): `service_role` has no table privilege on `profiles`, and on `shops` only `select (id, slug)`, so the plan's version failed with "permission denied for table profiles". Mailpit/Auth behaviour unchanged.
+- **Task 3:** the script test's Node warning `MODULE_TYPELESS_PACKAGE_JSON` for the imported `.ts` files is harmless (same pattern as `run-e2e-web.mjs`).
+- **Task 7/8/9 ordering:** `address.ts`, `cep.ts`, `formatCepInput`, `CepInput` and the new locale texts landed in one commit before the switch of `PublicShop`, `ShopInfoCard`, the calendar location and the owner Shop screen (Task 9), as the plan ordered; `examples.address` was removed in Task 9, and `tests/unit/field-examples.test.ts` now lists the new example keys instead of `address`.
+- **Task 9:** `shop.tsx` types the number-field ref with `ComponentRef<typeof TextInput>` (the plan's `useRef<TextInput>` does not satisfy the project's `Input` ref type).
