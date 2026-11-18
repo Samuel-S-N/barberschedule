@@ -15,6 +15,7 @@ import { errorMessage } from "../../src/i18n/errors";
 import { useColors } from "../../src/lib/design/theme/ThemeProvider";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { InstallPrompt } from "../../src/features/install/InstallPrompt";
+import { NotificationPrompt } from "../../src/features/notifications/NotificationPrompt";
 
 export default function OwnerSettingsScreen() {
   const colors = useColors();
@@ -74,6 +75,7 @@ export default function OwnerSettingsScreen() {
             />
 
             <InstallPrompt />
+            <NotificationPrompt />
 
             <Pressable
               accessibilityRole="button"

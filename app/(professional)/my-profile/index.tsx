@@ -17,6 +17,7 @@ import { useColors } from "../../../src/lib/design/theme/ThemeProvider";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../../src/lib/use-refresh";
 import { InstallPrompt } from "../../../src/features/install/InstallPrompt";
+import { NotificationPrompt } from "../../../src/features/notifications/NotificationPrompt";
 
 export default function ProfessionalProfileHub() {
   const colors = useColors();
@@ -70,6 +71,7 @@ export default function ProfessionalProfileHub() {
             />
 
             <InstallPrompt />
+            <NotificationPrompt />
 
             <Pressable
               accessibilityRole="button"
