@@ -48,7 +48,7 @@ describe("useAppointmentCards", () => {
   });
 
   it("formats the date in the current language and keeps real names", async () => {
-    jest.mocked(useCurrentShop).mockReturnValue({ retry: jest.fn(), shop: { address: null, id: "s1", name: "Barbearia Alfa", phone: null, slug: "alfa", whatsapp: null }, slug: "alfa", status: "ready" });
+    jest.mocked(useCurrentShop).mockReturnValue({ retry: jest.fn(), shop: { address_cep: null, address_city: null, address_city_ibge: null, address_complement: null, address_district: null, address_number: null, address_state: null, address_street: null, id: "s1", name: "Barbearia Alfa", phone: null, slug: "alfa", whatsapp: null }, slug: "alfa", status: "ready" });
     jest.mocked(listPublicProfessionals).mockResolvedValue([{ id: "b1", name: "João" }] as never);
     await i18n.changeLanguage("pt");
 

@@ -10,12 +10,12 @@ import React, {
   useState,
 } from "react";
 
-import { AppState } from "react-native";
+import { AppState, Platform } from "react-native";
 import { I18nextProvider } from "react-i18next";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 
 import { getCurrentProfile } from "../features/auth/api";
-import { markRecovery } from "../features/auth/recovery";
+import { inviteTokenFromUrl, markRecovery, promoteInvite, rememberInviteToken } from "../features/auth/recovery";
 import i18n, { loadLanguagePreference, syncLanguage } from "../i18n";
 import type { Profile } from "../features/auth/types";
 import { getSupabaseBrowserClient } from "../lib/supabase/client";
@@ -33,7 +33,14 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 export function AppProviders({ children }: PropsWithChildren) {
   const queryClient = useMemo(() => new QueryClient(), []);
   useEffect(() => bindQueryFocusToAppState(AppState), []);
-  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
+  const supabase = useMemo(() => {
+    // supabase-js consumes (and removes) the URL hash when the client is created, so note an invite link's token first; it becomes
+    // the invite proof only when the session it creates arrives (see promoteInvite).
+    const inviteToken = Platform.OS === "web" && typeof window !== "undefined" ? inviteTokenFromUrl(window.location.href) : null;
+    if (inviteToken) rememberInviteToken(inviteToken);
+
+    return getSupabaseBrowserClient();
+  }, []);
   const [isLoading, setIsLoading] = useState(true);
   const [languageReady, setLanguageReady] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -87,6 +94,7 @@ export function AppProviders({ children }: PropsWithChildren) {
     };
 
     supabase.auth.getSession().then(({ data }) => {
+      promoteInvite(data.session);
       void syncSession(data.session);
     });
 
@@ -94,6 +102,7 @@ export function AppProviders({ children }: PropsWithChildren) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (event === "PASSWORD_RECOVERY") markRecovery();
+      promoteInvite(nextSession);
 
       // The same user, refreshed or edited (password/e-mail change): keep the session current without the
       // loading gate, which would unmount the navigator and send the user back to the first screen. The browser

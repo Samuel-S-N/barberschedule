@@ -1,5 +1,6 @@
 import { TERMS_VERSION } from "../account/legal";
-import { clearRecovery, markRecovery } from "./recovery";
+import { clearRecovery, markInvite, markRecovery } from "./recovery";
+import type { RecoveryFlow } from "./recovery";
 import type { AuthSupabaseClient, Profile } from "./types";
 import type { SignupInput } from "./validation";
 
@@ -108,7 +109,7 @@ let consumedRefreshToken: string | null = null;
 
 export async function startRecoverySession(
   supabase: Pick<AuthSupabaseClient, "auth">,
-  link: { accessToken: string; refreshToken: string },
+  link: { accessToken: string; refreshToken: string; flow?: RecoveryFlow },
 ) {
   if (consumedRefreshToken === link.refreshToken) return true;
 
@@ -120,7 +121,8 @@ export async function startRecoverySession(
     return false;
   }
 
-  markRecovery();
+  if (link.flow === "invite") markInvite();
+  else markRecovery();
   return true;
 }
 

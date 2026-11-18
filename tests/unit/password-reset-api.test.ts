@@ -1,5 +1,5 @@
 import { completePasswordReset, requestPasswordReset, startRecoverySession } from "../../src/features/auth/api";
-import { clearRecovery, hasRecovery, markRecovery } from "../../src/features/auth/recovery";
+import { clearRecovery, hasRecovery, isInvite, markRecovery } from "../../src/features/auth/recovery";
 
 const client = (auth: Record<string, jest.Mock>) => ({ auth }) as never;
 
@@ -15,6 +15,23 @@ describe("requestPasswordReset", () => {
 
 describe("startRecoverySession", () => {
   beforeEach(clearRecovery);
+
+  it("marks an invite link as an invite session", async () => {
+    const supabase = client({ setSession: jest.fn().mockResolvedValue({ error: null }) });
+
+    await startRecoverySession(supabase, { accessToken: "a3", flow: "invite", refreshToken: "r3" });
+
+    expect(isInvite()).toBe(true);
+    expect(hasRecovery()).toBe(true);
+  });
+
+  it("keeps a recovery link a plain recovery", async () => {
+    const supabase = client({ setSession: jest.fn().mockResolvedValue({ error: null }) });
+
+    await startRecoverySession(supabase, { accessToken: "a4", flow: "recovery", refreshToken: "r4" });
+
+    expect(isInvite()).toBe(false);
+  });
 
   it("sets the session once per token, marks the recovery and survives a remount", async () => {
     const setSession = jest.fn().mockResolvedValue({ error: null });

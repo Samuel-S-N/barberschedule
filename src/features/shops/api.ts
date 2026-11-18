@@ -1,18 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { toDomainError } from "../../lib/errors/domain-errors";
+import { addressToColumns } from "./address";
+import type { ShopAddress, ShopAddressColumns } from "./address";
 import type { ShopPeriod } from "./hours";
 
-export type PublicShop = {
-  address: string | null;
-  id: string;
-  name: string;
-  phone: string | null;
-  slug: string;
-  whatsapp: string | null;
-};
+export type PublicShop = ShopAddressColumns & { id: string; name: string; phone: string | null; slug: string; whatsapp: string | null };
 
-const PUBLIC_SHOP_COLUMNS = "id, name, slug, address, phone, whatsapp";
+const PUBLIC_SHOP_COLUMNS =
+  "id, name, slug, phone, whatsapp, address_cep, address_street, address_number, address_complement, address_district, address_city, address_state, address_city_ibge";
 
 export async function listPublicShops(supabase: Pick<SupabaseClient, "from">) {
   const { data, error } = await supabase.from("shops").select(PUBLIC_SHOP_COLUMNS).order("name");
@@ -57,12 +53,12 @@ export async function saveShopHours(supabase: Pick<SupabaseClient, "rpc">, perio
 export async function updateShopContact(
   supabase: Pick<SupabaseClient, "from">,
   shopId: string,
-  input: { address: string; phone: string; whatsapp: string },
+  input: { address: ShopAddress; phone: string; whatsapp: string },
 ) {
   const clean = (value: string) => value.trim() || null;
   const { error } = await supabase
     .from("shops")
-    .update({ address: clean(input.address), phone: clean(input.phone), whatsapp: clean(input.whatsapp) })
+    .update({ ...addressToColumns(input.address), phone: clean(input.phone), whatsapp: clean(input.whatsapp) })
     .eq("id", shopId);
   if (error) throw toDomainError(error);
 }

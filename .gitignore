@@ -54,3 +54,6 @@ graphify-out/
 
 # local brainstorming scratch
 .superpowers/
+
+# Supabase CLI local state (holds local service-role keys and JWT secrets)
+supabase/.temp/

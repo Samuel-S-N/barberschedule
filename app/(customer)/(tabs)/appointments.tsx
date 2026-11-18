@@ -27,6 +27,7 @@ import { useRefresh } from "../../../src/lib/use-refresh";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 import { Screen } from "../../../src/components/ui/Screen";
 import { useCurrentShop } from "../../../src/features/shops/CurrentShopProvider";
+import { formatShopAddress } from "../../../src/features/shops/address";
 
 export default function AgendaScreen() {
   const router = useRouter();
@@ -83,7 +84,7 @@ export default function AgendaScreen() {
           description: card.professionalName,
           endsAt: appointment.endsAt,
           id: appointment.id,
-          location: shop?.address ?? null,
+          location: shop ? formatShopAddress(shop) || null : null,
           startsAt: appointment.startsAt,
           summary: `${card.serviceName} — ${card.shopName}`,
         }),
