@@ -22,6 +22,12 @@ jest.mock("react-native-gesture-handler", () => ({
 jest.mock("../../src/features/auth/session", () => ({
   resolveAuthRedirect: jest.fn(() => null),
 }));
+jest.mock("../../src/features/shops/CurrentShopProvider", () => ({
+  CurrentShopProvider: ({ children }: { children: unknown }) => children,
+}));
+jest.mock("../../src/features/shops/ShopGate", () => ({
+  ShopGate: ({ children }: { children: unknown }) => children,
+}));
 jest.mock("../../src/features/shops/ShopThemeProvider", () => ({
   ShopThemeProvider: ({ children }: { children: unknown }) => children,
 }));

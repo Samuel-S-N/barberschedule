@@ -6,29 +6,30 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 import type { ThemeInput } from "../../lib/design/theme/derive";
 import { AppThemeProvider } from "../../lib/design/theme/ThemeProvider";
 import { useSupabaseSession } from "../../providers/AppProviders";
+import { useCurrentShop } from "./CurrentShopProvider";
 import { getShopTheme, readCachedTheme, writeCachedTheme } from "./theme";
 
 // Longest the root keeps its loading screen for the shop colours: they are cosmetic, so a slow or failing request must
 // never hold the whole app back.
 export const THEME_WAIT_MS = 2500;
 
-// The current shop's colours (single-shop MVP). `isReady` is false only while a signed-in user has neither a cached
-// theme nor an answer yet, so the root can keep its loading screen instead of flashing the default colours, and only
-// for THEME_WAIT_MS at most.
+// The current shop's colours, available to signed-out visitors too (the shop comes from the host). `isReady` is false only
+// while the shop has neither a cached theme nor an answer yet, so the root can keep its loading screen instead of flashing
+// the default colours, and only for THEME_WAIT_MS at most.
 export function useShopTheme() {
-  const { session, supabase } = useSupabaseSession();
-  const userId = session?.user.id ?? null;
+  const { supabase } = useSupabaseSession();
+  const { slug } = useCurrentShop();
   const [cache, setCache] = useState<{ loaded: boolean; value: ThemeInput | null }>({ loaded: false, value: null });
   const [timedOut, setTimedOut] = useState(false);
   // No retry: react-query's default (3 tries with growing delays, ~7 s) would keep the app behind the spinner.
-  const query = useQuery({ enabled: Boolean(userId), queryFn: () => getShopTheme(supabase), queryKey: ["shop-theme", userId], retry: false });
+  const query = useQuery({ enabled: Boolean(slug), queryFn: () => getShopTheme(supabase, slug!), queryKey: ["shop-theme", slug], retry: false });
 
   useEffect(() => {
     let active = true;
 
-    setCache({ loaded: !userId, value: null });
-    if (userId) {
-      void readCachedTheme(userId).then((value) => {
+    setCache({ loaded: !slug, value: null });
+    if (slug) {
+      void readCachedTheme(slug).then((value) => {
         if (active) setCache({ loaded: true, value });
       });
     }
@@ -36,26 +37,26 @@ export function useShopTheme() {
     return () => {
       active = false;
     };
-  }, [userId]);
+  }, [slug]);
 
   useEffect(() => {
-    if (userId && query.data) void writeCachedTheme(userId, query.data.input);
-  }, [query.data, userId]);
+    if (slug && query.data) void writeCachedTheme(slug, query.data.input);
+  }, [query.data, slug]);
 
   useEffect(() => {
     setTimedOut(false);
-    if (!userId) return undefined;
+    if (!slug) return undefined;
     const timer = setTimeout(() => setTimedOut(true), THEME_WAIT_MS);
 
     return () => clearTimeout(timer);
-  }, [userId]);
+  }, [slug]);
 
   const answered = query.isSuccess || query.isError;
 
   return {
     data: query.data,
     input: query.data ? query.data.input : answered ? null : cache.value,
-    isReady: !userId || answered || timedOut || (cache.loaded && cache.value !== null),
+    isReady: !slug || answered || timedOut || (cache.loaded && cache.value !== null),
   };
 }
 
