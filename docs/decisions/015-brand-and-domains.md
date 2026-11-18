@@ -32,6 +32,7 @@ identifiers that are expensive to change later can still be set freely.
   and TLS for `*.zencpro.app`, and universal links (`associatedDomains` / Android intent filters). That is the
   shop-resolution sub-project; it is not part of the brand rename.
 - The domain lives in one configuration constant when introduced, so changing it later is a one-line change.
-- Logo, icon, splash and the Zenc colour palette are pending design work; `DESIGN_SYSTEM.md` keeps the old visual
-  identity until then.
+- The visual identity (wordmark, app icons, colours) is decided in decision 017. The splash is not wired yet; it needs
+  `expo-splash-screen`.
+- Open: moving the repository to a company GitHub organisation (last) and the shop-resolution sub-project above.
 - Stored keys changed with the name (`zenc.language`, `zenc-my-data-*.json`); harmless because nothing is deployed.
