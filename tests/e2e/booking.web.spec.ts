@@ -239,6 +239,7 @@ test("the step indicator marks the current step and completed steps lead back", 
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("button", { name: "09:00" }).click();
   await page.getByTestId("book-time-continue").click();
+  await expect(page).toHaveURL(/\/book\/review/);
 
   // Back from checkout returns to the time step; a completed segment jumps to its step.
   await page.locator('[data-testid="back"]:not([aria-hidden="true"] *)').click();

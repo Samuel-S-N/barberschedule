@@ -56,6 +56,7 @@ test.describe("customer", () => {
 
     await page.getByTestId("menu-settings").click();
     await page.getByTestId("menu-language").click();
+    await expect(page).toHaveURL(/\/language$/);
     await back(page);
     await expect(page).toHaveURL(/\/me\/settings$/);
     await back(page);
