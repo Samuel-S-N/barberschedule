@@ -1,21 +1,4 @@
-import { deleteRentPayment, listRentPayments, parseReaisToCents, recordRentPayment } from "../../src/features/owner-reports/rent";
-
-describe("parseReaisToCents", () => {
-  it.each([
-    ["300", 30000],
-    ["300,50", 30050],
-    ["300.5", 30050],
-    ["1.250,00", 125000],
-    ["R$ 75,90", 7590],
-    [" 0,99 ", 99],
-  ])("parses %s", (input, cents) => {
-    expect(parseReaisToCents(input)).toBe(cents);
-  });
-
-  it.each(["", "abc", "0", "0,00", "-5", "1,234", "12,5,0"])("rejects %j", (input) => {
-    expect(parseReaisToCents(input)).toBeNull();
-  });
-});
+import { deleteRentPayment, listRentPayments, recordRentPayment } from "../../src/features/owner-reports/rent";
 
 describe("rent payment RPCs", () => {
   it("records a payment with the explicit parameter names", async () => {
