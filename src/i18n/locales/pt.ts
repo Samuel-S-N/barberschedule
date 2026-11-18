@@ -4,7 +4,6 @@ import type { DeepStringRecord } from "./types";
 export const pt: DeepStringRecord<typeof en> = {
   examples: {
     cep: "01310-100", city: "São Paulo", complement: "Sala 2", district: "Centro", number: "123", state: "SP", street: "Rua das Flores",
-    address: "Rua das Flores, 123",
     bio: "Degradês e cortes clássicos desde 2015",
     date: "25/10/2026",
     day: "5",

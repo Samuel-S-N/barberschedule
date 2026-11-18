@@ -5,7 +5,7 @@ import { Linking } from "react-native";
 import { ShopContactButtons, ShopInfoCard } from "../../src/components/domain/ShopInfoCard";
 import i18n from "../../src/i18n";
 
-const shop = { address: "Rua A, 10", id: "s1", name: "Shop", phone: "(11) 3000-0000", slug: "alfa", whatsapp: "(11) 99999-0000" };
+const shop = { address_cep: null, address_city: "Recife", address_city_ibge: null, address_complement: null, address_district: null, address_number: "10", address_state: "PE", address_street: "Rua A", id: "s1", name: "Shop", phone: "(11) 3000-0000", slug: "alfa", whatsapp: "(11) 99999-0000" };
 const hours = [
   { end: "12:00", start: "09:00", weekday: 1 },
   { end: "18:00", start: "13:00", weekday: 1 },
@@ -18,7 +18,7 @@ describe("ShopInfoCard", () => {
   it("shows address and hours with the break", async () => {
     const view = await render(React.createElement(ShopInfoCard, { hours, shop }));
 
-    expect(view.getByText("Rua A, 10")).toBeTruthy();
+    expect(view.getByText("Rua A, 10 · Recife - PE")).toBeTruthy();
     expect(view.getByText("09:00–12:00 · 13:00–18:00")).toBeTruthy();
   });
 

@@ -5,7 +5,6 @@ import type { DomainErrorCode } from "../../lib/errors/domain-errors";
 export const en = {
   examples: {
     cep: "01310-100", city: "São Paulo", complement: "Suite 2", district: "Downtown", number: "123", state: "SP", street: "Flower Street",
-    address: "123 Flower Street",
     bio: "Fades and classic cuts since 2015",
     date: "2026-10-25",
     day: "5",

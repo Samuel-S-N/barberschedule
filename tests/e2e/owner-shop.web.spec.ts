@@ -4,7 +4,7 @@ import type { Page } from "@playwright/test";
 import { json } from "./customer-helpers";
 
 // The shop the screen reads comes from the current-shop lookup (answered by the fixture).
-test.use({ shop: { ...defaultShop, address: "Rua A, 10", phone: "1133334444", whatsapp: null } });
+test.use({ shop: { ...defaultShop, address_city: "Recife", address_number: "10", address_state: "PE", address_street: "Rua A", phone: "1133334444", whatsapp: null } });
 
 const ownerId = "55555555-5555-4555-8555-555555555555";
 const shop = "11111111-1111-4111-8111-111111111111";
@@ -73,7 +73,9 @@ test("the shop screen shows contact info and the weekly hours with breaks", asyn
   await mockOwnerRest(page, {});
 
   await page.goto("/shop");
-  await expect(page.getByTestId("shop-address")).toHaveValue("Rua A, 10");
+  await expect(page.getByTestId("shop-street")).toHaveValue("Rua A");
+  await expect(page.getByTestId("shop-number")).toHaveValue("10");
+  await expect(page.getByTestId("shop-city")).toHaveValue("Recife");
   await expect(page.getByTestId("shop-day-1")).toContainText("Open");
   await expect(page.getByTestId("shop-day-2")).toContainText("Closed");
   await expect(page.getByTestId("shop-day-1").getByTestId("shop-break-start-1-0")).toHaveValue("12:00");
@@ -86,13 +88,16 @@ test("saving writes the contact and turns a break into two periods", async ({ pa
   await mockOwnerRest(page, calls);
 
   await page.goto("/shop");
-  await expect(page.getByTestId("shop-address")).toHaveValue("Rua A, 10");
+  await expect(page.getByTestId("shop-street")).toHaveValue("Rua A");
   await expect(page.getByTestId("shop-day-1")).toBeVisible();
   await page.getByTestId("shop-phone").fill("1155556666");
   await page.getByTestId("shop-save").click();
 
   await expect(page.getByText("Shop details saved.")).toBeVisible();
-  expect(calls.contact).toEqual({ address: "Rua A, 10", phone: "1155556666", whatsapp: null });
+  expect(calls.contact).toEqual({
+    address_cep: null, address_city: "Recife", address_city_ibge: null, address_complement: null, address_district: null,
+    address_number: "10", address_state: "PE", address_street: "Rua A", phone: "1155556666", whatsapp: null,
+  });
   expect(calls.hours).toEqual({ p_periods: [{ end: "12:00", start: "09:00", weekday: 1 }, { end: "18:00", start: "14:00", weekday: 1 }] });
 });
 
@@ -170,4 +175,37 @@ test("a date closed for every professional is listed and can be reopened", async
   await expect(page.getByTestId(`shop-closed-${date}`)).toContainText("2099-12-25");
   await page.getByTestId(`shop-reopen-${date}`).click();
   await expect.poll(() => (calls.deletes as string[]).length).toBe(2);
+});
+
+test("typing a CEP fills the address, moves to the number and keeps every field editable", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, {});
+  await page.route("https://viacep.com.br/ws/01310100/json/", (route) =>
+    route.fulfill({ body: JSON.stringify({ bairro: "Bela Vista", ibge: "3550308", localidade: "São Paulo", logradouro: "Avenida Paulista", uf: "SP" }), contentType: "application/json" }),
+  );
+  await page.goto("/shop");
+  await expect(page.getByTestId("shop-day-1")).toBeVisible();
+
+  await page.getByTestId("shop-cep").fill("01310100");
+  await expect(page.getByTestId("shop-street")).toHaveValue("Avenida Paulista");
+  await expect(page.getByTestId("shop-city")).toHaveValue("São Paulo");
+  await expect(page.getByTestId("shop-state")).toHaveValue("SP");
+  await expect(page.getByTestId("shop-number")).toBeFocused();
+
+  await page.getByTestId("shop-street").fill("Rua que eu mudei");
+  await expect(page.getByTestId("shop-street")).toHaveValue("Rua que eu mudei");
+});
+
+test("an unknown CEP shows a message and clears nothing", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, {});
+  await page.route("https://viacep.com.br/ws/99999999/json/", (route) => route.fulfill({ body: JSON.stringify({ erro: true }), contentType: "application/json" }));
+  await page.goto("/shop");
+  await expect(page.getByTestId("shop-day-1")).toBeVisible();
+
+  await page.getByTestId("shop-street").fill("Rua que eu digitei");
+  await page.getByTestId("shop-cep").fill("99999999");
+
+  await expect(page.getByText("CEP not found, fill in the address.")).toBeVisible();
+  await expect(page.getByTestId("shop-street")).toHaveValue("Rua que eu digitei");
 });
