@@ -2298,3 +2298,20 @@ Change the spec's `Status:` line to `implemented on feat-shop-resolution`, and r
 git add docs
 git commit -m "docs: shop resolution implemented, spike decision recorded"
 ```
+
+---
+
+## Execution deviations
+
+What differed between this plan and the code as executed (2026-11-18, branch `feat-shop-resolution`).
+
+- **Task 1 (spike):** Path B decided without building the Path A prototype. `@supabase/ssr` 0.12.7 hard-codes `flowType: "pkce"` after the caller's `auth` spread (source and a runtime check agree), which fails the go/no-go rule and the "implicit flow" requirement; it also ignores a custom `auth.storage`. Note: `docs/superpowers/spikes/2026-11-18-cookie-session.md`.
+- **Task 3:** `011_customer_self_service.sql` passes `current_setting('t11.shop')::uuid` (the file's first shop by `created_at`, which is the seed shop), not the `T11 Shop` id the plan assumed; its two "anonymous / owner cannot ensure a customer" assertions also pass a shop id.
+- **Task 4 (extended):** the plan assumed the bell count was a table query. It is `count_unread_notifications()`, and "mark all read" / "clear all" are `mark_notifications_read(uuid[])` / `delete_notifications(uuid[])`, which would have wiped other shops' inbox rows. Migration 0069 therefore also replaces those three functions with an optional `p_shop_id` (no argument = old behaviour), with four more assertions in `051` (plan(10)). `listNotifications(supabase, shopId, limit)`, `countUnread(supabase, shopId)`, `markRead(supabase, ids?, shopId?)`, `deleteNotifications(supabase, ids?, shopId?)`; the inbox screen only sends the shop for "all", not for specific ids.
+- **Task 7:** `tests/unit/shop-gate.test.ts` mocks `useSafeAreaInsets` (Expo Router provides the provider above layouts; the unit test has none).
+- **Task 8:** `tests/unit/root-layout.test.ts` mocks `CurrentShopProvider` and `ShopGate`. `shop-theme.test.ts`'s fake query builder lets `.eq()` continue into `.limit()`.
+- **Task 10:** `use-appointment-cards.test.ts` now waits for the professional name (the shop name is synchronous, so it no longer works as the "queries finished" signal; the old version was timing-dependent).
+- **Task 11:** `book/review.tsx` already had a `shopId` from the route params and keeps using it; `cookie-storage.test.ts` uses a 7000-character value (the plan's value produced 2 chunks, not 3).
+- **Task 12:** Path B as planned.
+- **Task 13:** `Linking.createURL("/")` on web is the origin without a trailing slash; the e2e asserts that.
+- **Task 14:** the fixture also answers `POST /rest/v1/rpc/get_my_shop` (staff screens call it through `useOwnerShopId`) and registers a base route so specs that mock no REST at all still get a shop; options `shop` (null = unknown slug), `myShop` (staff shop, defaults to `shop`) and `interceptShops` (off for `owner-appearance`, which changes the shop row while it runs). `owner-shop.web.spec.ts` gets its shop through `test.use({ shop })`. `useMyShop` has `retry: false` so a failed lookup lets the app through instead of holding a spinner. `scripts/run-e2e-web.mjs` probes `http://127.0.0.1:<port>` (`getE2EWebProbeUrl`) and passes `EXPO_PUBLIC_SHOP_BASE_DOMAIN=localhost`. `playwright.chrome.config.ts` is git-ignored, edited locally only. The unknown-slug and owner-redirect specs use `test.use({ shop: null })` / `test.use({ myShop })` instead of per-test route mocks.
