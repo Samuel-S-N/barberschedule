@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getCurrentLanguage } from "../../i18n";
 import { useSupabaseSession } from "../../providers/AppProviders";
 import { registerWebPushSubscription } from "./api";
-import { enableWebPush, readWebPushEnvironment, registerCurrentSubscription } from "./web-push";
+import { enableWebPush, readWebPushEnvironment, registerCurrentSubscription, withTimeout } from "./web-push";
 import { resolveWebPushState } from "./web-push-state";
 import type { WebPushState } from "./web-push-state";
 
@@ -39,7 +39,7 @@ export function useWebPush(): { enable: () => Promise<void>; error: boolean; sta
     setError(false);
     try {
       const outcome = await enableWebPush({
-        getRegistration: () => navigator.serviceWorker.ready,
+        getRegistration: () => withTimeout(navigator.serviceWorker.ready, 8000),
         locale: getCurrentLanguage(),
         origin: window.location.origin,
         publicKey: vapidPublicKey(),

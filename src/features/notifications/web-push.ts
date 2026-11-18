@@ -8,6 +8,18 @@ import { deactivateMyWebSubscription, registerWebPushSubscription } from "./api"
 import type { WebSubscriptionJson } from "./api";
 import type { WebPushEnvironment } from "./web-push-state";
 
+// A promise that never settles (the service worker failed to register, an offline RPC) must not hang a tap or a sign-out forever.
+export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("timed out")), ms);
+
+    promise.then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      (error: unknown) => { clearTimeout(timer); reject(error); },
+    );
+  });
+}
+
 // The VAPID public key is a URL-safe base64 string; pushManager.subscribe wants the raw bytes.
 export function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   const padded = base64.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(base64.length / 4) * 4, "=");
@@ -73,7 +85,10 @@ export async function registerCurrentSubscription(supabase: Pick<SupabaseClient,
 export async function unsubscribeWebPush(supabase: Pick<SupabaseClient, "rpc">) {
   if (Platform.OS !== "web" || typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
 
-  const subscription = await (await navigator.serviceWorker.getRegistration())?.pushManager.getSubscription();
+  // Bounded: an offline or hung network must not delay signing out.
+  await withTimeout((async () => {
+    const subscription = await (await navigator.serviceWorker.getRegistration())?.pushManager.getSubscription();
 
-  if (subscription) await deactivateMyWebSubscription(supabase, subscription.endpoint);
+    if (subscription) await deactivateMyWebSubscription(supabase, subscription.endpoint);
+  })(), 4000);
 }

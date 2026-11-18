@@ -39,8 +39,15 @@ self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
   // Only this worker's own origin is ever opened: a url that points elsewhere falls back to the root.
-  const requested = new URL((event.notification.data && event.notification.data.url) || "/", self.location.origin);
-  const target = requested.origin === self.location.origin ? requested.href : new URL("/", self.location.origin).href;
+  let target = new URL("/", self.location.origin).href;
+
+  try {
+    const requested = new URL((event.notification.data && event.notification.data.url) || "/", self.location.origin);
+
+    if (requested.origin === self.location.origin) target = requested.href;
+  } catch {
+    // A malformed url opens the root.
+  }
 
   event.waitUntil(
     self.clients.matchAll({ includeUncontrolled: true, type: "window" }).then((windows) => {
@@ -48,7 +55,7 @@ self.addEventListener("notificationclick", (event) => {
 
       if (!open) return self.clients.openWindow(target);
 
-      return open.focus().then((focused) => (focused && "navigate" in focused ? focused.navigate(target) : undefined));
+      return open.focus().then((focused) => (focused && "navigate" in focused ? focused.navigate(target) : self.clients.openWindow(target)));
     }),
   );
 });

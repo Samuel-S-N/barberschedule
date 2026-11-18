@@ -103,6 +103,29 @@ describe("notificationclick", () => {
     expect(self.clients.openWindow).toHaveBeenCalledWith("https://shop-a.zencpro.app/");
   });
 
+  it("a malformed url opens the root instead of failing", async () => {
+    const { listeners, self } = load();
+    const event = click("http://[bad");
+
+    listeners.notificationclick(event);
+    await (event.waitUntil.mock.calls[0][0] as Promise<unknown>);
+
+    expect(self.clients.openWindow).toHaveBeenCalledWith("https://shop-a.zencpro.app/");
+  });
+
+  it("opens a window when the focused tab cannot navigate", async () => {
+    const { listeners, self } = load();
+    const tab = { focus: jest.fn(), url: "https://shop-a.zencpro.app/home" };
+    tab.focus.mockResolvedValue(tab);
+    self.clients.matchAll.mockResolvedValue([tab]);
+    const event = click("https://shop-a.zencpro.app/payouts");
+
+    listeners.notificationclick(event);
+    await (event.waitUntil.mock.calls[0][0] as Promise<unknown>);
+
+    expect(self.clients.openWindow).toHaveBeenCalledWith("https://shop-a.zencpro.app/payouts");
+  });
+
   it("falls back to the root when the notification has no url", async () => {
     const { listeners, self } = load();
     const event = click();

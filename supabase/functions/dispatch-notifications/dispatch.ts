@@ -60,51 +60,67 @@ export function pickRows(rows: ClaimedNotification[]): ClaimedNotification[] {
   });
 }
 
+type Attempt = { error?: string; outcome: "failed" | "sent" | "skipped" };
+
+// 404/410: the subscription is gone. 401/403: it was made under another VAPID key (rotated or foreign), so it can never receive from us.
+const PERMANENT_WEB_STATUSES = new Set([401, 403, 404, 410]);
+
 export function createDispatcher(deps: Deps) {
-  async function dispatchOne(row: ClaimedNotification): Promise<keyof Counts> {
+  // One attempt per token row; it only deactivates dead tokens and reports what happened. The notification's own state is decided
+  // once per outbox id by the caller (mark_notification_sent/failed act only on a row still "sending": the first call would win).
+  async function attempt(row: ClaimedNotification): Promise<Attempt> {
     if (row.web_subscription) {
       const message = buildMessage(row.event_type, row.locale, row.payload);
       const url = `${row.web_origin ?? ""}${notificationPath(row.event_type, row.recipient_role)}`;
       const { status } = await deps.sendWeb(row.web_subscription, { body: message.body, title: message.title, url });
 
-      if (status >= 200 && status < 300) {
-        await deps.markSent(row.id);
-        return "sent";
-      }
-      if (status === 404 || status === 410) {
+      if (status >= 200 && status < 300) return { outcome: "sent" };
+      if (PERMANENT_WEB_STATUSES.has(status)) {
         await deps.deactivateWeb(row.web_subscription.endpoint);
-        await deps.markFailed(row.id, "WebPushGone");
-        return "failed";
+        return { error: status === 404 || status === 410 ? "WebPushGone" : `Web push HTTP ${status}`, outcome: "failed" };
       }
-      await deps.markFailed(row.id, `Web push HTTP ${status}`);
-      return "failed";
+
+      return { error: `Web push HTTP ${status}`, outcome: "failed" };
     }
 
-    if (!row.expo_push_token) {
-      await deps.markSent(row.id);
-      return "skipped";
-    }
+    if (!row.expo_push_token) return { outcome: "skipped" };
 
     const result = await deps.sendExpo(row.expo_push_token, buildMessage(row.event_type, row.locale, row.payload), row.payload);
 
-    if (result.ok) {
-      await deps.markSent(row.id);
-      return "sent";
-    }
+    if (result.ok) return { outcome: "sent" };
     if (result.error === "DeviceNotRegistered") await deps.deactivateExpo(row.expo_push_token);
-    await deps.markFailed(row.id, result.error ?? "Expo delivery failed");
-    return "failed";
+
+    return { error: result.error ?? "Expo delivery failed", outcome: "failed" };
   }
 
   return async (rows: ClaimedNotification[]): Promise<Counts> => {
     const counts: Counts = { failed: 0, sent: 0, skipped: 0 };
+    const groups = new Map<string, ClaimedNotification[]>();
 
-    for (const row of pickRows(rows)) {
-      try {
-        counts[await dispatchOne(row)]++;
-      } catch (error) {
-        await deps.markFailed(row.id, error instanceof Error ? error.message : "Unknown delivery error");
+    for (const row of pickRows(rows)) groups.set(row.id, [...(groups.get(row.id) ?? []), row]);
+
+    for (const [id, group] of groups) {
+      const attempts: Attempt[] = [];
+
+      for (const row of group) {
+        try {
+          attempts.push(await attempt(row));
+        } catch (error) {
+          attempts.push({ error: error instanceof Error ? error.message : "Unknown delivery error", outcome: "failed" });
+        }
+      }
+
+      // One outcome per notification: delivered to at least one device is sent (a dead token must not turn it into a retry that
+      // re-sends to the devices that already got it); only when every attempt failed does it go back for another try.
+      if (attempts.some((item) => item.outcome === "sent")) {
+        await deps.markSent(id);
+        counts.sent++;
+      } else if (attempts.some((item) => item.outcome === "failed")) {
+        await deps.markFailed(id, attempts.find((item) => item.outcome === "failed")?.error ?? "Delivery failed");
         counts.failed++;
+      } else {
+        await deps.markSent(id);
+        counts.skipped++;
       }
     }
 

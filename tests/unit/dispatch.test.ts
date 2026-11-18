@@ -138,3 +138,50 @@ describe("dispatcher: web", () => {
     expect(calls.filter((call) => /^(expo|web):/.test(call))).toEqual(["expo:T1", "web:https://push.example/a"]);
   });
 });
+
+describe("dispatcher: several tokens for one notification", () => {
+  it("a gone web subscription next to a working Expo token still marks the notification sent, once", async () => {
+    const { calls, dispatch } = deps({ sendWeb: async () => ({ status: 410 }) });
+
+    await expect(dispatch([web("a", "https://shop-a.zencpro.app"), expo("T1")])).resolves.toEqual({ failed: 0, sent: 1, skipped: 0 });
+    expect(calls.filter((call) => call.startsWith("sent:") || call.startsWith("failed:"))).toEqual(["sent:n1"]);
+    expect(calls).toContain("deactivateWeb:https://push.example/a");
+  });
+
+  it("a failing Expo token next to a working web subscription marks it sent, once", async () => {
+    const { calls, dispatch } = deps({ sendExpo: async () => ({ error: "MessageRateExceeded", ok: false }) });
+
+    await expect(dispatch([expo("T1"), web("a", "https://shop-a.zencpro.app")])).resolves.toEqual({ failed: 0, sent: 1, skipped: 0 });
+    expect(calls.filter((call) => call.startsWith("sent:") || call.startsWith("failed:"))).toEqual(["sent:n1"]);
+  });
+
+  it("when every token fails the notification is marked failed once, with the first error", async () => {
+    const { calls, dispatch } = deps({ sendExpo: async () => ({ error: "DeviceNotRegistered", ok: false }), sendWeb: async () => ({ status: 503 }) });
+
+    await expect(dispatch([expo("T1"), web("a", "https://shop-a.zencpro.app")])).resolves.toEqual({ failed: 1, sent: 0, skipped: 0 });
+    expect(calls.filter((call) => call.startsWith("sent:") || call.startsWith("failed:"))).toEqual(["failed:n1:DeviceNotRegistered"]);
+    expect(calls).toContain("deactivateExpo:T1");
+  });
+
+  it("two web rows of the same notification are one outcome", async () => {
+    const { calls, dispatch } = deps();
+
+    await expect(dispatch([web("a", "https://shop-a.zencpro.app"), web("b", "https://shop-a.zencpro.app")])).resolves.toEqual({ failed: 0, sent: 1, skipped: 0 });
+    expect(calls.filter((call) => call.startsWith("sent:"))).toEqual(["sent:n1"]);
+  });
+
+  it("separate notifications keep separate outcomes", async () => {
+    const { dispatch } = deps({ sendExpo: async (token) => (token === "BAD" ? { error: "x", ok: false } : { ok: true }) });
+
+    await expect(dispatch([expo("T1", { id: "n1" }), expo("BAD", { id: "n2" })])).resolves.toEqual({ failed: 1, sent: 1, skipped: 0 });
+  });
+
+  it("401 and 403 from the push service (a subscription made under another VAPID key) deactivate it like 410", async () => {
+    for (const status of [401, 403]) {
+      const { calls, dispatch } = deps({ sendWeb: async () => ({ status }) });
+
+      await dispatch([web("a", "https://shop-a.zencpro.app")]);
+      expect(calls).toContain("deactivateWeb:https://push.example/a");
+    }
+  });
+});

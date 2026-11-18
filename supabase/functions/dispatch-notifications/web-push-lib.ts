@@ -12,7 +12,8 @@ export function createWebSender({ privateKey, publicKey, subject }: Vapid) {
 
   return async (subscription: WebSubscription, message: { body: string; title: string; url: string }) => {
     try {
-      const result = await webpush.sendNotification(subscription, JSON.stringify(message), { TTL: 24 * 60 * 60, urgency: "normal" });
+      const result = await webpush.sendNotification(subscription, JSON.stringify(message), // A hung push service must not stall the whole batch (deliveries run one after another).
+      { TTL: 24 * 60 * 60, timeout: 10_000, urgency: "normal" });
 
       return { status: result.statusCode };
     } catch (error) {

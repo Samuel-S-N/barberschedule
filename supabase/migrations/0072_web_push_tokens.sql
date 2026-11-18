@@ -41,6 +41,11 @@ begin
   if jsonb_typeof(target_subscription) is distinct from 'object'
     or coalesce(target_subscription ->> 'endpoint', '') !~ '^https://[^[:space:]]+$'
     or char_length(target_subscription ->> 'endpoint') > 2000
+    -- Only the browsers' own push services: the dispatcher POSTs to this address, so an arbitrary host (or an internal one) would let a
+    -- user point the Edge runtime at it and hang the batch. FCM (Chrome, Edge, Brave, Opera, Samsung), Mozilla, Windows, Apple.
+    or (target_subscription ->> 'endpoint') !~ '^https://([a-z0-9-]+\.)*(googleapis\.com|push\.services\.mozilla\.com|notify\.windows\.com|push\.apple\.com)(:443)?/'
+    or char_length(target_subscription #>> '{keys,p256dh}') > 200
+    or char_length(target_subscription #>> '{keys,auth}') > 200
     or coalesce(target_subscription #>> '{keys,p256dh}', '') = ''
     or coalesce(target_subscription #>> '{keys,auth}', '') = ''
     or coalesce(target_origin, '') !~ '^https?://[A-Za-z0-9.-]{1,253}(:[0-9]{1,5})?$'

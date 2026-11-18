@@ -1,4 +1,4 @@
-import { enableWebPush, unsubscribeWebPush, urlBase64ToUint8Array } from "../../src/features/notifications/web-push";
+import { enableWebPush, unsubscribeWebPush, urlBase64ToUint8Array, withTimeout } from "../../src/features/notifications/web-push";
 
 const json = { endpoint: "https://push.example/a", keys: { auth: "a", p256dh: "p" } };
 const registration = (subscribe = jest.fn().mockResolvedValue({ toJSON: () => json })) => ({ pushManager: { subscribe } });
@@ -50,5 +50,15 @@ describe("unsubscribeWebPush", () => {
 
     await expect(unsubscribeWebPush({ rpc } as never)).resolves.toBeUndefined();
     expect(rpc).not.toHaveBeenCalled();
+  });
+});
+
+describe("withTimeout", () => {
+  it("resolves with the value when it is quick", async () => {
+    await expect(withTimeout(Promise.resolve("ok"), 50)).resolves.toBe("ok");
+  });
+
+  it("rejects when the promise never settles (a service worker that never became ready)", async () => {
+    await expect(withTimeout(new Promise(() => undefined), 20)).rejects.toThrow("timed out");
   });
 });
