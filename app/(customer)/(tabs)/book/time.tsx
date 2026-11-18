@@ -18,17 +18,18 @@ import { useLanguage } from "../../../../src/i18n/use-language";
 import { formatDateNumeric } from "../../../../src/lib/i18n/format";
 import { useBack } from "../../../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../../../src/providers/AppProviders";
+import { useBookingShopId } from "../../../../src/features/booking/use-booking-shop-id";
 
 function param(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";
 }
 
 export default function BookTimeScreen() {
-  const params = useLocalSearchParams<{ professionalId?: string; professionalServiceId?: string; localDate?: string; shopId?: string }>();
+  const params = useLocalSearchParams<{ professionalId?: string; professionalServiceId?: string; localDate?: string }>();
   const professionalId = param(params.professionalId);
   const professionalServiceId = param(params.professionalServiceId);
   const localDate = param(params.localDate);
-  const shopId = param(params.shopId);
+  const shopId = useBookingShopId();
   const router = useRouter();
   const back = useBack();
   const { t } = useTranslation();

@@ -23,6 +23,7 @@ import { formatDateNumeric } from "../../../../src/lib/i18n/format";
 import { useBack } from "../../../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../../../src/providers/AppProviders";
 import { Screen } from "../../../../src/components/ui/Screen";
+import { useBookingShopId } from "../../../../src/features/booking/use-booking-shop-id";
 
 const notesSchema = z.object({ notes: z.string().trim().max(500) });
 // The button is disabled until a time is chosen, so this is only a safety net; it is mapped to text in onError.
@@ -33,8 +34,8 @@ function param(value: string | string[] | undefined) {
 }
 
 export default function BookReviewScreen() {
-  const params = useLocalSearchParams<{ professionalId?: string; professionalServiceId?: string; localDate?: string; shopId?: string; startsAt?: string }>();
-  const shopId = param(params.shopId);
+  const params = useLocalSearchParams<{ professionalId?: string; professionalServiceId?: string; localDate?: string; startsAt?: string }>();
+  const shopId = useBookingShopId();
   const professionalId = param(params.professionalId);
   const professionalServiceId = param(params.professionalServiceId);
   const localDate = param(params.localDate);
