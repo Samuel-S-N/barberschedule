@@ -10,12 +10,12 @@ import React, {
   useState,
 } from "react";
 
-import { AppState } from "react-native";
+import { AppState, Platform } from "react-native";
 import { I18nextProvider } from "react-i18next";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 
 import { getCurrentProfile } from "../features/auth/api";
-import { markRecovery } from "../features/auth/recovery";
+import { isInviteUrl, markInvite, markRecovery } from "../features/auth/recovery";
 import i18n, { loadLanguagePreference, syncLanguage } from "../i18n";
 import type { Profile } from "../features/auth/types";
 import { getSupabaseBrowserClient } from "../lib/supabase/client";
@@ -33,7 +33,12 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 export function AppProviders({ children }: PropsWithChildren) {
   const queryClient = useMemo(() => new QueryClient(), []);
   useEffect(() => bindQueryFocusToAppState(AppState), []);
-  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
+  const supabase = useMemo(() => {
+    // supabase-js consumes (and removes) the URL hash when the client is created, so note an invite link first.
+    if (Platform.OS === "web" && typeof window !== "undefined" && isInviteUrl(window.location.href)) markInvite();
+
+    return getSupabaseBrowserClient();
+  }, []);
   const [isLoading, setIsLoading] = useState(true);
   const [languageReady, setLanguageReady] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);

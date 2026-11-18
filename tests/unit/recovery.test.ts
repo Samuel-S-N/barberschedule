@@ -1,15 +1,15 @@
-import { clearRecovery, hasRecovery, markRecovery, parseRecoveryUrl, resolveRecoveryStatus } from "../../src/features/auth/recovery";
+import { clearRecovery, hasRecovery, isInvite, isInviteUrl, markInvite, markRecovery, parseRecoveryUrl, resolveRecoveryStatus } from "../../src/features/auth/recovery";
 
 describe("parseRecoveryUrl", () => {
   it("reads tokens from a deep link fragment", () => {
     expect(parseRecoveryUrl("zenc://reset-password#access_token=a&refresh_token=r&type=recovery")).toEqual({
-      accessToken: "a", kind: "tokens", refreshToken: "r",
+      accessToken: "a", flow: "recovery", kind: "tokens", refreshToken: "r",
     });
   });
 
   it("reads tokens from an Expo Go link", () => {
     expect(parseRecoveryUrl("exp://192.168.0.2:8081/--/reset-password#access_token=a&refresh_token=r&type=recovery&expires_in=3600")).toEqual({
-      accessToken: "a", kind: "tokens", refreshToken: "r",
+      accessToken: "a", flow: "recovery", kind: "tokens", refreshToken: "r",
     });
   });
 
@@ -55,5 +55,29 @@ describe("resolveRecoveryStatus", () => {
   it("is invalid on web without a session, but keeps waiting on native for the deep link", () => {
     expect(resolveRecoveryStatus({ ...base, platform: "web" })).toBe("invalid");
     expect(resolveRecoveryStatus(base)).toBe("checking");
+  });
+});
+
+describe("invite links", () => {
+  it("parses an invite deep link as a tokens link with the invite flow", () => {
+    expect(parseRecoveryUrl("zenc://reset-password#access_token=a&refresh_token=r&type=invite")).toEqual({
+      accessToken: "a", flow: "invite", kind: "tokens", refreshToken: "r",
+    });
+  });
+
+  it("recognises an invite URL from the hash", () => {
+    expect(isInviteUrl("https://alfa.zencpro.app/reset-password#access_token=a&refresh_token=r&type=invite")).toBe(true);
+    expect(isInviteUrl("https://alfa.zencpro.app/reset-password#access_token=a&refresh_token=r&type=recovery")).toBe(false);
+    expect(isInviteUrl(null)).toBe(false);
+  });
+
+  it("an invite proof counts as recovery proof and is cleared with it", () => {
+    clearRecovery();
+    markInvite();
+    expect(hasRecovery()).toBe(true);
+    expect(isInvite()).toBe(true);
+    clearRecovery();
+    expect(hasRecovery()).toBe(false);
+    expect(isInvite()).toBe(false);
   });
 });

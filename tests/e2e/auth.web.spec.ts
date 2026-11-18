@@ -151,12 +151,12 @@ test("the terms and privacy page is reachable while signed out", async ({ page }
   await expect(page.getByText("Your rights (LGPD)")).toBeVisible();
 });
 
-function recoveryHash() {
+function recoveryHash(type = "recovery") {
   const now = Math.floor(Date.now() / 1000);
   const header = btoa(JSON.stringify({ alg: "none" })).replace(/=+$/, "");
   const token = `${header}.${btoa(JSON.stringify({ exp: now + 3600, sub: customerUserId }))}.`;
 
-  return `#access_token=${token}&refresh_token=e2e-recovery&token_type=bearer&expires_in=3600&type=recovery`;
+  return `#access_token=${token}&refresh_token=e2e-recovery&token_type=bearer&expires_in=3600&type=${type}`;
 }
 
 const recoveryUser = { app_metadata: {}, aud: "authenticated", created_at: "2026-09-23T10:00:00Z", email: "customer@example.com", id: customerUserId, user_metadata: {} };
@@ -187,6 +187,21 @@ test("the recovery link opens the new-password screen, saves it and returns to l
   await expect(page.getByText("Password reset. Sign in with your new password.")).toBeVisible();
   expect(updated).toMatchObject({ password: "brand-new-1" });
   expect(loggedOutGlobally).toBe(true);
+});
+
+test("an invite link opens 'Create your password', saves it and returns to login", async ({ page }) => {
+  await mockCustomerRest(page);
+  await page.route("**/auth/v1/user", (route) => json(route, recoveryUser));
+  await page.route("**/auth/v1/logout**", (route) => route.fulfill({ status: 204 }));
+
+  await page.goto(`/reset-password${recoveryHash("invite")}`);
+  await expect(page.getByRole("heading", { name: "Create your password" })).toBeVisible();
+  await page.getByTestId("reset-new").fill("brand-new-1");
+  await page.getByTestId("reset-confirm").fill("brand-new-1");
+  await page.getByTestId("reset-submit").click();
+
+  await expect(page).toHaveURL(/\/login/);
+  await expect(page.getByText("Password created. Sign in with it.")).toBeVisible();
 });
 
 test("an expired recovery link shows the invalid state with a way to request another", async ({ page }) => {
