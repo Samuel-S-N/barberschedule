@@ -1,6 +1,6 @@
 # Testing
 
-Task 1 establishes the persistent baseline gate for the Zenc MVP:
+The persistent baseline gate for the Zenc MVP (also what CI runs, with typecheck, lint, the Node runner tests and pgTAP):
 
 - `npm run typecheck`
 - `npm run lint`
@@ -9,10 +9,25 @@ Task 1 establishes the persistent baseline gate for the Zenc MVP:
 
 Every later task must rerun the accumulated suite before it is considered complete.
 
-Task 10 focused checks:
+Example of focused checks (notifications):
 
 - `npm test -- --runInBand tests/integration/notifications.test.ts`
 - `HOME=/tmp SUPABASE_DISABLE_TELEMETRY=1 npx supabase test db --local supabase/tests/009_notifications.sql`
+
+Not in CI: the Playwright web suite. A green PR check says nothing about it, so run it on the merged result before
+calling a change done (see "Running the whole suite without the Metro dev server" below).
+
+Gotchas that cost time before:
+
+- The full Jest run takes about 5 minutes; give it a timeout above 6 minutes or run it in the background. It ends with a
+  harmless "Jest did not exit one second after the test run" notice.
+- React Native Testing Library 14 renders asynchronously (`await render(...)`); a test `QueryClient` needs `gcTime: 0`
+  or Jest hangs on open timers.
+- After `supabase db reset`, recreate the dev accounts with `supabase/dev-owner.sql` and `supabase/dev-professional.sql`.
+  While they exist `010_full_rls.sql` fails on seed counts; that is local data, not a defect.
+- The local stack uses `project_id = "zenc"` (containers `supabase_*_zenc`, API port 55421, DB port 55422).
+- `npm run lint` at the root also lints `.e2e-dist` after an e2e export; delete the folder or lint with
+  `npx eslint app src tests scripts`.
 
 Final handoff gate:
 

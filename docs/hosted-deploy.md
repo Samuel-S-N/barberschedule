@@ -3,9 +3,9 @@
 Run these **in order**, by a human with access to the hosted project. Nothing here has been applied to the hosted
 project yet. Never run `supabase db reset` against it.
 
-Migrations pending on hosted: `0031` … `0038` (merged to `main`), plus `0039` (email-claim flag), `0040`
-(`professional_book_new_customer`), `0041` (professional cancel/move), `0042` (agenda customer phone) and `0043`
-(`list_my_working_periods`) once their PRs are merged. Apply whatever is on `main` at the time; the order is the file order.
+Migrations: the hosted project does not exist yet, so the first deploy applies **every** migration in `supabase/migrations`
+(file order, currently `0001` … `0066`; `0061`-`0063` are intentionally absent until the payouts work lands). After the first
+deploy migrations are append-only (decision `018`): never rewrite an applied file, add a new one.
 
 ## 1. Before touching the database
 
@@ -77,4 +77,4 @@ row is merged into the account's own row if one exists). Turn it off again if co
 
 ## 7. Rollback
 
-Migrations are forward-only. If something breaks, restore the backup from step 1 rather than hand-editing.
+Migrations are forward-only (append-only once applied, decision `018`). If something breaks, restore the backup from step 1 rather than hand-editing.

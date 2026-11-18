@@ -1,7 +1,27 @@
 # Project status
 
-Date: 2026-09-29
-Status: Tasks 1-16 implemented; credentialed EAS build remains deployment-only
+Date: 2026-11-17
+Status: feature-complete for the local MVP and in `main` (PRs up to #95); nothing is deployed, and there is no hosted
+environment yet. The per-task history below is kept as the record of how it was built (Tasks 1-21).
+
+## Current state (2026-11-17)
+
+- **Product:** Zenc, a scheduling app for beauty businesses (barbershops, salons, nail and lash designers, braiders).
+  Customer, owner and professional roles; Expo app for iOS/Android/Web on Supabase. Identity and vocabulary:
+  decisions `015`, `017`, `018`.
+- **Repository:** 63 migration files (0001-0060 and 0064-0066; 0061-0063 are reserved by the unmerged payouts work),
+  45 pgTAP files, 18 decision records, three Edge Functions (`delete-account`, `dispatch-notifications`,
+  `invite-professional`).
+- **Not in `main`:** the professional payouts and commission-balance work (migrations `0061`-`0063`, `src/features/payouts`),
+  which lives on the `feat-payouts-0N-*` branches and needs to be rebased onto the renamed code before it can land.
+- **Latest verification (main at `ea88100`):** typecheck and ESLint clean; Jest 155 suites / 855 tests; pgTAP 45 files /
+  664 tests on a reset database; Node runner tests 6/6; CI `verify` green. The web e2e suite is not part of CI and is run
+  by hand (see `docs/testing.md`).
+- **Migrations policy** (decision `018`): migrations may be rewritten in place only until the first hosted deploy;
+  after it they are append-only. Nothing is hosted yet, so this is still allowed.
+- **Open:** splash screen, in-app wordmark component, trademark search for ZENC, store identifiers for `com.zencpro.app`,
+  shop resolution by `*.zencpro.app`, device check of the shop theme and the new icons, hosted deploy
+  (`docs/hosted-deploy.md`).
 
 Note (2026-11-11): per-shop colour theme (decision 016): tokens read CSS variables, `deriveTheme` builds palettes from up to
 three colours with contrast guarantees, and owners choose their colours in Manage > App appearance. Dark mode, logo and the

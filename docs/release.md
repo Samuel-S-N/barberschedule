@@ -18,6 +18,12 @@ npm run export:web
 
 `pg_cron` jobs are registered by migration `0022` when the extension is available. Otherwise schedule `enqueue_notification_reminders()` every 15 minutes and `materialize_recurrence_job()` hourly through the deployment scheduler.
 
+## Store identifiers
+
+The app id is `com.zencpro.app` (iOS bundle identifier and Android package, see `app.json` and decision `015`). Reserve it
+in App Store Connect and Google Play before the first build; changing it later is not possible once published.
+Shop subdomains will be `*.zencpro.app`; the marketing site is on `zencpro.com.br`.
+
 ## EAS
 
 `development` is an internal development-client build, `preview` is an internal Android APK, and `production` is intentionally empty until real EAS credentials and store metadata are configured. This repository does not claim store readiness.
