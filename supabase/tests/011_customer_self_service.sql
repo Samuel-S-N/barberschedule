@@ -29,8 +29,8 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '70000000-0000-0000-0000-000000000002', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
-select is((select full_name from public.ensure_my_customer()), 'T11 Customer', 'ensure_my_customer creates the row from the profile name');
-select is((select phone from public.ensure_my_customer()), '+55 11 90000-1111', 'phone comes from signup metadata');
+select is((select full_name from public.ensure_my_customer(current_setting('t11.shop')::uuid)), 'T11 Customer', 'ensure_my_customer creates the row from the profile name');
+select is((select phone from public.ensure_my_customer(current_setting('t11.shop')::uuid)), '+55 11 90000-1111', 'phone comes from signup metadata');
 select is((select count(*)::int from public.customers where user_id = '70000000-0000-0000-0000-000000000002'), 1, 'ensure_my_customer is idempotent');
 select is((select count(*)::int from public.consents where user_id = '70000000-0000-0000-0000-000000000002'), 2, 'terms and privacy consents recorded once each');
 
@@ -47,7 +47,7 @@ reset role;
 set local role anon;
 select set_config('request.jwt.claim.sub', '', true);
 select set_config('request.jwt.claim.role', 'anon', true);
-select throws_ok($$ select public.ensure_my_customer() $$, '42501', null, 'anonymous callers cannot ensure a customer');
+select throws_ok($$ select public.ensure_my_customer(current_setting('t11.shop')::uuid) $$, '42501', null, 'anonymous callers cannot ensure a customer');
 select throws_ok($$ select public.prepare_account_deletion() $$, '42501', null, 'anonymous callers cannot run account deletion');
 
 -- owner
@@ -55,7 +55,7 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '70000000-0000-0000-0000-000000000001', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
-select throws_ok($$ select public.ensure_my_customer() $$, '42501', null, 'owners cannot create a customer self row');
+select throws_ok($$ select public.ensure_my_customer(current_setting('t11.shop')::uuid) $$, '42501', null, 'owners cannot create a customer self row');
 select throws_ok($$ select public.prepare_account_deletion() $$, '42501', null, 'owners cannot run account deletion');
 
 -- profile update

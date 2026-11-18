@@ -48,7 +48,7 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 -- Flag off (default): even a confirmed same-email signup must not claim (confirmations may be auto-on locally).
 select set_config('request.jwt.claim.sub', 'f0000000-0000-0000-0000-000000000004', true);
-select isnt((select id from public.ensure_my_customer()), 'f3000000-0000-0000-0000-000000000004'::uuid, 'with the flag off a confirmed signup does not claim');
+select isnt((select id from public.ensure_my_customer('f1000000-0000-0000-0000-000000000001')), 'f3000000-0000-0000-0000-000000000004'::uuid, 'with the flag off a confirmed signup does not claim');
 
 reset role;
 select throws_ok($$set local role authenticated; update public.app_settings set email_claim_enabled = true$$, '42501', null, 'clients cannot flip the flag');
@@ -58,12 +58,12 @@ set local role authenticated;
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select set_config('request.jwt.claim.sub', 'f0000000-0000-0000-0000-000000000002', true);
-select is((select id from public.ensure_my_customer()), 'f3000000-0000-0000-0000-000000000001'::uuid, 'a confirmed signup claims the existing same-email customer');
-select is((select full_name from public.ensure_my_customer()), 'Pre Confirmed', 'the claimed row keeps its history and name');
+select is((select id from public.ensure_my_customer('f1000000-0000-0000-0000-000000000001')), 'f3000000-0000-0000-0000-000000000001'::uuid, 'a confirmed signup claims the existing same-email customer');
+select is((select full_name from public.ensure_my_customer('f1000000-0000-0000-0000-000000000001')), 'Pre Confirmed', 'the claimed row keeps its history and name');
 
 select set_config('request.jwt.claim.sub', 'f0000000-0000-0000-0000-000000000003', true);
-select isnt((select id from public.ensure_my_customer()), 'f3000000-0000-0000-0000-000000000002'::uuid, 'an unconfirmed signup never claims');
-select is((select email from public.ensure_my_customer()), null, 'the new unconfirmed row does not duplicate the taken email');
+select isnt((select id from public.ensure_my_customer('f1000000-0000-0000-0000-000000000001')), 'f3000000-0000-0000-0000-000000000002'::uuid, 'an unconfirmed signup never claims');
+select is((select email from public.ensure_my_customer('f1000000-0000-0000-0000-000000000001')), null, 'the new unconfirmed row does not duplicate the taken email');
 
 reset role;
 select is(
@@ -75,8 +75,8 @@ select is(
 set local role authenticated;
 select set_config('request.jwt.claim.role', 'authenticated', true);
 select set_config('request.jwt.claim.sub', 'f0000000-0000-0000-0000-000000000004', true);
-select isnt((select id from public.ensure_my_customer()), 'f3000000-0000-0000-0000-000000000004'::uuid, 'the account keeps its own customer row after merging');
-select is((select email from public.ensure_my_customer()), 't19-flagoff@example.com', 'the merged row takes the email the professional stored');
+select isnt((select id from public.ensure_my_customer('f1000000-0000-0000-0000-000000000001')), 'f3000000-0000-0000-0000-000000000004'::uuid, 'the account keeps its own customer row after merging');
+select is((select email from public.ensure_my_customer('f1000000-0000-0000-0000-000000000001')), 't19-flagoff@example.com', 'the merged row takes the email the professional stored');
 reset role;
 select is((select count(*)::int from public.customers where id = 'f3000000-0000-0000-0000-000000000004'), 0, 'the professional-created duplicate is gone');
 select is(
