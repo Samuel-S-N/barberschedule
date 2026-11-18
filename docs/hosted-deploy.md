@@ -61,6 +61,11 @@ row is merged into the account's own row if one exists). Turn it off again if co
 - Functions: `npx supabase functions deploy dispatch-notifications invite-professional delete-account`.
 - Secrets (never in git): `SUPABASE_SERVICE_ROLE_KEY`, optional `EXPO_ACCESS_TOKEN`
   (`npx supabase secrets set ...`).
+- Web push (needs HTTPS): generate a key pair once with `npx web-push generate-vapid-keys` and set
+  `npx supabase secrets set VAPID_PUBLIC_KEY=<public> VAPID_PRIVATE_KEY=<private> VAPID_SUBJECT=mailto:<business e-mail>`;
+  put the same **public** key in the web build environment as `EXPO_PUBLIC_VAPID_PUBLIC_KEY`. The private key is never committed
+  (local development uses the git-ignored `supabase/functions/.env`). Without the three secrets, web notifications fail with
+  `Missing VAPID_...` in `notification_outbox.last_error` while Expo pushes keep working.
 - `pg_cron` registers the jobs in migration `0022` when the extension is available; otherwise schedule
   `enqueue_notification_reminders()` every 15 minutes and `materialize_recurrence_job()` hourly.
 - Whatever schedules `dispatch-notifications` must send `Authorization: Bearer <service role key>`; any other caller

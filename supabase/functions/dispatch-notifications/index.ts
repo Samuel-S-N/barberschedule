@@ -1,19 +1,11 @@
 import { isServiceRequest } from "./auth.ts";
-import { buildMessage } from "./messages.ts";
+import { createDispatcher } from "./dispatch.ts";
+import type { ClaimedNotification, Message, WebSubscription } from "./dispatch.ts";
+import { createWebSender } from "./web-push-lib.ts";
 
 declare const Deno: {
   env: { get(name: string): string | undefined };
   serve(handler: (request: Request) => Response | Promise<Response>): void;
-};
-
-type ClaimedNotification = {
-  attempts: number;
-  event_type: string;
-  expo_push_token: string | null;
-  id: string;
-  locale: string | null;
-  max_attempts: number;
-  payload: Record<string, unknown>;
 };
 
 const expoPushUrl = "https://exp.host/--/api/v2/push/send";
@@ -41,20 +33,7 @@ async function supabaseRpc(name: string, body: Record<string, unknown>) {
   return response.status === 204 ? null : response.json();
 }
 
-async function markSent(id: string) {
-  await supabaseRpc("mark_notification_sent", { target_id: id });
-}
-
-async function markFailed(id: string, error: string) {
-  await supabaseRpc("mark_notification_failed", { target_error: error, target_id: id });
-}
-
-async function dispatchOne(notification: ClaimedNotification) {
-  if (!notification.expo_push_token) {
-    await markSent(notification.id);
-    return "skipped";
-  }
-
+async function sendExpo(token: string, message: Message, data: Record<string, unknown>) {
   const accessToken = Deno.env.get("EXPO_ACCESS_TOKEN");
   const response = await fetch(expoPushUrl, {
     method: "POST",
@@ -62,32 +41,35 @@ async function dispatchOne(notification: ClaimedNotification) {
       "Content-Type": "application/json",
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
     },
-    body: JSON.stringify({
-      to: notification.expo_push_token,
-      ...buildMessage(notification.event_type, notification.locale, notification.payload),
-      data: notification.payload,
-    }),
+    body: JSON.stringify({ to: token, ...message, data }),
+  });
+  const result = (await response.json().catch(() => null)) as { data?: { details?: { error?: string }; status?: string } } | null;
+
+  if (response.ok && result?.data?.status !== "error") return { ok: true };
+
+  return { error: result?.data?.details?.error ?? `Expo HTTP ${response.status}`, ok: false };
+}
+
+// Built on the first web notification, so a missing VAPID secret only fails web rows (and says why), never the Expo ones.
+let webSender: ReturnType<typeof createWebSender> | undefined;
+function sendWeb(subscription: WebSubscription, message: { body: string; title: string; url: string }) {
+  webSender ??= createWebSender({
+    privateKey: requiredEnv("VAPID_PRIVATE_KEY"),
+    publicKey: requiredEnv("VAPID_PUBLIC_KEY"),
+    subject: requiredEnv("VAPID_SUBJECT"),
   });
 
-  const result = (await response.json().catch(() => null)) as {
-    data?: { details?: { error?: string }; status?: string };
-  } | null;
-  const providerError = result?.data?.details?.error;
-
-  if (response.ok && result?.data?.status !== "error") {
-    await markSent(notification.id);
-    return "sent";
-  }
-
-  if (providerError === "DeviceNotRegistered") {
-    await supabaseRpc("deactivate_notification_token", {
-      target_expo_push_token: notification.expo_push_token,
-    });
-  }
-
-  await markFailed(notification.id, providerError ?? `Expo HTTP ${response.status}`);
-  return "failed";
+  return webSender(subscription, message);
 }
+
+const dispatchRows = createDispatcher({
+  deactivateExpo: async (token) => { await supabaseRpc("deactivate_notification_token", { target_expo_push_token: token }); },
+  deactivateWeb: async (endpoint) => { await supabaseRpc("deactivate_web_subscription", { target_endpoint: endpoint }); },
+  markFailed: async (id, error) => { await supabaseRpc("mark_notification_failed", { target_error: error, target_id: id }); },
+  markSent: async (id) => { await supabaseRpc("mark_notification_sent", { target_id: id }); },
+  sendExpo,
+  sendWeb,
+});
 
 async function dispatch(request: Request) {
   if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
@@ -96,18 +78,8 @@ async function dispatch(request: Request) {
   }
 
   const claimed = (await supabaseRpc("claim_notification_batch", { target_limit: 50 })) as ClaimedNotification[];
-  const results = { failed: 0, sent: 0, skipped: 0 };
 
-  for (const notification of claimed ?? []) {
-    try {
-      results[await dispatchOne(notification)]++;
-    } catch (error) {
-      await markFailed(notification.id, error instanceof Error ? error.message : "Unknown delivery error");
-      results.failed++;
-    }
-  }
-
-  return Response.json(results);
+  return Response.json(await dispatchRows(claimed ?? []));
 }
 
 Deno.serve(dispatch);
