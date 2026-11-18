@@ -67,6 +67,7 @@ export async function signInWithPassword(
 export async function signUpCustomer(
   supabase: Pick<AuthSupabaseClient, "auth">,
   input: SignupInput,
+  redirectTo: string,
 ) {
   const { data, error } = await supabase.auth.signUp({
     email: input.email,
@@ -77,6 +78,8 @@ export async function signUpCustomer(
         ...(input.nickname ? { nickname: input.nickname } : {}),
         ...(input.phone ? { phone: input.phone } : {}),
       },
+      // The confirmation link returns to the shop the person signed up on.
+      emailRedirectTo: redirectTo,
     },
     password: input.password,
   });

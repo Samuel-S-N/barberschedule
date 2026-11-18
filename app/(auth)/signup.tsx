@@ -1,3 +1,4 @@
+import * as Linking from "expo-linking";
 import { Redirect, useRouter } from "expo-router";
 import { Check } from "lucide-react-native";
 import { useState } from "react";
@@ -45,7 +46,7 @@ export default function SignupScreen() {
     setServerError(null);
     setIsSubmitting(true);
     try {
-      const { needsEmailConfirmation } = await signUpCustomer(supabase, parsed.value);
+      const { needsEmailConfirmation } = await signUpCustomer(supabase, parsed.value, Linking.createURL("/"));
       setConfirmationSent(needsEmailConfirmation);
     } catch (caught) {
       setServerError(errorMessage(caught, t, t("auth.signup.error")));
