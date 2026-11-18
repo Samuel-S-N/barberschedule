@@ -37,3 +37,12 @@ npm run export:web
 
 Os testes Web usam respostas Supabase determinísticas. Os testes Jest e pgTAP
 cobrem as regras de domínio, autorização, concorrência e persistência.
+
+## Documentação
+
+- `docs/project-status.md`: estado atual e histórico por tarefa.
+- `docs/decisions/`: registros de decisão (marca, vocabulário, tema por loja, papéis, LGPD, concorrência).
+- `docs/testing.md` e `docs/release.md`: como verificar e publicar. O e2e Web não roda no CI.
+- `docs/hosted-deploy.md`: checklist do primeiro deploy no Supabase hospedado (ainda não existe ambiente hospedado).
+- Migrations: podem ser reescritas apenas até o primeiro deploy hospedado; depois são só de acréscimo
+  (decisão `018`).
