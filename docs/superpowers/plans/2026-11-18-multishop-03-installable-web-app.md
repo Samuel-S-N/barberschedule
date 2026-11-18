@@ -1271,3 +1271,14 @@ Set `Status:` of `docs/superpowers/specs/2026-11-18-installable-web-app-design.m
 git add docs
 git commit -m "docs: installable web app implemented"
 ```
+
+---
+
+## Execution deviations
+
+- **Task 3 (`app/+html.tsx`, important):** the plan's document omitted Expo Router's server-document nodes. In SDK 58 a custom `+html` must render `useServerDocumentContext()`'s `headNodes` (styles, preloads), `bodyNodes` (**the bundle `<script>`**), `htmlAttributes` and `bodyAttributes`; without them the static export has the manifest tags but **no JavaScript** (the page stays blank). Found when the whole Playwright suite hung on a spinner-less blank page after the first `+html`; fixed in `app/+html.tsx` and pinned by `tests/unit/html-document-nodes.test.ts` (mocks the context, asserts head nodes in `<head>` and body nodes after the app) and by the PWA e2e (the service worker only registers if the bundle ran).
+- **Task 3:** `tests/unit/react-dom-server.d.ts` (a one-function type shim, no new dependency) because `react-dom` ships no types here; `route-parents-coverage.test.ts` ignores `+`-prefixed files as planned.
+- **Task 4:** `useInstallPrompt` removes its listeners from the `window` captured when it subscribed (the plan's `window.removeEventListener` in the cleanup failed when `window` had been replaced); the unmount test wraps `unmount()` in `act`.
+- **Task 5:** the guide's step icons sit in a fixed-width box (`w-12`) so both steps' texts line up (seen in the screenshot). Tests were extracted together with the code, so the red run for this task and for the Task 6 e2e additions was not shown separately.
+- **Task 1:** icons generated with Pillow (already on the machine) from `assets/icon.png`; the maskable ones are the artwork at 80% on the ink background (checked by eye).
+- **Browser check (screenshots in the session scratchpad `shots3/`):** against a static export served locally: `/manifest.json` (200, `application/json`, name "Zenc", standalone, 4 icons), `/sw.js` (200, `text/javascript`), the icons (200, `image/png`); the three hubs at 430×900 show the install card; a synthetic `beforeinstallprompt` is stored in `window.__zencInstallPromptEvent` by the head script, the card reacts and **Install** calls the event's `prompt()`; with an iPhone user agent the hub shows "Add to Home Screen" and the guide opens as a centred floating window (X top-right, closes with X, "Got it" and a tap outside). Note: a screenshot taken during the Modal's fade-in looks translucent; wait ~700 ms.

@@ -42,7 +42,7 @@ export function InstallGuide({ onClose, variant, visible }: { onClose: () => voi
                 <View className="h-6 w-6 items-center justify-center rounded-full bg-primary-100">
                   <Text className="text-xs font-sans-bold text-primary-600" style={{ fontVariant: ["tabular-nums"] }}>{index + 1}</Text>
                 </View>
-                {step.icon}
+                <View className="w-12 items-center">{step.icon}</View>
                 <Text className="flex-1 text-sm font-sans-medium text-neutral-700">{step.text}</Text>
               </View>
             ))}
