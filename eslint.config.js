@@ -6,6 +6,7 @@ module.exports = tseslint.config(
   {
     ignores: [
       ".claude/**",
+      ".e2e-dist/**",
       ".expo/**",
       "coverage/**",
       "dist/**",
