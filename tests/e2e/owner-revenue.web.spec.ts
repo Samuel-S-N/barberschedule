@@ -196,3 +196,72 @@ test("each professional and service shows the change versus the previous period"
   await page.getByTestId("section-services-toggle").click();
   await expect(page.getByTestId("section-services")).toContainText("+100%");
 });
+
+const overviewRow = (patch: Record<string, unknown>) => ({
+  balance_cents: 0, professional_id: "b1", professional_name: "Ana Professional", current_open_cents: 0, earned_cents: 0, last_due_date: null, next_due_date: null,
+  paid_cents: 0, payout_day_1: 5, payout_day_2: null, payout_schedule: "weekly", period_start: "2026-10-30", prior_open_cents: 0, status: "ok", tracking_start: "2026-10-01", ...patch,
+});
+
+async function mockRevenueWithPayouts(page: Page, payouts: unknown[], overview: unknown[]) {
+  await signInAsOwner(page);
+  await page.route("**/rest/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    const json = (body: unknown) => route.fulfill({ body: JSON.stringify(body), contentType: "application/json", status: 200 });
+
+    if (path.endsWith("/rpc/get_current_profile")) return json([{ full_name: "Owner", role: "owner", user_id: ownerId }]);
+    if (path.endsWith("/rpc/get_shop_report")) return json(report);
+    if (path.endsWith("/rpc/list_rent_payments")) return json([]);
+    if (path.endsWith("/rpc/list_professional_payouts")) return json(payouts);
+    if (path.endsWith("/rpc/get_payout_overview")) return json(overview);
+    await route.abort();
+  });
+}
+
+test("a professional with an unpaid previous period shows the total, the leftover and the current period, linked to Repasses", async ({ page }) => {
+  await mockRevenueWithPayouts(
+    page,
+    [{ amount_cents: 3000, professional_id: "b1", professional_name: "Ana Professional", id: "p1", note: null, paid_on: "2026-10-20" }, { amount_cents: 1000, professional_id: "b1", professional_name: "Ana Professional", id: "p2", note: null, paid_on: "2026-10-25" }],
+    [overviewRow({ balance_cents: 7000, current_open_cents: 5000, next_due_date: "2026-11-06", prior_open_cents: 2000 })],
+  );
+
+  await page.goto("/revenue");
+  const ana = page.getByTestId("professional-row-b1");
+
+  await expect(ana).toContainText("Professional share");
+  await expect(page.getByTestId("revenue-payouts-paid-b1")).toContainText("R$ 40,00");
+  await expect(page.getByTestId("revenue-period-b1-total")).toContainText("R$ 70,00");
+  await expect(page.getByTestId("revenue-period-b1-prior")).toContainText("R$ 20,00");
+  await expect(ana).toContainText("Left from the previous period");
+  await expect(page.getByTestId("revenue-period-b1-current")).toContainText("R$ 50,00");
+  await expect(ana).toContainText("Current period · until 05/11");
+  await expect(ana).not.toContainText("Counting since");
+  // Chair-rental professionals are paid by the professional, so they get no payout lines.
+  await expect(page.getByTestId("revenue-payouts-paid-b2")).toHaveCount(0);
+
+  await page.getByTestId("revenue-payouts-link-b1").click();
+  await expect(page).toHaveURL(/\/payouts/);
+});
+
+test("with nothing left from before, only the current period shows", async ({ page }) => {
+  await mockRevenueWithPayouts(page, [], [overviewRow({ balance_cents: 4400, current_open_cents: 4400, next_due_date: "2026-11-06" })]);
+
+  await page.goto("/revenue");
+  await expect(page.getByTestId("revenue-period-b1-current")).toContainText("R$ 44,00");
+  await expect(page.getByTestId("revenue-period-b1-prior")).toHaveCount(0);
+  await expect(page.getByTestId("revenue-period-b1-total")).toHaveCount(0);
+});
+
+test("an overpaid balance stays inside the card", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await mockRevenueWithPayouts(page, [{ amount_cents: 2500, professional_id: "b1", professional_name: "Ana Professional", id: "p1", note: null, paid_on: "2026-10-27" }], [overviewRow({ balance_cents: -2500, current_open_cents: -2500, paid_cents: 2500, tracking_start: "2026-10-27" })]);
+
+  await page.goto("/revenue");
+  const card = page.getByTestId("professional-row-b1");
+  const overpaid = page.getByTestId("revenue-period-b1-overpaid");
+
+  await expect(overpaid).toContainText("R$ 25,00");
+  await expect(card).toContainText("Overpaid");
+  const box = (await overpaid.boundingBox())!;
+  const cardBox = (await card.boundingBox())!;
+  expect(box.x + box.width).toBeLessThanOrEqual(cardBox.x + cardBox.width);
+});

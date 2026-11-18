@@ -8,6 +8,7 @@ import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
 import { Card } from "../../../src/components/ui/Card";
 import { Screen } from "../../../src/components/ui/Screen";
 import { getMyProfessionalProfile } from "../../../src/features/professionals/api";
+import { MyPayoutSection } from "../../../src/features/payouts/professional/MyPayoutSection";
 import { errorMessage } from "../../../src/i18n/errors";
 import { useBack } from "../../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
@@ -46,6 +47,7 @@ export default function ProfessionalCompensationScreen() {
                 </View>
               </Card>
             ) : null}
+            <MyPayoutSection />
           </View>
         </View>
       </ScrollView>

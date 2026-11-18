@@ -1,0 +1,39 @@
+import { useTranslation } from "react-i18next";
+import { Text, View } from "react-native";
+
+import { formatPriceBRL } from "../../../components/domain/ServiceCard";
+import { Button } from "../../../components/ui/Button";
+import { Card } from "../../../components/ui/Card";
+import { payoutBadge } from "../balance";
+import { formatDayMonth } from "../format";
+import { scheduleText } from "../schedule";
+import { PeriodBreakdown } from "./PeriodBreakdown";
+import type { PayoutOverviewItem } from "../types";
+
+const TONE_CLASS = { danger: "text-danger-500", neutral: "text-neutral-600", success: "text-success-500", warning: "text-warning-500" } as const;
+
+export function PayoutCard({ item, onPay }: { item: PayoutOverviewItem; onPay: () => void }) {
+  const { t } = useTranslation();
+  const badge = payoutBadge(item.status, item.balanceCents);
+
+  return (
+    <Card variant="outlined">
+      <View className="gap-2" testID={`payout-card-${item.professionalId}`}>
+        <View className="flex-row items-center justify-between gap-2">
+          <Text accessibilityRole="header" className="flex-1 text-lg font-display-semibold text-ink">{item.professionalName}</Text>
+          <Text className={`text-sm font-sans-medium ${TONE_CLASS[badge.tone]}`}>{t(`payouts.badge.${badge.key}`)}</Text>
+        </View>
+        <Text className="text-sm font-sans text-neutral-600">{scheduleText(t, item.config)}</Text>
+        <View>
+          <Text className="text-xs font-sans text-neutral-500">{t("payouts.period.total")}</Text>
+          <Text className="text-2xl font-display-bold text-ink" testID={`payout-total-${item.professionalId}`}>
+            {item.balanceCents < 0 ? `${t("payouts.balanceOverpaid")} ${formatPriceBRL(-item.balanceCents)}` : formatPriceBRL(item.balanceCents)}
+          </Text>
+        </View>
+        <PeriodBreakdown item={item} showTotal={false} testIdPrefix={`payout-period-${item.professionalId}`} />
+        {item.nextDueDate ? <Text className="text-sm font-sans text-neutral-600">{t("payouts.next", { date: formatDayMonth(item.nextDueDate) })}</Text> : null}
+        <Button label={t("payouts.pay")} onPress={onPay} size="sm" testID={`payout-pay-${item.professionalId}`} />
+      </View>
+    </Card>
+  );
+}

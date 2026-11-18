@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 import { CheckCircle2, UserX, XCircle } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -19,7 +20,9 @@ import { StatTile } from "../../src/components/domain/StatTile";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Screen } from "../../src/components/ui/Screen";
-import { professionalRows, sumShopReport, topByValue } from "../../src/features/owner-reports/build";
+import { professionalRows, payoutsPaidByProfessional, sumShopReport, topByValue } from "../../src/features/owner-reports/build";
+import { getPayoutOverview, listProfessionalPayouts } from "../../src/features/payouts/api";
+import { PeriodBreakdown } from "../../src/features/payouts/owner/PeriodBreakdown";
 import { getShopReport } from "../../src/features/owner-reports/api";
 import { ownerReportCsv } from "../../src/features/reports/csv";
 import { useCsvLabels } from "../../src/features/reports/use-csv-labels";
@@ -59,7 +62,12 @@ export default function OwnerRevenueScreen() {
   const before = useQuery({ queryFn: () => getShopReport(supabase, previous.start, previous.end), queryKey: ["owner-report", previous.start, previous.end] });
 
   const queryClient = useQueryClient();
+  const router = useRouter();
   const payments = useQuery({ queryFn: () => listRentPayments(supabase, range.start, range.end), queryKey: ["rent-payments", range.start, range.end] });
+  // Money paid out to commission professionals in the period, and the running balance still owed (not period-bound). Failures just hide the lines.
+  const payouts = useQuery({ queryFn: () => listProfessionalPayouts(supabase, range.start, range.end), queryKey: ["payout-history", "revenue", range.start, range.end] });
+  const payoutOverview = useQuery({ queryFn: () => getPayoutOverview(supabase), queryKey: ["payout-overview"] });
+  const paidOut = useMemo(() => payoutsPaidByProfessional(payouts.data ?? []), [payouts.data]);
   // Rent payment form: one professional at a time; remove needs a second tap on the same payment.
   const [payingFor, setPayingFor] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
@@ -142,6 +150,18 @@ export default function OwnerRevenueScreen() {
     value: p.value,
   }));
   const rows = report ? professionalRows(report) : [];
+  const payoutLines = (professionalId: string) => {
+    const item = payoutOverview.data?.find((o) => o.professionalId === professionalId);
+
+    if (!item) return null;
+
+    return (
+      <>
+        <PeriodBreakdown item={item} showTotal testIdPrefix={`revenue-period-${professionalId}`} />
+        <Button label={t("owner.revenue.viewPayouts")} onPress={() => router.push("/payouts" as never)} size="sm" testID={`revenue-payouts-link-${professionalId}`} variant="outline" />
+      </>
+    );
+  };
   const donutColor = (key: string, index: number) => (key === "other" ? colors.neutral[500] : SERVICE_SLICE_COLORS[index % SERVICE_SLICE_COLORS.length]);
   const professionalItems = report ? topByValue(report.professionals.map((b) => ({ key: b.professionalId, name: b.name, value: b.grossCents }))) : [];
   const serviceItems = report ? topByValue(report.services.map((s) => ({ key: s.serviceId, name: s.name, value: s.grossCents }))) : [];
@@ -273,6 +293,13 @@ export default function OwnerRevenueScreen() {
                       {row.compensationType === "chair_rental" && payingFor !== row.professionalId ? (
                         <Button label={t("owner.revenue.recordPayment")} onPress={() => openPayment(row.professionalId, row.rentEstimateCents - row.rentPaidCents)} size="sm" testID={`rent-pay-${row.professionalId}`} variant="outline" />
                       ) : null}
+                      {row.compensationType === "commission" && payouts.data ? (
+                        <View className="flex-row justify-between">
+                          <Text className="flex-1 text-sm font-sans text-neutral-600">{t("owner.revenue.payoutsPaid")}</Text>
+                          <Text className="text-sm font-sans-medium text-ink" testID={`revenue-payouts-paid-${row.professionalId}`}>{money(paidOut[row.professionalId] ?? 0)}</Text>
+                        </View>
+                      ) : null}
+                      {row.compensationType === "commission" ? payoutLines(row.professionalId) : null}
                       {payingFor === row.professionalId ? (
                         <View className="gap-2">
                           <Input label={t("owner.revenue.paymentAmount")} onChangeText={setAmount} placeholder={t("examples.money")} testID="rent-amount" value={amount} />
