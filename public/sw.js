@@ -17,13 +17,13 @@ self.addEventListener("fetch", () => {
 
 // Web push. The dispatcher sends { title, body, url } (url = the shop's origin plus the screen the notification is about).
 self.addEventListener("push", (event) => {
-  let data = {};
-
-  try {
-    data = event.data ? event.data.json() : {};
-  } catch {
-    data = {};
-  }
+  const data = (() => {
+    try {
+      return event.data ? event.data.json() : {};
+    } catch {
+      return {};
+    }
+  })();
 
   event.waitUntil(
     self.registration.showNotification(data.title || "Zenc", {
