@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { Platform, type PlatformOSType } from "react-native";
 
 import { createKeyValueStorage, type WebStorage } from "../key-value-storage";
+import { createBrowserCookieStorage } from "./cookie-storage";
 
 type PublicSupabaseConfig = {
   publishableKey: string;
@@ -20,7 +21,8 @@ export function buildSupabaseAuthOptions(
     autoRefreshToken: true,
     detectSessionInUrl: platform === "web",
     persistSession: true,
-    storage: createKeyValueStorage(platform, webStorage),
+    // On web the session lives in cookies (shared across the shop subdomains); an injected storage (tests) still wins.
+    storage: platform === "web" && !webStorage && typeof document !== "undefined" ? createBrowserCookieStorage() : createKeyValueStorage(platform, webStorage),
   };
 }
 

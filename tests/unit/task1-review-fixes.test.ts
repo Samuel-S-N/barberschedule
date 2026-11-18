@@ -78,6 +78,13 @@ describe("task 1 review fixes", () => {
     await expect(auth.storage.getItem("token")).resolves.toBe("session");
   });
 
+  it("uses the cookie storage on web when no storage is injected", () => {
+    const auth = buildSupabaseAuthOptions("web");
+
+    expect(auth.storage).toBeDefined();
+    expect(auth.detectSessionInUrl).toBe(true);
+  });
+
   it("uses SecureStore-backed persistence on native", async () => {
     const getItemAsync = jest
       .spyOn(SecureStore, "getItemAsync")
