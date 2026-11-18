@@ -2096,3 +2096,16 @@ Set `Status:` of `docs/superpowers/specs/2026-11-18-web-push-design.md` to `impl
 git add docs
 git commit -m "docs: web push implemented"
 ```
+
+---
+
+## Execution deviations
+
+- **Task 1 (spike):** Path A (`npm:web-push@3.6.7`) works on the local Edge runtime (`{"status":201}` from a public HTTPS endpoint; cold 12 s, warm 1.4 s). **No real push service could be reached:** Chrome started by Playwright refuses `pushManager.subscribe` ("Registration failed - permission denied", headless and headed, permission granted). So the spike used a generated P-256 subscription pointing at `https://httpbin.org/status/201`, and the browser check stubs `PushManager.subscribe`. Note: `docs/superpowers/spikes/2026-11-18-web-push-library.md`.
+- **VAPID keys:** a local pair lives only in the git-ignored `supabase/functions/.env` (`.gitignore` line `.env` covers it); production uses `supabase secrets set VAPID_PUBLIC_KEY VAPID_PRIVATE_KEY VAPID_SUBJECT` and `EXPO_PUBLIC_VAPID_PUBLIC_KEY` in the web build (documented in `docs/hosted-deploy.md` and `.env.example`).
+- **Task 2:** the endpoint regex `{1,2000}` is invalid in Postgres (repetition limit 255); the migration uses `^https://[^[:space:]]+$` plus `char_length(endpoint) <= 2000`.
+- **Task 3:** `055` scopes its claim assertions to its own outbox rows by `event_key` (the claim also takes the seed's pending rows, so counting by `event_type` was wrong).
+- **Task 5:** `web-push-lib.ts` carries a `// @ts-expect-error` on the `npm:` import (the Node TypeScript project cannot resolve Deno specifiers).
+- **Task 7:** `urlBase64ToUint8Array` returns `Uint8Array<ArrayBuffer>` (TypeScript 6 lib typing); `use-web-push.test.ts` gives `window` a `location` (the hook reads the origin when it builds the subscribe request); a `sign-out.test.ts` covers the order (unsubscribe, then sign out) and the failure case.
+- **Browser check (real Chrome, local stack, screenshots in the session scratchpad `shots4/`):** the card went default → on with a real saved row (`web_origin = http://shop-a.localhost:4180`, `platform = web`, locale `en`, `active`); an `appointment.booked` outbox row was claimed by `dispatch-notifications` served on the local Edge runtime and sent (`{"failed":0,"sent":1,...}`, outbox `sent`); because the stub endpoint is not a push service the same `{title, body, url}` message (built by `buildMessage` and `notificationPath`) was delivered to the page's service worker through DevTools (`ServiceWorker.deliverPushMessage`), which showed "Appointment booked" with `icon-192.png` and `url = http://shop-a.localhost:4180/appointments`; signing out set the row inactive; the denied card and the iPhone-not-installed card (with the install guide) render. The notification **click** (focus/navigate/open) could not be automated in Chrome; it is covered by the `sw.js` unit tests.
+- **Not touched:** the empty `fetch` handler in `sw.js` (push does not need it).
