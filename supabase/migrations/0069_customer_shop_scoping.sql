@@ -62,3 +62,68 @@ language sql stable security definer set search_path = pg_catalog, public, pg_te
 $$;
 revoke all on function public.list_my_recurrence_requests(uuid) from public, anon;
 grant execute on function public.list_my_recurrence_requests(uuid) to authenticated;
+
+-- The bell count and "mark all read" / "clear all" follow the same scope: with a shop given they only touch that shop's rows and the
+-- unscoped ones, so clearing the inbox on shop A never deletes shop B's notifications. Without a shop they behave as before.
+drop function public.count_unread_notifications();
+create function public.count_unread_notifications(p_shop_id uuid default null)
+returns integer
+language sql
+stable
+security invoker
+as $$
+  select count(*)::int from public.notifications
+  where user_id = auth.uid() and read_at is null and (p_shop_id is null or shop_id is null or shop_id = p_shop_id);
+$$;
+grant execute on function public.count_unread_notifications(uuid) to authenticated;
+
+drop function public.mark_notifications_read(uuid[]);
+create function public.mark_notifications_read(target_ids uuid[] default null, p_shop_id uuid default null)
+returns integer
+language plpgsql
+security definer
+set search_path = pg_catalog, public, pg_temp
+as $$
+declare
+  changed integer;
+begin
+  if auth.uid() is null then
+    raise exception using errcode = 'P0016', message = 'NOTIFICATION_FORBIDDEN';
+  end if;
+
+  update public.notifications
+  set read_at = clock_timestamp()
+  where user_id = auth.uid() and read_at is null and (target_ids is null or id = any (target_ids))
+    and (p_shop_id is null or shop_id is null or shop_id = p_shop_id);
+  get diagnostics changed = row_count;
+
+  return changed;
+end;
+$$;
+revoke all on function public.mark_notifications_read(uuid[], uuid) from public;
+grant execute on function public.mark_notifications_read(uuid[], uuid) to authenticated;
+
+drop function public.delete_notifications(uuid[]);
+create function public.delete_notifications(target_ids uuid[] default null, p_shop_id uuid default null)
+returns integer
+language plpgsql
+security definer
+set search_path = pg_catalog, public, pg_temp
+as $$
+declare
+  removed integer;
+begin
+  if auth.uid() is null then
+    raise exception using errcode = 'P0016', message = 'NOTIFICATION_FORBIDDEN';
+  end if;
+
+  delete from public.notifications
+  where user_id = auth.uid() and (target_ids is null or id = any (target_ids))
+    and (p_shop_id is null or shop_id is null or shop_id = p_shop_id);
+  get diagnostics removed = row_count;
+
+  return removed;
+end;
+$$;
+revoke all on function public.delete_notifications(uuid[], uuid) from public, anon;
+grant execute on function public.delete_notifications(uuid[], uuid) to authenticated;

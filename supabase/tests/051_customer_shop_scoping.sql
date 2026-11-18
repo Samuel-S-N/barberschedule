@@ -2,18 +2,22 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(6);
+select plan(10);
 
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at)
 values
   ('00000000-0000-0000-0000-000000000000', 'fb000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 't51-owner@example.com', 'x', now()),
   ('00000000-0000-0000-0000-000000000000', 'fb000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 't51-customer@example.com', 'x', now()),
-  ('00000000-0000-0000-0000-000000000000', 'fb000000-0000-0000-0000-000000000003', 'authenticated', 'authenticated', 't51-pro@example.com', 'x', now());
+  ('00000000-0000-0000-0000-000000000000', 'fb000000-0000-0000-0000-000000000003', 'authenticated', 'authenticated', 't51-pro@example.com', 'x', now()),
+  ('00000000-0000-0000-0000-000000000000', 'fb000000-0000-0000-0000-000000000004', 'authenticated', 'authenticated', 't51-owner2@example.com', 'x', now());
+update public.profiles set role = 'owner' where user_id = 'fb000000-0000-0000-0000-000000000004';
 update public.profiles set role = 'owner' where user_id = 'fb000000-0000-0000-0000-000000000001';
 update public.profiles set role = 'professional' where user_id = 'fb000000-0000-0000-0000-000000000003';
 
 insert into public.shops (id, name, owner_user_id)
 values ('fb100000-0000-0000-0000-000000000001', 'T51 Shop', 'fb000000-0000-0000-0000-000000000001');
+insert into public.shops (id, name, owner_user_id)
+values ('fb100000-0000-0000-0000-000000000002', 'T51 Shop B', 'fb000000-0000-0000-0000-000000000004');
 insert into public.customers (id, shop_id, user_id, full_name, email)
 values ('fb110000-0000-0000-0000-000000000001', 'fb100000-0000-0000-0000-000000000001', 'fb000000-0000-0000-0000-000000000002', 'T51 Customer', 't51-customer@shop.example');
 insert into public.professionals (id, shop_id, name, user_id)
@@ -57,6 +61,21 @@ select set_config('request.jwt.claim.sub', 'fb000000-0000-0000-0000-000000000002
 select set_config('request.jwt.claim.role', 'authenticated', true);
 select is((select count(*)::int from public.list_my_recurrence_requests()), 0, 'no argument still works');
 select is((select count(*)::int from public.list_my_recurrence_requests('fb100000-0000-0000-0000-000000000001')), 0, 'a shop id filters');
+reset role;
+
+-- count / mark read / delete are scoped to one shop (plus the unscoped rows) when a shop is given
+insert into public.notifications (user_id, kind, params, event_key, shop_id)
+values
+  ('fb000000-0000-0000-0000-000000000002', 'appointment_booked', '{}', 't51-a', 'fb100000-0000-0000-0000-000000000001'),
+  ('fb000000-0000-0000-0000-000000000002', 'appointment_booked', '{}', 't51-b', 'fb100000-0000-0000-0000-000000000002');
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', 'fb000000-0000-0000-0000-000000000002', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select is(public.count_unread_notifications('fb100000-0000-0000-0000-000000000001'), 2, 'the unread count of shop A: its row plus the unscoped one');
+select is(public.mark_notifications_read(null, 'fb100000-0000-0000-0000-000000000001'), 2, 'mark all read in shop A leaves shop B alone');
+select is(public.count_unread_notifications(), 1, 'without a shop the count still covers everything (shop B is still unread)');
+select is(public.delete_notifications(null, 'fb100000-0000-0000-0000-000000000001'), 2, 'clear all in shop A keeps shop B''s notification');
 reset role;
 
 select * from finish();
