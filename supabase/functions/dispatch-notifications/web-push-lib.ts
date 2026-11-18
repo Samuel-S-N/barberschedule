@@ -1,3 +1,4 @@
+// @ts-expect-error The Edge runtime (Deno) resolves `npm:` specifiers; the Node TypeScript project cannot.
 import webpush from "npm:web-push@3.6.7";
 
 import type { WebSubscription } from "./dispatch.ts";
