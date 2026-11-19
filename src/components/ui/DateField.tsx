@@ -34,16 +34,17 @@ export function DateField({ disabledDates, label, max, min, onChange, step = "da
   const next = stepDate(value, step, 1);
   const canGoBack = !min || previous >= min;
   const canGoForward = !max || next <= max;
-  const arrow = "h-input-height w-11 items-center justify-center rounded-xl border border-neutral-200 bg-surface";
+  // The arrows are ghost buttons inside the single box (44px targets in a 52px box); only the box has the border.
+  const arrow = "h-11 w-11 items-center justify-center rounded-lg";
 
   return (
     <View className="gap-1">
       <Text className="text-sm font-sans-medium text-neutral-700">{label}</Text>
-      <View className="flex-row items-center gap-2">
+      <View className="h-input-height flex-row items-center rounded-xl border border-neutral-200 bg-surface px-1" testID={`${testID}-box`}>
         <Pressable accessibilityLabel={t(PREVIOUS[step])} accessibilityRole="button" accessibilityState={{ disabled: !canGoBack }} className={`${arrow} ${canGoBack ? "" : "opacity-30"}`} disabled={!canGoBack} onPress={() => onChange(previous)} testID={`${testID}-prev`}>
           <ChevronLeft color={colors.ink} size={20} />
         </Pressable>
-        <Pressable accessibilityLabel={`${label}: ${formatDateNumeric(value, language)}. ${t("dateField.choose")}`} accessibilityRole="button" className="h-input-height flex-1 items-center justify-center rounded-xl border border-neutral-200 bg-surface px-4" onPress={() => setOpen(true)} testID={testID}>
+        <Pressable accessibilityLabel={`${label}: ${formatDateNumeric(value, language)}. ${t("dateField.choose")}`} accessibilityRole="button" className="h-11 flex-1 items-center justify-center" onPress={() => setOpen(true)} testID={testID}>
           <Text className="text-base font-sans-semibold text-ink" style={{ fontVariant: ["tabular-nums"] }}>{formatDateNumeric(value, language)}</Text>
         </Pressable>
         <Pressable accessibilityLabel={t(NEXT[step])} accessibilityRole="button" accessibilityState={{ disabled: !canGoForward }} className={`${arrow} ${canGoForward ? "" : "opacity-30"}`} disabled={!canGoForward} onPress={() => onChange(next)} testID={`${testID}-next`}>

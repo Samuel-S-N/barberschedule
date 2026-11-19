@@ -74,4 +74,44 @@ describe("DateField", () => {
 
     expect(view.getByTestId("date-picker-day-2026-10-09")).toBeDisabled();
   });
+
+  const isInside = (node: { parent: unknown }, testID: string) => {
+    let current = node as { parent: { props?: { testID?: string }; parent: unknown } | null };
+
+    while (current.parent) {
+      if (current.parent.props?.testID === testID) return true;
+      current = current.parent as typeof current;
+    }
+
+    return false;
+  };
+
+  it("is ONE bordered box with the date and both arrows inside it", async () => {
+    const { view } = await show();
+
+    expect(view.getByTestId("df-box").props.className).toContain("border");
+    for (const id of ["df-prev", "df", "df-next"]) expect(isInside(view.getByTestId(id), "df-box")).toBe(true);
+  });
+
+  it("the arrows are ghost buttons inside the box: no border of their own, 44px tap targets", async () => {
+    const { view } = await show();
+
+    for (const id of ["df-prev", "df-next"]) {
+      const className = view.getByTestId(id).props.className as string;
+
+      expect(className).not.toContain("border");
+      expect(className).toContain("h-11");
+      expect(className).toContain("w-11");
+    }
+  });
+
+  it("the date button has no border of its own and centres the date", async () => {
+    const { view } = await show();
+    const className = view.getByTestId("df").props.className as string;
+
+    expect(className).not.toContain("border");
+    expect(className).toContain("items-center");
+    expect(className).toContain("justify-center");
+    expect(className).toContain("flex-1");
+  });
 });
