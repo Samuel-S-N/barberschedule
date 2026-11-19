@@ -9,6 +9,9 @@ import { useColors } from "../../../src/lib/design/theme/ThemeProvider";
 import { selectTab } from "../../../src/lib/navigation/select-tab";
 import { isTabSwipeEnabled } from "../../../src/lib/navigation/tab-swipe";
 
+// The booking flow keeps a half-made booking when its tab is pressed again; a completed one resets itself in book/review.tsx.
+const KEEP_NESTED = ["book"] as const;
+
 export default function TabsLayout() {
   const colors = useColors();
   const { t } = useTranslation();
@@ -28,13 +31,13 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: colors.canvas },
         swipeEnabled: isTabSwipeEnabled(pathname),
       }}
-      tabBar={({ navigateToTab, state }) => (
+      tabBar={({ emitter, navigateToTab, state }) => (
         // Tab screens skip the bottom edge; the bar owns it so the system navigation area isn't padded twice.
         <Screen className="bg-surface" edges={["bottom", "left", "right"]}>
           <BottomTabBar
             activeKey={state.routes[state.index].name}
             items={items}
-            onSelect={(key) => selectTab(state, navigateToTab, key)}
+            onSelect={(key) => selectTab({ emitter, navigateToTab, state }, key, KEEP_NESTED)}
           />
         </Screen>
       )}
