@@ -4,15 +4,18 @@ import { useEffect } from "react";
 import { Platform } from "react-native";
 
 import { useSupabaseSession } from "../../providers/AppProviders";
+import { isNativePushDisabled } from "./native-push-preference";
 import { saveExpoPushToken } from "./register-token";
 
-export async function registerPushToken(supabase: Parameters<typeof saveExpoPushToken>[0]) {
+export async function registerPushToken(supabase: Parameters<typeof saveExpoPushToken>[0], options: { ask?: boolean } = {}) {
   if (Platform.OS === "web") return null;
   // Expo Go (SDK 53+) removed remote push: the module logs an error and throws as soon as it is loaded.
   if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) return null;
   // On Android expo-notifications requires this native module as soon as it is imported, and Expo Go and older development builds
   // do not ship it: the import then throws a red screen that no try/catch can stop (Metro reports module-init errors itself).
   if (Platform.OS === "android" && !requireOptionalNativeModule("ExpoTopicSubscriptionModule")) return null;
+  // The user switched notifications off on this device: stay quiet (start-up must not quietly turn them back on).
+  if (!options.ask && (await isNativePushDisabled())) return null;
   // Loaded lazily: on web the module only logs a "not supported" warning at import time.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const Notifications = require("expo-notifications") as typeof import("expo-notifications");
@@ -33,7 +36,8 @@ export async function registerPushToken(supabase: Parameters<typeof saveExpoPush
   }
 
   let { status } = await Notifications.getPermissionsAsync();
-  if (status !== "granted") ({ status } = await Notifications.requestPermissionsAsync());
+  // Only a tap (the first-sign-in pop-up or the Settings switch) may ask; start-up only refreshes a token that is already allowed.
+  if (status !== "granted" && options.ask) ({ status } = await Notifications.requestPermissionsAsync());
   if (status !== "granted") return null;
 
   const projectId =

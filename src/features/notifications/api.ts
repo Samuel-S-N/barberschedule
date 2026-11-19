@@ -51,3 +51,9 @@ export async function deactivateMyWebSubscription(supabase: NotificationsSupabas
 
   if (error) throw error;
 }
+
+export async function deactivateMyNotificationToken(supabase: NotificationsSupabaseClient, token: string) {
+  const { error } = await supabase.rpc("deactivate_my_notification_token", { target_expo_push_token: token });
+
+  if (error) throw error;
+}

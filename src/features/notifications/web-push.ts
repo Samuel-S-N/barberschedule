@@ -92,3 +92,13 @@ export async function unsubscribeWebPush(supabase: Pick<SupabaseClient, "rpc">) 
     if (subscription) await deactivateMyWebSubscription(supabase, subscription.endpoint);
   })(), 4000);
 }
+
+// Settings > Notifications > off: this browser stops receiving pushes. The server row is deactivated first, so a failure keeps the
+// browser subscribed and the switch honest; then the browser's own subscription is dropped (a later "on" subscribes afresh).
+export async function disableWebPush(supabase: Pick<SupabaseClient, "rpc">) {
+  const subscription = await (await navigator.serviceWorker.getRegistration())?.pushManager.getSubscription();
+
+  if (!subscription) return;
+  await deactivateMyWebSubscription(supabase, subscription.endpoint);
+  await subscription.unsubscribe();
+}

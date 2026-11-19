@@ -1,4 +1,4 @@
-import { resolveWebPushState } from "../../src/features/notifications/web-push-state";
+import { resolvePromptKind, resolveWebPushState } from "../../src/features/notifications/web-push-state";
 import type { WebPushEnvironment } from "../../src/features/notifications/web-push-state";
 
 const env = (patch: Partial<WebPushEnvironment> = {}): WebPushEnvironment => ({
@@ -20,5 +20,25 @@ describe("resolveWebPushState", () => {
     ["permission granted but the subscription is gone", env({ permission: "granted" }), "default"],
   ])("%s", (_name, environment, expected) => {
     expect(resolveWebPushState(environment)).toBe(expected);
+  });
+});
+
+describe("resolvePromptKind", () => {
+  it("asks only when the browser can do push and has not been asked", () => {
+    expect(resolvePromptKind(env())).toBe("ask");
+  });
+
+  it.each(["granted", "denied"] as const)("does not ask when permission is already %s", (permission) => {
+    expect(resolvePromptKind(env({ permission }))).toBeNull();
+  });
+
+  it("points an iPhone that has not installed the app to the install guide, before any support check", () => {
+    expect(resolvePromptKind(env({ hasPushManager: false, ios: true }))).toBe("install");
+    expect(resolvePromptKind(env({ ios: true, standalone: true }))).toBe("ask");
+  });
+
+  it("stays silent in unsupported browsers and off the web", () => {
+    expect(resolvePromptKind(env({ hasServiceWorker: false }))).toBeNull();
+    expect(resolvePromptKind(env({ isWeb: false }))).toBeNull();
   });
 });
