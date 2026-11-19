@@ -88,7 +88,9 @@ test("an empty range shows the empty state and the new-appointment button opens 
   await expect(page).toHaveURL(/\/appointment-form/);
 });
 
-test("the date field masks what is typed and only requests the range once the date is complete", async ({ page }) => {
+const nextDay = (date: string, days: number) => new Date(Date.parse(`${date}T12:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
+
+test("the date field arrows step by the selected view and ask for the matching range", async ({ page }) => {
   const ranges: string[] = [];
 
   await signInAsOwner(page);
@@ -98,46 +100,47 @@ test("the date field masks what is typed and only requests the range once the da
   });
 
   await page.goto("/agenda");
-  const field = page.getByTestId("owner-agenda-date");
-  await field.fill("");
-  await field.pressSequentially("20261002");
-  await expect(field).toHaveValue("2026-10-02");
-  await expect.poll(() => ranges.at(-1)).toBe("2026-10-02");
-  // Deleting one character leaves a partial date: shown as typed, no invalid range requested.
-  await field.press("Backspace");
-  await expect(field).toHaveValue("2026-10-0");
-  expect(ranges.every((range) => /^\d{4}-\d{2}-\d{2}$/.test(range))).toBe(true);
-});
-
-test("the previous/next buttons and the title follow the selected view", async ({ page }) => {
-  await signInAsOwner(page);
-  await mockOwnerRest(page, { calls: {}, noOverrides: true, rows: [] });
-
-  await page.goto("/agenda");
   await expect(page.getByRole("heading", { name: "Day calendar" })).toBeVisible();
-  await expect(page.getByText(/^Day: /)).toHaveCount(0);
-  await expect(page.getByTestId("owner-range-prev")).toHaveText("Previous day");
-  await expect(page.getByTestId("owner-range-next")).toHaveText("Next day");
+  await expect.poll(() => ranges.length).toBeGreaterThan(0);
+  const start = ranges.at(-1)!;
+
+  await page.getByTestId("owner-agenda-date-next").click();
+  await expect.poll(() => ranges.at(-1)).toBe(nextDay(start, 1));
 
   await page.getByTestId("owner-view-week").click();
   await expect(page.getByRole("heading", { name: "Week calendar" })).toBeVisible();
-  await expect(page.getByText(/^Week: /)).toBeVisible();
-  await expect(page.getByTestId("owner-range-prev")).toHaveText("Previous week");
-  await expect(page.getByTestId("owner-range-next")).toHaveText("Next week");
+  await expect(page.getByLabel("Next week")).toBeVisible();
+  const beforeWeek = ranges.at(-1)!;
+  await page.getByTestId("owner-agenda-date-next").click();
+  await expect.poll(() => ranges.at(-1)).toBe(nextDay(beforeWeek, 7));
 
   await page.getByTestId("owner-view-month").click();
   await expect(page.getByRole("heading", { name: "Month calendar" })).toBeVisible();
-  await expect(page.getByTestId("owner-range-prev")).toHaveText("Previous month");
-  await expect(page.getByTestId("owner-range-next")).toHaveText("Next month");
+  await expect(page.getByLabel("Next month")).toBeVisible();
 });
 
-test("the agenda date field has a ghost example when empty and no format hint in its label", async ({ page }) => {
+test("tapping the date opens the calendar pop-up; picking a day loads that day, past days included", async ({ page }) => {
+  const ranges: string[] = [];
+
   await signInAsOwner(page);
   await mockOwnerRest(page, { calls: {}, noOverrides: true, rows: [] });
+  page.on("request", (request) => {
+    if (request.url().endsWith("/rpc/list_owner_agenda")) ranges.push((request.postDataJSON() as { range_start: string }).range_start);
+  });
 
   await page.goto("/agenda");
-  await expect(page.getByTestId("owner-agenda-date")).toHaveAttribute("placeholder", "2026-10-25");
-  await expect(page.getByText("Local date", { exact: true })).toBeVisible();
+  await page.getByTestId("owner-agenda-date").click();
+  await expect(page.getByTestId("date-picker")).toBeVisible();
+  const first = page.locator('[data-testid^="date-picker-day-"]').first();
+  const picked = ((await first.getAttribute("data-testid")) ?? "").replace("date-picker-day-", "");
+
+  await first.click();
+  await expect(page.getByTestId("date-picker")).toHaveCount(0);
+  await expect.poll(() => ranges.at(-1)).toBe(picked);
+
+  await page.getByTestId("owner-agenda-date").click();
+  await page.getByTestId("date-picker-close").click();
+  await expect(page.getByTestId("date-picker")).toHaveCount(0);
 });
 
 test("the owner pop-up has the customer's WhatsApp and phone and opens the customer", async ({ page }) => {
