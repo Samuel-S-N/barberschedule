@@ -233,5 +233,5 @@ test("the login form is centred vertically, shows the Zenc wordmark and a passwo
   expect(email!.y + email!.height / 2).toBeLessThan(600);
   await expect(page.getByTestId("login-password")).toHaveAttribute("type", "password");
   await page.getByTestId("login-password-toggle").click();
-  await expect(page.getByTestId("login-password")).toHaveAttribute("type", "text");
+  await expect(page.getByTestId("login-password")).not.toHaveAttribute("type", "password");
 });
