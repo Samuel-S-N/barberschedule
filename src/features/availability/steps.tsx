@@ -12,6 +12,7 @@ import { useLanguage } from "../../i18n/use-language";
 import { formatDateNumeric } from "../../lib/i18n/format";
 import { useSupabaseSession } from "../../providers/AppProviders";
 import { AvailabilityCalendar } from "./AvailabilityCalendar";
+import { useAvailabilitySelection } from "./use-availability-selection";
 import { getAvailableSlotsQueryOptions } from "./query";
 import type { AvailableSlot } from "./types";
 
@@ -20,13 +21,14 @@ import type { AvailableSlot } from "./types";
 
 export function DateStep({ children, localDate, onChange, onContinue, professionalId, testID, today }: { children?: ReactNode; localDate: string; onChange: (date: string) => void; onContinue: () => void; professionalId?: string; testID: string; today: string }) {
   const { t } = useTranslation();
+  const selection = useAvailabilitySelection(professionalId, localDate, onChange);
 
   return (
     <>
       {children}
-      <AvailabilityCalendar onSelectDate={onChange} professionalId={professionalId} selectedDate={localDate} today={today} />
+      <AvailabilityCalendar selection={selection} today={today} />
       <View className="w-full max-w-[420px]">
-        <Button label={t("book.continue")} onPress={onContinue} size="lg" testID={testID} />
+        <Button disabled={!selection.canContinue} label={t("book.continue")} onPress={onContinue} size="lg" testID={testID} />
       </View>
     </>
   );

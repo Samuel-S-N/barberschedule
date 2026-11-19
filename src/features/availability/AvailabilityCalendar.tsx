@@ -1,14 +1,8 @@
-import { useState } from "react";
-
 import { MonthCalendar } from "../../components/domain/MonthCalendar";
-import type { MonthCalendarProps } from "../../components/domain/MonthCalendar";
-import { useUnavailableDates } from "./use-unavailable-dates";
+import type { useAvailabilitySelection } from "./use-availability-selection";
 
-// The booking calendar of every flow: MonthCalendar, with the days the chosen professional cannot work dimmed (nothing is dimmed
-// without a professional).
-export function AvailabilityCalendar({ professionalId, ...rest }: Omit<MonthCalendarProps, "onVisibleMonthChange" | "unavailableDates"> & { professionalId?: string }) {
-  const [month, setMonth] = useState(rest.selectedDate.slice(0, 7));
-  const unavailableDates = useUnavailableDates(professionalId ?? "", month);
-
-  return <MonthCalendar {...rest} onVisibleMonthChange={setMonth} unavailableDates={unavailableDates} />;
+// The booking calendar of every flow: MonthCalendar driven by useAvailabilitySelection (the days the chosen professional cannot work
+// are dimmed; the selection and the Continue button come from the same hook, see there).
+export function AvailabilityCalendar({ selection, today }: { selection: ReturnType<typeof useAvailabilitySelection>; today: string }) {
+  return <MonthCalendar {...selection.calendar} today={today} />;
 }

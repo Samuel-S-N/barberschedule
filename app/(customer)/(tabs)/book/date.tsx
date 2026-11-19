@@ -11,6 +11,7 @@ import { Screen } from "../../../../src/components/ui/Screen";
 import { useBack } from "../../../../src/lib/navigation/use-back";
 import { useNow } from "../../../../src/lib/use-now";
 import { AvailabilityCalendar } from "../../../../src/features/availability/AvailabilityCalendar";
+import { useAvailabilitySelection } from "../../../../src/features/availability/use-availability-selection";
 import { useBookingShopId } from "../../../../src/features/booking/use-booking-shop-id";
 
 function param(value: string | string[] | undefined) {
@@ -28,6 +29,7 @@ export default function BookDateScreen() {
   const today = formatInstantInShopTime(useNow()).localDate;
   const [picked, setLocalDate] = useState(today);
   const localDate = picked < today ? today : picked;
+  const selection = useAvailabilitySelection(professionalId, localDate, setLocalDate);
 
   return (
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
@@ -36,9 +38,10 @@ export default function BookDateScreen() {
           <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("book.dateTitle")} />
         </View>
         <StepIndicator current="date" ids={{ professionalId, professionalServiceId, shopId }} />
-        <AvailabilityCalendar onSelectDate={setLocalDate} professionalId={professionalId} selectedDate={localDate} today={today} />
+        <AvailabilityCalendar selection={selection} today={today} />
         <View className="w-full max-w-[420px]">
           <Button
+            disabled={!selection.canContinue}
             label={t("book.continue")}
             onPress={() => router.push(
               `/book/time?shopId=${encodeURIComponent(shopId)}&professionalId=${encodeURIComponent(professionalId)}&professionalServiceId=${encodeURIComponent(professionalServiceId)}&localDate=${encodeURIComponent(localDate)}`,

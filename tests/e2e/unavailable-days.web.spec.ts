@@ -65,6 +65,43 @@ test("customer: a day the professional cannot work is dimmed and a tap explains 
   await expect(page.getByTestId(`month-calendar-day-${normal}`)).toHaveClass(/bg-ink/);
 });
 
+test("customer: if today is unavailable nothing is selected and Continue waits for a free day (the app never picks one)", async ({ page }) => {
+  const today = addDays(0);
+  const free = addDays(1);
+
+  await signInAsCustomer(page);
+  await mockCustomerRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/professional_services")) {
+      await json(route, [{ duration_override_minutes: null, id: professionalServiceId, price_override_cents: null, service_id: "service-1", services: { duration_minutes: 30, name: "Browser Cut", price_cents: 4000 } }]);
+
+      return true;
+    }
+  });
+  await answerUnavailable(page, [today], []);
+
+  await page.goto("/book");
+  await page.getByRole("button", { name: "Browser Professional" }).click();
+  await page.getByRole("button", { name: "Browser Cut" }).click();
+  await showDay(page, today);
+
+  // Once the days are known: no day is highlighted and Continue is disabled.
+  await expect(page.getByTestId(`month-calendar-day-${today}`)).not.toHaveClass(/bg-ink/);
+  await expect(page.getByRole("button", { name: "Continue", exact: true })).toBeDisabled();
+  await expect(page.locator('[data-testid^="month-calendar-day-"].bg-ink')).toHaveCount(0);
+
+  // Tapping the dimmed today only explains it.
+  await page.getByTestId(`month-calendar-day-${today}`).click();
+  await expect(page.getByTestId("month-calendar-unavailable-message")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue", exact: true })).toBeDisabled();
+
+  // A free day selects and unlocks Continue, with that day in the next URL.
+  await page.getByTestId(`month-calendar-day-${free}`).click();
+  await expect(page.getByTestId(`month-calendar-day-${free}`)).toHaveClass(/bg-ink/);
+  await expect(page.getByRole("button", { name: "Continue", exact: true })).toBeEnabled();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/book/time.*localDate=${free}`));
+});
+
 const ownerId = "55555555-5555-4555-8555-555555555555";
 const shop = "11111111-1111-4111-8111-111111111111";
 
