@@ -123,3 +123,21 @@ test("Other colour opens the wheel pop-up next to the swatches and the hex field
   // The preview card follows the chosen colour.
   await expect.poll(() => page.getByTestId("theme-preview").getByRole("button", { name: "Book" }).evaluate((node) => getComputedStyle(node).backgroundColor)).not.toBe("rgb(219, 154, 52)");
 });
+
+test("the colour wheel pop-up: a tap on the card keeps it open, a tap outside closes it", async ({ page }) => {
+  const theme: Theme = { theme_accent: null, theme_base: null, theme_primary: null };
+
+  await signInAsOwner(page);
+  await mockRest(page, theme, []);
+  await page.goto("/appearance");
+  await page.getByTestId("appearance-primary-other").click();
+  const card = page.getByTestId("color-wheel-popup");
+
+  await expect(card).toBeVisible();
+  await card.getByRole("heading").click();
+  await expect(card).toBeVisible();
+
+  // The dimmed area outside the card (top-left corner of the viewport) is the backdrop.
+  await page.mouse.click(4, 4);
+  await expect(card).toHaveCount(0);
+});
