@@ -7,9 +7,11 @@ import { MenuBlock } from "../../components/domain/MenuBlock";
 import { ScreenHeader } from "../../components/domain/ScreenHeader";
 import { Screen } from "../../components/ui/Screen";
 import { useBack } from "../../lib/navigation/use-back";
+import { SignOutButton } from "./SignOutButton";
 
-// Settings is the same for every role: only the language today. `languageHref` is the role's own language route.
-export function ProfileSettingsScreen({ languageHref }: { languageHref: string }) {
+// Settings is the same for every role: only the language today. `languageHref` is the role's own language route; only the customer
+// shows sign out here (the other roles have it on their own hubs).
+export function ProfileSettingsScreen({ languageHref, showSignOut = false }: { languageHref: string; showSignOut?: boolean }) {
   const { t } = useTranslation();
   const router = useRouter();
   const back = useBack();
@@ -21,6 +23,7 @@ export function ProfileSettingsScreen({ languageHref }: { languageHref: string }
           <View className="w-full max-w-[420px] gap-4">
             <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("profile.settings.title")} />
             <MenuBlock items={[{ icon: Globe, key: "language", label: t("profile.settings.language"), onPress: () => router.push(languageHref as never) }]} />
+            {showSignOut ? <SignOutButton /> : null}
           </View>
         </View>
       </ScrollView>

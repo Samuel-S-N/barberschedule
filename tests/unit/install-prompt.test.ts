@@ -25,7 +25,8 @@ describe("InstallPrompt", () => {
     state({ promptEvent: { prompt, userChoice: Promise.resolve({ outcome: "accepted" }) }, status: "installable-chrome" });
     const view = await render(React.createElement(InstallPrompt));
 
-    expect(view.getByText("Install the app")).toBeTruthy();
+    expect(view.getByText("Install the Zenc app")).toBeTruthy();
+    expect(view.getByText("Zenc").props.className).toContain("font-sans-bold");
     await fireEvent.press(view.getByTestId("install-button"));
 
     expect(prompt).toHaveBeenCalledTimes(1);
@@ -46,7 +47,7 @@ describe("InstallPrompt", () => {
     state({ browser: "chrome", status: "installable-ios" });
     const view = await render(React.createElement(InstallPrompt));
 
-    expect(view.getByText("Add to Home Screen")).toBeTruthy();
+    expect(view.getByText("Install the Zenc app")).toBeTruthy();
     expect(view.queryByTestId("install-guide")).toBeNull();
     await fireEvent.press(view.getByTestId("install-card"));
 
@@ -67,7 +68,7 @@ describe("InstallPrompt", () => {
     state({ status: "installable-mac-safari" });
     const view = await render(React.createElement(InstallPrompt));
 
-    expect(view.getByText("Add to Dock")).toBeTruthy();
+    expect(view.getByText("Install the Zenc app")).toBeTruthy();
     await fireEvent.press(view.getByTestId("install-card"));
     expect(view.getByText("Choose “Add to Dock”")).toBeTruthy();
   });

@@ -1,26 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { Info, LogOut, Repeat, Settings, ShieldCheck, User, UserCog } from "lucide-react-native";
-import { useState } from "react";
+import { Info, Repeat, Settings, ShieldCheck, User, UserCog } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 import { Avatar } from "../../../src/components/domain/Avatar";
 import { MenuBlock } from "../../../src/components/domain/MenuBlock";
-import { Toast } from "../../../src/components/domain/Toast";
 import { Screen } from "../../../src/components/ui/Screen";
 import { useMyProfile } from "../../../src/features/account/use-my-profile";
-import { signOut } from "../../../src/features/auth/api";
 import { listMyCustomers } from "../../../src/features/customers/api";
-import { errorMessage } from "../../../src/i18n/errors";
-import { useColors } from "../../../src/lib/design/theme/ThemeProvider";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 import { useCurrentShop } from "../../../src/features/shops/CurrentShopProvider";
 import { InstallPrompt } from "../../../src/features/install/InstallPrompt";
 import { NotificationPrompt } from "../../../src/features/notifications/NotificationPrompt";
 
 export default function CustomerProfileScreen() {
-  const colors = useColors();
   const router = useRouter();
   const { t } = useTranslation();
   const { session, supabase } = useSupabaseSession();
@@ -28,13 +22,13 @@ export default function CustomerProfileScreen() {
   const shopId = useCurrentShop().shop?.id ?? "";
   const customers = useQuery({ enabled: Boolean(shopId), queryFn: () => listMyCustomers(supabase, shopId), queryKey: ["my-customers", shopId] });
   const name = profile.data?.nickname || customers.data?.[0]?.fullName || profile.data?.fullName || "";
-  const [error, setError] = useState<string | null>(null);
 
   return (
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
       <ScrollView className="flex-1">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-6">
+            <InstallPrompt />
             <View className="items-center gap-1 pt-4">
               <Avatar
                 accessibilityLabel={t("profile.menu.account")}
@@ -64,26 +58,8 @@ export default function CustomerProfileScreen() {
               ]}
             />
 
-            <InstallPrompt />
             <NotificationPrompt />
 
-            <Pressable
-              accessibilityRole="button"
-              className="min-h-[56px] flex-row items-center justify-center gap-2 rounded-[20px] border border-neutral-200 bg-surface"
-              onPress={async () => {
-                try {
-                  await signOut(supabase);
-                } catch (caught) {
-                  setError(errorMessage(caught, t, t("profile.signOutError")));
-                }
-              }}
-              testID="profile-signout"
-            >
-              <LogOut color={colors.danger[500]} size={20} />
-              <Text className="text-base font-sans-semibold text-danger-500">{t("profile.signOut")}</Text>
-            </Pressable>
-
-            <Toast message={error ?? ""} onDismiss={() => setError(null)} variant="error" visible={error !== null} />
           </View>
         </View>
       </ScrollView>

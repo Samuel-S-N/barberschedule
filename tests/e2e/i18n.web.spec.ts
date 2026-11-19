@@ -67,6 +67,7 @@ test.describe("Portuguese customer", () => {
     await page.getByTestId("tab-profile").click();
     await expect(page.getByTestId("menu-account")).toContainText("Meus dados");
     await expect(page.getByTestId("menu-security")).toContainText("Segurança");
+    await page.getByTestId("menu-settings").click();
     await expect(page.getByTestId("profile-signout")).toContainText("Sair");
   });
 

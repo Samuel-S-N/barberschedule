@@ -41,5 +41,5 @@ export function TimeInput({ value, onChangeValue, placeholder, ...rest }: Masked
 export function CepInput({ value, onChangeValue, placeholder, ...rest }: MaskedProps) {
   const { t } = useTranslation();
 
-  return <Input {...rest} keyboardType="number-pad" onChangeText={(text) => onChangeValue(formatCepInput(text))} placeholder={placeholder ?? t("examples.cep")} value={value} />;
+  return <Input {...rest} keyboardType="number-pad" maxLength={9} onChangeText={(text) => onChangeValue(formatCepInput(text))} placeholder={placeholder ?? t("examples.cep")} value={value} />;
 }

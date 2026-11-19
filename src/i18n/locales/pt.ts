@@ -45,6 +45,8 @@ export const pt: DeepStringRecord<typeof en> = {
     remove: "Remover",
     selectedOption: "{{option}} (selecionado)",
     service: "Serviço",
+    showPassword: "Mostrar senha",
+    hidePassword: "Ocultar senha",
     signOut: "Sair",
     startTime: "Horário inicial",
     email: "E-mail",
@@ -54,7 +56,7 @@ export const pt: DeepStringRecord<typeof en> = {
     phoneOptional: "Telefone (opcional)",
     tryAgain: "Tentar de novo",
   },
-  tabs: { agenda: "Agenda", manage: "Gerenciar", revenue: "Receita", account: "Conta", clients: "Clientes", earnings: "Relatórios", book: "Agendar", home: "Início", profile: "Perfil" },
+  tabs: { agenda: "Agenda", calendar: "Agenda", manage: "Gerenciar", revenue: "Receita", account: "Conta", clients: "Clientes", earnings: "Relatórios", book: "Agendar", home: "Início", profile: "Perfil" },
   status: { cancelled: "Cancelado", completed: "Concluído", confirmed: "Confirmado", no_show: "Não compareceu", scheduled: "Agendado" },
   auth: {
     login: {
@@ -391,9 +393,9 @@ export const pt: DeepStringRecord<typeof en> = {
     title: "Ativar notificações",
   },
   install: {
+    cardTitle: "Instalar o app <b>Zenc</b>",
     chromeBody: "Abra o Zenc direto da tela inicial do seu celular.",
     chromeButton: "Instalar",
-    chromeTitle: "Instalar o app",
     guideClose: "Fechar",
     guideGotIt: "Entendi",
     iosBody: "Abra o Zenc direto da tela inicial do seu celular.",
@@ -561,7 +563,6 @@ export const pt: DeepStringRecord<typeof en> = {
       previousDay: "Dia anterior",
       previousMonth: "Mês anterior",
       previousWeek: "Semana anterior",
-      rangeDay: "Dia: {{date}}",
       rangeMonth: "Mês: {{date}}",
       rangeWeek: "Semana: {{date}}",
       titleDay: "Agenda do dia",
