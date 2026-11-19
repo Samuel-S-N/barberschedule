@@ -2,12 +2,13 @@ import { useRouter } from "expo-router";
 import { Info, Lock, LogOut, Scissors, Settings, ShieldCheck, User } from "lucide-react-native";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, ScrollView, Switch, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { Avatar } from "../../src/components/domain/Avatar";
 import { MenuBlock } from "../../src/components/domain/MenuBlock";
 import { Toast } from "../../src/components/domain/Toast";
 import { Screen } from "../../src/components/ui/Screen";
+import { Toggle } from "../../src/components/ui/Toggle";
 import { useMyProfile } from "../../src/features/account/use-my-profile";
 import { signOut } from "../../src/features/auth/api";
 import { useOwnerAsProfessional } from "../../src/features/professionals/owner/use-owner-as-professional";
@@ -50,13 +51,11 @@ export default function OwnerSettingsScreen() {
               <View className="flex-row items-center gap-3">
                 <Scissors color={colors.primary[600]} size={22} />
                 <Text className="flex-1 text-base font-sans-medium text-ink">{t("owner.profile.asProfessional")}</Text>
-                <Switch
+                <Toggle
                   accessibilityLabel={t("owner.profile.asProfessional")}
                   disabled={asProfessional.isLoading || asProfessional.toggle.isPending}
                   onValueChange={(on) => asProfessional.toggle.mutate(on, { onError: (caught) => setError(errorMessage(caught, t, t("owner.professionals.updateError"))) })}
                   testID="owner-as-professional"
-                  thumbColor="#ffffff"
-                  trackColor={{ false: colors.neutral[200], true: colors.primary[400] }}
                   value={asProfessional.active}
                 />
               </View>

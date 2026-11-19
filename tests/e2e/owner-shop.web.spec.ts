@@ -115,6 +115,21 @@ test("an invalid time is explained and nothing is saved", async ({ page }) => {
   expect(calls.hours).toBeUndefined();
 });
 
+test("the open/closed switches use the theme track and a white knob, not the browser's teal", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, {});
+
+  await page.goto("/shop");
+  // Monday is open: the switch is a track plus a knob (first two children).
+  const colours = await page.getByTestId("shop-open-1").evaluate((node) => ({
+    knob: getComputedStyle(node.children[1]).backgroundColor,
+    track: getComputedStyle(node.children[0]).backgroundColor,
+  }));
+
+  expect(colours.knob).toBe("rgb(255, 255, 255)");
+  expect(colours.track).toBe("rgb(219, 154, 52)");
+});
+
 test("a day can be opened and a break added", async ({ page }) => {
   await signInAsOwner(page);
   await mockOwnerRest(page, {});

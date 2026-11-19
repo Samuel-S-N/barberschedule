@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import type { ComponentProps, ComponentRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Switch, Text, TextInput, View } from "react-native";
+import { Text, TextInput, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { ScreenHeader } from "../../src/components/domain/ScreenHeader";
@@ -12,6 +12,7 @@ import { Card } from "../../src/components/ui/Card";
 import { Input } from "../../src/components/ui/Input";
 import { CepInput, DateInput, TimeInput } from "../../src/components/ui/MaskedInputs";
 import { Screen } from "../../src/components/ui/Screen";
+import { Toggle } from "../../src/components/ui/Toggle";
 import { listOwnerProfessionals } from "../../src/features/professionals/api";
 import type { OwnerProfessional } from "../../src/features/professionals/types";
 import { createScheduleOverride, deleteScheduleOverride, listOwnerScheduleOverrides } from "../../src/features/schedule/api";
@@ -25,7 +26,6 @@ import { draftToPeriods, periodsToDraft, weekdayLabel } from "../../src/features
 import type { DayDraft, ShopPeriod } from "../../src/features/shops/hours";
 import { errorMessage } from "../../src/i18n/errors";
 import { useLanguage } from "../../src/i18n/use-language";
-import { useColors } from "../../src/lib/design/theme/ThemeProvider";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { formatDateNumeric } from "../../src/lib/i18n/format";
 import { useBack } from "../../src/lib/navigation/use-back";
@@ -36,7 +36,6 @@ const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
 const CONTACT_EXAMPLE = { phone: "examples.phone", whatsapp: "examples.phone" } as const;
 
 export default function OwnerShopScreen() {
-  const colors = useColors();
   const { t } = useTranslation();
   const pull = useRefreshAll();
   const language = useLanguage();
@@ -186,12 +185,10 @@ export default function OwnerShopScreen() {
                   <View className="gap-3">
                     <View className="flex-row items-center gap-3">
                       <Text className="min-w-[56px] text-base font-sans-semibold text-ink">{name}</Text>
-                      <Switch
+                      <Toggle
                         accessibilityLabel={`${name} ${t("owner.shop.open")}`}
                         onValueChange={(enabled) => patchDay(weekday, { enabled })}
                         testID={`shop-open-${weekday}`}
-                        thumbColor="#ffffff"
-                        trackColor={{ false: colors.neutral[200], true: colors.primary[400] }}
                         value={day.enabled}
                       />
                       <Text className="text-sm font-sans text-neutral-600">{day.enabled ? t("owner.shop.open") : t("owner.shop.closed")}</Text>
