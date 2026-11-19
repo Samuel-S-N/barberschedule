@@ -1,6 +1,6 @@
 import { SquarePlus } from "lucide-react-native";
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { Pressable, Text, View } from "react-native";
 
 import { Button } from "../../components/ui/Button";
@@ -9,6 +9,15 @@ import { InstallGuide } from "./InstallGuide";
 import { useInstallPrompt } from "./use-install-prompt";
 
 const CARD = "min-h-[56px] flex-row items-center justify-between gap-3 rounded-[20px] border border-neutral-200 bg-surface p-4";
+
+// "Install the <b>Zenc</b> app": the brand name is bold in every language (the translation marks it with <b>).
+function CardTitle() {
+  return (
+    <Text className="text-base font-sans-semibold text-ink">
+      <Trans components={{ b: <Text className="font-sans-bold" /> }} i18nKey="install.cardTitle" />
+    </Text>
+  );
+}
 
 // "Add Zenc to your home screen", on the profile hub only (never as an automatic pop-up). One card per situation: Chrome gets
 // the browser's own prompt, iPhone/iPad and Safari on Mac get a short guide, everything else shows nothing.
@@ -28,7 +37,7 @@ export function InstallPrompt() {
     return (
       <View className={CARD} testID="install-card">
         <View className="flex-1 gap-1">
-          <Text className="text-base font-sans-semibold text-ink">{t("install.chromeTitle")}</Text>
+          <CardTitle />
           <Text className="text-sm font-sans text-neutral-600">{t("install.chromeBody")}</Text>
         </View>
         <Button
@@ -52,13 +61,12 @@ export function InstallPrompt() {
 
   const mac = install.status === "installable-mac-safari";
   const variant = mac ? "mac-safari" : install.browser === "chrome" ? "ios-chrome" : "ios-other";
-  const title = mac ? t("install.macTitle") : t("install.iosTitle");
 
   return (
     <>
-      <Pressable accessibilityLabel={title} accessibilityRole="button" className={CARD} onPress={() => setGuideOpen(true)} testID="install-card">
+      <Pressable accessibilityRole="button" className={CARD} onPress={() => setGuideOpen(true)} testID="install-card">
         <View className="flex-1 gap-1">
-          <Text className="text-base font-sans-semibold text-ink">{title}</Text>
+          <CardTitle />
           <Text className="text-sm font-sans text-neutral-600">{mac ? t("install.macBody") : t("install.iosBody")}</Text>
         </View>
         <SquarePlus color={colors.neutral[400]} size={20} />

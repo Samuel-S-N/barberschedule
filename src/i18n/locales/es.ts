@@ -391,9 +391,9 @@ export const es: DeepStringRecord<typeof en> = {
     title: "Activar notificaciones",
   },
   install: {
+    cardTitle: "Instalar la app <b>Zenc</b>",
     chromeBody: "Abre Zenc directamente desde la pantalla de inicio.",
     chromeButton: "Instalar",
-    chromeTitle: "Instalar la app",
     guideClose: "Cerrar",
     guideGotIt: "Entendido",
     iosBody: "Abre Zenc directamente desde la pantalla de inicio.",

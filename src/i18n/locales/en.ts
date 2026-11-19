@@ -392,9 +392,9 @@ export const en = {
     title: "Turn on notifications",
   },
   install: {
+    cardTitle: "Install the <b>Zenc</b> app",
     chromeBody: "Open Zenc straight from your home screen.",
     chromeButton: "Install",
-    chromeTitle: "Install the app",
     guideClose: "Close",
     guideGotIt: "Got it",
     iosBody: "Open Zenc straight from your home screen.",

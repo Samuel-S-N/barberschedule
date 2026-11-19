@@ -194,7 +194,7 @@ test("the profile hub offers to install the app and calls the browser prompt", a
   await mockCustomerRest(page);
 
   await page.goto("/profile");
-  await expect(page.getByText("Install the app")).toBeVisible();
+  await expect(page.getByText("Install the Zenc app")).toBeVisible();
   await page.getByTestId("install-button").click();
 
   expect(await page.evaluate(() => (window as unknown as Record<string, unknown>).__installPrompted)).toBe(true);
