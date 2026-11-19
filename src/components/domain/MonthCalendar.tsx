@@ -13,18 +13,25 @@ import { addLocalDays } from "../../lib/dates/calendar-strip-days";
 import { BOOKING_DAYS_AHEAD, buildMonthGrid, isDateBookable, monthRange } from "../../lib/dates/month-calendar";
 import { useColors } from "../../lib/design/theme/ThemeProvider";
 import { formatDateLabel } from "../../lib/i18n/format";
+import { Toast } from "./Toast";
 
 const SETTLE_MS = 220;
 
 export type MonthCalendarProps = {
   maxDaysAhead?: number;
+  // Reports the month in view (first at mount, then after every paging), so a parent can fetch what that month needs.
+  onVisibleMonthChange?: (month: string) => void;
   onSelectDate: (date: string) => void;
   selectedDate: string;
   testID?: string;
   today: string;
+  // Days inside the booking window the chosen professional cannot work: dimmed, not selectable, and tapping one explains why.
+  unavailableDates?: readonly string[];
 };
 
 type MonthGridProps = Pick<MonthCalendarProps, "onSelectDate" | "selectedDate" | "today"> & {
+  onUnavailable: () => void;
+  unavailable: ReadonlySet<string>;
   // The month in view. The others are off screen: their days stay out of the tab order so the browser never
   // scrolls the clipped viewport to reach one.
   active: boolean;
@@ -33,7 +40,7 @@ type MonthGridProps = Pick<MonthCalendarProps, "onSelectDate" | "selectedDate" |
   month: string;
 };
 
-function MonthGrid({ active, language, maxDaysAhead, month, onSelectDate, selectedDate, today }: MonthGridProps) {
+function MonthGrid({ active, language, maxDaysAhead, month, onSelectDate, onUnavailable, selectedDate, today, unavailable }: MonthGridProps) {
   const grid = buildMonthGrid(month, language);
 
   return (
@@ -52,16 +59,19 @@ function MonthGrid({ active, language, maxDaysAhead, month, onSelectDate, select
 
             const bookable = isDateBookable(date, today, maxDaysAhead);
             const selected = date === selectedDate;
+            // Dimmed, not natively disabled: it must still receive the press to explain itself.
+            const dimmed = bookable && unavailable.has(date);
 
             return (
               <Pressable
                 accessibilityLabel={formatDateLabel(date, language)}
                 accessibilityRole="button"
-                accessibilityState={{ disabled: !bookable, selected }}
-                className={`m-0.5 aspect-square flex-1 items-center justify-center rounded-2xl ${selected ? "bg-ink" : "bg-transparent"}`}
-                disabled={!bookable}
+                accessibilityState={{ disabled: !bookable || dimmed, selected }}
+                className={`m-0.5 aspect-square flex-1 items-center justify-center rounded-2xl ${selected ? "bg-ink" : "bg-transparent"} ${dimmed ? "opacity-40" : ""}`}
+                // `undefined`, not false: an explicit false would override accessibilityState.disabled of a dimmed day.
+                disabled={bookable ? undefined : true}
                 key={date}
-                onPress={() => onSelectDate(date)}
+                onPress={() => (dimmed ? onUnavailable() : onSelectDate(date))}
                 tabIndex={active ? 0 : -1}
                 testID={`month-calendar-day-${date}`}
               >
@@ -80,7 +90,7 @@ function MonthGrid({ active, language, maxDaysAhead, month, onSelectDate, select
   );
 }
 
-export function MonthCalendar({ maxDaysAhead = BOOKING_DAYS_AHEAD, onSelectDate, selectedDate, testID, today }: MonthCalendarProps) {
+export function MonthCalendar({ maxDaysAhead = BOOKING_DAYS_AHEAD, onSelectDate, onVisibleMonthChange, selectedDate, testID, today, unavailableDates = [] }: MonthCalendarProps) {
   const colors = useColors();
   const { t } = useTranslation();
   const language = useLanguage();
@@ -91,6 +101,13 @@ export function MonthCalendar({ maxDaysAhead = BOOKING_DAYS_AHEAD, onSelectDate,
   // Opens on the month of the selected date (a flow may start on a later day); it is clamped to the window below.
   const [pickedMonth, setPickedMonth] = useState(selectedDate.slice(0, 7) || firstMonth);
   const index = pickedMonth <= firstMonth ? 0 : pickedMonth >= lastMonth ? pages - 1 : months.indexOf(pickedMonth);
+  const [unavailableMessage, setUnavailableMessage] = useState(false);
+  const unavailable = new Set(unavailableDates);
+  const visibleMonth = months[index];
+
+  useEffect(() => {
+    onVisibleMonthChange?.(visibleMonth);
+  }, [visibleMonth]);
   const canGoBack = index > 0;
   const canGoForward = index < pages - 1;
   const [width, setWidth] = useState(0);
@@ -131,7 +148,7 @@ export function MonthCalendar({ maxDaysAhead = BOOKING_DAYS_AHEAD, onSelectDate,
     });
 
   const stripStyle = useAnimatedStyle(() => ({ transform: [{ translateX: position.value }] }));
-  const gridProps = { language, maxDaysAhead, onSelectDate, selectedDate, today };
+  const gridProps = { language, maxDaysAhead, onSelectDate, onUnavailable: () => setUnavailableMessage(true), selectedDate, today, unavailable };
 
   return (
     // pan-y keeps vertical page scrolling on touch browsers; gesture-handler defaults to `touch-action: none` on web.
@@ -183,6 +200,7 @@ export function MonthCalendar({ maxDaysAhead = BOOKING_DAYS_AHEAD, onSelectDate,
             <MonthGrid active month={months[index]} {...gridProps} />
           )}
         </View>
+        <Toast message={t("book.dateUnavailable")} onDismiss={() => setUnavailableMessage(false)} testID="month-calendar-unavailable-message" variant="info" visible={unavailableMessage} />
       </View>
     </GestureDetector>
   );

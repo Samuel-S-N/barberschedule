@@ -165,6 +165,7 @@ export const pt: DeepStringRecord<typeof en> = {
     noTimes: "Nenhum horário disponível neste dia",
   },
   book: {
+    dateUnavailable: "Indisponível nesta data",
     summary: { professional: "Profissional", date: "Data", duration: "Duração", price: "Preço", service: "Serviço", time: "Horário" },
     professionalTitle: "Escolha seu profissional",
     professionalsError: "Não foi possível carregar os profissionais.",
