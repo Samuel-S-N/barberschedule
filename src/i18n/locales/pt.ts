@@ -27,6 +27,7 @@ export const pt: DeepStringRecord<typeof en> = {
   dateField: { choose: "Escolher data", close: "Fechar", nextDay: "Próximo dia", nextMonth: "Próximo mês", nextWeek: "Próxima semana", previousDay: "Dia anterior", previousMonth: "Mês anterior", previousWeek: "Semana anterior" },
   colorWheel: { close: "Fechar", done: "Concluir" },
   notificationsPrompt: { body: "Receba pedidos, confirmações e mudanças de agendamento assim que acontecerem.", close: "Fechar", enable: "Ativar", installBody: "No iPhone, as notificações funcionam depois de adicionar o Zenc à Tela de Início.", installButton: "Como instalar", later: "Agora não", title: "Ativar notificações?" },
+  notificationsSwitch: { installHint: "No iPhone, adicione o Zenc à Tela de Início primeiro.", label: "Notificações", offHint: "Desativadas neste aparelho.", onHint: "Ativadas neste aparelho." },
   agendaCard: { professional: "Profissional", close: "Fechar", customer: "Cliente", notes: "Observações" },
   common: {
     activate: "Ativar",
