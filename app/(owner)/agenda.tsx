@@ -14,7 +14,7 @@ import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
 import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
-import { DateInput } from "../../src/components/ui/MaskedInputs";
+import { DateField } from "../../src/components/ui/DateField";
 import { Screen } from "../../src/components/ui/Screen";
 import { listOwnerAgenda, listOwnerAgendaOverrides } from "../../src/features/appointments/agenda-query";
 import { cancelAppointment } from "../../src/features/appointments/lifecycle";
@@ -67,13 +67,11 @@ export default function OwnerAgendaScreen() {
   const [localDate, setLocalDate] = useState(formatInstantInShopTime(new Date()).localDate);
   const [offset, setOffset] = useState(0);
   const [view, setView] = useState<AgendaView>("day");
-  // The date field reports "" while the typed date is incomplete; keep the last valid range until it is complete.
-  const dateValid = /^\d{4}-\d{2}-\d{2}$/.test(localDate);
-  const range = useMemo(() => (dateValid ? agendaRange(localDate, view) : { end: "", start: "" }), [dateValid, localDate, view]);
+  const range = useMemo(() => agendaRange(localDate, view), [localDate, view]);
   const shopId = shop.data ?? null;
 
   const agenda = useQuery({
-    enabled: shopId !== null && dateValid,
+    enabled: shopId !== null,
     queryFn: async () => {
       const input = { limit: PAGE_SIZE, offset, rangeEnd: range.end, rangeStart: range.start, shopId: shopId ?? "" };
       const [appointments, overrides] = await Promise.all([listOwnerAgenda(supabase, input), listOwnerAgendaOverrides(supabase, input)]);
@@ -96,13 +94,6 @@ export default function OwnerAgendaScreen() {
   const selectView = (nextView: AgendaView) => {
     setOffset(0);
     setView(nextView);
-  };
-
-  const moveRange = (direction: -1 | 1) => {
-    if (!dateValid) return;
-    const days = view === "week" ? 7 : view === "month" ? 31 : 1;
-    setOffset(0);
-    setLocalDate((date) => addDays(date, direction * days));
   };
 
   const nav = agendaNavKeys(view);
@@ -142,12 +133,8 @@ export default function OwnerAgendaScreen() {
                 <Button key={item} label={t(VIEW_LABEL[item])} onPress={() => selectView(item)} size="sm" testID={`owner-view-${item}`} variant={view === item ? "dark" : "outline"} />
               ))}
             </View>
-            <DateInput label={t("common.localDate")} onChangeValue={(value) => { setLocalDate(value); setOffset(0); }} testID="owner-agenda-date" value={localDate} />
+            <DateField label={t("common.localDate")} onChange={(value) => { setLocalDate(value); setOffset(0); }} step={view} testID="owner-agenda-date" value={localDate} />
             {nav.range ? <Text className="text-center text-sm font-sans text-neutral-600">{t(nav.range, { date: formatDateNumeric(localDate, language) })}</Text> : null}
-            <View className="flex-row gap-2">
-              <View className="flex-1"><Button disabled={loading} label={t(nav.previous)} onPress={() => moveRange(-1)} testID="owner-range-prev" size="sm" variant="outline" /></View>
-              <View className="flex-1"><Button disabled={loading} label={t(nav.next)} onPress={() => moveRange(1)} testID="owner-range-next" size="sm" variant="outline" /></View>
-            </View>
 
             {loading ? <SkeletonBlock height={96} width={320} /> : null}
             {loadError ? <Text className="text-sm font-sans text-danger-500">{errorMessage(loadError, t, t("owner.agenda.loadError"))}</Text> : null}

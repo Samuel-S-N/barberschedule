@@ -28,10 +28,10 @@ import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 
-type Step = "customer" | "date" | "review" | "service" | "time";
-const FLOW = ["customer", "service", "date", "time", "review", "confirm"] as const;
+type Step = "customer" | "date" | "professional" | "review" | "service" | "time";
+const FLOW = ["customer", "service", "professional", "date", "time", "review", "confirm"] as const;
 
-// The owner books for a customer with the same steps as every booking: customer › service › date › time › review › create.
+// The owner books for a customer with the same steps as every booking: customer › service › professional › date › time › review › create.
 export default function OwnerAppointmentFormScreen() {
   const { t } = useTranslation();
   const language = useLanguage();
@@ -48,6 +48,7 @@ export default function OwnerAppointmentFormScreen() {
   const [localDate, setLocalDate] = useState(today);
   const [notes, setNotes] = useState("");
   const [search, setSearch] = useState("");
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [selectedProfessionalServiceId, setSelectedProfessionalServiceId] = useState<string | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedStartsAt, setSelectedStartsAt] = useState<string | null>(null);
@@ -64,6 +65,7 @@ export default function OwnerAppointmentFormScreen() {
         setLocalDate(formatInstantInShopTime(new Date()).localDate);
         setNotes("");
         setSearch("");
+        setSelectedServiceId(null);
         setSelectedProfessionalServiceId(null);
         setSelectedCustomerId(null);
         setSelectedStartsAt(null);
@@ -105,6 +107,16 @@ export default function OwnerAppointmentFormScreen() {
       }))
       .filter((choice) => choice.professional && choice.service);
   }, [catalog.data]);
+
+  // Each service once (a service several professionals offer is one entry), in the order the catalogue lists them.
+  const serviceOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+
+    for (const { service } of choices) if (service && !seen.has(service.id)) seen.set(service.id, service.name);
+
+    return [...seen].map(([id, name]) => ({ id, name }));
+  }, [choices]);
+  const professionalOptions = choices.filter(({ service }) => service?.id === selectedServiceId);
 
   const term = search.trim().toLowerCase();
   const customers = (catalog.data?.customers ?? []).filter((customer) => !term || customer.fullName.toLowerCase().includes(term) || (customer.email ?? "").toLowerCase().includes(term));
@@ -163,9 +175,26 @@ export default function OwnerAppointmentFormScreen() {
 
             {step === "service" ? (
               <RadioBlock
-                items={choices.map(({ professional, professionalService, service }) => ({
+                items={serviceOptions.map((option) => ({
+                  key: option.id,
+                  label: option.name,
+                  onPress: () => {
+                    setSelectedServiceId(option.id);
+                    setSelectedProfessionalServiceId(null);
+                    setSelectedStartsAt(null);
+                    go("professional");
+                  },
+                  selected: option.id === selectedServiceId,
+                }))}
+                testID="owner-service-list"
+              />
+            ) : null}
+
+            {step === "professional" ? (
+              <RadioBlock
+                items={professionalOptions.map(({ professional, professionalService }) => ({
                   key: professionalService.id,
-                  label: `${professional?.name} · ${service?.name}`,
+                  label: professional?.name ?? "",
                   onPress: () => {
                     setSelectedProfessionalServiceId(professionalService.id);
                     setSelectedStartsAt(null);
@@ -173,7 +202,7 @@ export default function OwnerAppointmentFormScreen() {
                   },
                   selected: professionalService.id === selectedProfessionalServiceId,
                 }))}
-                testID="owner-service-list"
+                testID="owner-professional-list"
               />
             ) : null}
 

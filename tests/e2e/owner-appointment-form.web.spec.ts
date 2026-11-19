@@ -65,7 +65,7 @@ test("the owner books with the booking steps: customer, service, date, time, rev
 
   await page.goto("/appointment-form");
   await expect(page.getByRole("heading", { name: "Choose the customer" })).toBeVisible();
-  await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 6 · Customer");
+  await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 7 · Customer");
   // The old form controls are gone.
   await expect(page.getByTestId("owner-appointment-date")).toHaveCount(0);
   await expect(page.getByTestId("owner-form-load-times")).toHaveCount(0);
@@ -76,20 +76,25 @@ test("the owner books with the booking steps: customer, service, date, time, rev
   await page.getByTestId("owner-customer-search").fill("");
   await page.getByTestId("option-c1").click();
 
-  await expect(page.getByTestId("step-label")).toHaveText("Step 2 of 6 · Service");
-  await expect(page.getByTestId("option-bs1")).toContainText("Bruno Professional · Cut");
+  await expect(page.getByTestId("step-label")).toHaveText("Step 2 of 7 · Service");
+  await expect(page.getByTestId("option-s1")).toContainText("Cut");
+  await expect(page.getByTestId("option-s1")).not.toContainText("Bruno");
+  await page.getByTestId("option-s1").click();
+
+  await expect(page.getByTestId("step-label")).toHaveText("Step 3 of 7 · Professional");
+  await expect(page.getByTestId("option-bs1")).toContainText("Bruno Professional");
   await page.getByTestId("option-bs1").click();
 
-  await expect(page.getByTestId("step-label")).toHaveText("Step 3 of 6 · Date");
+  await expect(page.getByTestId("step-label")).toHaveText("Step 4 of 7 · Date");
   await expect(page.getByTestId("month-calendar")).toBeVisible();
   await page.getByTestId("owner-continue").click();
 
-  await expect(page.getByTestId("step-label")).toHaveText("Step 4 of 6 · Time");
+  await expect(page.getByTestId("step-label")).toHaveText("Step 5 of 7 · Time");
   await expect(page.getByTestId("owner-continue")).toBeDisabled();
   await page.getByRole("button", { name: "10:30" }).click();
   await page.getByTestId("owner-continue").click();
 
-  await expect(page.getByTestId("step-label")).toHaveText("Step 5 of 6 · Review");
+  await expect(page.getByTestId("step-label")).toHaveText("Step 6 of 7 · Review");
   const summary = page.getByTestId("owner-summary");
 
   await expect(summary).toContainText("Ana Customer");
@@ -111,13 +116,14 @@ test("back steps back, a finished step is tappable, and the first step leaves", 
   await page.goto("/agenda");
   await page.getByTestId("owner-new-appointment").click();
   await page.getByTestId("option-c1").click();
+  await page.getByTestId("option-s1").click();
   await page.getByTestId("option-bs1").click();
-  await expect(page.getByTestId("step-label")).toHaveText("Step 3 of 6 · Date");
+  await expect(page.getByTestId("step-label")).toHaveText("Step 4 of 7 · Date");
 
   await back();
-  await expect(page.getByTestId("step-label")).toHaveText("Step 2 of 6 · Service");
+  await expect(page.getByTestId("step-label")).toHaveText("Step 3 of 7 · Professional");
   await page.getByTestId("step-customer").click();
-  await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 6 · Customer");
+  await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 7 · Customer");
   await back();
   await expect(page).toHaveURL(/\/agenda/);
 });
@@ -128,6 +134,7 @@ test("a time taken meanwhile returns to the time step with the error", async ({ 
 
   await page.goto("/appointment-form");
   await page.getByTestId("option-c1").click();
+  await page.getByTestId("option-s1").click();
   await page.getByTestId("option-bs1").click();
   await page.getByTestId("owner-continue").click();
   await page.getByRole("button", { name: "10:30" }).click();
@@ -135,7 +142,7 @@ test("a time taken meanwhile returns to the time step with the error", async ({ 
   await page.getByTestId("owner-form-create").click();
 
   await expect(page.getByText("That time is no longer available.")).toBeVisible();
-  await expect(page.getByTestId("step-label")).toHaveText("Step 4 of 6 · Time");
+  await expect(page.getByTestId("step-label")).toHaveText("Step 5 of 7 · Time");
   await expect(page.getByTestId("owner-continue")).toBeDisabled();
 });
 
@@ -148,17 +155,18 @@ test("the form opens on the customer step again after leaving it mid-way and aft
   await page.goto("/agenda");
   await page.getByTestId("owner-new-appointment").click();
   await page.getByTestId("option-c1").click();
-  await expect(page.getByTestId("step-label")).toHaveText("Step 2 of 6 · Service");
+  await expect(page.getByTestId("step-label")).toHaveText("Step 2 of 7 · Service");
 
   // Leave mid-way (another tab) and open the form anew: it must start at step 1 with nothing chosen.
   await page.getByTestId("tab-revenue").click();
   await page.getByTestId("tab-agenda").click();
   await page.getByTestId("owner-new-appointment").click();
-  await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 6 · Customer");
+  await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 7 · Customer");
   await expect(page.getByTestId("owner-customer-search")).toHaveValue("");
 
   // After finishing a booking, the next "new appointment" starts at step 1 too.
   await page.getByTestId("option-c1").click();
+  await page.getByTestId("option-s1").click();
   await page.getByTestId("option-bs1").click();
   await page.getByTestId("owner-continue").click();
   await page.getByRole("button", { name: "10:30" }).click();
@@ -166,5 +174,5 @@ test("the form opens on the customer step again after leaving it mid-way and aft
   await page.getByTestId("owner-form-create").click();
   await expect(page).toHaveURL(/\/agenda/);
   await page.getByTestId("owner-new-appointment").click();
-  await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 6 · Customer");
+  await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 7 · Customer");
 });

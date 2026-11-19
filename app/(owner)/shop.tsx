@@ -10,7 +10,7 @@ import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Input } from "../../src/components/ui/Input";
-import { CepInput, DateInput, TimeInput } from "../../src/components/ui/MaskedInputs";
+import { CepInput, TimeInput } from "../../src/components/ui/MaskedInputs";
 import { Screen } from "../../src/components/ui/Screen";
 import { Toggle } from "../../src/components/ui/Toggle";
 import { listOwnerProfessionals } from "../../src/features/professionals/api";
@@ -19,6 +19,7 @@ import { createScheduleOverride, deleteScheduleOverride, listOwnerScheduleOverri
 import { addressFromColumns, EMPTY_ADDRESS } from "../../src/features/shops/address";
 import type { ShopAddress } from "../../src/features/shops/address";
 import { lookupCep, mergeCepResult } from "../../src/features/shops/cep";
+import { ClosedDatesCard } from "../../src/features/shops/ClosedDatesCard";
 import { closedDates, copyDayToOthers } from "../../src/features/shops/day-tools";
 import { listShopHours, saveShopHours, updateShopContact } from "../../src/features/shops/api";
 import { useCurrentShop } from "../../src/features/shops/CurrentShopProvider";
@@ -27,7 +28,6 @@ import type { DayDraft, ShopPeriod } from "../../src/features/shops/hours";
 import { errorMessage } from "../../src/i18n/errors";
 import { useLanguage } from "../../src/i18n/use-language";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
-import { formatDateNumeric } from "../../src/lib/i18n/format";
 import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
@@ -55,7 +55,6 @@ export default function OwnerShopScreen() {
   const [feedback, setFeedback] = useState<{ message: string; variant: "error" | "success" } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const today = formatInstantInShopTime(new Date()).localDate;
-  const [closeDate, setCloseDate] = useState(today);
   const closure = useQuery({
     enabled: Boolean(shop),
     queryFn: async () => {
@@ -71,9 +70,9 @@ export default function OwnerShopScreen() {
     void queryClient.invalidateQueries({ queryKey: ["owner-agenda"] });
   };
   const closeShop = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (date: string) => {
       for (const professional of closure.data?.activeProfessionals ?? []) {
-        await createScheduleOverride(supabase, { professionalId: professional.id, endTime: null, kind: "block", localDate: closeDate, shopId: shop!.id, startTime: null });
+        await createScheduleOverride(supabase, { professionalId: professional.id, endTime: null, kind: "block", localDate: date, shopId: shop!.id, startTime: null });
       }
     },
     onError: (error) => setFeedback({ message: errorMessage(error, t, t("owner.shop.closedError")), variant: "error" }),
@@ -235,20 +234,7 @@ export default function OwnerShopScreen() {
                 </Card>
               );
             })}
-            <Text accessibilityRole="header" className="text-xl font-display-semibold text-ink">{t("owner.shop.closedTitle")}</Text>
-            <Card variant="outlined">
-              <View className="gap-3">
-                {(closure.data?.dates ?? []).length === 0 ? <Text className="text-sm font-sans text-neutral-600">{t("owner.shop.closedNone")}</Text> : null}
-                {(closure.data?.dates ?? []).map((date) => (
-                  <View className="flex-row items-center justify-between gap-2" key={date} testID={`shop-closed-${date}`}>
-                    <Text className="text-base font-sans-medium text-ink" style={{ fontVariant: ["tabular-nums"] }}>{formatDateNumeric(date, language)}</Text>
-                    <Button disabled={reopen.isPending} label={t("owner.shop.reopen")} onPress={() => reopen.mutate(date)} size="sm" testID={`shop-reopen-${date}`} variant="outline" />
-                  </View>
-                ))}
-                <DateInput label={t("common.localDate")} onChangeValue={setCloseDate} testID="shop-closed-date" value={closeDate} />
-                <Button disabled={closeShop.isPending || !/^\d{4}-\d{2}-\d{2}$/.test(closeDate) || closeDate < today || !closure.data} label={t("owner.shop.closedAdd")} onPress={() => closeShop.mutate()} testID="shop-closed-add" variant="outline" />
-              </View>
-            </Card>
+            <ClosedDatesCard busy={closeShop.isPending || reopen.isPending} dates={closure.data?.dates ?? []} disabled={!closure.data} onClose={(date) => closeShop.mutate(date)} onReopen={(date) => reopen.mutate(date)} today={today} />
             <Button disabled={isSaving} label={t("owner.shop.save")} onPress={() => void save()} testID="shop-save" />
             <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
           </View>

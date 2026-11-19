@@ -159,22 +159,30 @@ test("a day's hours can be copied to every other day or to Monday-Friday", async
   await expect(page.getByTestId("shop-day-7")).toContainText("Open");
 });
 
-test("the owner closes the shop on a date for every active professional and reopens it", async ({ page }) => {
-  const date = "2099-12-25";
+test("the owner closes the shop on a picked date after confirming, for every active professional", async ({ page }) => {
   const calls: Record<string, unknown> = { deletes: [], inserts: [] };
+  const target = new Date(Date.now() + 40 * 86_400_000).toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
 
   await signInAsOwner(page);
   await mockOwnerRest(page, calls);
 
   await page.goto("/shop");
   await expect(page.getByText("No closed dates.")).toBeVisible();
-  await page.getByTestId("shop-closed-date").fill("");
-  await page.getByTestId("shop-closed-date").pressSequentially("20991225");
   await page.getByTestId("shop-closed-add").click();
+  await expect(page.getByTestId("date-picker")).toBeVisible();
+  // Past days are disabled.
+  await expect(page.locator('[data-testid^="date-picker-day-"][aria-disabled="true"]').first()).toBeVisible();
+  while (!(await page.getByTestId(`date-picker-day-${target}`).count())) await page.getByTestId("date-picker-next").click();
+  await page.getByTestId(`date-picker-day-${target}`).click();
+
+  // Nothing is closed until the owner confirms.
+  await expect(page.getByTestId("confirm-dialog")).toBeVisible();
+  expect(calls.inserts).toEqual([]);
+  await page.getByTestId("confirm-dialog-confirm").click();
 
   await expect.poll(() => calls.inserts).toMatchObject([
-    { professional_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1", kind: "block", local_date: date, start_time: null },
-    { professional_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2", kind: "block", local_date: date, start_time: null },
+    { professional_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1", kind: "block", local_date: target, start_time: null },
+    { professional_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2", kind: "block", local_date: target, start_time: null },
   ]);
 });
 
