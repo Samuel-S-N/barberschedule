@@ -52,3 +52,28 @@ it("routes recurrence notifications", () => {
   expect(inboxRoute("recurrence_cancel_accepted", "customer")).toBe("/me/recurrence");
   expect(inboxRoute("recurrence_cancel_declined", "customer")).toBe("/me/recurrence");
 });
+
+it("opens the appointment on its day for staff", () => {
+  const target = { appointmentId: "a1", startsAt: "2026-11-20T15:00:00Z" };
+
+  expect(inboxRoute("appointment_awaiting_confirmation", "professional", target)).toBe("/my-agenda?date=2026-11-20&open=a1");
+  expect(inboxRoute("appointment_cancelled", "owner", target)).toBe("/agenda?date=2026-11-20&open=a1");
+});
+
+it("uses the shop-local day, not the UTC one", () => {
+  // 01:30 UTC on the 21st is still the 20th in the shop's time zone (UTC-3).
+  expect(inboxRoute("appointment_booked", "owner", { appointmentId: "a1", startsAt: "2026-11-21T01:30:00Z" })).toBe("/agenda?date=2026-11-20&open=a1");
+});
+
+it("keeps the role's agenda when the row has no appointment or no time", () => {
+  expect(inboxRoute("appointment_booked", "owner", { appointmentId: null, startsAt: "2026-11-20T15:00:00Z" })).toBe("/agenda");
+  expect(inboxRoute("appointment_booked", "owner", { appointmentId: "a1", startsAt: "" })).toBe("/agenda");
+});
+
+it("does not deep-link customers, recurrence or payouts", () => {
+  const target = { appointmentId: "a1", startsAt: "2026-11-20T15:00:00Z" };
+
+  expect(inboxRoute("appointment_confirmed", "customer", target)).toBe("/appointments");
+  expect(inboxRoute("recurrence_requested", "owner", target)).toBe("/monthly-customers");
+  expect(inboxRoute("payout_paid", "professional", target)).toBe("/my-profile/compensation");
+});

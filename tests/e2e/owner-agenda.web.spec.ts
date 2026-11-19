@@ -174,3 +174,17 @@ test("the owner confirms a scheduled appointment from its card", async ({ page }
 
   await expect.poll(() => state.calls.status).toEqual({ appointment_id: "appt-1", new_status: "confirmed" });
 });
+
+test("an agenda link with ?open= opens that appointment's pop-up once", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, { calls: {}, rows: [agendaRow()] });
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+
+  await page.goto(`/agenda?date=${today}&open=appt-1`);
+
+  await expect(page.getByTestId("owner-sheet")).toBeVisible();
+  await expect(page.getByTestId("owner-sheet")).toContainText("Ana Customer");
+  // The params are consumed once: closing the pop-up must not reopen it.
+  await page.getByTestId("owner-sheet-close").click();
+  await expect(page.getByTestId("owner-sheet")).toHaveCount(0);
+});

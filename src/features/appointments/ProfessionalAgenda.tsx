@@ -20,6 +20,7 @@ import { Card } from "../../components/ui/Card";
 import { Screen } from "../../components/ui/Screen";
 import { quickActions } from "./agenda-actions";
 import { listMyProfessionalAgenda, setMyAppointmentStatus, type ProfessionalAgendaAppointment, type ProfessionalAppointmentStatus } from "./professional-agenda";
+import { parseAgendaTarget } from "./agenda-target";
 import { groupByLocalDate, markAppointmentDays, pendingClosure } from "./agenda-view";
 import { bookAsProfessional, searchMyCustomers, type ProfessionalCustomerInput } from "./professional-booking";
 import { getMyClient } from "../../features/clients/api";
@@ -91,7 +92,7 @@ export function ProfessionalAgenda({ header, mode = "professional" }: { header?:
   const showEarned = selectedDate <= today;
   // Booking again for a known client (from the client screen): the agenda carries `bookFor` until the booking is done or cancelled.
   const router = useRouter();
-  const { bookFor, moved } = useLocalSearchParams<{ bookFor?: string; moved?: string }>();
+  const { bookFor, date, moved, open } = useLocalSearchParams<{ bookFor?: string; date?: string; moved?: string; open?: string }>();
   const bookClient = useQuery({ enabled: Boolean(bookFor), queryFn: () => getMyClient(supabase, bookFor ?? ""), queryKey: ["my-client", bookFor] });
   const initialCustomer = useMemo(
     () => (bookClient.data ? { email: bookClient.data.customer.email, fullName: bookClient.data.customer.fullName, hasAccount: bookClient.data.customer.hasAccount, id: bookClient.data.customer.id, phone: bookClient.data.customer.phone } : null),
@@ -127,6 +128,15 @@ export function ProfessionalAgenda({ header, mode = "professional" }: { header?:
   }, [bookClient.error]);
 
   const [openId, setOpenId] = useState<string | null>(null);
+  // Coming from a notification: show that day and open that appointment, once.
+  useEffect(() => {
+    const target = parseAgendaTarget({ date, open });
+
+    if (!target.date && !target.open) return;
+    if (target.date) setPickedDate(target.date);
+    if (target.open) setOpenId(target.open);
+    router.setParams({ date: undefined, open: undefined });
+  }, [date, open]);
   const openAppointment = [...pending, ...dayAppointments].find((appointment) => appointment.id === openId) ?? null;
   const openStart = openAppointment ? formatInstantInShopTime(new Date(openAppointment.startsAt)) : null;
   const openRemindUrl = openAppointment && openStart && new Date(openAppointment.startsAt) > new Date()

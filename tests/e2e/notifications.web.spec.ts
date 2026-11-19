@@ -1,6 +1,6 @@
 import { expect, test } from "./fixtures";
 
-import { json, mockCustomerRest, signInAsCustomer } from "./customer-helpers";
+import { appointmentRow, json, mockCustomerRest, signInAsCustomer } from "./customer-helpers";
 
 const notification = (overrides: Record<string, unknown> = {}) => ({
   appointment_id: "a1",
@@ -89,4 +89,44 @@ test("the bell sits at the top-right with the title on a line below it", async (
   expect(bell && title).toBeTruthy();
   expect(bell!.x + bell!.width).toBeGreaterThan(375 - 40); // right edge
   expect(bell!.y + bell!.height).toBeLessThanOrEqual(title!.y + 2); // above the title, not beside it
+});
+
+test("tapping an awaiting-confirmation notice opens that appointment on its day (owner)", async ({ page }) => {
+  const ownerId = "55555555-5555-4555-8555-555555555555";
+  const ranges: string[] = [];
+  const row = { ...appointmentRow({ id: "a1", starts_at: "2026-10-21T13:00:00Z" }), professional_name: "Bruno Professional", customer_name: "Ana Customer" };
+
+  await page.addInitScript(({ id }) => {
+    const now = Math.floor(Date.now() / 1000);
+    const header = btoa(JSON.stringify({ alg: "none" })).replace(/=+$/, "");
+    const token = `${header}.${btoa(JSON.stringify({ exp: now + 3600, sub: id }))}.`;
+    const session = JSON.stringify({ access_token: token, expires_at: now + 3600, expires_in: 3600, refresh_token: "e2e-refresh-token", token_type: "bearer", user: { id } });
+    localStorage.setItem("sb-example-auth-token", session);
+  }, { id: ownerId });
+  await page.route("**/rest/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+
+    if (path.endsWith("/rpc/get_current_profile")) return json(route, [{ full_name: "Owner", role: "owner", user_id: ownerId }]);
+    if (path.endsWith("/rpc/count_unread_notifications")) return json(route, 1);
+    if (path.endsWith("/rpc/mark_notifications_read")) return json(route, 1);
+    if (path.endsWith("/notifications")) return json(route, [notification({ id: "n9", kind: "appointment_awaiting_confirmation" })]);
+    if (path.endsWith("/shops")) return json(route, [{ id: "11111111-1111-4111-8111-111111111111" }]);
+    if (path.endsWith("/rpc/list_owner_agenda")) {
+      const body = route.request().postDataJSON() as { range_start: string };
+      ranges.push(body.range_start);
+
+      // Only the notification's day has the appointment: today's agenda must not show it.
+      return json(route, body.range_start === "2026-10-21" ? [row] : []);
+    }
+    if (path.endsWith("/rpc/list_owner_agenda_overrides")) return json(route, []);
+    await route.abort();
+  });
+
+  await page.goto("/agenda");
+  await page.getByTestId("notification-bell").click();
+  await page.getByTestId("notification-n9").click();
+
+  await expect(page.getByTestId("owner-sheet")).toBeVisible();
+  await expect(page.getByTestId("owner-sheet")).toContainText("Ana Customer");
+  expect(ranges).toContain("2026-10-21");
 });
