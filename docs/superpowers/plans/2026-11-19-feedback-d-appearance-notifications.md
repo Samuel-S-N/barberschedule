@@ -4,13 +4,13 @@
 
 **Goal:** (1) A colour-wheel pop-up ("Other colour") on the Appearance screen next to the swatches and hex field; (2) the *scheduled* status badge uses the shop's accent colour; (3) a "Turn on notifications?" pop-up after the first sign-in or account creation on a device (once per device); (4) a "Notifications" switch in every role's Settings.
 
-**Architecture:** The colour wheel is `reanimated-color-picker` behind our own thin `ColorWheel` component (so unit tests never load Reanimated gestures) shown in a project-style pop-up. The badge change is class tokens only (`accent` is already a themed token). Notifications get one small abstraction, `useNotificationChannel()` (web = part 4's Web Push, native = Expo push token), used by both the prompt gate (mounted once in the root layout) and a switch row in the shared `ProfileSettingsScreen` (all three roles already use it). Native push registration stops asking for permission at app start (today `usePushRegistration` asks on every launch) and asks only from the prompt or the switch. Turning native push off needs one new user-callable RPC (`deactivate_my_notification_token`, migration 0074 + pgTAP 056), the Expo twin of part 4's `deactivate_my_web_subscription`.
+**Architecture:** The colour wheel is `reanimated-color-picker` behind our own thin `ColorWheel` component (so unit tests never load Reanimated gestures) shown in a project-style pop-up. The badge change is class tokens only (`accent` is already a themed token). Notifications get one small abstraction, `useNotificationChannel()` (web = part 4's Web Push, native = Expo push token), used by both the prompt gate (mounted once in the root layout) and a switch row in the shared `ProfileSettingsScreen` (all three roles already use it). Native push registration stops asking for permission at app start (today `usePushRegistration` asks on every launch) and asks only from the prompt or the switch. Turning native push off needs one new user-callable RPC (`deactivate_my_notification_token`, migration 0075 + pgTAP 057), the Expo twin of part 4's `deactivate_my_web_subscription`.
 
 **Tech Stack:** Expo SDK 58 / React Native 0.88 / react-native-web, Reanimated 4.7.1, react-native-gesture-handler 3.3.0, `reanimated-color-picker` 5.1.4, NativeWind tokens, Supabase (Postgres + pgTAP), Web Push (part 4), `expo-notifications`, react-i18next (pt/es/en), Jest (jest-expo, RNTL 14 async `render`), Playwright (system Chrome).
 
 **Spec:** `docs/superpowers/specs/2026-11-19-feedback-1811-design.md` (section "PR D — appearance and notifications")
 
-**Branch:** `feat-feedback-d-appearance-notifications`, cut from `main` **after PR B (needs its `Toggle`) and ideally after A (both edit `ProfileSettingsScreen.tsx`)**. Migration number **0074**, pgTAP **056** (latest on `main`: 0073 / 055; re-check with `ls supabase/migrations | tail -3` before creating).
+**Branch:** `feat-feedback-d-appearance-notifications`, cut from `main` **after PR B (needs its `Toggle`) and ideally after A (both edit `ProfileSettingsScreen.tsx`)**. Migration number **0075**, pgTAP **057** (PR B takes 0074 / 056 for the owner-confirm RPC; latest on `main` is 0073 / 055; re-check with `ls supabase/migrations | tail -3` before creating).
 
 ## Library check: `reanimated-color-picker` on Expo SDK 58 (answer to the order's question)
 
@@ -26,9 +26,9 @@ Checked read-only (`npm view`, `npm pack` into a scratch folder, inspected the p
 ## Open questions for the orchestrator
 
 1. **Spec vs code — what already exists.** The install card and the notifications card already exist from parts 3–4 (`InstallPrompt`, `NotificationPrompt` on each role's hub), and **native push registration is automatic today**: `usePushRegistration` (`app/(owner)/_layout.tsx:28`, `(customer)/_layout.tsx:30`, `(professional)/_layout.tsx:34`) calls `registerPushToken`, which asks for permission on every app start until granted. The spec's "on native, tapping Turn on runs the Expo registration" only makes sense if the automatic ask is removed. **Plan does:** `registerPushToken(supabase, { ask })`; automatic start-up registration only refreshes a token when permission is *already* granted and the user did not switch it off; the prompt and the switch pass `ask: true`.
-2. **Hub cards.** After this PR each role has three notification entry points: the hub card (part 4), the pop-up, the Settings switch. **Plan keeps the hub cards untouched** (not in the spec); recommended follow-up: delete `NotificationPrompt` from the three hubs (one small commit) once the pop-up and switch are accepted.
+2. **DECIDED (user, 2026-11-19): remove the hub cards.** The pop-up and the Settings switch replace part 4's `NotificationPrompt` card on the three hubs. **Plan does:** Task 7 deletes the card, its unit test and updates `tests/e2e/web-push.web.spec.ts`. Part 3's install card stays (the customer profile moves it first, PR A).
 3. **Expo Go cannot receive remote push** (SDK 53+): `registerPushToken` returns `null` there. **Plan does:** in Expo Go (and Android builds without the native module) the notifications state is `unsupported`: no pop-up, no switch row (consistent with "unsupported: no pop-up"). Real native behaviour needs a dev build / device check (not covered by Jest or the browser; listed in the PR description as manual).
-4. **"First sign-in on a device" for people who are already signed in** (everyone using the app today): the "prompted" flag does not exist yet, so they get the pop-up once on their next launch. **Plan does:** that (it is "once per device"). Say if existing sessions should be skipped (would need a "first seen" marker written at install time).
+4. **DECIDED (user): people already signed in get the pop-up once** on their next launch (the "prompted" flag does not exist yet, so it is "once per device" from then on).
 5. **Per origin, not per physical device on web.** Shops live on subdomains, and `localStorage` is per origin, so a person using two shops' addresses on one phone is asked once per shop address (their push subscription is per origin anyway).
 6. **Badge contrast.** *Scheduled* in accent colour = tint background (`accent/10`), dot and text in the accent. A light accent (yellow) as text on a pale tint reads poorly; the default accent `#DB9A34` already has the same weak contrast as today's warning orange. **Plan does what the spec says** and shows the badge in the Appearance preview check; if a shop picks a very light accent the badge text is faint (it is also true of the accent used as text elsewhere).
 7. **Calling Turn on in the pop-up when the browser prompt is dismissed** (permission stays `default`): the pop-up is closed and remembered (once per device), the switch in Settings remains the way to try again.
@@ -71,7 +71,8 @@ Checked read-only (`npm view`, `npm pack` into a scratch folder, inspected the p
 | `src/features/notifications/NotificationsSwitch.tsx` (new) | the Settings row |
 | `src/features/account/ProfileSettingsScreen.tsx` (modify) | mount the switch |
 | `app/_layout.tsx` (modify) | mount the gate inside `ShopGate` |
-| `supabase/migrations/0074_deactivate_my_notification_token.sql`, `supabase/tests/056_deactivate_my_notification_token.sql` (new) | RPC + pgTAP |
+| `src/features/notifications/NotificationPrompt.tsx`, `tests/unit/notification-prompt.test.ts` (delete), the three hubs (modify) | the hub card goes (Task 7) |
+| `supabase/migrations/0075_deactivate_my_notification_token.sql`, `supabase/tests/057_deactivate_my_notification_token.sql` (new) | RPC + pgTAP |
 | `src/i18n/locales/{en,es,pt}.ts` (modify) | `owner.appearance.otherColor`, `colorWheel.*`, `notificationsPrompt.*`, `notificationsSwitch.*` |
 
 ---
@@ -418,7 +419,7 @@ git commit -m "feat(ui): scheduled badge follows the shop accent" -m "Co-Authore
 
 **Files:**
 - Modify: `src/features/notifications/web-push-state.ts`, `web-push.ts`, `use-web-push.ts`, `use-push-registration.ts`, `api.ts`
-- Create: `src/features/notifications/native-push-preference.ts`, `src/features/notifications/native-push.ts`, `src/features/notifications/prompt-kind.ts`, `src/features/notifications/prompt-store.ts`, `src/features/notifications/use-notification-channel.ts`, `supabase/migrations/0074_deactivate_my_notification_token.sql`, `supabase/tests/056_deactivate_my_notification_token.sql`
+- Create: `src/features/notifications/native-push-preference.ts`, `src/features/notifications/native-push.ts`, `src/features/notifications/prompt-kind.ts`, `src/features/notifications/prompt-store.ts`, `src/features/notifications/use-notification-channel.ts`, `supabase/migrations/0075_deactivate_my_notification_token.sql`, `supabase/tests/057_deactivate_my_notification_token.sql`
 - Test: `tests/unit/web-push-state.test.ts`, `tests/unit/web-push.test.ts`, `tests/unit/push-registration.test.ts`, `tests/unit/use-web-push.test.ts` (modify); new `tests/unit/native-push.test.ts`, `prompt-store.test.ts`, `use-notification-channel.test.ts` (the preference flag is covered through `push-registration.test.ts` and `native-push.test.ts`)
 
 **Interfaces:**
@@ -628,7 +629,7 @@ describe("useNotificationChannel on a phone", () => {
 
 `tests/unit/native-push.test.ts` — `nativePushSupported` false on web / Expo Go / Android without the module; `enableNativePush` clears the off flag and returns `"on"` when a token is saved and `"denied"` when `registerPushToken` returns `null` for a denied permission; `disableNativePush` calls the RPC with the token and sets the flag. Mock `expo-notifications`, `expo-constants`, `expo-modules-core` (`requireOptionalNativeModule`), `../../src/features/notifications/api` (`deactivateMyNotificationToken`) and `../../src/lib/key-value-storage` as the files above do (mock `native-push-preference` for the flag), and assert the calls.
 
-pgTAP `supabase/tests/056_deactivate_my_notification_token.sql` (same shape as `054`; adjust `plan(n)` to the count):
+pgTAP `supabase/tests/057_deactivate_my_notification_token.sql` (same shape as `054`; adjust `plan(n)` to the count):
 
 ```sql
 begin;
@@ -639,30 +640,30 @@ select plan(4);
 
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at)
 values
-  ('00000000-0000-0000-0000-000000000000', 'fe000000-0000-0000-0000-000000000056', 'authenticated', 'authenticated', 't56-one@example.com', 'x', now()),
-  ('00000000-0000-0000-0000-000000000000', 'fe000000-0000-0000-0000-000000000057', 'authenticated', 'authenticated', 't56-two@example.com', 'x', now());
+  ('00000000-0000-0000-0000-000000000000', 'fe000000-0000-0000-0000-000000000056', 'authenticated', 'authenticated', 't57-one@example.com', 'x', now()),
+  ('00000000-0000-0000-0000-000000000000', 'fe000000-0000-0000-0000-000000000057', 'authenticated', 'authenticated', 't57-two@example.com', 'x', now());
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'fe000000-0000-0000-0000-000000000056', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
-select public.register_notification_token('ExponentPushToken[t56mine]', 'android', 'en');
+select public.register_notification_token('ExponentPushToken[t57mine]', 'android', 'en');
 reset role;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'fe000000-0000-0000-0000-000000000057', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
-select lives_ok($$ select public.deactivate_my_notification_token('ExponentPushToken[t56mine]') $$, 'deactivating someone else''s token is a harmless no-op');
+select lives_ok($$ select public.deactivate_my_notification_token('ExponentPushToken[t57mine]') $$, 'deactivating someone else''s token is a harmless no-op');
 reset role;
-select is((select active from public.notification_tokens where expo_push_token = 'ExponentPushToken[t56mine]'), true, 'and it stays active');
+select is((select active from public.notification_tokens where expo_push_token = 'ExponentPushToken[t57mine]'), true, 'and it stays active');
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'fe000000-0000-0000-0000-000000000056', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
-select public.deactivate_my_notification_token('ExponentPushToken[t56mine]');
+select public.deactivate_my_notification_token('ExponentPushToken[t57mine]');
 reset role;
-select is((select active from public.notification_tokens where expo_push_token = 'ExponentPushToken[t56mine]'), false, 'the owner of the token switches it off');
+select is((select active from public.notification_tokens where expo_push_token = 'ExponentPushToken[t57mine]'), false, 'the owner of the token switches it off');
 
-select throws_ok($$ set local role anon; select public.deactivate_my_notification_token('ExponentPushToken[t56mine]') $$, '42501', null, 'anonymous callers are refused');
+select throws_ok($$ set local role anon; select public.deactivate_my_notification_token('ExponentPushToken[t57mine]') $$, '42501', null, 'anonymous callers are refused');
 
 select * from finish();
 rollback;
@@ -892,7 +893,7 @@ export function useNotificationChannel(): { busy: boolean; disable: () => Promis
 }
 ```
 
-Migration `supabase/migrations/0074_deactivate_my_notification_token.sql`:
+Migration `supabase/migrations/0075_deactivate_my_notification_token.sql`:
 
 ```sql
 -- Settings > Notifications > off on a phone: the signed-in user switches their own device's Expo token off.
@@ -915,7 +916,7 @@ grant execute on function public.deactivate_my_notification_token(text) to authe
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `npx jest tests/unit/web-push-state.test.ts tests/unit/web-push.test.ts tests/unit/use-web-push.test.ts tests/unit/push-registration.test.ts tests/unit/prompt-store.test.ts tests/unit/use-notification-channel.test.ts tests/unit/native-push.test.ts tests/unit/notification-prompt.test.ts` (the existing `notification-prompt.test.ts` mocks `useWebPush`; add `disable: jest.fn()` to its `push()` helper if the type complains) and `npx supabase db reset && npx supabase test db`.
-Expected: PASS (pgTAP all green, including the new 056).
+Expected: PASS (pgTAP all green, including the new 057).
 
 - [ ] **Step 5: Gate and commit**
 
@@ -1359,11 +1360,28 @@ git commit -m "feat(settings): notifications switch for every role" -m "Co-Autho
 
 ---
 
-### Task 7: Docs and the hosted note
+### Task 7: Remove part 4's notification card from the three hubs
 
-**Files:** `docs/hosted-deploy.md` only if it lists migrations/secrets (part 4 added VAPID lines): add a line that migration `0074` ships a user-callable RPC and needs no secret; otherwise skip this task.
+**Files:**
+- Modify: `app/(customer)/(tabs)/profile.tsx`, `app/(owner)/settings.tsx`, `app/(professional)/my-profile/index.tsx`, `tests/e2e/web-push.web.spec.ts`
+- Delete: `src/features/notifications/NotificationPrompt.tsx`, `tests/unit/notification-prompt.test.ts`
+- Modify (optional): `docs/hosted-deploy.md` (add one line that migration `0075` ships a user-callable RPC and needs no secret, only if the file lists migrations)
 
-- [ ] **Step 1:** `rtk grep -n "0073\|deactivate_my_web" docs/hosted-deploy.md README.md`; add the 0074 line next to 0073's if such a list exists. Commit `docs: note migration 0074` or skip.
+The pop-up (Task 5) and the Settings switch (Task 6) replace the card; keep `use-web-push.ts`, `web-push.ts` and `web-push-state.ts` (the channel hook uses them), and keep part 3's `InstallPrompt` on the hubs.
+
+- [ ] **Step 1: Update the browser test first.** Read `tests/e2e/web-push.web.spec.ts`; every step that taps `notify-button` or reads `notify-card` on a profile hub now goes through Settings (`menu-settings` on the customer profile, the owner's and professional's settings routes) and the `notifications-switch` toggle; the iPhone case asserts the `notifications-switch-install` row and the install guide; the denied case asserts the disabled switch and its hint. Run it and see it fail against the old UI (`npx playwright test tests/e2e/web-push.web.spec.ts --config playwright.chrome.config.ts`).
+
+- [ ] **Step 2: Remove the card.** In the three hub files delete the `NotificationPrompt` import and the `<NotificationPrompt />` element; delete `NotificationPrompt.tsx` and `tests/unit/notification-prompt.test.ts`. Then `rtk grep -rn "NotificationPrompt\|notify-card\|notify-button\|webPush.title\|webPush.body\|webPush.button\|webPush.onTitle\|webPush.onBody\|webPush.iosTitle\|webPush.iosBody" app src tests`: any locale key now unused by code (`webPush.title/body/button/onTitle/onBody/iosTitle/iosBody`; keep `webPush.deniedBody` and `webPush.error`, which the switch uses) is deleted from all three locales in the same commit (parity test keeps them aligned).
+
+- [ ] **Step 3: Run** `npx jest tests/unit/locale-parity.test.ts tests/unit/no-hardcoded-text.test.ts tests/unit/profile-settings-screen.test.ts tests/unit/customer-profile-order.test.ts tests/unit/use-web-push.test.ts` and `npx playwright test tests/e2e/web-push.web.spec.ts tests/e2e/profile.web.spec.ts tests/e2e/owner-profile.web.spec.ts tests/e2e/professional-profile.web.spec.ts --config playwright.chrome.config.ts`. Expected: PASS.
+
+- [ ] **Step 4: Gate and commit**
+
+```bash
+npm run typecheck && ./node_modules/.bin/eslint app src tests scripts
+git add -A app src tests docs
+git commit -m "refactor(notifications): the pop-up and the switch replace the hub card" -m "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
+```
 
 ---
 
@@ -1388,4 +1406,4 @@ Expected: both exits 0 (read the real lint output), Jest green, pgTAP green. Fix
   - Playwright: `npx playwright test tests/e2e/owner-appearance.web.spec.ts tests/e2e/notifications.web.spec.ts tests/e2e/profile.web.spec.ts tests/e2e/owner-profile.web.spec.ts tests/e2e/professional-profile.web.spec.ts tests/e2e/owner-agenda.web.spec.ts --config playwright.chrome.config.ts`.
   - **Manual, on a phone (not covered here):** a development build (not Expo Go): first launch shows the pop-up, Turn on registers the token, the Settings switch off stops pushes; Expo Go shows neither the pop-up nor the row; colour wheel drag inside the Modal on iOS and Android.
 
-- [ ] **Step 3: Hand off** — push, open the PR, bind with `get_status`/`bind_pr`, turn on Auto-fix, never auto-merge (only when ordered; this plan itself does not push). Mention in the PR: migration 0074 must be applied wherever migrations run.
+- [ ] **Step 3: Hand off** — push, open the PR, bind with `get_status`/`bind_pr`, turn on Auto-fix, never auto-merge (only when ordered; this plan itself does not push). Mention in the PR: migration 0075 must be applied wherever migrations run.

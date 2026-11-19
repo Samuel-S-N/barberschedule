@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** One shared `DateField` (locale date with `‹ ›` arrows and a calendar pop-up) used by the owner Agenda, the owner booking form and the closed dates; a clearer "Closed dates" section (future dates only, remove button, "Add closed date" → calendar → confirmation); and an owner booking form where the service and the professional are two steps (service first, then only the professionals who offer it).
+**Goal:** One shared `DateField` (locale date with `‹ ›` arrows and a calendar pop-up) used by the owner Agenda and the closed dates **only** (decided with the user: the date field is exclusive to the places named; every booking flow, including the owner's, keeps its existing inline calendar); a clearer "Closed dates" section (future dates only, remove button, "Add closed date" → calendar → confirmation); and an owner booking form where the service and the professional are two steps (service first, then only the professionals who offer it).
 
-**Architecture:** Three small, tested units: a pure `stepDate(date, unit, direction)` (day / week / month with end-of-month clamping), a `CalendarPopup` (project pop-up style, month grid, min/max/disabled dates, built on the existing `buildMonthGrid`/`addMonths` helpers, **not** on the inline swipeable `MonthCalendar`, which is hard-wired to "today + 30 days" and cannot show past dates) and `DateField` on top of both. The Agenda replaces its text date box **and** its previous/next buttons with `DateField` (arrows step by the selected view). The closed-dates block becomes its own `ClosedDatesCard` so its pop-up + confirmation are unit-testable. The booking form gains a `professional` step and swaps its date step for `DateField`.
+**Architecture:** Three small, tested units: a pure `stepDate(date, unit, direction)` (day / week / month with end-of-month clamping), a `CalendarPopup` (project pop-up style, month grid, min/max/disabled dates, built on the existing `buildMonthGrid`/`addMonths` helpers, **not** on the inline swipeable `MonthCalendar`, which is hard-wired to "today + 30 days" and cannot show past dates) and `DateField` on top of both. The Agenda replaces its text date box **and** its previous/next buttons with `DateField` (arrows step by the selected view). The closed-dates block becomes its own `ClosedDatesCard` so its pop-up + confirmation are unit-testable. The booking form gains a `professional` step; its date step keeps the shared inline calendar (`DateStep`).
 
 **Tech Stack:** Expo SDK 58 / React Native 0.88 / react-native-web, Expo Router, TanStack Query, react-i18next (pt/es/en parity), `lucide-react-native`, Jest (jest-expo, RNTL 14 async `render`), Playwright (system Chrome).
 
@@ -14,18 +14,18 @@
 
 ## Open questions for the orchestrator
 
-1. **The owner booking form's date is NOT a text field today (spec vs code).** The spec says "the owner booking form date ('Local date' text field today)". In the code, the form's date step is `DateStep` (`src/features/availability/steps.tsx`): an inline `MonthCalendar` (today … today+30 days) plus a Continue button, shared with the reschedule, move, conflict and customer-booking flows. The only text date fields are the Agenda box (`DateInput`, testID `owner-agenda-date`) and the closed-dates input (`shop-closed-date`). **Plan does:** replaces *only the owner form's* date step by `DateField` + Continue (min = today, max = today + `BOOKING_DAYS_AHEAD` = 30 days, the same window as today); `DateStep` stays untouched for the other four flows. If the user wants the inline calendar kept in the owner form, drop Task 6 step "date" and keep the rest.
+1. **DECIDED (user, 2026-11-19): keep the booking template; `DateField` only where listed.** The spec said the owner booking form's date was a text field; in the code it is the shared inline `MonthCalendar` (`DateStep`, used by every booking flow). The user chose to keep it: **all booking flows keep the same form**, and `DateField` is used only by the Agenda date box and the closed dates. This plan therefore does **not** touch the form's date step; it only splits service and professional.
 2. **Month step in the Agenda.** Today the month view's next/previous move 31 days, and the month range is "start date + 30 days" (`agendaRange`). The spec says the arrow moves "a month in month view". **Plan does:** a calendar month (`2026-01-31` + 1 month → `2026-02-28`); `agendaRange` is left as it is.
-3. **Agenda date range limits.** The Agenda must reach past dates (the owner reviews old days), so its `DateField` has no min/max. Only closed dates (min = today) and the booking form (today … +30) set limits.
+3. **Agenda date range limits.** The Agenda must reach past dates (the owner reviews old days), so its `DateField` has no min/max. Only closed dates set a limit (min = today).
 4. **"Remove button"** on closed dates: the list already has a "Reopen" button per future date (`shop-reopen-<date>`, text `owner.shop.reopen`). **Plan keeps it** (same action, wording the owner already knows) and only restructures the add flow. Past closed dates are already not listed (`closedDates()` drops dates before today).
 5. **Pop-up for the already-closed days:** picking a day that is already closed makes no sense, so the closed-dates calendar shows those days disabled (`disabledDates`).
 
 ## Global Constraints
 
 - `DateField`: the date formatted for the locale with `‹` and `›` buttons on the sides; the arrows move **one step without opening anything** (a day; a week in the Agenda's week view; a month in month view). Tapping the date opens a **calendar pop-up** in the project pop-up style (centred floating card, **X top-right**, **tap outside closes**) with `‹ ›` to change month; tapping a day selects it and closes. Optional min/max date.
-- Used in: the owner Agenda date box, the owner booking form date, closed dates.
+- Used in: the owner Agenda date box and closed dates **only** (user decision). The owner booking form keeps its inline calendar (`DateStep`), the same as every other booking flow.
 - Closed dates (Manage → Opening hours): "Closed dates" lists the **future** closed dates (each with a remove button) and an "Add closed date" button opens the calendar; **picking a day asks for confirmation before closing it**. Past dates are not listed.
-- Owner booking form: **service and professional are two steps**: first the service, then only the professionals who offer it.
+- Owner booking form: **service and professional are two steps**: first the service, then only the professionals who offer it. Nothing else about the form's look changes.
 - Other owner screens that still type dates as text stay as they are.
 - Texts pt/es/en with parity (`tests/unit/locale-parity.test.ts`); no hard-coded text; colours by tokens; `className` only on plain React Native elements; pop-ups are centred floating cards (like `AppointmentSheet`/`ConfirmDialog`); every `<Input>` has a placeholder (none added here).
 - **Gate per task:** `npm run typecheck`, `./node_modules/.bin/eslint app src tests scripts`, the Jest files named. **Final gate (Task 7):** `npm run typecheck`, ROOT `npm run lint` (read the real output and exit code, never `| tail`), whole Jest suite, **re-run after the last commit**, browser screenshots of changed screens.
@@ -47,7 +47,7 @@
 | `app/(owner)/agenda.tsx` (modify) | `DateField` replaces the text box and the prev/next buttons |
 | `src/features/appointments/agenda-nav.ts` (modify) | drop `next`/`previous` keys |
 | `app/(owner)/shop.tsx` (modify) | mount `ClosedDatesCard`; `closeShop` takes the date |
-| `app/(owner)/appointment-form.tsx` (modify) | `professional` step, `DateField` date step, reset extended |
+| `app/(owner)/appointment-form.tsx` (modify) | `professional` step, reset extended (date step unchanged) |
 | `src/i18n/locales/{en,es,pt}.ts` (modify) | `dateField.*`, `owner.shop.closed*`, `owner.appointmentForm.professionalTitle/steps.professional` |
 | `tests/unit/step-date.test.ts`, `calendar-popup.test.ts`, `date-field.test.ts`, `closed-dates-card.test.ts`, `owner-appointment-form-steps.test.ts`, `agenda-nav.test.ts` | Jest |
 | `tests/e2e/owner-agenda.web.spec.ts`, `owner-shop.web.spec.ts`, `owner-appointment-form.web.spec.ts` | updated/added Playwright |
@@ -925,15 +925,15 @@ git commit -m "feat(shop): add closed dates through the calendar with confirmati
 
 ---
 
-### Task 6: Owner booking form — service and professional as two steps, `DateField` for the date
+### Task 6: Owner booking form — service and professional as two steps
 
 **Files:**
 - Modify: `app/(owner)/appointment-form.tsx`, `src/i18n/locales/{en,es,pt}.ts` (`owner.appointmentForm`)
 - Test: new `tests/unit/owner-appointment-form-steps.test.ts`; update `tests/e2e/owner-appointment-form.web.spec.ts` (step counts and options)
 
 **Interfaces:**
-- Consumes: `DateField` (Task 3), `addLocalDays`, `BOOKING_DAYS_AHEAD` (`src/lib/dates/month-calendar.ts`), B's `useFocusEffect` reset.
-- Produces (screen-internal): `type Step = "customer" | "date" | "professional" | "review" | "service" | "time"`; `FLOW = ["customer", "service", "professional", "date", "time", "review", "confirm"]`; new state `selectedServiceId: string | null`; testIDs `owner-service-list` (distinct services, key = service id), `owner-professional-list` (only the chosen service's professionals, key = professional-service id), `owner-form-date` (DateField), `owner-continue` (unchanged).
+- Consumes: B's `useFocusEffect` reset (extended here). The date step (`DateStep` with `MonthCalendar`) is left exactly as it is.
+- Produces (screen-internal): `type Step = "customer" | "date" | "professional" | "review" | "service" | "time"`; `FLOW = ["customer", "service", "professional", "date", "time", "review", "confirm"]`; new state `selectedServiceId: string | null`; testIDs `owner-service-list` (distinct services, key = service id), `owner-professional-list` (only the chosen service's professionals, key = professional-service id), `owner-continue` (unchanged).
 - i18n: `owner.appointmentForm.professionalTitle` = "Choose the professional" / pt "Escolha o profissional" / es "Elija al profesional"; `owner.appointmentForm.steps.professional` = "Professional" / "Profissional" / "Profesional". (`serviceTitle`, `steps.service`, `dateTitle` stay.)
 
 - [ ] **Step 1: Write the failing test** `tests/unit/owner-appointment-form-steps.test.ts` (same mock header as `owner-appointment-form-reset.test.ts` from PR B, with this data):
@@ -1007,14 +1007,13 @@ describe("owner appointment form: service then professional", () => {
     expect(view.queryByText("Caio")).toBeNull();
   });
 
-  it("choosing the professional moves to the date step with a DateField limited to the booking window", async () => {
+  it("choosing the professional moves to the date step (the usual calendar)", async () => {
     const view = await toServiceStep();
 
     await fireEvent.press(view.getByText("Haircut"));
     await fireEvent.press(view.getByText("Caio"));
 
-    expect(view.getByTestId("owner-form-date")).toBeTruthy();
-    expect(view.getByTestId("owner-form-date-prev")).toBeDisabled();
+    expect(view.getByTestId("month-calendar")).toBeTruthy();
     expect(view.getByTestId("step-label")).toHaveTextContent("Step 4 of 7 · Date");
   });
 });
@@ -1029,7 +1028,6 @@ Expected: FAIL (service list still shows "Bruno · Haircut").
 
 - [ ] **Step 3: Implement** in `app/(owner)/appointment-form.tsx`
 
-- imports: remove `DateStep` from `../../src/features/availability/steps` (keep `TimeStep`); add `import { DateField } from "../../src/components/ui/DateField";`, `import { addLocalDays } from "../../src/lib/dates/calendar-strip-days";`, `import { BOOKING_DAYS_AHEAD } from "../../src/lib/dates/month-calendar";`.
 - `type Step = "customer" | "date" | "professional" | "review" | "service" | "time";` and `const FLOW = ["customer", "service", "professional", "date", "time", "review", "confirm"] as const;`.
 - new state next to the others: `const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);`; add `setSelectedServiceId(null);` to B's `useFocusEffect` reset.
 - below `choices`:
@@ -1083,17 +1081,6 @@ Expected: FAIL (service list still shows "Bruno · Haircut").
             ) : null}
 ```
 
-- the date step:
-
-```tsx
-            {step === "date" ? (
-              <>
-                <DateField label={t("common.localDate")} max={addLocalDays(today, BOOKING_DAYS_AHEAD)} min={today} onChange={(date) => { setLocalDate(date); setSelectedStartsAt(null); }} testID="owner-form-date" value={localDate} />
-                <Button label={t("book.continue")} onPress={() => go("time")} size="lg" testID="owner-continue" />
-              </>
-            ) : null}
-```
-
 - i18n keys from Interfaces above in all three locales (`owner.appointmentForm.professionalTitle`, `steps.professional`). `title = t(\`owner.appointmentForm.${step}Title\`)` then resolves `professionalTitle`.
 
 E2E `tests/e2e/owner-appointment-form.web.spec.ts` (update the happy-path test and the other two that click `option-bs1`): after the customer, the service option is `option-<serviceId from the file's mock>`; add the professional click. For example, in the happy path replace lines "Step 2 of 6 · Service … Step 3 of 6 · Date … month-calendar visible" by:
@@ -1109,34 +1096,13 @@ E2E `tests/e2e/owner-appointment-form.web.spec.ts` (update the happy-path test a
   await page.getByTestId("option-bs1").click();
 
   await expect(page.getByTestId("step-label")).toHaveText("Step 4 of 7 · Date");
-  await expect(page.getByTestId("owner-form-date")).toBeVisible();
+  await expect(page.getByTestId("month-calendar")).toBeVisible();
   await page.getByTestId("owner-continue").click();
 
   await expect(page.getByTestId("step-label")).toHaveText("Step 5 of 7 · Time");
 ```
 
-and bump the following labels (Time → 5, Review → 6 of 7; "a time taken meanwhile returns to the time step" → "Step 5 of 7 · Time"; the back-navigation test: customer → service → professional → "Step 4 of 7 · Date", back → "Step 3 of 7 · Professional"). Replace `s1` with the service id the file's mock really uses (`rtk grep -n "service_id\|id: \"s" tests/e2e/owner-appointment-form.web.spec.ts`). Add one test: picking the date through the pop-up and with the arrow:
-
-```ts
-test("the date step uses the DateField: arrow, calendar, and no past days", async ({ page }) => {
-  await signInAsOwner(page);
-  await mockOwnerRest(page, {});
-
-  await page.goto("/appointment-form");
-  await page.getByTestId("option-c1").click();
-  await page.getByTestId("option-s1").click();
-  await page.getByTestId("option-bs1").click();
-
-  await expect(page.getByTestId("owner-form-date-prev")).toBeDisabled();
-  await page.getByTestId("owner-form-date-next").click();
-  await page.getByTestId("owner-form-date").click();
-  await expect(page.getByTestId("date-picker")).toBeVisible();
-  await expect(page.locator('[data-testid^="date-picker-day-"][aria-disabled="true"]').first()).toBeVisible();
-  await page.getByTestId("date-picker-close").click();
-  await page.getByTestId("owner-continue").click();
-  await expect(page.getByTestId("step-label")).toHaveText("Step 5 of 7 · Time");
-});
-```
+and bump the following labels (Time → 5, Review → 6 of 7; "a time taken meanwhile returns to the time step" → "Step 5 of 7 · Time"; the back-navigation test: customer → service → professional → "Step 4 of 7 · Date", back → "Step 3 of 7 · Professional"). Replace `s1` with the service id the file's mock really uses (`rtk grep -n "service_id\|id: \"s" tests/e2e/owner-appointment-form.web.spec.ts`). The date step assertions stay as they are (`month-calendar` visible, `owner-continue`).
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
@@ -1148,7 +1114,7 @@ Expected: PASS.
 ```bash
 npm run typecheck && ./node_modules/.bin/eslint app src tests scripts
 git add -A app src tests
-git commit -m "feat(owner): booking form picks service, then professional, with a DateField" -m "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
+git commit -m "feat(owner): booking form picks service, then professional" -m "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 ```
 
 ---
@@ -1165,6 +1131,6 @@ npx jest --runInBand
 
 Expected: both exits 0 (read the real output), Jest green. Fix, commit, then **re-run all three after the last commit**.
 
-- [ ] **Step 2: Browser verification** (system Chrome, `.env.local` moved aside, mobile width 390x844, screenshots outside the repo and viewed): owner Agenda in day, week and month view (arrows step a day / week / month; computed text of the date button changes accordingly; the pop-up opens on tap and closes with X, tap outside and a day pick; a past day is selectable); closed dates (list with remove buttons, Add closed date → calendar with past days dimmed → confirmation text with the formatted date → list updates); the booking form (service list without professional names, professional list limited to the service, date step with disabled previous arrow and dimmed past days in the pop-up). Computed-style checks: the selected day cell background equals the ink token (`getComputedStyle(...).backgroundColor` = `rgb(...)` of `--c-ink`), the pop-up card background equals `--c-surface`, the pop-up is centred (`getBoundingClientRect` centre within 2px of the viewport centre). Run the touched specs: `npx playwright test tests/e2e/owner-agenda.web.spec.ts tests/e2e/owner-shop.web.spec.ts tests/e2e/owner-appointment-form.web.spec.ts tests/e2e/swipe.web.spec.ts tests/e2e/professional-booking.web.spec.ts --config playwright.chrome.config.ts` (the last two prove the inline `MonthCalendar` flows are unaffected).
+- [ ] **Step 2: Browser verification** (system Chrome, `.env.local` moved aside, mobile width 390x844, screenshots outside the repo and viewed): owner Agenda in day, week and month view (arrows step a day / week / month; computed text of the date button changes accordingly; the pop-up opens on tap and closes with X, tap outside and a day pick; a past day is selectable); closed dates (list with remove buttons, Add closed date → calendar with past days dimmed → confirmation text with the formatted date → list updates); the booking form (service list without professional names, professional list limited to the service, date step unchanged). Computed-style checks: the selected day cell background equals the ink token (`getComputedStyle(...).backgroundColor` = `rgb(...)` of `--c-ink`), the pop-up card background equals `--c-surface`, the pop-up is centred (`getBoundingClientRect` centre within 2px of the viewport centre). Run the touched specs: `npx playwright test tests/e2e/owner-agenda.web.spec.ts tests/e2e/owner-shop.web.spec.ts tests/e2e/owner-appointment-form.web.spec.ts tests/e2e/swipe.web.spec.ts tests/e2e/professional-booking.web.spec.ts --config playwright.chrome.config.ts` (the last two prove the inline `MonthCalendar` flows are unaffected).
 
 - [ ] **Step 3: Hand off** — push, open the PR, bind with `get_status`/`bind_pr`, turn on Auto-fix, never auto-merge (only when ordered; this plan itself does not push).

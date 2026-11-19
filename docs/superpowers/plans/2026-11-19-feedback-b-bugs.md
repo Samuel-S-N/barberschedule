@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. Every bug task starts with the **systematic-debugging** skill: reproduce, find the root cause, write the failing regression test, only then fix.
 
-**Goal:** Fix the three bugs found in the 18/11 test round: the owner "new appointment" form reopens on the step where it was left; the Opening hours screen showed mixed colours and the web app seemed to freeze after changing and resetting the shop colours; tapping an "awaiting confirmation" notification does not open the appointment.
+**Goal:** Fix the three bugs found in the 18/11 test round: the owner "new appointment" form reopens on the step where it was left; the Opening hours screen showed mixed colours and the web app seemed to freeze after changing and resetting the shop colours; tapping an "awaiting confirmation" notification does not open the appointment, and the owner cannot confirm appointments at all (decided with the user on 2026-11-19: the owner must be able to confirm, so this PR adds that).
 
-**Architecture:** Three independent fixes, each with a regression test written first. (1) The form lives in an Expo Router `Tabs` screen that stays mounted when the user leaves, so its `useState` survives; the form resets itself when the screen loses focus. (2) The "mixed colours" are not a theme bug at all (root cause already found, below): react-native-web paints a switch's *on* knob from `activeThumbColor`, which two of our three switches never set. A shared `Toggle` fixes all three. The reported *freeze* could not be reproduced in the browser with mocked REST; the plan lists the investigation steps and what each outcome means. (3) The inbox row carries `appointmentId` and `params.startsAt`, but `inboxRoute` ignores them; staff rows now open the agenda on that day with that appointment's pop-up open.
+**Architecture:** Three independent fixes, each with a regression test written first. (1) The form lives in an Expo Router `Tabs` screen that stays mounted when the user leaves, so its `useState` survives; the form resets itself when the screen loses focus. (2) The "mixed colours" are not a theme bug at all (root cause already found, below): react-native-web paints a switch's *on* knob from `activeThumbColor`, which two of our three switches never set. A shared `Toggle` fixes all three. The reported *freeze* could not be reproduced in the browser with mocked REST; the plan lists the investigation steps and what each outcome means. (3) The owner could not confirm an appointment (only the professional can, `set_owner_appointment_status` only accepts `completed` / `no_show`); a one-function migration lets the owner confirm a `scheduled` appointment, mirroring the professional rule, and the owner agenda shows the Confirm button. (4) The inbox row carries `appointmentId` and `params.startsAt`, but `inboxRoute` ignores them; staff rows now open the agenda on that day with that appointment's pop-up open.
 
 **Tech Stack:** Expo SDK 58 / React Native 0.88 / react-native-web, Expo Router (`Tabs`, `useFocusEffect`, `useLocalSearchParams`), TanStack Query, react-i18next, Jest (jest-expo, RNTL 14 async `render`), Playwright (system Chrome).
 
@@ -26,25 +26,27 @@ Method: code reading plus a scratch Playwright spec on the production-style stat
 
 ## Open questions for the orchestrator
 
-1. **Who can confirm an appointment? (affects the "awaiting confirmation" target for owners.)** Only the professional can: `ProfessionalAgenda` renders `quickActions({ canConfirm: true })`; the owner agenda renders `canConfirm: false` and has no confirm RPC (`setOwnerAppointmentStatus` only does `completed` / `no_show`). Yet the *owner* also receives `appointment_awaiting_confirmation` (`supabase/migrations/0046_notifications_inbox.sql`, staff kinds go to the professional and the owner). **Plan does:** professional → `/my-agenda?date=…&open=<id>` (pop-up open, the card on that day has the Confirm button); owner → `/agenda?date=…&open=<id>` (pop-up open: details, move, cancel). If the owner is meant to confirm too, that is a new feature (RPC + button) for a later PR.
+1. **DECIDED (user, 2026-11-19): the owner must be able to confirm appointments.** Today only the professional can (`ProfessionalAgenda` uses `quickActions({ canConfirm: true })`; the owner agenda uses `canConfirm: false` and `set_owner_appointment_status` only accepts `completed` / `no_show`), yet the owner also receives `appointment_awaiting_confirmation` (`0046_notifications_inbox.sql`). **Plan does:** Task 4 (migration `0074`, API type, owner agenda button), and Task 5 sends the owner to `/agenda?date=…&open=<id>`, where the card has Confirm. Confirming notifies the customer through the existing `appointments_inbox_events` trigger (`scheduled → confirmed` UPDATE), no extra code.
 2. **The freeze.** If Task 3 cannot reproduce it either, we need the exact steps the user took (which button: Reset or a swatch? which screen was open? did the whole tab become unclickable, or the page blank?) and a screenshot or the browser console. The plan ships the switch fix either way and keeps the freeze task open.
-3. **Web push taps** (the browser notification, not the inbox) open the role's agenda root, same as the inbox did. Fixing them needs the appointment's shop-local date in the push URL (`supabase/functions/_shared/notification-path.ts` has the role only), which means passing `starts_at` through `dispatch.ts`. The spec says "inbox" and "check the other types"; **plan does** the inbox (Task 4) and leaves web push as the follow-up below.
+3. **DECIDED (user): web push taps are a follow-up, not in this PR.** Web push taps (the browser notification, not the inbox) open the role's agenda root, same as the inbox did. Fixing them needs the appointment's shop-local date in the push URL (`supabase/functions/_shared/notification-path.ts` has the role only), which means passing `starts_at` through `dispatch.ts`. The spec says "inbox" and "check the other types"; **plan does** the inbox (Task 5) and leaves web push as the follow-up below.
 4. **Customer taps** open `/appointments` (the list), which already shows the customer's appointments; no deep link is added for customers.
 
 ## Global Constraints
 
 - Owner booking form: "always starts at step 1 with empty state when opened anew". Root cause first, regression test written failing first.
 - Theme: reproduce in the browser, find the cause, fix, regression test. (Mixed colours: root cause is the web switch knob; freeze: Task 3.)
-- Notification tap on "awaiting confirmation" must open that appointment (the screen the professional uses to confirm). Check the other notification types' targets while there (done in the table in Task 4).
+- Notification tap on "awaiting confirmation" must open that appointment (the screen where the professional or owner confirms). Check the other notification types' targets while there (done in the table in Task 5).
+- The owner can confirm a `scheduled` appointment (new, user decision): same transition rule as the professional (`scheduled → confirmed`), only for the owner of that shop.
 - Project conventions: texts pt/es/en with parity; colours by tokens (`colors.white`, `colors.primary[400]`, never a literal except tokens' data); `className` only on plain RN elements; new routes need `parents.ts` (none here); tests in `tests/unit/*.test.ts` using `React.createElement` and async `render`; Playwright uses the system Chrome with `.env.local` moved aside (see `reference_local_dev_gotchas`).
-- **Gate per task:** `npm run typecheck`, `./node_modules/.bin/eslint app src tests scripts`, the Jest files named. **Final gate (Task 5):** `npm run typecheck`, ROOT `npm run lint` (read the real output and exit code, never `| tail`), whole Jest suite, **re-run after the last commit**, browser screenshots of changed screens.
+- **Gate per task:** `npm run typecheck`, `./node_modules/.bin/eslint app src tests scripts`, the Jest files named. **Final gate (Task 6):** `npm run typecheck`, ROOT `npm run lint` (read the real output and exit code, never `| tail`), whole Jest suite, **re-run after the last commit**, browser screenshots of changed screens.
 
 ## Order between the four plans
 
+- Migration numbers: B takes **0074** and pgTAP **056**; D then uses **0075** / **057** (merge order B before D; re-check with `ls supabase/migrations | tail -3` when starting).
 - B first of the code PRs after A (or in parallel with A: no shared files except `app/(owner)/settings.tsx` Switch, which A does not touch).
 - **C** replaces the form's `localDate` text step and splits service/professional; it must rebase on B's `useFocusEffect` reset (Task 1) and extend `reset()` with C's new state (`selectedServiceId`). C's plan says so.
 - **D** edits `app/(owner)/appearance.tsx`; B does not touch it (Task 3 touches it only if the investigation finds the cause there).
-- B's Task 4 changes `app/(owner)/agenda.tsx` (new params effect). A's Task 6 and C's Task 5 also edit that file; each is a small, separate hunk.
+- B's Tasks 4 and 5 change `app/(owner)/agenda.tsx` (new params effect). A's Task 6 and C's Task 5 also edit that file; each is a small, separate hunk.
 
 ## File structure
 
@@ -53,11 +55,13 @@ Method: code reading plus a scratch Playwright spec on the production-style stat
 | `app/(owner)/appointment-form.tsx` (modify) | reset all form state when the screen loses focus |
 | `src/components/ui/Toggle.tsx` (new) | the app's switch: theme tokens + web `activeThumbColor` |
 | `app/(owner)/shop.tsx`, `app/(owner)/settings.tsx`, `app/(professional)/my-profile/services.tsx` (modify) | use `Toggle` |
+| `supabase/migrations/0074_owner_confirm_appointment.sql`, `supabase/tests/056_owner_confirm_appointment.sql` (new) | `set_owner_appointment_status` also accepts `confirmed` for a `scheduled` appointment |
+| `src/features/appointments/owner-api.ts` (modify) | `OwnerAppointmentStatus` gains `"confirmed"` |
 | `src/features/notifications/inbox-route.ts` (modify) | `inboxRoute(kind, role, target?)` with date + appointment id for staff |
 | `src/features/notifications/NotificationsScreen.tsx` (modify) | pass the target |
 | `src/features/appointments/agenda-target.ts` (new) | `parseAgendaTarget(params)` validation shared by both agendas |
 | `app/(owner)/agenda.tsx`, `src/features/appointments/ProfessionalAgenda.tsx` (modify) | apply `date` / `open` params once |
-| `tests/unit/owner-appointment-form-reset.test.ts`, `toggle.test.ts`, `inbox.test.ts`, `agenda-target.test.ts` | regression tests |
+| `tests/unit/owner-appointment-form-reset.test.ts`, `owner-confirm.test.ts`, `toggle.test.ts`, `inbox.test.ts`, `agenda-target.test.ts` | regression tests |
 | `tests/e2e/owner-appointment-form.web.spec.ts`, `owner-agenda.web.spec.ts`, `owner-shop.web.spec.ts`, `notifications.web.spec.ts` | browser regression |
 
 ---
@@ -348,7 +352,195 @@ Start the local stack (`running-barberschedule-locally`: Supabase, seeded owner,
 
 ---
 
-### Task 4: B3 — the inbox opens the appointment (and the other notification targets)
+### Task 4: the owner can confirm an appointment
+
+**Files:**
+- Create: `supabase/migrations/0074_owner_confirm_appointment.sql`, `supabase/tests/056_owner_confirm_appointment.sql`
+- Modify: `src/features/appointments/owner-api.ts`, `app/(owner)/agenda.tsx`
+- Test: new `tests/unit/owner-confirm.test.ts`; extend `tests/e2e/owner-agenda.web.spec.ts`
+
+**Interfaces:**
+- SQL: `public.set_owner_appointment_status(appointment_id uuid, new_status public.appointment_status) returns setof public.appointments` keeps its signature; it now also allows `new_status = 'confirmed'` when the current status is `scheduled` (and still `completed` / `no_show` from `scheduled` / `confirmed`). Anything else: `P0013 APPOINTMENT_STATUS_INVALID`; not the shop's owner: `P0010 APPOINTMENT_FORBIDDEN`.
+- TS: `export type OwnerAppointmentStatus = "completed" | "confirmed" | "no_show";` `setOwnerAppointmentStatus(supabase, appointmentId, status)` unchanged otherwise.
+
+- [ ] **Step 1: Write the failing tests**
+
+`supabase/tests/056_owner_confirm_appointment.sql` (fixture copied from `007_owner_booking.sql` with its own ids; owner books for a customer, the appointment starts `scheduled`):
+
+```sql
+begin;
+
+create extension if not exists pgtap with schema extensions;
+
+select plan(6);
+
+insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at)
+values
+  ('00000000-0000-0000-0000-000000000000', 'a6000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 't56c-owner@example.com', 'x', now()),
+  ('00000000-0000-0000-0000-000000000000', 'a6000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 't56c-customer@example.com', 'x', now()),
+  ('00000000-0000-0000-0000-000000000000', 'a6000000-0000-0000-0000-000000000003', 'authenticated', 'authenticated', 't56c-other-owner@example.com', 'x', now());
+
+update public.profiles set role = 'owner' where user_id in ('a6000000-0000-0000-0000-000000000001', 'a6000000-0000-0000-0000-000000000003');
+
+insert into public.shops (id, name, owner_user_id)
+values
+  ('a6100000-0000-0000-0000-000000000001', 'T56 Shop', 'a6000000-0000-0000-0000-000000000001'),
+  ('a6100000-0000-0000-0000-000000000002', 'T56 Other Shop', 'a6000000-0000-0000-0000-000000000003');
+
+insert into public.professionals (id, shop_id, name)
+values ('a6200000-0000-0000-0000-000000000001', 'a6100000-0000-0000-0000-000000000001', 'T56 Professional');
+
+insert into public.customers (id, shop_id, user_id, full_name, email)
+values ('a6300000-0000-0000-0000-000000000001', 'a6100000-0000-0000-0000-000000000001', 'a6000000-0000-0000-0000-000000000002', 'T56 Customer', 't56c-customer@example.com');
+
+insert into public.services (id, shop_id, name, duration_minutes, price_cents)
+values ('a6400000-0000-0000-0000-000000000001', 'a6100000-0000-0000-0000-000000000001', 'T56 Cut', 30, 4000);
+
+insert into public.professional_services (id, shop_id, professional_id, service_id)
+values ('a6500000-0000-0000-0000-000000000001', 'a6100000-0000-0000-0000-000000000001', 'a6200000-0000-0000-0000-000000000001', 'a6400000-0000-0000-0000-000000000001');
+
+insert into public.working_periods (shop_id, professional_id, weekday, start_time, end_time)
+select 'a6100000-0000-0000-0000-000000000001', 'a6200000-0000-0000-0000-000000000001', weekday, '00:00', '23:59' from generate_series(1, 7) as weekday;
+
+select set_config('t56.start', ((date_trunc('day', now() at time zone 'America/Sao_Paulo') + interval '1 day 10 hours') at time zone 'America/Sao_Paulo')::text, false);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', 'a6000000-0000-0000-0000-000000000001', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select set_config('t56.appointment', (select id::text from public.book_appointment('a6500000-0000-0000-0000-000000000001', 'a6300000-0000-0000-0000-000000000001', current_setting('t56.start')::timestamptz, 'owner', 'T56')), false);
+
+select is((select status::text from public.appointments where id = current_setting('t56.appointment')::uuid), 'scheduled', 'an owner-booked appointment starts scheduled');
+select lives_ok($$ select * from public.set_owner_appointment_status(current_setting('t56.appointment')::uuid, 'confirmed') $$, 'the owner confirms a scheduled appointment');
+select is((select status::text from public.appointments where id = current_setting('t56.appointment')::uuid), 'confirmed', 'and it is confirmed');
+select throws_ok($$ select * from public.set_owner_appointment_status(current_setting('t56.appointment')::uuid, 'confirmed') $$, 'P0013', null, 'a confirmed appointment cannot be confirmed again');
+select lives_ok($$ select * from public.set_owner_appointment_status(current_setting('t56.appointment')::uuid, 'completed') $$, 'a confirmed appointment can still be completed');
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', 'a6000000-0000-0000-0000-000000000003', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select throws_ok($$ select * from public.set_owner_appointment_status(current_setting('t56.appointment')::uuid, 'confirmed') $$, 'P0010', null, 'another shop''s owner cannot confirm it');
+
+select * from finish();
+rollback;
+```
+
+(If `book_appointment` returns a different shape than `setof appointments` with an `id` column, copy the way `007_owner_booking.sql` captures the first appointment id into a `set_config`. The `a6…` ids must not collide with other pgTAP files: `rtk grep -rn "a6000000" supabase/tests`.)
+
+`tests/unit/owner-confirm.test.ts`:
+
+```ts
+import { setOwnerAppointmentStatus } from "../../src/features/appointments/owner-api";
+
+describe("setOwnerAppointmentStatus", () => {
+  it("can confirm a scheduled appointment", async () => {
+    const row = { id: "a1", status: "confirmed" };
+    const rpc = jest.fn().mockResolvedValue({ data: [row], error: null });
+
+    await setOwnerAppointmentStatus({ rpc } as never, "a1", "confirmed");
+
+    expect(rpc).toHaveBeenCalledWith("set_owner_appointment_status", { appointment_id: "a1", new_status: "confirmed" });
+  });
+});
+```
+
+(Its mock row may need the snake_case columns `toAppointment` reads; copy a complete row from `tests/unit/owner-agenda-query.test.ts`.)
+
+E2E, in `tests/e2e/owner-agenda.web.spec.ts` (extend `mockOwnerRest` so `set_owner_appointment_status` records `calls.status`, which it already does):
+
+```ts
+test("the owner confirms a scheduled appointment from its card", async ({ page }) => {
+  const state = { calls: {} as Record<string, unknown>, rows: [agendaRow()] };
+
+  await signInAsOwner(page);
+  await mockOwnerRest(page, state);
+
+  await page.goto("/agenda");
+  await page.getByTestId("owner-confirm-appt-1").click();
+
+  await expect.poll(() => state.calls.status).toEqual({ appointment_id: "appt-1", new_status: "confirmed" });
+});
+```
+
+- [ ] **Step 2: Run them to verify they fail**
+
+Run: `npx jest tests/unit/owner-confirm.test.ts` (fails only on the TypeScript type: `"confirmed"` not assignable; `npm run typecheck` shows it) and `npx supabase db reset && npx supabase test db` (056 fails: `P0013` on the first confirm).
+
+- [ ] **Step 3: Implement**
+
+`supabase/migrations/0074_owner_confirm_appointment.sql` — the 0015 function with the new rule (everything else identical):
+
+```sql
+-- The owner can confirm a scheduled appointment like the professional can (0029): scheduled -> confirmed. The scheduled -> confirmed
+-- UPDATE already tells the customer (appointments_inbox_events, 0046).
+create or replace function public.set_owner_appointment_status(
+  appointment_id uuid,
+  new_status public.appointment_status
+)
+returns setof public.appointments
+language plpgsql
+security definer
+set search_path = pg_catalog, public, pg_temp
+as $$
+declare
+  target public.appointments%rowtype;
+begin
+  if auth.uid() is null then
+    raise exception using errcode = 'P0010', message = 'APPOINTMENT_FORBIDDEN';
+  end if;
+
+  select *
+  into target
+  from public.appointments
+  where id = appointment_id
+  for update;
+
+  if not found then
+    raise exception using errcode = 'P0012', message = 'APPOINTMENT_NOT_FOUND';
+  end if;
+
+  if not public.is_shop_owner(target.shop_id) then
+    raise exception using errcode = 'P0010', message = 'APPOINTMENT_FORBIDDEN';
+  end if;
+
+  if not (
+    (new_status in ('completed', 'no_show') and target.status in ('scheduled', 'confirmed'))
+    or (new_status = 'confirmed' and target.status = 'scheduled')
+  ) then
+    raise exception using errcode = 'P0013', message = 'APPOINTMENT_STATUS_INVALID';
+  end if;
+
+  return query
+  update public.appointments
+  set status = new_status, updated_at = clock_timestamp()
+  where id = target.id
+  returning *;
+end;
+$$;
+```
+
+(Before writing it, `rtk grep -rn "set_owner_appointment_status" supabase/migrations` and copy grants/revokes from the latest definition if a later migration re-granted it; `create or replace` keeps existing grants.)
+
+`owner-api.ts`: `export type OwnerAppointmentStatus = "completed" | "confirmed" | "no_show";`
+
+`app/(owner)/agenda.tsx`: the mutation input becomes `{ id: string; status: "completed" | "confirmed" | "no_show" | "cancelled" }` (the `cancelled` branch is unchanged); `quickActions({ canConfirm: true, endsAt: appointment.endsAt, now: new Date(), status: appointment.status })`; `onConfirm={() => update.mutate({ id: appointment.id, status: "confirmed" })}` (replacing `() => undefined`).
+
+- [ ] **Step 4: Run the tests to verify they pass**
+
+Run: `npx jest tests/unit/owner-confirm.test.ts tests/unit/agenda-actions.test.ts tests/unit/owner-agenda-query.test.ts`, `npx supabase db reset && npx supabase test db`, then `npx playwright test tests/e2e/owner-agenda.web.spec.ts --config playwright.chrome.config.ts`.
+Expected: PASS (all pgTAP files green).
+
+- [ ] **Step 5: Gate and commit**
+
+```bash
+npm run typecheck && ./node_modules/.bin/eslint app src tests scripts
+git add -A app src tests supabase
+git commit -m "feat(owner): owners can confirm scheduled appointments" -m "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
+```
+
+---
+
+### Task 5: B3 — the inbox opens the appointment (and the other notification targets)
 
 **Files:**
 - Create: `src/features/appointments/agenda-target.ts`
@@ -365,7 +557,7 @@ Target table (what each inbox kind opens after this task):
 
 | Kind | customer | professional | owner |
 |---|---|---|---|
-| `appointment_awaiting_confirmation`, `appointment_booked`, `appointment_cancelled`, `appointment_rescheduled` | `/appointments` (unchanged) | `/my-agenda?date=D&open=ID` | `/agenda?date=D&open=ID` |
+| `appointment_awaiting_confirmation`, `appointment_booked`, `appointment_cancelled`, `appointment_rescheduled` | `/appointments` (unchanged) | `/my-agenda?date=D&open=ID` (Confirm on the card) | `/agenda?date=D&open=ID` (Confirm on the card, after Task 4) |
 | `appointment_confirmed` (customer only) | `/appointments` | n/a | n/a |
 | `recurrence_*` | `/me/recurrence` | `/my-profile/recurrence` | `/monthly-customers` (unchanged) |
 | `payout_*` | `/appointments` | `/my-profile/compensation` | `/payouts` (unchanged) |
@@ -470,7 +662,7 @@ const AGENDA: Record<Role, string> = { professional: "/my-agenda", customer: "/a
 const REQUESTS: Record<Role, string> = { professional: "/my-profile/recurrence", customer: "/me/recurrence", owner: "/monthly-customers" };
 const PAYOUTS: Record<Role, string> = { professional: "/my-profile/compensation", customer: "/appointments", owner: "/payouts" };
 
-// Staff land on the appointment's day with its pop-up open (the professional's card there has the Confirm button); everyone else
+// Staff land on the appointment's day with its pop-up open (the card there has the Confirm button, for the professional and, after Task 4, the owner); everyone else
 // on their agenda root.
 export function inboxRoute(kind: InboxKind, role: Role, target?: Target) {
   if (kind.startsWith("payout_")) return PAYOUTS[role];
@@ -522,7 +714,7 @@ git commit -m "fix(notifications): inbox opens the appointment on its day" -m "C
 
 ---
 
-### Task 5: Final gate, browser checks, PR handoff
+### Task 6: Final gate, browser checks, PR handoff
 
 - [ ] **Step 1: Whole-suite gates**
 
