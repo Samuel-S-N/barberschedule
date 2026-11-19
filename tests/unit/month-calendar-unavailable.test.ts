@@ -42,7 +42,9 @@ describe("MonthCalendar unavailable days", () => {
     expect(day.props.accessibilityState).toMatchObject({ disabled: true });
     expect(day.props.disabled).toBeFalsy();
     expect(day.props.className).toContain("opacity-40");
+    expect(day.props.accessibilityLabel).toContain("Unavailable on this date");
     expect(view.getByTestId("month-calendar-day-2026-09-29").props.className).not.toContain("opacity-40");
+    expect(view.getByTestId("month-calendar-day-2026-09-29").props.accessibilityLabel).not.toContain("Unavailable");
   });
 
   it("days outside the booking window stay natively disabled (not part of the unavailable list)", async () => {

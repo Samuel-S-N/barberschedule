@@ -41,6 +41,7 @@ type MonthGridProps = Pick<MonthCalendarProps, "onSelectDate" | "selectedDate" |
 };
 
 function MonthGrid({ active, language, maxDaysAhead, month, onSelectDate, onUnavailable, selectedDate, today, unavailable }: MonthGridProps) {
+  const { t } = useTranslation();
   const grid = buildMonthGrid(month, language);
 
   return (
@@ -64,7 +65,8 @@ function MonthGrid({ active, language, maxDaysAhead, month, onSelectDate, onUnav
 
             return (
               <Pressable
-                accessibilityLabel={formatDateLabel(date, language)}
+                // The label says why a dimmed day is not selectable (react-native-web has no aria-disabled for a still-pressable button).
+                accessibilityLabel={dimmed ? `${formatDateLabel(date, language)}, ${t("book.dateUnavailable")}` : formatDateLabel(date, language)}
                 accessibilityRole="button"
                 accessibilityState={{ disabled: !bookable || dimmed, selected }}
                 className={`m-0.5 aspect-square flex-1 items-center justify-center rounded-2xl ${selected ? "bg-ink" : "bg-transparent"} ${dimmed ? "opacity-40" : ""}`}
