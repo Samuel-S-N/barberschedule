@@ -28,6 +28,7 @@ jest.mock("../../src/features/shops/CurrentShopProvider", () => ({
 jest.mock("../../src/features/shops/ShopGate", () => ({
   ShopGate: ({ children }: { children: unknown }) => children,
 }));
+jest.mock("../../src/features/notifications/NotificationsPromptGate", () => ({ NotificationsPromptGate: () => null }));
 jest.mock("../../src/features/shops/ShopThemeProvider", () => ({
   ShopThemeProvider: ({ children }: { children: unknown }) => children,
 }));

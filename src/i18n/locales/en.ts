@@ -27,6 +27,7 @@ export const en = {
   },
   dateField: { choose: "Choose date", close: "Close", nextDay: "Next day", nextMonth: "Next month", nextWeek: "Next week", previousDay: "Previous day", previousMonth: "Previous month", previousWeek: "Previous week" },
   colorWheel: { close: "Close", done: "Done" },
+  notificationsPrompt: { body: "Get booking requests, confirmations and changes as soon as they happen.", close: "Close", enable: "Turn on", installBody: "On iPhone, notifications work once Zenc is on your Home Screen.", installButton: "How to install", later: "Not now", title: "Turn on notifications?" },
   agendaCard: { professional: "Professional", close: "Close", customer: "Customer", notes: "Notes" },
   common: {
     activate: "Activate",
