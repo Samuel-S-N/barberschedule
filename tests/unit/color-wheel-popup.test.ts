@@ -50,4 +50,51 @@ describe("ColorWheelPopup", () => {
 
     expect(base.onClose).toHaveBeenCalledTimes(3);
   });
+
+  const ancestors = (node: { parent: unknown }) => {
+    const found: Array<{ props?: Record<string, unknown> }> = [];
+    let current = node as { parent: { props?: Record<string, unknown>; parent: unknown } | null };
+
+    while (current.parent) {
+      found.push(current.parent);
+      current = current.parent as typeof current;
+    }
+
+    return found;
+  };
+
+  it("the backdrop is a SIBLING behind the card, not an ancestor of the wheel (no touchable around the gesture)", async () => {
+    const view = await render(React.createElement(ColorWheelPopup, base));
+
+    expect(ancestors(view.getByTestId("wheel-stub")).some((node) => node.props?.testID === "color-wheel-backdrop")).toBe(false);
+    expect(ancestors(view.getByTestId("color-wheel-popup")).some((node) => node.props?.testID === "color-wheel-backdrop")).toBe(false);
+  });
+
+  it("no touch handler wraps the wheel: the card is a plain view", async () => {
+    const view = await render(React.createElement(ColorWheelPopup, base));
+    // The stub itself is a Pressable; only what is ABOVE the wheel counts (host views get responder handlers from a Pressable).
+    const touchable = (node: { props?: Record<string, unknown> }) =>
+      ["onPress", "onClick", "onStartShouldSetResponder", "onResponderGrant"].some((name) => typeof node.props?.[name] === "function");
+
+    expect(ancestors(view.getByTestId("wheel-stub")).filter(touchable)).toEqual([]);
+    expect(touchable(view.getByTestId("color-wheel-popup"))).toBe(false);
+  });
+
+  it("gives the wheel its colour once, when the pop-up opens (later prop changes do not re-feed it)", async () => {
+    const view = await render(React.createElement(ColorWheelPopup, base));
+
+    expect(view.getByText("#DB9A34")).toBeTruthy();
+    await view.rerender(React.createElement(ColorWheelPopup, { ...base, value: "#2F6FDB" }));
+
+    expect(view.getByText("#DB9A34")).toBeTruthy();
+    expect(view.queryByText("#2F6FDB")).toBeNull();
+  });
+
+  it("starts from the new colour the next time it opens", async () => {
+    const view = await render(React.createElement(ColorWheelPopup, { ...base, visible: false }));
+
+    await view.rerender(React.createElement(ColorWheelPopup, { ...base, value: "#2F6FDB" }));
+
+    expect(view.getByText("#2F6FDB")).toBeTruthy();
+  });
 });

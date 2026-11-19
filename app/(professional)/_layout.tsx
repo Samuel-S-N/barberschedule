@@ -60,9 +60,9 @@ export default function ProfessionalLayout() {
     <Tabs
       backBehavior="history"
       screenOptions={{ headerShown: false }}
-      tabBar={({ navigateToTab, state }) => (
+      tabBar={({ emitter, navigateToTab, state }) => (
         <Screen className="bg-surface" edges={["bottom", "left", "right"]}>
-          <BottomTabBar activeKey={state.routes[state.index].name} items={items} onSelect={(key) => selectTab(state, navigateToTab, key)} />
+          <BottomTabBar activeKey={state.routes[state.index].name} items={items} onSelect={(key) => selectTab({ emitter, navigateToTab, state }, key)} />
         </Screen>
       )}
     >
