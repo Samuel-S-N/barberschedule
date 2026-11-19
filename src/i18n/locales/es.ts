@@ -573,6 +573,7 @@ export const es: DeepStringRecord<typeof en> = {
       viewWeek: "Semana",
     },
     appointmentForm: {
+      professionalTitle: "Elija al profesional",
       searchCustomer: "Buscar clientes",
       backToAgenda: "Volver a la agenda",
       create: "Crear cita",
@@ -583,7 +584,7 @@ export const es: DeepStringRecord<typeof en> = {
       dateTitle: "Elige la fecha",
       reviewTitle: "Revisa la cita",
       serviceTitle: "Elige el servicio",
-      steps: { confirm: "Confirmar", customer: "Cliente", date: "Fecha", review: "Revisión", service: "Servicio", time: "Hora" },
+      steps: { professional: "Profesional", confirm: "Confirmar", customer: "Cliente", date: "Fecha", review: "Revisión", service: "Servicio", time: "Hora" },
       timeTitle: "Elige la hora",
     },
     professionals: {

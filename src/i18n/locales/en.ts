@@ -574,6 +574,7 @@ export const en = {
       viewWeek: "Week",
     },
     appointmentForm: {
+      professionalTitle: "Choose the professional",
       searchCustomer: "Search customers",
       backToAgenda: "Back to agenda",
       create: "Create appointment",
@@ -584,7 +585,7 @@ export const en = {
       dateTitle: "Choose the date",
       reviewTitle: "Review the appointment",
       serviceTitle: "Choose the service",
-      steps: { confirm: "Confirm", customer: "Customer", date: "Date", review: "Review", service: "Service", time: "Time" },
+      steps: { professional: "Professional", confirm: "Confirm", customer: "Customer", date: "Date", review: "Review", service: "Service", time: "Time" },
       timeTitle: "Choose the time",
     },
     professionals: {
