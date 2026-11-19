@@ -166,6 +166,7 @@ export const en = {
     noTimes: "No times available this day",
   },
   book: {
+    dateUnavailable: "Unavailable on this date",
     summary: { professional: "Professional", date: "Date", duration: "Duration", price: "Price", service: "Service", time: "Time" },
     professionalTitle: "Choose your professional",
     professionalsError: "Unable to load professionals.",

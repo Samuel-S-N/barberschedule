@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 
 import { EmptyState } from "../../components/domain/EmptyState";
-import { MonthCalendar } from "../../components/domain/MonthCalendar";
 import { SkeletonBlock } from "../../components/domain/SkeletonLoader";
 import { TimeSlotPicker } from "../../components/domain/TimeSlotPicker";
 import type { TimeSlot } from "../../components/domain/TimeSlotPicker";
@@ -12,21 +11,24 @@ import { Button } from "../../components/ui/Button";
 import { useLanguage } from "../../i18n/use-language";
 import { formatDateNumeric } from "../../lib/i18n/format";
 import { useSupabaseSession } from "../../providers/AppProviders";
+import { AvailabilityCalendar } from "./AvailabilityCalendar";
+import { useAvailabilitySelection } from "./use-availability-selection";
 import { getAvailableSlotsQueryOptions } from "./query";
 import type { AvailableSlot } from "./types";
 
 // The two steps every date-and-time scheduling flow shares (reschedule, move, conflict, owner booking):
 // pick the day on the month calendar, then one of that day's free times.
 
-export function DateStep({ children, localDate, onChange, onContinue, testID, today }: { children?: ReactNode; localDate: string; onChange: (date: string) => void; onContinue: () => void; testID: string; today: string }) {
+export function DateStep({ children, localDate, onChange, onContinue, professionalId, testID, today }: { children?: ReactNode; localDate: string; onChange: (date: string) => void; onContinue: () => void; professionalId?: string; testID: string; today: string }) {
   const { t } = useTranslation();
+  const selection = useAvailabilitySelection(professionalId, localDate, onChange);
 
   return (
     <>
       {children}
-      <MonthCalendar onSelectDate={onChange} selectedDate={localDate} today={today} />
+      <AvailabilityCalendar selection={selection} today={today} />
       <View className="w-full max-w-[420px]">
-        <Button label={t("book.continue")} onPress={onContinue} size="lg" testID={testID} />
+        <Button disabled={!selection.canContinue} label={t("book.continue")} onPress={onContinue} size="lg" testID={testID} />
       </View>
     </>
   );

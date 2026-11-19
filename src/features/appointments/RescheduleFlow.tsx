@@ -101,7 +101,7 @@ export function RescheduleFlow({ professionalId, professionalServiceId, current,
           />
 
           {step === "date" ? (
-            <DateStep localDate={localDate} onChange={(date) => { setLocalDate(date); setStartsAt(null); }} onContinue={() => go("time")} testID={`${testPrefix}-continue`} today={today}>
+            <DateStep localDate={localDate} onChange={(date) => { setLocalDate(date); setStartsAt(null); }} onContinue={() => go("time")} professionalId={professionalId} testID={`${testPrefix}-continue`} today={today}>
               {currentCard ? (
                 <View className="w-full max-w-[420px] gap-2">
                   <Text className="text-sm font-sans-medium text-neutral-600">{currentTitle ?? t("reschedule.current")}</Text>

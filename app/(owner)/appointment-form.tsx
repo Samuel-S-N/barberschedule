@@ -207,7 +207,7 @@ export default function OwnerAppointmentFormScreen() {
             ) : null}
 
             {step === "date" ? (
-              <DateStep localDate={localDate} onChange={(date) => { setLocalDate(date); setSelectedStartsAt(null); }} onContinue={() => go("time")} testID="owner-continue" today={today} />
+              <DateStep localDate={localDate} onChange={(date) => { setLocalDate(date); setSelectedStartsAt(null); }} onContinue={() => go("time")} professionalId={choice?.professionalService.professionalId} testID="owner-continue" today={today} />
             ) : null}
 
             {step === "time" && choice ? (
