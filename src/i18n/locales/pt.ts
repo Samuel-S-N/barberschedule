@@ -24,6 +24,7 @@ export const pt: DeepStringRecord<typeof en> = {
     time: "09:00",
     weeks: "2",
   },
+  dateField: { choose: "Escolher data", close: "Fechar", nextDay: "Próximo dia", nextMonth: "Próximo mês", nextWeek: "Próxima semana", previousDay: "Dia anterior", previousMonth: "Mês anterior", previousWeek: "Semana anterior" },
   agendaCard: { professional: "Profissional", close: "Fechar", customer: "Cliente", notes: "Observações" },
   common: {
     activate: "Ativar",

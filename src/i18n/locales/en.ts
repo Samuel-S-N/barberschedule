@@ -25,6 +25,7 @@ export const en = {
     time: "09:00",
     weeks: "2",
   },
+  dateField: { choose: "Choose date", close: "Close", nextDay: "Next day", nextMonth: "Next month", nextWeek: "Next week", previousDay: "Previous day", previousMonth: "Previous month", previousWeek: "Previous week" },
   agendaCard: { professional: "Professional", close: "Close", customer: "Customer", notes: "Notes" },
   common: {
     activate: "Activate",
