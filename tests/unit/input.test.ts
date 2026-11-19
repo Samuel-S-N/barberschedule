@@ -2,6 +2,7 @@ import React from "react";
 import { fireEvent, render } from "@testing-library/react-native";
 
 import { Input, useFieldChain } from "../../src/components/ui/Input";
+import i18n from "../../src/i18n";
 
 describe("Input", () => {
   it("renders the label and current value", async () => {
@@ -108,4 +109,32 @@ describe("Input", () => {
     expect(focus).toHaveBeenCalled();
   });
 
+});
+
+describe("Input password toggle", () => {
+  beforeAll(async () => i18n.changeLanguage("en"));
+
+  it("hides the text by default and reveals it on the eye", async () => {
+    const view = await render(React.createElement(Input, { label: "Password", onChangeText: jest.fn(), secureTextEntry: true, testID: "pw", value: "secret" }));
+
+    expect(view.getByTestId("pw").props.secureTextEntry).toBe(true);
+    await fireEvent.press(view.getByTestId("pw-toggle"));
+    expect(view.getByTestId("pw").props.secureTextEntry).toBe(false);
+    await fireEvent.press(view.getByTestId("pw-toggle"));
+    expect(view.getByTestId("pw").props.secureTextEntry).toBe(true);
+  });
+
+  it("labels the eye for screen readers and flips the label", async () => {
+    const view = await render(React.createElement(Input, { label: "Password", onChangeText: jest.fn(), secureTextEntry: true, testID: "pw", value: "" }));
+
+    expect(view.getByLabelText("Show password")).toBeTruthy();
+    await fireEvent.press(view.getByTestId("pw-toggle"));
+    expect(view.getByLabelText("Hide password")).toBeTruthy();
+  });
+
+  it("has no eye on a normal field", async () => {
+    const view = await render(React.createElement(Input, { label: "Name", onChangeText: jest.fn(), testID: "name", value: "" }));
+
+    expect(view.queryByTestId("name-toggle")).toBeNull();
+  });
 });

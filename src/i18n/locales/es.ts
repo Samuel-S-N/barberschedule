@@ -45,6 +45,8 @@ export const es: DeepStringRecord<typeof en> = {
     remove: "Quitar",
     selectedOption: "{{option}} (seleccionado)",
     service: "Servicio",
+    showPassword: "Mostrar contraseña",
+    hidePassword: "Ocultar contraseña",
     signOut: "Cerrar sesión",
     startTime: "Hora inicial",
     email: "Correo electrónico",

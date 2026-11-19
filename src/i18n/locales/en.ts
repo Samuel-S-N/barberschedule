@@ -46,6 +46,8 @@ export const en = {
     remove: "Remove",
     selectedOption: "{{option}} (selected)",
     service: "Service",
+    showPassword: "Show password",
+    hidePassword: "Hide password",
     signOut: "Sign out",
     startTime: "Start time",
     email: "Email",
