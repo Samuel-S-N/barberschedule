@@ -12,7 +12,6 @@ import { listMyCustomers } from "../../../src/features/customers/api";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 import { useCurrentShop } from "../../../src/features/shops/CurrentShopProvider";
 import { InstallPrompt } from "../../../src/features/install/InstallPrompt";
-import { NotificationPrompt } from "../../../src/features/notifications/NotificationPrompt";
 
 export default function CustomerProfileScreen() {
   const router = useRouter();
@@ -57,8 +56,6 @@ export default function CustomerProfileScreen() {
                 { icon: Info, key: "about", label: t("profile.menu.about"), onPress: () => router.push("/me/about") },
               ]}
             />
-
-            <NotificationPrompt />
 
           </View>
         </View>

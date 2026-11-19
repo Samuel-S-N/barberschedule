@@ -34,3 +34,27 @@ describe("StatusBadge", () => {
     expect(view.getByTestId("badge").props.accessibilityLabel).toBe("No-show");
   });
 });
+
+describe("StatusBadge colours", () => {
+  it("scheduled follows the shop accent token (tint, dot and text), not the fixed warning colour", async () => {
+    const view = await render(React.createElement(StatusBadge, { status: "scheduled", testID: "badge" }));
+
+    expect(view.getByTestId("badge").props.className).toContain("bg-accent/10");
+    expect(view.getByTestId("badge").props.className).not.toContain("warning");
+    expect(view.getByText("Scheduled").props.className).toContain("text-accent");
+    expect(view.getByTestId("badge-dot").props.className).toContain("bg-accent");
+    expect(view.getByTestId("badge-dot").props.className).not.toContain("warning");
+  });
+
+  it.each([
+    ["confirmed", "Confirmed", "bg-success-500/10", "text-success-500"],
+    ["no_show", "No-show", "bg-danger-500/10", "text-danger-500"],
+    ["completed", "Completed", "bg-neutral-100", "text-neutral-600"],
+    ["cancelled", "Cancelled", "bg-neutral-100", "text-neutral-400"],
+  ] as const)("%s keeps its fixed meaning colours", async (status, label, background, text) => {
+    const view = await render(React.createElement(StatusBadge, { status, testID: "badge" }));
+
+    expect(view.getByTestId("badge").props.className).toContain(background);
+    expect(view.getByText(label).props.className).toContain(text);
+  });
+});

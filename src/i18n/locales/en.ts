@@ -26,6 +26,9 @@ export const en = {
     weeks: "2",
   },
   dateField: { choose: "Choose date", close: "Close", nextDay: "Next day", nextMonth: "Next month", nextWeek: "Next week", previousDay: "Previous day", previousMonth: "Previous month", previousWeek: "Previous week" },
+  colorWheel: { close: "Close", done: "Done" },
+  notificationsPrompt: { body: "Get booking requests, confirmations and changes as soon as they happen.", close: "Close", enable: "Turn on", installBody: "On iPhone, notifications work once Zenc is on your Home Screen.", installButton: "How to install", later: "Not now", title: "Turn on notifications?" },
+  notificationsSwitch: { installHint: "On iPhone, add Zenc to your Home Screen first.", label: "Notifications", offHint: "Off for this device.", onHint: "On for this device." },
   agendaCard: { professional: "Professional", close: "Close", customer: "Customer", notes: "Notes" },
   common: {
     activate: "Activate",
@@ -383,16 +386,8 @@ export const en = {
   shop: { call: "Call", contactToChange: "To change this appointment, contact the shop.", whatsapp: "WhatsApp" },
   layout: { bootstrapError: "Unable to set up your account." },
   webPush: {
-    body: "Get booking and reminder alerts on this device.",
-    button: "Turn on",
     deniedBody: "Allow notifications for this site in your browser settings, then reload the page.",
-    deniedTitle: "Notifications are blocked",
     error: "Could not turn on notifications. Try again.",
-    iosBody: "On iPhone, notifications only work for the app added to your Home Screen.",
-    iosTitle: "Add Zenc to your Home Screen first",
-    onBody: "You will get booking and reminder alerts on this device.",
-    onTitle: "Notifications are on",
-    title: "Turn on notifications",
   },
   install: {
     cardTitle: "Install the <b>Zenc</b> app",
@@ -442,6 +437,7 @@ export const en = {
   },
   owner: {
     appearance: {
+      otherColor: "Other colour",
       accent: "Accent colour",
       accentHint: "Action buttons (book, sign in, save). Empty uses the primary colour.",
       adjusted: "We slightly adjusted a colour so the text stays readable.",

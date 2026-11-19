@@ -98,3 +98,28 @@ test("an invalid colour code is explained and cannot be saved", async ({ page })
   await expect(page.getByText("Use 6 digits, like #2F6FDB.")).toBeVisible();
   await expect(page.getByTestId("appearance-save")).toHaveAttribute("aria-disabled", "true");
 });
+
+test("Other colour opens the wheel pop-up next to the swatches and the hex field", async ({ page }) => {
+  const theme: Theme = { theme_accent: null, theme_base: null, theme_primary: null };
+
+  await signInAsOwner(page);
+  await mockRest(page, theme, []);
+  await page.goto("/appearance");
+
+  await expect(page.getByTestId("appearance-primary-swatch-#DB9A34")).toBeVisible();
+  await expect(page.getByTestId("appearance-primary-input")).toBeVisible();
+  await page.getByTestId("appearance-primary-other").click();
+  await expect(page.getByTestId("color-wheel-popup")).toBeVisible();
+  // Drag from the middle of the wheel towards its edge: the hex field follows.
+  const box = (await page.getByTestId("color-wheel-popup").boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + 150);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 + 90, box.y + 150, { steps: 6 });
+  await page.mouse.up();
+  await page.getByTestId("color-wheel-done").click();
+
+  await expect(page.getByTestId("color-wheel-popup")).toHaveCount(0);
+  await expect(page.getByTestId("appearance-primary-input")).toHaveValue(/^#[0-9A-F]{6}$/);
+  // The preview card follows the chosen colour.
+  await expect.poll(() => page.getByTestId("theme-preview").getByRole("button", { name: "Book" }).evaluate((node) => getComputedStyle(node).backgroundColor)).not.toBe("rgb(219, 154, 52)");
+});

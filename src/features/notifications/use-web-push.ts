@@ -3,14 +3,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getCurrentLanguage } from "../../i18n";
 import { useSupabaseSession } from "../../providers/AppProviders";
 import { registerWebPushSubscription } from "./api";
-import { enableWebPush, readWebPushEnvironment, registerCurrentSubscription, withTimeout } from "./web-push";
+import { disableWebPush, enableWebPush, readWebPushEnvironment, registerCurrentSubscription, withTimeout } from "./web-push";
 import { resolveWebPushState } from "./web-push-state";
 import type { WebPushState } from "./web-push-state";
 
 // Expo inlines EXPO_PUBLIC_* only for literal reads.
 const vapidPublicKey = () => process.env.EXPO_PUBLIC_VAPID_PUBLIC_KEY ?? "";
 
-export function useWebPush(): { enable: () => Promise<void>; error: boolean; state: WebPushState } {
+export function useWebPush(): { disable: () => Promise<void>; enable: () => Promise<void>; error: boolean; state: WebPushState } {
   const { profile, supabase } = useSupabaseSession();
   const [state, setState] = useState<WebPushState>("hidden");
   const [error, setError] = useState(false);
@@ -53,5 +53,15 @@ export function useWebPush(): { enable: () => Promise<void>; error: boolean; sta
     }
   }, [supabase]);
 
-  return { enable, error, state };
+  const disable = useCallback(async () => {
+    setError(false);
+    try {
+      await disableWebPush(supabase);
+      setState("default");
+    } catch {
+      setError(true);
+    }
+  }, [supabase]);
+
+  return { disable, enable, error, state };
 }

@@ -14,6 +14,10 @@ jest.mock("expo-constants", () => ({
   default: { easConfig: { projectId: "proj" }, executionEnvironment: "bare", expoConfig: { extra: {} } },
 }));
 jest.mock("../../src/providers/AppProviders", () => ({ useSupabaseSession: () => ({ supabase: {} }) }));
+jest.mock("../../src/features/notifications/native-push-preference", () => ({
+  isNativePushDisabled: jest.fn().mockResolvedValue(false),
+  setNativePushDisabled: jest.fn(),
+}));
 jest.mock("../../src/features/notifications/register-token", () => ({
   saveExpoPushToken: jest.fn().mockResolvedValue(undefined),
 }));
@@ -21,6 +25,7 @@ jest.mock("../../src/features/notifications/register-token", () => ({
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 
+import { isNativePushDisabled } from "../../src/features/notifications/native-push-preference";
 import { saveExpoPushToken } from "../../src/features/notifications/register-token";
 import { registerPushToken } from "../../src/features/notifications/use-push-registration";
 
@@ -58,13 +63,13 @@ describe("registerPushToken", () => {
     expect(Notifications.getPermissionsAsync).not.toHaveBeenCalled();
   });
 
-  it("asks for permission, then saves the Expo token", async () => {
+  it("asks for permission only when told to, then saves the Expo token", async () => {
     setOs("ios");
     jest.mocked(Notifications.getPermissionsAsync).mockResolvedValue({ status: "undetermined" } as never);
     jest.mocked(Notifications.requestPermissionsAsync).mockResolvedValue({ status: "granted" } as never);
     jest.mocked(Notifications.getExpoPushTokenAsync).mockResolvedValue({ data: "ExponentPushToken[abc]", type: "expo" } as never);
 
-    expect(await registerPushToken(supabase)).toBe("ExponentPushToken[abc]");
+    expect(await registerPushToken(supabase, { ask: true })).toBe("ExponentPushToken[abc]");
     expect(Notifications.getExpoPushTokenAsync).toHaveBeenCalledWith({ projectId: "proj" });
     expect(saveExpoPushToken).toHaveBeenCalledWith(supabase, "ExponentPushToken[abc]", "ios");
   });
@@ -83,6 +88,33 @@ describe("registerPushToken", () => {
     setOs("ios");
     jest.mocked(Notifications.getPermissionsAsync).mockResolvedValue({ status: "denied" } as never);
     jest.mocked(Notifications.requestPermissionsAsync).mockResolvedValue({ status: "denied" } as never);
+
+    expect(await registerPushToken(supabase, { ask: true })).toBeNull();
+    expect(saveExpoPushToken).not.toHaveBeenCalled();
+  });
+
+  it("never asks for permission on its own: with undetermined permission it does nothing", async () => {
+    setOs("ios");
+    jest.mocked(Notifications.getPermissionsAsync).mockResolvedValue({ status: "undetermined" } as never);
+
+    expect(await registerPushToken(supabase)).toBeNull();
+    expect(Notifications.requestPermissionsAsync).not.toHaveBeenCalled();
+    expect(saveExpoPushToken).not.toHaveBeenCalled();
+  });
+
+  it("refreshes the token silently when permission was already granted", async () => {
+    setOs("ios");
+    jest.mocked(Notifications.getPermissionsAsync).mockResolvedValue({ status: "granted" } as never);
+    jest.mocked(Notifications.getExpoPushTokenAsync).mockResolvedValue({ data: "ExponentPushToken[x]", type: "expo" } as never);
+
+    expect(await registerPushToken(supabase)).toBe("ExponentPushToken[x]");
+    expect(Notifications.requestPermissionsAsync).not.toHaveBeenCalled();
+  });
+
+  it("stays off when the user switched notifications off on this device", async () => {
+    setOs("ios");
+    jest.mocked(isNativePushDisabled).mockResolvedValueOnce(true);
+    jest.mocked(Notifications.getPermissionsAsync).mockResolvedValue({ status: "granted" } as never);
 
     expect(await registerPushToken(supabase)).toBeNull();
     expect(saveExpoPushToken).not.toHaveBeenCalled();

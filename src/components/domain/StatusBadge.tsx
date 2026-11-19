@@ -9,8 +9,9 @@ export type StatusBadgeProps = {
   testID?: string;
 };
 
+// Scheduled follows the shop accent; the other statuses keep fixed meaning colours (a red brand must not make every badge look like a no-show).
 const CLASSNAME: Record<AppointmentStatus, string> = {
-  scheduled: "bg-warning-500/10",
+  scheduled: "bg-accent/10",
   confirmed: "bg-success-500/10",
   completed: "bg-neutral-100",
   cancelled: "bg-neutral-100",
@@ -18,7 +19,7 @@ const CLASSNAME: Record<AppointmentStatus, string> = {
 };
 
 const TEXT_CLASSNAME: Record<AppointmentStatus, string> = {
-  scheduled: "text-warning-500",
+  scheduled: "text-accent",
   confirmed: "text-success-500",
   completed: "text-neutral-600",
   cancelled: "text-neutral-400",
@@ -26,7 +27,7 @@ const TEXT_CLASSNAME: Record<AppointmentStatus, string> = {
 };
 
 const DOT_CLASSNAME: Record<AppointmentStatus, string> = {
-  scheduled: "bg-warning-500",
+  scheduled: "bg-accent",
   confirmed: "bg-success-500",
   completed: "bg-neutral-600",
   cancelled: "bg-neutral-400",
@@ -43,7 +44,7 @@ export function StatusBadge({ status, label, testID }: StatusBadgeProps) {
       className={`flex-row items-center gap-1.5 self-start rounded-full px-3 py-1 ${CLASSNAME[status]}`}
       testID={testID}
     >
-      <View className={`h-1.5 w-1.5 rounded-full ${DOT_CLASSNAME[status]}`} />
+      <View className={`h-1.5 w-1.5 rounded-full ${DOT_CLASSNAME[status]}`} testID={testID ? `${testID}-dot` : undefined} />
       <Text className={`text-xs font-sans-semibold ${TEXT_CLASSNAME[status]}`}>{resolvedLabel}</Text>
     </View>
   );

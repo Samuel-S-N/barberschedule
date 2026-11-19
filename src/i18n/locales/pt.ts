@@ -25,6 +25,9 @@ export const pt: DeepStringRecord<typeof en> = {
     weeks: "2",
   },
   dateField: { choose: "Escolher data", close: "Fechar", nextDay: "Próximo dia", nextMonth: "Próximo mês", nextWeek: "Próxima semana", previousDay: "Dia anterior", previousMonth: "Mês anterior", previousWeek: "Semana anterior" },
+  colorWheel: { close: "Fechar", done: "Concluir" },
+  notificationsPrompt: { body: "Receba pedidos, confirmações e mudanças de agendamento assim que acontecerem.", close: "Fechar", enable: "Ativar", installBody: "No iPhone, as notificações funcionam depois de adicionar o Zenc à Tela de Início.", installButton: "Como instalar", later: "Agora não", title: "Ativar notificações?" },
+  notificationsSwitch: { installHint: "No iPhone, adicione o Zenc à Tela de Início primeiro.", label: "Notificações", offHint: "Desativadas neste aparelho.", onHint: "Ativadas neste aparelho." },
   agendaCard: { professional: "Profissional", close: "Fechar", customer: "Cliente", notes: "Observações" },
   common: {
     activate: "Ativar",
@@ -382,16 +385,8 @@ export const pt: DeepStringRecord<typeof en> = {
   shop: { call: "Ligar", contactToChange: "Para alterar este agendamento, fale com o estabelecimento.", whatsapp: "WhatsApp" },
   layout: { bootstrapError: "Não foi possível configurar sua conta." },
   webPush: {
-    body: "Receba avisos de agendamentos e lembretes neste aparelho.",
-    button: "Ativar",
     deniedBody: "Permita as notificações deste site nas configurações do navegador e recarregue a página.",
-    deniedTitle: "As notificações estão bloqueadas",
     error: "Não foi possível ativar as notificações. Tente de novo.",
-    iosBody: "No iPhone, as notificações só funcionam no app adicionado à Tela de Início.",
-    iosTitle: "Adicione o Zenc à Tela de Início primeiro",
-    onBody: "Você receberá avisos de agendamentos e lembretes neste aparelho.",
-    onTitle: "As notificações estão ativas",
-    title: "Ativar notificações",
   },
   install: {
     cardTitle: "Instalar o app <b>Zenc</b>",
@@ -441,6 +436,7 @@ export const pt: DeepStringRecord<typeof en> = {
   },
   owner: {
     appearance: {
+      otherColor: "Outra cor",
       accent: "Cor de destaque",
       accentHint: "Botões de ação (agendar, entrar, salvar). Vazio usa a cor principal.",
       adjusted: "Ajustamos levemente uma cor para o texto ficar legível.",

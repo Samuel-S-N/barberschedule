@@ -9,7 +9,11 @@ export async function stubPushSubscription(page: Page) {
       return { endpoint: subscription.endpoint, toJSON: () => subscription } as unknown as PushSubscription;
     };
     PushManager.prototype.getSubscription = async function getSubscription() {
-      return (window as unknown as { __subscribed?: boolean }).__subscribed ? ({ endpoint: subscription.endpoint, toJSON: () => subscription } as unknown as PushSubscription) : null;
+      const flags = window as unknown as { __subscribed?: boolean };
+
+      return flags.__subscribed
+        ? ({ endpoint: subscription.endpoint, toJSON: () => subscription, unsubscribe: async () => { flags.__subscribed = false; return true; } } as unknown as PushSubscription)
+        : null;
     };
   });
 }

@@ -23,12 +23,15 @@ const isMyShopRpc = (request: Request) => request.method() === "POST" && target(
 // page.route), which still sees every other request.
 // `shop: null` simulates an unknown slug (no rows). `myShop` is the staff member's shop; it follows `shop` unless set (an owner of
 // another shop: `test.use({ myShop: otherShop })`).
-export const test = base.extend<{ interceptShops: boolean; myShop: Shop | null | undefined; shop: Shop | null }>({
+export const test = base.extend<{ interceptShops: boolean; myShop: Shop | null | undefined; notificationsPrompt: boolean; shop: Shop | null }>({
   // A spec that changes the shop row while it runs (the colours screen) turns this off and answers the lookups itself.
   interceptShops: [true, { option: true }],
   myShop: [undefined, { option: true }],
+  // The first-sign-in notifications pop-up would cover every screen of every spec: it is marked as already shown unless a spec opts in.
+  notificationsPrompt: [false, { option: true }],
   shop: [defaultShop, { option: true }],
-  page: async ({ interceptShops, myShop, page, shop }, use) => {
+  page: async ({ interceptShops, myShop, notificationsPrompt, page, shop }, use) => {
+    if (!notificationsPrompt) await page.addInitScript(() => localStorage.setItem("zenc.notifications-prompted", "1"));
     const original = page.route.bind(page);
     const staffShop = myShop === undefined ? shop : myShop;
     const answer = (route: Parameters<Parameters<typeof page.route>[1]>[0], request: Request) => {

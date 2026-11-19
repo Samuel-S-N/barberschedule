@@ -25,6 +25,9 @@ export const es: DeepStringRecord<typeof en> = {
     weeks: "2",
   },
   dateField: { choose: "Elegir fecha", close: "Cerrar", nextDay: "Día siguiente", nextMonth: "Mes siguiente", nextWeek: "Semana siguiente", previousDay: "Día anterior", previousMonth: "Mes anterior", previousWeek: "Semana anterior" },
+  colorWheel: { close: "Cerrar", done: "Listo" },
+  notificationsPrompt: { body: "Recibe solicitudes, confirmaciones y cambios de reservas en cuanto ocurran.", close: "Cerrar", enable: "Activar", installBody: "En iPhone, las notificaciones funcionan cuando Zenc está en tu pantalla de inicio.", installButton: "Cómo instalar", later: "Ahora no", title: "¿Activar notificaciones?" },
+  notificationsSwitch: { installHint: "En iPhone, añade Zenc a tu pantalla de inicio primero.", label: "Notificaciones", offHint: "Desactivadas en este dispositivo.", onHint: "Activadas en este dispositivo." },
   agendaCard: { professional: "Profesional", close: "Cerrar", customer: "Cliente", notes: "Notas" },
   common: {
     activate: "Activar",
@@ -382,16 +385,8 @@ export const es: DeepStringRecord<typeof en> = {
   shop: { call: "Llamar", contactToChange: "Para cambiar esta cita, contacta al establecimiento.", whatsapp: "WhatsApp" },
   layout: { bootstrapError: "No se pudo configurar tu cuenta." },
   webPush: {
-    body: "Recibe avisos de reservas y recordatorios en este dispositivo.",
-    button: "Activar",
     deniedBody: "Permite las notificaciones de este sitio en la configuración del navegador y recarga la página.",
-    deniedTitle: "Las notificaciones están bloqueadas",
     error: "No se pudieron activar las notificaciones. Inténtalo de nuevo.",
-    iosBody: "En iPhone, las notificaciones solo funcionan en la app añadida a la pantalla de inicio.",
-    iosTitle: "Añade Zenc a la pantalla de inicio primero",
-    onBody: "Recibirás avisos de reservas y recordatorios en este dispositivo.",
-    onTitle: "Las notificaciones están activas",
-    title: "Activar notificaciones",
   },
   install: {
     cardTitle: "Instalar la app <b>Zenc</b>",
@@ -441,6 +436,7 @@ export const es: DeepStringRecord<typeof en> = {
   },
   owner: {
     appearance: {
+      otherColor: "Otro color",
       accent: "Color de acento",
       accentHint: "Botones de acción (reservar, entrar, guardar). Vacío usa el color principal.",
       adjusted: "Ajustamos ligeramente un color para que el texto sea legible.",

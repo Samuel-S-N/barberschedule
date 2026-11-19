@@ -13,7 +13,6 @@ jest.mock("../../src/features/install/InstallPrompt", () => {
 
   return { InstallPrompt: () => jest.requireActual("react").createElement(Text, { testID: "install-card" }, "install") };
 });
-jest.mock("../../src/features/notifications/NotificationPrompt", () => ({ NotificationPrompt: () => null }));
 
 import CustomerProfileScreen from "../../app/(customer)/(tabs)/profile";
 import i18n from "../../src/i18n";

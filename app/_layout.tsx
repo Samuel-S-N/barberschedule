@@ -19,6 +19,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { resolveAuthRedirect } from "../src/features/auth/session";
 import { CurrentShopProvider } from "../src/features/shops/CurrentShopProvider";
+import { NotificationsPromptGate } from "../src/features/notifications/NotificationsPromptGate";
 import { ShopGate } from "../src/features/shops/ShopGate";
 import { ShopThemeProvider } from "../src/features/shops/ShopThemeProvider";
 import { useColors } from "../src/lib/design/theme/ThemeProvider";
@@ -71,6 +72,7 @@ export function RootNavigator() {
   return (
     <ThemeProvider value={navigationTheme}>
       <ShopGate>
+        <NotificationsPromptGate />
         <Stack screenOptions={{ headerShown: false }} />
       </ShopGate>
     </ThemeProvider>
