@@ -385,16 +385,8 @@ export const es: DeepStringRecord<typeof en> = {
   shop: { call: "Llamar", contactToChange: "Para cambiar esta cita, contacta al establecimiento.", whatsapp: "WhatsApp" },
   layout: { bootstrapError: "No se pudo configurar tu cuenta." },
   webPush: {
-    body: "Recibe avisos de reservas y recordatorios en este dispositivo.",
-    button: "Activar",
     deniedBody: "Permite las notificaciones de este sitio en la configuración del navegador y recarga la página.",
-    deniedTitle: "Las notificaciones están bloqueadas",
     error: "No se pudieron activar las notificaciones. Inténtalo de nuevo.",
-    iosBody: "En iPhone, las notificaciones solo funcionan en la app añadida a la pantalla de inicio.",
-    iosTitle: "Añade Zenc a la pantalla de inicio primero",
-    onBody: "Recibirás avisos de reservas y recordatorios en este dispositivo.",
-    onTitle: "Las notificaciones están activas",
-    title: "Activar notificaciones",
   },
   install: {
     cardTitle: "Instalar la app <b>Zenc</b>",
