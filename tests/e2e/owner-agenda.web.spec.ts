@@ -1,7 +1,8 @@
 import { openOwnerCard } from "./agenda-helpers";
-import { expect, test } from "./fixtures";
+import { defaultShop, expect, test } from "./fixtures";
 import type { Page } from "@playwright/test";
 
+import { deriveTheme } from "../../src/lib/design/theme/derive";
 import { appointmentRow, json } from "./customer-helpers";
 
 const ownerId = "55555555-5555-4555-8555-555555555555";
@@ -190,4 +191,33 @@ test("an agenda link with ?open= opens that appointment's pop-up once", async ({
   // The params are consumed once: closing the pop-up must not reopen it.
   await page.getByTestId("owner-sheet-close").click();
   await expect(page.getByTestId("owner-sheet")).toHaveCount(0);
+});
+
+test("the scheduled badge uses the default accent, and the shop's accent when it has one", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, { calls: {}, noOverrides: true, rows: [agendaRow()] });
+
+  await page.goto("/agenda");
+  const badge = page.getByTestId("owner-appointment-appt-1").getByText("Scheduled");
+
+  await expect(badge).toBeVisible();
+  expect(await badge.evaluate((node) => getComputedStyle(node).color)).toBe("rgb(219, 154, 52)");
+});
+
+test.describe("with a shop accent", () => {
+  test.use({ shop: { ...defaultShop, theme_accent: "#2F6FDB" } });
+
+  test("the scheduled badge follows the accent while confirmed stays green", async ({ page }) => {
+    await signInAsOwner(page);
+    await mockOwnerRest(page, { calls: {}, noOverrides: true, rows: [agendaRow(), agendaRow({ id: "appt-2", status: "confirmed" })] });
+
+    await page.goto("/agenda");
+    const accent = deriveTheme({ accent: "#2F6FDB" }).colors.accent;
+    const rgb = `rgb(${[1, 3, 5].map((i) => parseInt(accent.slice(i, i + 2), 16)).join(", ")})`;
+
+    await expect.poll(() => page.getByTestId("owner-appointment-appt-1").getByText("Scheduled").evaluate((node) => getComputedStyle(node).color)).toBe(rgb);
+    const confirmed = await page.getByTestId("owner-appointment-appt-2").getByText("Confirmed").evaluate((node) => getComputedStyle(node).color);
+
+    expect(confirmed).not.toBe(rgb);
+  });
 });
