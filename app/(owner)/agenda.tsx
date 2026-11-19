@@ -83,7 +83,7 @@ export default function OwnerAgendaScreen() {
   });
 
   const update = useMutation({
-    mutationFn: (input: { id: string; status: "completed" | "no_show" | "cancelled" }) =>
+    mutationFn: (input: { id: string; status: "completed" | "confirmed" | "no_show" | "cancelled" }) =>
       input.status === "cancelled" ? cancelAppointment(supabase, input.id) : setOwnerAppointmentStatus(supabase, input.id, input.status),
     onError: (error) => setFeedback({ message: errorMessage(error, t, t("owner.agenda.updateError")), variant: "error" }),
     onSuccess: () => {
@@ -145,13 +145,13 @@ export default function OwnerAgendaScreen() {
 
               return (
                 <AgendaCard
-                  actions={quickActions({ canConfirm: false, endsAt: appointment.endsAt, now: new Date(), status: appointment.status })}
+                  actions={quickActions({ canConfirm: true, endsAt: appointment.endsAt, now: new Date(), status: appointment.status })}
                   appointmentId={appointment.id}
                   busy={busy}
                   customerName={appointment.customerName}
                   key={appointment.id}
                   onComplete={() => update.mutate({ id: appointment.id, status: "completed" })}
-                  onConfirm={() => undefined}
+                  onConfirm={() => update.mutate({ id: appointment.id, status: "confirmed" })}
                   onNoShow={() => update.mutate({ id: appointment.id, status: "no_show" })}
                   onOpen={() => setOpenId(appointment.id)}
                   status={appointment.status}

@@ -7,7 +7,7 @@ import type { Appointment, AppointmentRow, BookingInput } from "./types";
 type OwnerAppointmentsSupabaseClient = Pick<SupabaseClient, "rpc">;
 
 export type OwnerBookingInput = Omit<BookingInput, "source">;
-export type OwnerAppointmentStatus = "completed" | "no_show";
+export type OwnerAppointmentStatus = "completed" | "confirmed" | "no_show";
 
 export function bookOwnerAppointment(
   supabase: OwnerAppointmentsSupabaseClient,

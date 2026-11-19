@@ -162,3 +162,15 @@ test("tapping outside the appointment pop-up closes it", async ({ page }) => {
   await page.mouse.click(5, 5);
   await expect(page.getByTestId("owner-sheet")).toHaveCount(0);
 });
+
+test("the owner confirms a scheduled appointment from its card", async ({ page }) => {
+  const state = { calls: {} as Record<string, unknown>, rows: [agendaRow()] };
+
+  await signInAsOwner(page);
+  await mockOwnerRest(page, state);
+
+  await page.goto("/agenda");
+  await page.getByTestId("owner-confirm-appt-1").click();
+
+  await expect.poll(() => state.calls.status).toEqual({ appointment_id: "appt-1", new_status: "confirmed" });
+});
