@@ -65,7 +65,7 @@ export default function NotificationsScreen() {
 
   const open = (item: InboxItem) => {
     if (!item.readAt) read.mutate([item.id]);
-    router.push(inboxRoute(item.kind, role) as never);
+    router.push(inboxRoute(item.kind, role, { appointmentId: item.appointmentId, startsAt: item.params.startsAt }) as never);
   };
 
   const when = (startsAt: string) => {

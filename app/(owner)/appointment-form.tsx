@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
@@ -53,6 +53,24 @@ export default function OwnerAppointmentFormScreen() {
   const [selectedStartsAt, setSelectedStartsAt] = useState<string | null>(null);
   const go = (next: Step) => setTrail((existing) => [...existing, next]);
   const goBack = () => (trail.length > 1 ? setTrail((existing) => existing.slice(0, -1)) : back());
+
+  // The owner Tabs navigator keeps this screen mounted when the user leaves it, so the form must forget itself: every open starts at
+  // step 1 with nothing chosen. The cleanup of a focus effect runs when the screen loses focus (tab switch, or leaving after booking).
+  useFocusEffect(
+    useCallback(
+      () => () => {
+        setTrail(["customer"]);
+        setFeedback(null);
+        setLocalDate(formatInstantInShopTime(new Date()).localDate);
+        setNotes("");
+        setSearch("");
+        setSelectedProfessionalServiceId(null);
+        setSelectedCustomerId(null);
+        setSelectedStartsAt(null);
+      },
+      [],
+    ),
+  );
 
   const catalog = useQuery({
     enabled: shopId !== null,

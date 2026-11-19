@@ -20,6 +20,7 @@ import { listOwnerAgenda, listOwnerAgendaOverrides } from "../../src/features/ap
 import { cancelAppointment } from "../../src/features/appointments/lifecycle";
 import { setOwnerAppointmentStatus } from "../../src/features/appointments/owner-api";
 import { quickActions } from "../../src/features/appointments/agenda-actions";
+import { parseAgendaTarget } from "../../src/features/appointments/agenda-target";
 import { agendaNavKeys } from "../../src/features/appointments/agenda-nav";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
 import { useLanguage } from "../../src/i18n/use-language";
@@ -52,7 +53,7 @@ export default function OwnerAgendaScreen() {
   const language = useLanguage();
   const pull = useRefreshAll();
   const router = useRouter();
-  const { created } = useLocalSearchParams<{ created?: string }>();
+  const { created, date, open } = useLocalSearchParams<{ created?: string; date?: string; open?: string }>();
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
   const shop = useOwnerShopId();
@@ -83,7 +84,7 @@ export default function OwnerAgendaScreen() {
   });
 
   const update = useMutation({
-    mutationFn: (input: { id: string; status: "completed" | "no_show" | "cancelled" }) =>
+    mutationFn: (input: { id: string; status: "completed" | "confirmed" | "no_show" | "cancelled" }) =>
       input.status === "cancelled" ? cancelAppointment(supabase, input.id) : setOwnerAppointmentStatus(supabase, input.id, input.status),
     onError: (error) => setFeedback({ message: errorMessage(error, t, t("owner.agenda.updateError")), variant: "error" }),
     onSuccess: () => {
@@ -110,6 +111,19 @@ export default function OwnerAgendaScreen() {
   const appointments = agenda.data?.appointments ?? [];
   const [openId, setOpenId] = useState<string | null>(null);
   const openAppointment = appointments.find((appointment) => appointment.id === openId) ?? null;
+  // Coming from a notification: show that day and open that appointment, once.
+  useEffect(() => {
+    const target = parseAgendaTarget({ date, open });
+
+    if (!target.date && !target.open) return;
+    if (target.date) {
+      setView("day");
+      setOffset(0);
+      setLocalDate(target.date);
+    }
+    if (target.open) setOpenId(target.open);
+    router.setParams({ date: undefined, open: undefined });
+  }, [date, open]);
   const openStart = openAppointment ? formatInstantInShopTime(new Date(openAppointment.startsAt)) : null;
   const overrides = agenda.data?.overrides ?? [];
   const busy = update.isPending;
@@ -145,13 +159,13 @@ export default function OwnerAgendaScreen() {
 
               return (
                 <AgendaCard
-                  actions={quickActions({ canConfirm: false, endsAt: appointment.endsAt, now: new Date(), status: appointment.status })}
+                  actions={quickActions({ canConfirm: true, endsAt: appointment.endsAt, now: new Date(), status: appointment.status })}
                   appointmentId={appointment.id}
                   busy={busy}
                   customerName={appointment.customerName}
                   key={appointment.id}
                   onComplete={() => update.mutate({ id: appointment.id, status: "completed" })}
-                  onConfirm={() => undefined}
+                  onConfirm={() => update.mutate({ id: appointment.id, status: "confirmed" })}
                   onNoShow={() => update.mutate({ id: appointment.id, status: "no_show" })}
                   onOpen={() => setOpenId(appointment.id)}
                   status={appointment.status}

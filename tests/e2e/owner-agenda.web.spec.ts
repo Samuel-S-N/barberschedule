@@ -162,3 +162,29 @@ test("tapping outside the appointment pop-up closes it", async ({ page }) => {
   await page.mouse.click(5, 5);
   await expect(page.getByTestId("owner-sheet")).toHaveCount(0);
 });
+
+test("the owner confirms a scheduled appointment from its card", async ({ page }) => {
+  const state = { calls: {} as Record<string, unknown>, rows: [agendaRow()] };
+
+  await signInAsOwner(page);
+  await mockOwnerRest(page, state);
+
+  await page.goto("/agenda");
+  await page.getByTestId("owner-confirm-appt-1").click();
+
+  await expect.poll(() => state.calls.status).toEqual({ appointment_id: "appt-1", new_status: "confirmed" });
+});
+
+test("an agenda link with ?open= opens that appointment's pop-up once", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, { calls: {}, rows: [agendaRow()] });
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+
+  await page.goto(`/agenda?date=${today}&open=appt-1`);
+
+  await expect(page.getByTestId("owner-sheet")).toBeVisible();
+  await expect(page.getByTestId("owner-sheet")).toContainText("Ana Customer");
+  // The params are consumed once: closing the pop-up must not reopen it.
+  await page.getByTestId("owner-sheet-close").click();
+  await expect(page.getByTestId("owner-sheet")).toHaveCount(0);
+});

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, Switch, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 import { EmptyState } from "../../../src/components/domain/EmptyState";
 import { formatPriceBRL } from "../../../src/components/domain/ServiceCard";
@@ -10,15 +10,14 @@ import { SkeletonBlock } from "../../../src/components/domain/SkeletonLoader";
 import { Toast } from "../../../src/components/domain/Toast";
 import { Card } from "../../../src/components/ui/Card";
 import { Screen } from "../../../src/components/ui/Screen";
+import { Toggle } from "../../../src/components/ui/Toggle";
 import { listMyServiceOptions, setMyServiceEnabled } from "../../../src/features/professionals/api";
 import { errorMessage } from "../../../src/i18n/errors";
-import { useColors } from "../../../src/lib/design/theme/ThemeProvider";
 import { useBack } from "../../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../../src/lib/use-refresh";
 
 export default function ProfessionalServicesScreen() {
-  const colors = useColors();
   const { t } = useTranslation();
   const pull = useRefreshAll();
   const back = useBack();
@@ -66,16 +65,12 @@ export default function ProfessionalServicesScreen() {
                       {t("professional.myServices.standard")}
                     </Text>
                   ) : (
-                    <Switch
+                    <Toggle
                       accessibilityLabel={service.serviceName}
                       disabled={toggle.isPending}
                       onValueChange={(enabled) => toggle.mutate({ enabled, id: service.serviceId })}
                       testID={`service-switch-${service.serviceId}`}
-                      thumbColor={colors.white}
-                      trackColor={{ false: colors.neutral[200], true: colors.primary[400] }}
                       value={service.enabled}
-                      // react-native-web paints the "on" thumb from activeThumbColor (browser default: teal); not in RN's types.
-                      {...({ activeThumbColor: colors.white } as object)}
                     />
                   )}
                 </View>

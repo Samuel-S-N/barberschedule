@@ -138,3 +138,33 @@ test("a time taken meanwhile returns to the time step with the error", async ({ 
   await expect(page.getByTestId("step-label")).toHaveText("Step 4 of 6 · Time");
   await expect(page.getByTestId("owner-continue")).toBeDisabled();
 });
+
+test("the form opens on the customer step again after leaving it mid-way and after booking", async ({ page }) => {
+  const calls: Record<string, unknown> = {};
+
+  await signInAsOwner(page);
+  await mockOwnerRest(page, calls);
+
+  await page.goto("/agenda");
+  await page.getByTestId("owner-new-appointment").click();
+  await page.getByTestId("option-c1").click();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 2 of 6 · Service");
+
+  // Leave mid-way (another tab) and open the form anew: it must start at step 1 with nothing chosen.
+  await page.getByTestId("tab-revenue").click();
+  await page.getByTestId("tab-agenda").click();
+  await page.getByTestId("owner-new-appointment").click();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 6 · Customer");
+  await expect(page.getByTestId("owner-customer-search")).toHaveValue("");
+
+  // After finishing a booking, the next "new appointment" starts at step 1 too.
+  await page.getByTestId("option-c1").click();
+  await page.getByTestId("option-bs1").click();
+  await page.getByTestId("owner-continue").click();
+  await page.getByRole("button", { name: "10:30" }).click();
+  await page.getByTestId("owner-continue").click();
+  await page.getByTestId("owner-form-create").click();
+  await expect(page).toHaveURL(/\/agenda/);
+  await page.getByTestId("owner-new-appointment").click();
+  await expect(page.getByTestId("step-label")).toHaveText("Step 1 of 6 · Customer");
+});

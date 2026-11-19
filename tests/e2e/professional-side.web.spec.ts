@@ -225,3 +225,16 @@ test("the agenda card shows only time, customer, status and quick buttons; detai
   await page.getByTestId("professional-sheet-close").click();
   await expect(page.getByTestId("professional-sheet")).toHaveCount(0);
 });
+
+test("a link with ?open= opens that appointment's pop-up on the professional agenda, once", async ({ page }) => {
+  await signIn(page, professionalUserId);
+  await mockProfessionalRest(page);
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+
+  await page.goto(`/my-agenda?date=${today}&open=appt-1`);
+
+  await expect(page.getByTestId("professional-sheet")).toBeVisible();
+  await expect(page.getByTestId("professional-sheet")).toContainText("Ana Customer");
+  await page.getByTestId("professional-sheet-close").click();
+  await expect(page.getByTestId("professional-sheet")).toHaveCount(0);
+});
