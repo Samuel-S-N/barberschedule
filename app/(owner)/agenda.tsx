@@ -46,7 +46,6 @@ function agendaRange(localDate: string, view: AgendaView) {
 }
 
 const VIEW_LABEL = { day: "owner.agenda.viewDay", month: "owner.agenda.viewMonth", week: "owner.agenda.viewWeek" } as const;
-const RANGE_LABEL = { day: "owner.agenda.rangeDay", month: "owner.agenda.rangeMonth", week: "owner.agenda.rangeWeek" } as const;
 
 export default function OwnerAgendaScreen() {
   const { t } = useTranslation();
@@ -130,7 +129,7 @@ export default function OwnerAgendaScreen() {
               ))}
             </View>
             <DateInput label={t("common.localDate")} onChangeValue={(value) => { setLocalDate(value); setOffset(0); }} testID="owner-agenda-date" value={localDate} />
-            <Text className="text-center text-sm font-sans text-neutral-600">{t(RANGE_LABEL[view], { date: formatDateNumeric(localDate, language) })}</Text>
+            {nav.range ? <Text className="text-center text-sm font-sans text-neutral-600">{t(nav.range, { date: formatDateNumeric(localDate, language) })}</Text> : null}
             <View className="flex-row gap-2">
               <View className="flex-1"><Button disabled={loading} label={t(nav.previous)} onPress={() => moveRange(-1)} testID="owner-range-prev" size="sm" variant="outline" /></View>
               <View className="flex-1"><Button disabled={loading} label={t(nav.next)} onPress={() => moveRange(1)} testID="owner-range-next" size="sm" variant="outline" /></View>

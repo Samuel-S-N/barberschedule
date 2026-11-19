@@ -20,7 +20,7 @@ export default function OwnerLayout() {
   const { t } = useTranslation();
   const { profile } = useSupabaseSession();
   const items = [
-    { icon: CalendarDays, key: "agenda", label: t("tabs.agenda") },
+    { icon: CalendarDays, key: "agenda", label: t("tabs.calendar") },
     { icon: Coins, key: "revenue", label: t("tabs.revenue") },
     { icon: LayoutGrid, key: "manage", label: t("tabs.manage") },
     { icon: User, key: "settings", label: t("tabs.account") },

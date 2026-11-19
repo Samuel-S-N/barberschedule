@@ -56,7 +56,7 @@ export const es: DeepStringRecord<typeof en> = {
     phoneOptional: "Teléfono (opcional)",
     tryAgain: "Reintentar",
   },
-  tabs: { agenda: "Agenda", manage: "Gestionar", revenue: "Ingresos", account: "Cuenta", clients: "Clientes", earnings: "Informes", book: "Reservar", home: "Inicio", profile: "Perfil" },
+  tabs: { agenda: "Agenda", calendar: "Agenda", manage: "Gestionar", revenue: "Ingresos", account: "Cuenta", clients: "Clientes", earnings: "Informes", book: "Reservar", home: "Inicio", profile: "Perfil" },
   status: { cancelled: "Cancelada", completed: "Completada", confirmed: "Confirmada", no_show: "No asistió", scheduled: "Programada" },
   auth: {
     login: {
@@ -563,7 +563,6 @@ export const es: DeepStringRecord<typeof en> = {
       previousDay: "Día anterior",
       previousMonth: "Mes anterior",
       previousWeek: "Semana anterior",
-      rangeDay: "Día: {{date}}",
       rangeMonth: "Mes: {{date}}",
       rangeWeek: "Semana: {{date}}",
       titleDay: "Agenda del día",
