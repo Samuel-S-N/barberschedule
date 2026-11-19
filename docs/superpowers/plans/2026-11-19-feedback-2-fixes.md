@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Three leftovers from the first feedback round, one PR: (1) `DateField` becomes a single bordered box with the arrows inside; (2) restructure the colour-wheel pop-up so its drag has a chance to work in Expo Go (restructure only, **not verifiable here**); (3) tapping the active tab returns that tab's nested stack to its root.
+**Goal:** Three leftovers from the first feedback round, one PR: (1) `DateField` becomes a single bordered box with the arrows inside; (2) restructure the colour-wheel pop-up so its drag has a chance to work in Expo Go (restructure only, **not verifiable here**); (3) tapping the active tab returns that tab's nested stack to its root, **except the customer Book tab, which keeps a half-made booking** (user decision).
 
-**Architecture:** (1) Markup change in one component. (2) The pop-up's backdrop becomes a sibling `Pressable` behind a plain `View` card, and the wheel gets its start colour once at open. (3) `selectTab` emits the `tabPress` event through the `emitter` that expo-router passes to a custom `tabBar`, then navigates only if the event was not prevented and the tab is not already focused; React Navigation's own native-stack listener pops the nested stack. No dependency, no SQL.
+**Architecture:** (1) Markup change in one component. (2) The pop-up's backdrop becomes a sibling `Pressable` behind a plain `View` card, and the wheel gets its start colour once at open. (3) `selectTab` emits the `tabPress` event through the `emitter` that expo-router passes to a custom `tabBar`, then navigates only if the event was not prevented and the tab is not already focused; React Navigation's own native-stack listener pops the nested stack. `selectTab` takes an optional list of tab names that **keep their nested state** (the customer layout passes `["book"]`): for those it emits nothing, so nothing pops. No dependency, no SQL.
 
 **Tech Stack:** Expo SDK 58 / expo-router 58.0.27 (`Tabs`, `expo-router/js-top-tabs`), React Native 0.88 / react-native-web, `react-native-gesture-handler` 3.3.0, `reanimated-color-picker` 5.1.4, NativeWind, Jest (jest-expo, RNTL 14 async `render`), Playwright (system Chrome).
 
@@ -19,21 +19,24 @@
 3. **Do not call `preventDefault()`** on the event: that is the one thing that would cancel the pop.
 4. **The stock bar does not navigate to the already focused tab** (`BottomTabBar.js:324`: `if (!focused && !event.defaultPrevented)`); our `selectTab` did, which is harmless but redundant. The new `selectTab` copies the stock rule.
 5. **Owner "Profile" is a nested stack too** (`app/(owner)/owner-profile/_layout.tsx`, declared as a `Tabs.Screen` in `ACCOUNT_SCREENS`), yet already behaves because the bar item `settings` is a *different* route (`highlight()` maps `owner-profile` to the `settings` item): pressing it navigates there. With the new code the event is emitted for the **target** route (`settings`), which is never the focused one while the user is inside `owner-profile`, so nothing changes for the owner. The e2e in Task 3 pins that.
-6. **Customer `me/*` screens are outside the tabs** (root `Stack` of `(customer)`), so nothing to do there; the **Book** tab is the only nested stack of the customer (`app/(customer)/(tabs)/book/_layout.tsx`), plus nothing else.
+6. **Customer `me/*` screens are outside the tabs** (root `Stack` of `(customer)`), so nothing to do there. The **Book** tab is the customer's only nested stack (`app/(customer)/(tabs)/book/_layout.tsx`) and it is **excluded** from the pop-to-root by the user's decision (next finding).
+6a. **Book keeps a half-made booking (user, verbatim): "se o agendamento estiver na metade, salve o status, concluido deve voltar para a home com fluxo reiniciado para que possa começar um novo se desejado".** Verified in the code: the booking state **is the nested stack itself** (route params: `shopId`, `professionalId`, `professionalServiceId`, `localDate`, `startsAt` in `book/service|date|time|review`); the first screen is stateless. `TopTabs` keeps every tab mounted (`lazy: false`) and the nested stack keeps its state when the user switches tab, so leaving Book and coming back **already resumes** where the user was. The only thing that would discard it is the tab-press pop, hence the exclusion. `preventDefault()` is **not** the way to exclude it: a prevented press also blocks `navigateToTab`, which would stop the tab from opening when pressed from another tab. The exclusion is an explicit `keepNested` list in `selectTab` that skips the `tabPress` emission.
+6b. **Completing a booking already resets the flow** (`book/review.tsx:96-98`: `router.dismissAll()` pops the Book stack to its first screen, then `router.navigate("/home?booked=…")`), and the existing e2e `tests/e2e/booking.web.spec.ts:118` ("The booking flow was reset: Book starts over instead of showing the old review screen") covers it. Nothing is preselected on return: the first screen holds no state. **No code change is needed**; Task 3 adds an explicit assertion that Book is at its first screen after a completed booking and that a Book → Home → Book trip resumes mid-flow. If either assertion fails, fix `review.tsx` there (the order allows it) and say so.
+6c. **The first Book screen is the professional list, not the service list** (`book/index.tsx` redirects to `/book/professional?shopId=…`; the steps are professional → service → date → time → review). The brief's "starts at the service step" is read as "starts at the first step".
 7. **The colour-wheel "taps work, drag does not" pattern has a specific meaning in the picker's code:** every panel/slider calls its update function in `onBegin` (touch down), then `onUpdate` while panning; `Gesture.Exclusive(pan, tap, longPress)`. A tap therefore always moves the thumb; a drag that moves nothing means the **Pan never activates** — something else holds the touch. See Task 4.
 
 ## Open questions for the orchestrator
 
-1. **Which OS was the wheel tested on in Expo Go (iOS, Android, both)?** The nested-`Pressable` hypothesis and the Modal-root-view hypothesis behave differently per platform; the device checklist in Task 4 asks the user to note it.
-2. **Tapping Book mid-flow restarts the booking flow** (the flow state lives in the URL/params of the nested stack). That is the standard meaning of "tap the active tab" and the user asked for it; flagging it because a customer could lose a half-made booking with one tap.
+1. **DECIDED (user): the wheel was tested on ANDROID in Expo Go.** The checklist in Task 4 is Android-first (the classic failure there is RN `Modal` + gesture-handler); iOS steps are optional.
+2. **DECIDED (user): a half-made booking is kept.** Tapping Book while inside the flow does nothing (as today); Book → Home → Book resumes; a completed booking returns to Home with the flow reset (already the case, finding 6b).
 3. **If the wheel still does not drag after steps 1–2 of Task 4,** the next move (inline panel instead of a pop-up, or a wheel built without gesture-handler) changes the look/behaviour and needs the user's decision; the plan stops there and reports.
-4. **Task 2 changes `selectTab`'s signature** (from `(state, navigateToTab, name)` to `({ emitter, navigateToTab, state }, name)`); it has three callers, all updated in the same commit.
+4. **Task 2 changes `selectTab`'s signature** (from `(state, navigateToTab, name)` to `({ emitter, navigateToTab, state }, name, keepNested?)`); it has three callers, all updated in the same commit.
 
 ## Global Constraints
 
 - `DateField`: one bordered box, same look as an `Input` (`h-input-height` = 52px, `rounded-xl`, `border border-neutral-200`, `bg-surface`); date centred; arrows **inside** at the left/right edges as ghost buttons (no own border), each **44px** tap target; tapping the date opens the calendar pop-up; keep `step`, `min`/`max` (arrow dimmed + disabled when its step leaves the range), `disabledDates`, testIDs `<id>`, `<id>-prev`, `<id>-next`, and the a11y labels. Only the owner Agenda uses it.
-- Colour wheel: tap-outside-closes, X top-right, Done, centred card (project pop-up style) all stay. **Not verifiable in Jest or the browser**; the PR says "restructured, needs Expo Go test", never "fixed".
-- Tab press: tapping the **active** tab returns its nested stack to the root; other tabs keep switching exactly as before; never `preventDefault()` the event.
+- Colour wheel (Android, Expo Go): tap-outside-closes, X top-right, Done, centred card (project pop-up style) all stay. **Not verifiable in Jest or the browser**; the PR says "restructured, needs Expo Go test", never "fixed".
+- Tab press: tapping the **active** tab returns its nested stack to the root, **except tabs listed in `keepNested` (customer Book)**, which are left exactly where they are; other tabs keep switching exactly as before; never `preventDefault()` the event.
 - Project conventions: no hard-coded text; colours by tokens; `className` only on plain RN elements; tests in `tests/unit/*.test.ts` with `React.createElement` and async `render`; Playwright with the system Chrome and `.env.local` moved aside (see `reference_local_dev_gotchas`).
 - **Gate per task:** `npm run typecheck`, `./node_modules/.bin/eslint app src tests scripts`, the Jest files named (read the `Test Suites:` line, not only `Tests:`; a suite that fails to run shows there). **Final gate (Task 5):** `npm run typecheck`, ROOT `npm run lint` (read the real output and exit code; `npm run lint; echo exit=$?`, never `| tail`), whole `npx jest --runInBand`, whole Playwright suite, **all re-run after the last commit**, then browser screenshots.
 
@@ -45,8 +48,8 @@
 | `tests/unit/date-field.test.ts` (modify) | structure tests added; behaviour tests unchanged |
 | `src/lib/navigation/select-tab.ts` (modify) | emit `tabPress`, navigate unless prevented / focused |
 | `tests/unit/select-tab.test.ts` (modify) | new signature and the four behaviours |
-| `app/(owner)/_layout.tsx`, `app/(professional)/_layout.tsx`, `app/(customer)/(tabs)/_layout.tsx` (modify) | pass `{ emitter, navigateToTab, state }` |
-| `tests/e2e/tab-press-root.web.spec.ts` (new) | professional Profile + Clients, customer Book, owner unchanged |
+| `app/(owner)/_layout.tsx`, `app/(professional)/_layout.tsx`, `app/(customer)/(tabs)/_layout.tsx` (modify) | pass `{ emitter, navigateToTab, state }`; the customer layout also passes `["book"]` as `keepNested` |
+| `tests/e2e/tab-press-root.web.spec.ts` (new) | professional Profile + Clients, customer Book kept / resumed / reset after a booking, owner unchanged |
 | `src/components/domain/ColorWheelPopup.tsx` (modify) | sibling backdrop, plain-`View` card, start colour fixed at open |
 | `tests/unit/color-wheel-popup.test.ts` (modify) | structure + fixed start colour |
 | `docs/superpowers/plans/2026-11-19-feedback-2-fixes.md` | this plan (device checklist in Task 4) |
@@ -178,14 +181,14 @@ git commit -m "fix(ui): DateField is a single box with the arrows inside" -m "Co
 
 **Interfaces:**
 - Consumes: the `tabBar` props of expo-router's `Tabs` and `TopTabs`: `emitter.emit({ type: "tabPress", target: routeKey, canPreventDefault: true })` returns `{ defaultPrevented: boolean }`; `navigateToTab(routeKey)`; `state.index`, `state.routes[]`.
-- Produces: `selectTab(tabBar: { emitter: TabPressEmitter; navigateToTab: (routeKey: string) => void; state: TabState }, name: string): void` where
+- Produces: `selectTab(tabBar: { emitter: TabPressEmitter; navigateToTab: (routeKey: string) => void; state: TabState }, name: string, keepNested?: readonly string[]): void` where
 
   ```ts
   type TabState = { index: number; routes: { key: string; name: string }[] };
   type TabPressEmitter = { emit: (event: { canPreventDefault: true; target: string; type: "tabPress" }) => { defaultPrevented: boolean } };
   ```
 
-  Behaviour: unknown `name` → nothing. Otherwise emit `tabPress` for that route; then call `navigateToTab(route.key)` only if the event was not prevented **and** `route.key` is not the focused route's key.
+  Behaviour: unknown `name` → nothing. If `name` is in `keepNested` → emit nothing (no pop), and call `navigateToTab(route.key)` only if that route is not already focused. Otherwise emit `tabPress` for that route; then call `navigateToTab(route.key)` only if the event was not prevented **and** `route.key` is not the focused route's key.
 
 - [ ] **Step 1: Write the failing tests** — replace `tests/unit/select-tab.test.ts`:
 
@@ -236,6 +239,32 @@ describe("selectTab", () => {
     expect(navigateToTab).not.toHaveBeenCalled();
   });
 
+  it("a tab that keeps its nested state emits no tabPress, so a half-made flow is not popped, but it still opens from another tab", () => {
+    const { emit, navigateToTab, tabBar } = bar(0);
+
+    selectTab(tabBar, "book", ["book"]);
+
+    expect(emit).not.toHaveBeenCalled();
+    expect(navigateToTab).toHaveBeenCalledWith("book-def");
+  });
+
+  it("pressing a keep-nested tab that is already focused does nothing at all", () => {
+    const { emit, navigateToTab, tabBar } = bar(1);
+
+    selectTab(tabBar, "book", ["book"]);
+
+    expect(emit).not.toHaveBeenCalled();
+    expect(navigateToTab).not.toHaveBeenCalled();
+  });
+
+  it("the keep list does not affect the other tabs", () => {
+    const { emit, tabBar } = bar(2);
+
+    selectTab(tabBar, "profile", ["book"]);
+
+    expect(emit).toHaveBeenCalledWith({ canPreventDefault: true, target: "profile-ghi", type: "tabPress" });
+  });
+
   it("does nothing for a name that is not a tab", () => {
     const { emit, navigateToTab, tabBar } = bar();
 
@@ -261,18 +290,31 @@ type TabPressEmitter = { emit: (event: { canPreventDefault: true; target: string
 // A custom tab bar must do what the stock bars do (BottomTabBar.js / MaterialTopTabBar.js in expo-router): emit `tabPress` first. A
 // nested stack inside the tab listens for it and pops to its root when its tab is pressed while already focused. Never call
 // preventDefault() on the event: that cancels the pop. The bar items are keyed by route name, navigation by route key.
-export function selectTab({ emitter, navigateToTab, state }: { emitter: TabPressEmitter; navigateToTab: (routeKey: string) => void; state: TabState }, name: string) {
+// `keepNested` lists tabs whose nested stack must NOT pop when the tab is pressed while focused (the customer's Book flow keeps a
+// half-made booking). They skip the event instead of preventing it: a prevented press would also stop the tab from opening.
+export function selectTab(
+  { emitter, navigateToTab, state }: { emitter: TabPressEmitter; navigateToTab: (routeKey: string) => void; state: TabState },
+  name: string,
+  keepNested: readonly string[] = [],
+) {
   const route = state.routes.find((candidate) => candidate.name === name);
 
   if (!route) return;
+  const focused = route.key === state.routes[state.index]?.key;
+
+  if (keepNested.includes(name)) {
+    if (!focused) navigateToTab(route.key);
+
+    return;
+  }
   const event = emitter.emit({ canPreventDefault: true, target: route.key, type: "tabPress" });
 
   // Like the stock bar: the focused tab is not navigated to again, and a prevented press does not navigate.
-  if (route.key !== state.routes[state.index]?.key && !event.defaultPrevented) navigateToTab(route.key);
+  if (!focused && !event.defaultPrevented) navigateToTab(route.key);
 }
 ```
 
-Callers (same commit). Owner and professional layouts: change `tabBar={({ navigateToTab, state }) => (` to `tabBar={({ emitter, navigateToTab, state }) => (` and `onSelect={(key) => selectTab(state, navigateToTab, key)}` to `onSelect={(key) => selectTab({ emitter, navigateToTab, state }, key)}`. Customer `(tabs)/_layout.tsx` (a `TopTabs`): the same two changes (its `onSelect` is spread over lines: keep the layout, replace the call). If `tsc` rejects passing expo-router's `emitter` to the structural `TabPressEmitter` (its `emit` is generic over the event map), type the parameter as `Pick<BottomTabBarProps, "emitter" | "navigateToTab" | "state"> | Pick<MaterialTopTabBarProps, "emitter" | "navigateToTab" | "state">` with `import type { BottomTabBarProps } from "expo-router"` / `import type { MaterialTopTabBarProps } from "expo-router/js-top-tabs"` (both are re-exported: `build/layouts/Tabs.d.ts:6`, `build/layouts/TopTabs.d.ts:4`), keeping the same body.
+Callers (same commit). Owner and professional layouts: change `tabBar={({ navigateToTab, state }) => (` to `tabBar={({ emitter, navigateToTab, state }) => (` and `onSelect={(key) => selectTab(state, navigateToTab, key)}` to `onSelect={(key) => selectTab({ emitter, navigateToTab, state }, key)}`. Customer `(tabs)/_layout.tsx` (a `TopTabs`): the same two changes, and the call becomes `selectTab({ emitter, navigateToTab, state }, key, KEEP_NESTED)` with `const KEEP_NESTED = ["book"] as const;` at the top of the file and a one-line comment ("the booking flow keeps a half-made booking; a completed one resets itself in book/review.tsx"). Its `onSelect` is spread over lines: keep the layout, replace the call. If `tsc` rejects passing expo-router's `emitter` to the structural `TabPressEmitter` (its `emit` is generic over the event map), type the parameter as `Pick<BottomTabBarProps, "emitter" | "navigateToTab" | "state"> | Pick<MaterialTopTabBarProps, "emitter" | "navigateToTab" | "state">` with `import type { BottomTabBarProps } from "expo-router"` / `import type { MaterialTopTabBarProps } from "expo-router/js-top-tabs"` (both are re-exported: `build/layouts/Tabs.d.ts:6`, `build/layouts/TopTabs.d.ts:4`), keeping the same body.
 
 - [ ] **Step 4: Run the tests and the neighbours**
 
@@ -294,7 +336,7 @@ git commit -m "fix(nav): tapping the active tab pops its nested stack to the roo
 **Files:**
 - Create: `tests/e2e/tab-press-root.web.spec.ts`
 
-Reuse the mocks of `tests/e2e/professional-clients.web.spec.ts` (`signIn`, `professionalProfile`, `mockProfessionalRest`, `clientRows`, the `get_my_customer` handler), `tests/e2e/booking.web.spec.ts` (`mockCustomerRest` with the `professional_services` handler) and `tests/e2e/owner-shell.web.spec.ts` (`signInAsOwner`, `mockOwnerRest`): copy the small helpers you need into the new file (specs do not share helpers across files except `customer-helpers.ts`, `fixtures.ts`).
+`bookingHandler` in the customer tests is the `RestHandler` that answers `/professional_services` (copy it from `booking.web.spec.ts`'s `bookingRest`) and `/rpc/get_available_slots` (the `slot` constant there: `local_date`, `local_time`, `starts_at`, `ends_at`); `appointmentRow` comes from `customer-helpers.ts`. Reuse the mocks of `tests/e2e/professional-clients.web.spec.ts` (`signIn`, `professionalProfile`, `mockProfessionalRest`, `clientRows`, the `get_my_customer` handler), `tests/e2e/booking.web.spec.ts` (`mockCustomerRest` with the `professional_services` handler) and `tests/e2e/owner-shell.web.spec.ts` (`signInAsOwner`, `mockOwnerRest`): copy the small helpers you need into the new file (specs do not share helpers across files except `customer-helpers.ts`, `fixtures.ts`).
 
 - [ ] **Step 1: Write the tests** (they fail on `main`-plus-Task-1 because the tab press does nothing; run first to see them red)
 
@@ -349,15 +391,9 @@ test("professional: the other tabs still switch (Agenda -> Clients -> Profile)",
   await expect(page).toHaveURL(/\/my-profile$/);
 });
 
-test("customer: tapping the active Book tab mid-flow returns to the first step; the other tabs are unchanged", async ({ page }) => {
+test("customer: tapping the active Book tab mid-flow leaves the booking where it is", async ({ page }) => {
   await signInAsCustomer(page);
-  await mockCustomerRest(page, async (route, url) => {
-    if (url.pathname.endsWith("/professional_services")) {
-      await json(route, [{ duration_override_minutes: null, id: professionalServiceId, price_override_cents: null, service_id: "service-1", services: { duration_minutes: 30, name: "Browser Cut", price_cents: 4000 } }]);
-
-      return true;
-    }
-  });
+  await mockCustomerRest(page, bookingHandler);
 
   await page.goto("/book");
   await page.getByRole("button", { name: "Browser Professional" }).click();
@@ -365,13 +401,67 @@ test("customer: tapping the active Book tab mid-flow returns to the first step; 
 
   await page.getByTestId("tab-book").click();
 
-  await expect(page).toHaveURL(/\/book$/);
-  await expect(page.getByRole("button", { name: "Browser Professional" })).toBeVisible();
+  await expect(page).toHaveURL(/\/book\/service/);
+  await expect(page.getByRole("button", { name: "Browser Cut" })).toBeVisible();
+});
+
+test("customer: Book -> Home -> Book resumes the half-made booking; the other tabs are unchanged", async ({ page }) => {
+  await signInAsCustomer(page);
+  await mockCustomerRest(page, bookingHandler);
+
+  await page.goto("/book");
+  await page.getByRole("button", { name: "Browser Professional" }).click();
+  await page.getByRole("button", { name: "Browser Cut" }).click();
+  await expect(page.getByTestId("month-calendar-title")).toBeVisible();
+
+  await page.getByTestId("tab-home").click();
+  await expect(page).toHaveURL(/\/home$/);
+  await page.getByTestId("tab-book").click();
+
+  // Resumed on the date step it was left on, with the choices still in the URL.
+  await expect(page).toHaveURL(/\/book\/date/);
+  await expect(page.getByTestId("month-calendar-title")).toBeVisible();
 
   await page.getByTestId("tab-profile").click();
   await expect(page).toHaveURL(/\/profile$/);
-  await page.getByTestId("tab-home").click();
-  await expect(page).toHaveURL(/\/home$/);
+});
+
+test("customer: a completed booking returns to Home and the next visit to Book starts at the first step with nothing chosen", async ({ page }) => {
+  let booked = false;
+
+  await signInAsCustomer(page);
+  await mockCustomerRest(page, async (route, url) => {
+    if (url.pathname.endsWith("/rpc/book_appointment")) {
+      booked = true;
+      await json(route, [appointmentRow()]);
+
+      return true;
+    }
+    if (url.pathname.endsWith("/appointments")) {
+      await json(route, booked ? [appointmentRow()] : []);
+
+      return true;
+    }
+
+    return bookingHandler(route, url);
+  });
+
+  await page.goto("/book");
+  await page.getByRole("button", { name: "Browser Professional" }).click();
+  await page.getByRole("button", { name: "Browser Cut" }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "09:00" }).click();
+  await page.getByTestId("book-time-continue").click();
+  await page.getByRole("button", { name: "Confirm booking" }).click();
+
+  await expect(page).toHaveURL(/\/home/);
+  await page.getByTestId("tab-book").click();
+
+  // First step (the professional list), no old review/date/time screen, no choice carried over in the URL.
+  await expect(page.getByRole("button", { name: "Browser Professional" })).toBeVisible();
+  await expect(page).toHaveURL(/\/book\/professional/);
+  await expect(page).not.toHaveURL(/professionalServiceId|startsAt|localDate/);
+  await expect(page.getByRole("button", { name: "Confirm booking" })).not.toBeVisible();
 });
 
 test("owner: the Manage tab still returns from a Manage screen, and Account from Settings", async ({ page }) => {
@@ -397,7 +487,7 @@ test("owner: the Manage tab still returns from a Manage screen, and Account from
 - [ ] **Step 2: Run them**
 
 `npm run e2e:export`, then `npx playwright test tests/e2e/tab-press-root.web.spec.ts --config playwright.chrome.config.ts`.
-Expected after Task 2 is in the build: the three "returns to the root" assertions PASS; the "other tabs still switch" and owner tests PASS. To see them red once, run the same spec against an export built from the commit before Task 2 (`git stash` is not allowed here: use `git worktree add ../zenc-before <commit>` or temporarily check out the previous commit on a scratch branch) and record "fails without the fix" in the PR description.
+Expected after Task 2 is in the build: the two professional "returns to the root" assertions PASS; the customer Book tests (kept mid-flow, resumed after Home, reset after a completed booking), the "other tabs still switch" and the owner tests PASS. The customer Book tests also pass on `main` (they pin behaviour that must not change); only the professional ones are red without the fix. To see them red once, run the same spec against an export built from the commit before Task 2 (`git stash` is not allowed here: use `git worktree add ../zenc-before <commit>` or temporarily check out the previous commit on a scratch branch) and record "fails without the fix" in the PR description.
 
 - [ ] **Step 3: Gate and commit**
 
@@ -547,16 +637,18 @@ Notes for the implementer: (a) the repo's ESLint has no `react-hooks` plugin, so
 Run: `npx jest tests/unit/color-wheel-popup.test.ts tests/unit/color-field.test.ts tests/unit/locale-parity.test.ts tests/unit/no-hardcoded-text.test.ts`
 Expected: PASS. Then `npm run e2e:export` and `npx playwright test tests/e2e/owner-appearance.web.spec.ts --config playwright.chrome.config.ts` (the browser drag test from PR D must still pass: this restructure must not break the web, where the wheel already works). Check by screenshot (390×844) that the pop-up is still centred with the X top-right, and that a tap on the dimmed area closes it while a tap on the card does not.
 
-- [ ] **Step 5: Device isolation checklist — to be run by the USER in Expo Go; record the answers in the PR**
+- [ ] **Step 5: Device isolation checklist — to be run by the USER in Expo Go on ANDROID; record the answers in the PR**
 
-Ask the user to test in this order and stop at the first that works, writing down iOS/Android and the result of each:
+The user's device is Android. On Android the classic failure for this exact setup is **React Native `Modal` + gesture-handler**: a `Modal` renders in its own native window, outside the app's root `GestureHandlerRootView`, so a gesture inside it only works if the Modal's content has its own root view (ours does: `ColorWheel` wraps the picker in one) and nothing in the Modal's own view tree intercepts the drag. Run the steps in order and stop at the first that works; write down the Android version, the device and the result of each:
 
   A. **This commit (restructure).** Appearance → Primary → "Other colour": drag the wheel thumb and the brightness thumb without lifting the finger. Expected if the nested-`Pressable` hypothesis was right: the thumb follows the finger.
-  B. **If A fails: drop our extra root view.** Change `src/components/ui/ColorWheel.tsx` to return the `ColorPicker` without the surrounding `GestureHandlerRootView` (the picker renders its own, `ColorPicker.js`), run again.
-  C. **If B fails: take the `Modal` out of the equation.** Add a temporary route `app/zz-wheel.tsx` rendering `<ColorWheel value="#DB9A34" onChange={() => undefined} />` directly in a screen (no `Modal`, no `Pressable`), open it on the phone. If it drags there, the `Modal` (its separate native window and root view) is the problem; if it does not, the problem is gesture-handler 3.3.0 / the picker with the legacy `Gesture.*` API on that device. (Delete the route afterwards; never commit it.)
-  D. **Decision point, not a coding step:** report C's result to the orchestrator. If the `Modal` is the problem: an inline panel on the Appearance screen instead of a pop-up (changes the agreed pop-up style: needs the user's OK). If gesture-handler is the problem: a wheel/sliders built on React Native's own `PanResponder` (no gesture-handler), or pin another gesture-handler version: also the user's call.
+  B. **If A fails: drop our extra root view.** Change `src/components/ui/ColorWheel.tsx` to return the `ColorPicker` without the surrounding `GestureHandlerRootView` (the picker renders its own, `ColorPicker.js`): two nested roots in one Modal is the other candidate for Android. Run again.
+  C. **If B fails: no `Modal` at all.** Replace the `Modal` in `ColorWheelPopup.tsx` by an absolutely positioned full-screen overlay `View` rendered inside the Appearance screen (same backdrop sibling + card; `className="absolute inset-0"`), so the wheel lives in the app's own gesture root. This keeps the agreed pop-up look (centred card, X, tap outside closes) and is the usual Android workaround. Run again. (It needs `ColorField` to render the overlay at the screen level or inside the screen's root view; confirm with a screenshot that it covers the tab bar or not, and tell the user which.)
+  D. **If C fails: isolate.** Add a temporary route `app/zz-wheel.tsx` rendering `<ColorWheel value="#DB9A34" onChange={() => undefined} />` in a plain screen (no `Modal`, no `Pressable`), open it on the phone, and delete it afterwards (never commit it). If it drags there, something in our pop-up tree still interferes; if it does not, the problem is gesture-handler 3.3.0 with the picker's legacy `Gesture.*` API on that device.
+  E. **Decision point, not a coding step:** report D's result. If gesture-handler is the problem: a wheel/sliders on React Native's own `PanResponder` (no gesture-handler) or another gesture-handler version: the user's call.
+  F. **Optional, only if the user also has an iPhone:** repeat A on iOS and report; do not spend effort on iOS-specific steps unless it fails there too.
 
-**State plainly in the PR and in the report: this item was restructured and covered by unit tests of the new structure, and works in the browser as before; it was NOT verified on a device. It must not be described as fixed until the user's Expo Go test passes.**
+**State plainly in the PR and in the report: this item was restructured and covered by unit tests of the new structure, and works in the browser as before; it was NOT verified on a device. It must not be described as fixed until the user's Android Expo Go test passes.**
 
 - [ ] **Step 6: Gate and commit**
 
@@ -583,9 +675,9 @@ Expected: typecheck_exit=0, lint_exit=0 (read the real output), jest_exit=0 with
 - [ ] **Step 2: Browser verification** (system Chrome, `.env.local` moved aside and restored, mobile width 390×844, screenshots outside the repo and viewed):
   - Owner Agenda: the single-box `DateField` in day, week and month view (computed styles from Task 1 Step 5), and its calendar pop-up still opening from the date.
   - Professional: Profile → Settings → tap Profile (hub), Clients → client → tap Clients (list).
-  - Customer: Book → a step → tap Book (first step).
+  - Customer: Book → a step → tap Book (stays on that step); Book → Home → Book (resumes); complete a booking → Home → Book (first step, nothing chosen).
   - Appearance: the wheel pop-up still centred, tap outside closes, drag works in the browser.
 
-- [ ] **Step 3: Report honestly.** The final report states, per item: (1) done and verified in Jest and the browser; (3) done and verified in Jest and the browser (web uses the same JS tab bar and stack code as the phones, but a device pass is still advisable: tap the active Profile/Clients/Book tab on the phone); (2) **restructured only, NOT verified on a device**, with the Task 4 Step 5 checklist for the user. Mention which Playwright specs failed without the fix (Task 3 Step 2).
+- [ ] **Step 3: Report honestly.** The final report states, per item: (1) done and verified in Jest and the browser; (3) done and verified in Jest and the browser for professional Profile/Clients; customer Book intentionally keeps a half-made booking and still resets after a completed booking (web uses the same JS tab bar and stack code as the phones, but a device pass is still advisable: tap the active Profile/Clients tab on the phone, and check Book mid-flow stays put); (2) **restructured only, NOT verified on a device**, with the Task 4 Step 5 checklist for the user. Mention which Playwright specs failed without the fix (Task 3 Step 2).
 
 - [ ] **Step 4: Hand off** — push, open the PR, bind with `get_status`/`bind_pr`, turn on Auto-fix, never auto-merge (only when ordered; this plan itself does not push).

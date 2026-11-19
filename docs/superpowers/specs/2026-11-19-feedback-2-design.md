@@ -26,7 +26,7 @@ Only the owner Agenda uses it today.
 
 ### 2. Colour wheel does not drag in Expo (native)
 
-In Expo Go the colour wheel and the brightness slider react to **taps** but not to a free **drag**. In the browser
+On **Android** (Expo Go; confirmed by the user) the colour wheel and the brightness slider react to **taps** but not to a free **drag**. In the browser
 (phone and PC) both work. The cause is **unknown** and only reproducible on a device.
 
 What the code shows (read, not run):
@@ -47,8 +47,7 @@ Plan of attack, cheapest first, stopping at the first one the user's Expo Go tes
 1. Restructure the pop-up: the backdrop is a **sibling** `Pressable` behind the card; the card is a plain `View` with no
    touch handlers; the wheel is given its colour **once at open** (not re-fed from the hex field).
 2. If it still fails: drop our extra `GestureHandlerRootView` (the picker has its own).
-3. If it still fails: render the picker **outside the `Modal`** (a temporary screen) to learn whether the `Modal` is the
-   problem; then decide with the user (inline panel instead of a pop-up, or a wheel built without gesture-handler).
+3. If it still fails: take the `Modal` out (an absolutely positioned overlay inside the screen's own gesture root, same look), then render the picker in a bare temporary screen to isolate; then decide with the user (a wheel built without gesture-handler). On Android the classic failure is RN `Modal` + gesture-handler, so the Android checks come first; iOS is optional.
 
 **This item cannot be verified in Jest or the browser** (the browser already works): it needs the user's Expo Go test.
 The PR must say "restructured, awaiting device test", never "fixed".
@@ -56,8 +55,8 @@ The PR must say "restructured, awaiting device test", never "fixed".
 ### 3. Tapping the active tab goes back to that tab's root
 
 Today, on the professional **Profile** tab, after opening Settings (`my-profile/settings`, a screen of a nested stack),
-tapping the highlighted Profile icon does nothing. Same for the professional **Clients** tab (`clients/[id]`) and for the
-customer **Book** flow (`book/service` … `book/review`).
+tapping the highlighted Profile icon does nothing. Same for the professional **Clients** tab (`clients/[id]`). The customer **Book** flow
+(`book/service` … `book/review`) has the same nested stack but is **deliberately excluded** (see below).
 
 Cause (verified in `node_modules/expo-router/build`): a nested stack pops to its root when the parent tab navigator emits
 `tabPress` for its route and nobody calls `preventDefault()`
@@ -73,14 +72,14 @@ was not prevented **and** the tab is not already focused (the stock bar's behavi
 Behaviour per role afterwards:
 
 - professional: Profile and Clients tabs return to their roots; Agenda and Earnings (no nested stack) unchanged;
-- customer: Book returns to its first step (the flow lives in the URL, so tapping Book mid-flow restarts it — that is
-  the standard "tap the active tab" meaning); Home, Agenda and Profile unchanged;
+- customer: **Book is excluded** (user, verbatim: "se o agendamento estiver na metade, salve o status, concluído deve voltar para a home com fluxo reiniciado para que possa começar um novo se desejado"): tapping Book while inside the flow leaves it where it is; leaving to another tab and coming back resumes it (the nested stack keeps its state, which is the booking state); a **completed** booking returns to Home and the flow is reset (already so: `book/review.tsx` does `router.dismissAll()` then navigates to `/home?booked=…`; covered by `booking.web.spec.ts`). The exclusion is an explicit `keepNested` list passed to `selectTab` by the customer layout (`["book"]`), not `preventDefault()` (which would also stop the tab from opening from another tab). Home, Agenda and Profile unchanged;
 - owner: unchanged — its tab items already navigate to sibling routes (`highlight` in `app/(owner)/_layout.tsx`), and the
   event is emitted for the **target** route, which is never the focused one there.
 
 ## Decisions
 
-- One PR, three independent commits-by-task; item 2 is shipped as a restructure plus a device checklist, not as a fix.
+- One PR, three independent commits-by-task; item 2 is shipped as a restructure plus an Android device checklist, not as a fix.
+- A half-made customer booking is never discarded by a tab press (user decision, 2026-11-19).
 - No new dependency, no SQL.
 - `DateField` keeps its public props; only its markup changes.
 
@@ -93,10 +92,10 @@ gesture-handler itself and the user agrees), changing what the Book flow remembe
 
 - Jest/RNTL: `DateField` structure (one box containing both arrows and the date, tap targets, disabled state);
   `selectTab` (emits `tabPress`, navigates when not prevented, does not when prevented, does not re-navigate to the
-  focused tab, unknown name does nothing); `ColorWheelPopup` structure (backdrop is a sibling, card has no handlers,
+  focused tab, a `keepNested` tab emits nothing but still opens from another tab, unknown name does nothing); `ColorWheelPopup` structure (backdrop is a sibling, card has no handlers,
   wheel colour fixed at open).
 - Playwright (web, mobile width): professional Profile → Settings → tap Profile → hub; professional Clients →
-  client → tap Clients → list; customer Book → step 2 → tap Book → step 1; owner tab bar unchanged; `DateField`
+  client → tap Clients → list; customer Book mid-flow → tap Book → still mid-flow; Book → Home → Book → resumes; completed booking → Home → Book → first step with nothing chosen; owner tab bar unchanged; `DateField`
   screenshot with computed-style checks (single border, arrows inside).
-- Colour wheel on device: **manual**, by the user in Expo Go (checklist in the plan).
+- Colour wheel on device: **manual**, by the user in Expo Go on Android (checklist in the plan).
 - Gates: typecheck, ROOT `npm run lint`, whole Jest suite, whole Playwright suite, re-run after the last commit.
