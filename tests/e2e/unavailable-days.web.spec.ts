@@ -15,9 +15,13 @@ async function answerUnavailable(page: Page, dates: string[], requests: Array<Re
   });
 }
 
-// Shows the month of `date` (the window is today + 30 days, so it can be next month).
+// Shows the month of `date` (the window is today + 30 days, so it can be next month): the page of a month that is not in view is aria-hidden.
 async function showDay(page: Page, date: string) {
-  if (!(await page.getByTestId(`month-calendar-day-${date}`).isVisible())) await page.getByTestId("month-calendar-next").click();
+  await expect(page.getByTestId("month-calendar-title")).toBeVisible();
+  const monthPage = page.getByTestId(`month-page-${date.slice(0, 7)}`);
+
+  await expect(monthPage).toBeAttached();
+  if ((await monthPage.getAttribute("aria-hidden")) === "true") await page.getByTestId("month-calendar-next").click();
   await expect(page.getByTestId(`month-calendar-day-${date}`)).toBeVisible();
 }
 
