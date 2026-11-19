@@ -67,6 +67,7 @@ export default function OwnerShopScreen() {
   });
   const refreshClosures = () => {
     void queryClient.invalidateQueries({ queryKey: ["owner-schedule"] });
+    void queryClient.invalidateQueries({ queryKey: ["unavailable-dates"] });
     void queryClient.invalidateQueries({ queryKey: ["owner-agenda"] });
   };
   const closeShop = useMutation({

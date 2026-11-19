@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { View } from "react-native";
 
-import { MonthCalendar } from "../../../../src/components/domain/MonthCalendar";
 import { ScreenHeader } from "../../../../src/components/domain/ScreenHeader";
 import { StepIndicator } from "../../../../src/components/domain/StepIndicator";
 import { Button } from "../../../../src/components/ui/Button";
@@ -11,6 +10,7 @@ import { formatInstantInShopTime } from "../../../../src/lib/dates/shop-time";
 import { Screen } from "../../../../src/components/ui/Screen";
 import { useBack } from "../../../../src/lib/navigation/use-back";
 import { useNow } from "../../../../src/lib/use-now";
+import { AvailabilityCalendar } from "../../../../src/features/availability/AvailabilityCalendar";
 import { useBookingShopId } from "../../../../src/features/booking/use-booking-shop-id";
 
 function param(value: string | string[] | undefined) {
@@ -36,7 +36,7 @@ export default function BookDateScreen() {
           <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("book.dateTitle")} />
         </View>
         <StepIndicator current="date" ids={{ professionalId, professionalServiceId, shopId }} />
-        <MonthCalendar onSelectDate={setLocalDate} selectedDate={localDate} today={today} />
+        <AvailabilityCalendar onSelectDate={setLocalDate} professionalId={professionalId} selectedDate={localDate} today={today} />
         <View className="w-full max-w-[420px]">
           <Button
             label={t("book.continue")}
