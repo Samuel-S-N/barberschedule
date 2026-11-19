@@ -89,4 +89,34 @@ describe("useAvailabilitySelection", () => {
 
     expect(useUnavailableDates).toHaveBeenLastCalledWith("p1", "2026-10");
   });
+
+  it("today unavailable: swiping two months away keeps today cleared and Continue disabled, and swiping back keeps it so", async () => {
+    // The visible window (month +-1) no longer holds today's month after two swipes; the hook must not depend on it for the decision.
+    jest.mocked(useUnavailableDates).mockImplementation((_professional, month) => (month === "2026-09" || month === "2026-08" || month === "2026-10" ? [TODAY] : []));
+    const { rerender, result } = await renderHook(() => useAvailabilitySelection("p1", TODAY, jest.fn()));
+
+    expect(result.current.calendar.selectedDate).toBe("");
+    expect(result.current.canContinue).toBe(false);
+
+    result.current.calendar.onVisibleMonthChange("2026-10");
+    await rerender({});
+    result.current.calendar.onVisibleMonthChange("2026-11");
+    await rerender({});
+    result.current.calendar.onVisibleMonthChange("2026-12");
+    await rerender({});
+
+    expect(useUnavailableDates).toHaveBeenCalledWith("p1", "2026-09");
+    expect(useUnavailableDates).toHaveBeenLastCalledWith("p1", "2026-12");
+    expect(result.current.calendar.selectedDate).toBe("");
+    expect(result.current.canContinue).toBe(false);
+    // Dimming still follows the month in view.
+    expect(result.current.calendar.unavailableDates).toEqual([]);
+
+    result.current.calendar.onVisibleMonthChange("2026-09");
+    await rerender({});
+
+    expect(result.current.calendar.selectedDate).toBe("");
+    expect(result.current.canContinue).toBe(false);
+    expect(result.current.calendar.unavailableDates).toEqual([TODAY]);
+  });
 });

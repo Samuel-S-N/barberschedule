@@ -9,8 +9,11 @@ import { useUnavailableDates } from "./use-unavailable-dates";
 export function useAvailabilitySelection(professionalId: string | undefined, localDate: string, onChange: (date: string) => void) {
   const [month, setMonth] = useState(localDate.slice(0, 7));
   const [picked, setPicked] = useState(false);
+  // The blocked decision reads the month the step OPENED on (same query keys as the opening window, so no extra request and it stays
+  // cached while swiping); the dimming reads the month in view. Swiping two months away must not "unblock" an unavailable opening day.
+  const opening = useUnavailableDates(professionalId ?? "", localDate.slice(0, 7));
   const unavailableDates = useUnavailableDates(professionalId ?? "", month);
-  const blocked = !picked && unavailableDates.includes(localDate);
+  const blocked = !picked && opening.includes(localDate);
 
   return {
     calendar: {
