@@ -8,6 +8,7 @@ import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Input, useFieldChain } from "../../src/components/ui/Input";
 import { Screen } from "../../src/components/ui/Screen";
+import { Wordmark } from "../../src/components/domain/Wordmark";
 import { signInWithPassword } from "../../src/features/auth/api";
 import { useCurrentShop } from "../../src/features/shops/CurrentShopProvider";
 import { errorMessage } from "../../src/i18n/errors";
@@ -46,9 +47,10 @@ export default function LoginScreen() {
 
   return (
     <Screen className="flex-1 bg-canvas">
-      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
+      <KeyboardAwareScrollView bottomOffset={24} className="flex-1" contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }} keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
+            <Wordmark />
             <Text accessibilityRole="header" className="text-3xl leading-[44px] font-display-bold text-ink">{t("auth.login.title")}</Text>
             <Text className="text-base font-sans text-neutral-600">{bare ? `${t("shopGate.bareTitle")}. ${t("shopGate.staffLoginHint")}` : t("auth.login.subtitle")}</Text>
             <Input {...field(0)} autoCapitalize="none" autoComplete="email" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" label={t("common.email")} onChangeText={setEmail} placeholder={t("examples.email")} testID="login-email" value={email} />

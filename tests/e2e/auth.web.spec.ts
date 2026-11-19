@@ -217,3 +217,21 @@ test("opening /reset-password with an ordinary session does not offer the form",
   await page.goto("/reset-password");
   await expect(page.getByRole("heading", { name: "Invalid link" })).toBeVisible();
 });
+
+test("the login form is centred vertically, shows the Zenc wordmark and a password eye", async ({ page }) => {
+  await page.setViewportSize({ height: 844, width: 390 });
+  await page.goto("/login");
+  const wordmark = page.getByTestId("wordmark");
+
+  await expect(wordmark).toBeVisible();
+  const email = await page.getByTestId("login-email").boundingBox();
+  const top = (await wordmark.boundingBox())!.y;
+
+  // Not stuck at the top: the wordmark starts well below the top edge and the form sits in the middle band.
+  expect(top).toBeGreaterThan(100);
+  expect(email!.y + email!.height / 2).toBeGreaterThan(300);
+  expect(email!.y + email!.height / 2).toBeLessThan(600);
+  await expect(page.getByTestId("login-password")).toHaveAttribute("type", "password");
+  await page.getByTestId("login-password-toggle").click();
+  await expect(page.getByTestId("login-password")).toHaveAttribute("type", "text");
+});
