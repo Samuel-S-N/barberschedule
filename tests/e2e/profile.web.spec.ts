@@ -25,6 +25,8 @@ test("the profile tab is a hub of blocks that open each inner screen", async ({ 
     await expect(page).toHaveURL(/\/profile$/);
   }
 
+  await expect(page.getByTestId("profile-signout")).toHaveCount(0);
+  await page.getByTestId("menu-settings").click();
   await expect(page.getByTestId("profile-signout")).toBeVisible();
 });
 
