@@ -7,6 +7,7 @@ import { formatPeriods, groupWeek, weekdayLabel } from "../../features/shops/hou
 import type { ShopPeriod } from "../../features/shops/hours";
 import { useLanguage } from "../../i18n/use-language";
 import { Button } from "../ui/Button";
+import { formatShopAddress } from "../../features/shops/address";
 
 export function ShopContactButtons({ phone, whatsapp }: { phone: string | null; whatsapp: string | null }) {
   const { t } = useTranslation();
@@ -25,12 +26,13 @@ export function ShopContactButtons({ phone, whatsapp }: { phone: string | null; 
 export function ShopInfoCard({ hours, shop }: { hours: ShopPeriod[]; shop: PublicShop }) {
   const language = useLanguage();
   const groups = groupWeek(hours);
-  if (!shop.address && !shop.phone && !shop.whatsapp && groups.length === 0) return null;
+  const address = formatShopAddress(shop);
+  if (!address && !shop.phone && !shop.whatsapp && groups.length === 0) return null;
 
   return (
     <View className="gap-2 rounded-[20px] bg-neutral-50 p-4" testID="shop-info-card">
       <Text className="text-base font-sans-semibold text-ink">{shop.name}</Text>
-      {shop.address ? <Text className="text-sm font-sans text-neutral-600">{shop.address}</Text> : null}
+      {address ? <Text className="text-sm font-sans text-neutral-600">{address}</Text> : null}
       {groups.map((group) => (
         <View className="flex-row justify-between" key={group.from}>
           <Text className="text-sm font-sans text-neutral-600">

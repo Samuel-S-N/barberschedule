@@ -16,6 +16,8 @@ import { errorMessage } from "../../../src/i18n/errors";
 import { useColors } from "../../../src/lib/design/theme/ThemeProvider";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 import { useCurrentShop } from "../../../src/features/shops/CurrentShopProvider";
+import { InstallPrompt } from "../../../src/features/install/InstallPrompt";
+import { NotificationPrompt } from "../../../src/features/notifications/NotificationPrompt";
 
 export default function CustomerProfileScreen() {
   const colors = useColors();
@@ -61,6 +63,9 @@ export default function CustomerProfileScreen() {
                 { icon: Info, key: "about", label: t("profile.menu.about"), onPress: () => router.push("/me/about") },
               ]}
             />
+
+            <InstallPrompt />
+            <NotificationPrompt />
 
             <Pressable
               accessibilityRole="button"

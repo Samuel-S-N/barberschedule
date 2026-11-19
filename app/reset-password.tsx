@@ -12,7 +12,7 @@ import { Input, useFieldChain } from "../src/components/ui/Input";
 import { Screen } from "../src/components/ui/Screen";
 import { validateNewPassword } from "../src/features/account/security";
 import { completePasswordReset, startRecoverySession } from "../src/features/auth/api";
-import { hasRecovery, parseRecoveryUrl, resolveRecoveryStatus, type RecoveryStatus } from "../src/features/auth/recovery";
+import { hasRecovery, isInvite, parseRecoveryUrl, resolveRecoveryStatus, type RecoveryStatus } from "../src/features/auth/recovery";
 import { errorMessage } from "../src/i18n/errors";
 import { useSupabaseSession } from "../src/providers/AppProviders";
 
@@ -27,6 +27,7 @@ export default function ResetPasswordScreen() {
   const [confirm, setConfirm] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const invite = isInvite();
   const resolved = resolveRecoveryStatus({ hasSession: session !== null, isLoading, platform: Platform.OS, proof: hasRecovery() });
   const status: RecoveryStatus = linkFailed || (timedOut && resolved === "checking") ? "invalid" : resolved;
   const problem = next || confirm ? validateNewPassword(next, confirm) : null;
@@ -63,8 +64,11 @@ export default function ResetPasswordScreen() {
     setSaving(true);
     setError(null);
     try {
+      // Read before completePasswordReset clears the proof.
+      const notice = isInvite() ? "password-created" : "password-reset";
+
       await completePasswordReset(supabase, next);
-      router.replace({ params: { notice: "password-reset" }, pathname: "/login" });
+      router.replace({ params: { notice }, pathname: "/login" });
     } catch (caught) {
       setError(errorMessage(caught, t, t("auth.reset.saveError")));
     } finally {
@@ -95,14 +99,14 @@ export default function ResetPasswordScreen() {
             ) : null}
             {status === "ready" ? (
               <>
-                <Text accessibilityRole="header" className="text-3xl leading-[44px] font-display-bold text-ink">{t("auth.reset.setTitle")}</Text>
-                <Text className="text-base font-sans text-neutral-600">{t("auth.reset.setSubtitle")}</Text>
+                <Text accessibilityRole="header" className="text-3xl leading-[44px] font-display-bold text-ink">{invite ? t("auth.reset.createTitle") : t("auth.reset.setTitle")}</Text>
+                <Text className="text-base font-sans text-neutral-600">{invite ? t("auth.reset.createSubtitle") : t("auth.reset.setSubtitle")}</Text>
                 <Input {...field(0)} autoComplete="new-password" label={t("auth.reset.newPassword")} onChangeText={setNext} secureTextEntry testID="reset-new" textContentType="newPassword" value={next} />
                 <Input {...field(1)} autoComplete="new-password" error={problemText} label={t("auth.reset.confirm")} onChangeText={setConfirm} secureTextEntry onSubmitEditing={() => canSave && void save()} returnKeyType="go" testID="reset-confirm" textContentType="newPassword" value={confirm} />
                 <Toast message={error ?? ""} onDismiss={() => setError(null)} variant="error" visible={error !== null} />
                 <Button
                   disabled={!canSave}
-                  label={t("auth.reset.saveSubmit")}
+                  label={invite ? t("auth.reset.createSubmit") : t("auth.reset.saveSubmit")}
                   onPress={() => void save()}
                   size="lg"
                   testID="reset-submit"

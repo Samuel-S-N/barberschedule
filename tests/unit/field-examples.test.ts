@@ -2,7 +2,7 @@ import { en } from "../../src/i18n/locales/en";
 import { es } from "../../src/i18n/locales/es";
 import { pt } from "../../src/i18n/locales/pt";
 
-const KEYS = ["date", "time", "fullName", "nickname", "email", "phone", "money", "minutes", "percent", "notes", "note", "bio", "search", "serviceName", "description", "address"] as const;
+const KEYS = ["date", "time", "fullName", "nickname", "email", "phone", "money", "minutes", "percent", "notes", "note", "bio", "search", "serviceName", "description", "cep", "street", "number", "complement", "district", "city", "state"] as const;
 
 describe.each([["en", en], ["es", es], ["pt", pt]])("%s examples", (_name, locale) => {
   it.each(KEYS)("has a non-empty example for %s", (key) => {

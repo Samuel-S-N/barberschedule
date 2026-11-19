@@ -1,5 +1,7 @@
 import { TERMS_VERSION } from "../account/legal";
-import { clearRecovery, markRecovery } from "./recovery";
+import { unsubscribeWebPush } from "../notifications/web-push";
+import { clearRecovery, markInvite, markRecovery } from "./recovery";
+import type { RecoveryFlow } from "./recovery";
 import type { AuthSupabaseClient, Profile } from "./types";
 import type { SignupInput } from "./validation";
 
@@ -88,7 +90,10 @@ export async function signUpCustomer(
   return { needsEmailConfirmation: !data.session };
 }
 
-export async function signOut(supabase: Pick<AuthSupabaseClient, "auth">) {
+export async function signOut(supabase: Pick<AuthSupabaseClient, "auth" | "rpc">) {
+  // Web only and best effort: this browser stops receiving the signed-out user's notifications, and a failure must not keep them signed in.
+  await unsubscribeWebPush(supabase).catch(() => undefined);
+
   const { error } = await supabase.auth.signOut();
   throwIfError(error);
 }
@@ -108,7 +113,7 @@ let consumedRefreshToken: string | null = null;
 
 export async function startRecoverySession(
   supabase: Pick<AuthSupabaseClient, "auth">,
-  link: { accessToken: string; refreshToken: string },
+  link: { accessToken: string; refreshToken: string; flow?: RecoveryFlow },
 ) {
   if (consumedRefreshToken === link.refreshToken) return true;
 
@@ -120,7 +125,8 @@ export async function startRecoverySession(
     return false;
   }
 
-  markRecovery();
+  if (link.flow === "invite") markInvite();
+  else markRecovery();
   return true;
 }
 

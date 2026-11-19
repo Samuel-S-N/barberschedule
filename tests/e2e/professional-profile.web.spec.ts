@@ -3,6 +3,7 @@ import type { Page } from "@playwright/test";
 
 import { professionalId, json, shopId } from "./customer-helpers";
 import type { RestHandler } from "./customer-helpers";
+import { stubInstallPrompt } from "./install-helpers";
 
 const professionalUserId = "66666666-6666-4666-8666-666666666666";
 
@@ -161,4 +162,13 @@ test("the save profile button is the last control of My details", async ({ page 
   const sendLink = await page.getByTestId("account-send-link").boundingBox();
 
   expect(save && sendLink && save.y > sendLink.y).toBe(true);
+});
+
+test("the professional hub shows the install card", async ({ page }) => {
+  await stubInstallPrompt(page);
+  await signIn(page, professionalUserId);
+  await mockProfessionalRest(page);
+
+  await page.goto("/my-profile");
+  await expect(page.getByTestId("install-card")).toBeVisible();
 });

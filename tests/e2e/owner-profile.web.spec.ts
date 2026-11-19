@@ -2,6 +2,7 @@ import { expect, test } from "./fixtures";
 import type { Page } from "@playwright/test";
 
 import { json } from "./customer-helpers";
+import { stubInstallPrompt } from "./install-helpers";
 
 const ownerId = "55555555-5555-4555-8555-555555555555";
 const shop = "11111111-1111-4111-8111-111111111111";
@@ -119,4 +120,13 @@ test("Serve as a professional creates a professional linked to the owner and ope
 
   await page.getByTestId("owner-as-professional").click();
   await expect.poll(() => (state.calls.patch as { active?: boolean } | undefined)?.active).toBe(false);
+});
+
+test("the owner account hub shows the install card", async ({ page }) => {
+  await stubInstallPrompt(page);
+  await signInAsOwner(page);
+  await mockOwnerRest(page, { calls: {}, linked: false });
+
+  await page.goto("/settings");
+  await expect(page.getByTestId("install-card")).toBeVisible();
 });
