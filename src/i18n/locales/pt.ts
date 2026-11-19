@@ -25,6 +25,7 @@ export const pt: DeepStringRecord<typeof en> = {
     weeks: "2",
   },
   dateField: { choose: "Escolher data", close: "Fechar", nextDay: "Próximo dia", nextMonth: "Próximo mês", nextWeek: "Próxima semana", previousDay: "Dia anterior", previousMonth: "Mês anterior", previousWeek: "Semana anterior" },
+  colorWheel: { close: "Fechar", done: "Concluir" },
   agendaCard: { professional: "Profissional", close: "Fechar", customer: "Cliente", notes: "Observações" },
   common: {
     activate: "Ativar",
@@ -441,6 +442,7 @@ export const pt: DeepStringRecord<typeof en> = {
   },
   owner: {
     appearance: {
+      otherColor: "Outra cor",
       accent: "Cor de destaque",
       accentHint: "Botões de ação (agendar, entrar, salvar). Vazio usa a cor principal.",
       adjusted: "Ajustamos levemente uma cor para o texto ficar legível.",

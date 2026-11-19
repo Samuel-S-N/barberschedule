@@ -26,6 +26,7 @@ export const en = {
     weeks: "2",
   },
   dateField: { choose: "Choose date", close: "Close", nextDay: "Next day", nextMonth: "Next month", nextWeek: "Next week", previousDay: "Previous day", previousMonth: "Previous month", previousWeek: "Previous week" },
+  colorWheel: { close: "Close", done: "Done" },
   agendaCard: { professional: "Professional", close: "Close", customer: "Customer", notes: "Notes" },
   common: {
     activate: "Activate",
@@ -442,6 +443,7 @@ export const en = {
   },
   owner: {
     appearance: {
+      otherColor: "Other colour",
       accent: "Accent colour",
       accentHint: "Action buttons (book, sign in, save). Empty uses the primary colour.",
       adjusted: "We slightly adjusted a colour so the text stays readable.",

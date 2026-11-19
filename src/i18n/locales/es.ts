@@ -25,6 +25,7 @@ export const es: DeepStringRecord<typeof en> = {
     weeks: "2",
   },
   dateField: { choose: "Elegir fecha", close: "Cerrar", nextDay: "Día siguiente", nextMonth: "Mes siguiente", nextWeek: "Semana siguiente", previousDay: "Día anterior", previousMonth: "Mes anterior", previousWeek: "Semana anterior" },
+  colorWheel: { close: "Cerrar", done: "Listo" },
   agendaCard: { professional: "Profesional", close: "Cerrar", customer: "Cliente", notes: "Notas" },
   common: {
     activate: "Activar",
@@ -441,6 +442,7 @@ export const es: DeepStringRecord<typeof en> = {
   },
   owner: {
     appearance: {
+      otherColor: "Otro color",
       accent: "Color de acento",
       accentHint: "Botones de acción (reservar, entrar, guardar). Vacío usa el color principal.",
       adjusted: "Ajustamos ligeramente un color para que el texto sea legible.",
