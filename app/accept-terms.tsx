@@ -24,7 +24,7 @@ export default function AcceptTermsScreen() {
 
   return (
     <Screen className="flex-1 bg-canvas">
-      <ScrollView className="flex-1">
+      <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}>
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <Text accessibilityRole="header" className="text-3xl leading-[44px] font-display-bold text-ink">{t("legal.gate.title")}</Text>
