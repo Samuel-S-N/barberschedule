@@ -23,7 +23,8 @@ select set_config('request.jwt.claim.sub', '90000000-0000-0000-0000-000000000002
 select set_config('request.jwt.claim.role', 'authenticated', true);
 select public.ensure_my_customer('91000000-0000-0000-0000-000000000001');
 
-select is((select full_name from public.update_my_profile('T15 Renamed', '(11)91234-5678', 'Bibi')), 'T15 Renamed', 'update_my_profile still returns the customer row');
+select public.update_my_profile('T15 Renamed', '(11)91234-5678', 'Bibi');
+select is((select full_name from public.customers where user_id = '90000000-0000-0000-0000-000000000002'), 'T15 Renamed', 'update_my_profile renames the customer row');
 select is((select nickname from public.profiles where user_id = '90000000-0000-0000-0000-000000000002'), 'Bibi', 'update_my_profile saves the nickname');
 select public.update_my_profile('T15 Renamed', null, '   ');
 select is((select nickname from public.profiles where user_id = '90000000-0000-0000-0000-000000000002'), null, 'a blank nickname clears it');
