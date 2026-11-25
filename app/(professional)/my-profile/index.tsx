@@ -1,25 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { Clock, Coins, Repeat, Info, Lock, LogOut, Scissors, Settings, ShieldCheck, User } from "lucide-react-native";
-import { useState } from "react";
+import { Clock, Coins, Repeat, Info, Lock, Scissors, Settings, ShieldCheck, User } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 import { Avatar } from "../../../src/components/domain/Avatar";
 import { MenuBlock } from "../../../src/components/domain/MenuBlock";
-import { Toast } from "../../../src/components/domain/Toast";
 import { Screen } from "../../../src/components/ui/Screen";
 import { useMyProfile } from "../../../src/features/account/use-my-profile";
-import { signOut } from "../../../src/features/auth/api";
 import { getMyProfessionalProfile } from "../../../src/features/professionals/api";
-import { errorMessage } from "../../../src/i18n/errors";
-import { useColors } from "../../../src/lib/design/theme/ThemeProvider";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../../src/lib/use-refresh";
 import { InstallPrompt } from "../../../src/features/install/InstallPrompt";
 
 export default function ProfessionalProfileHub() {
-  const colors = useColors();
   const router = useRouter();
   const { t } = useTranslation();
   const pull = useRefreshAll();
@@ -27,7 +21,6 @@ export default function ProfessionalProfileHub() {
   const profile = useMyProfile();
   const professional = useQuery({ queryFn: () => getMyProfessionalProfile(supabase), queryKey: ["my-professional-profile", sessionProfile?.userId] });
   const name = profile.data?.nickname || professional.data?.name || profile.data?.fullName || "";
-  const [error, setError] = useState<string | null>(null);
 
   return (
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
@@ -70,24 +63,6 @@ export default function ProfessionalProfileHub() {
             />
 
             <InstallPrompt />
-
-            <Pressable
-              accessibilityRole="button"
-              className="min-h-[56px] flex-row items-center justify-center gap-2 rounded-[20px] border border-neutral-200 bg-surface"
-              onPress={async () => {
-                try {
-                  await signOut(supabase);
-                } catch (caught) {
-                  setError(errorMessage(caught, t, t("profile.signOutError")));
-                }
-              }}
-              testID="profile-signout"
-            >
-              <LogOut color={colors.danger[500]} size={20} />
-              <Text className="text-base font-sans-semibold text-danger-500">{t("profile.signOut")}</Text>
-            </Pressable>
-
-            <Toast message={error ?? ""} onDismiss={() => setError(null)} variant="error" visible={error !== null} />
           </View>
         </View>
       </ScrollView>

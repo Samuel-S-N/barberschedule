@@ -53,8 +53,11 @@ test("the professional profile is a hub with professional and account sections",
     await expect(page.getByTestId(`menu-${key}`)).toBeVisible();
   }
 
+  await expect(page.getByTestId("profile-signout")).toHaveCount(0);
+
   await page.getByTestId("menu-settings").click();
   await expect(page).toHaveURL(/\/my-profile\/settings/);
+  await expect(page.getByTestId("profile-signout")).toBeVisible();
   await page.getByTestId("menu-language").click();
   await expect(page).toHaveURL(/\/my-profile\/language/);
 });
@@ -171,4 +174,17 @@ test("the professional hub shows the install card", async ({ page }) => {
 
   await page.goto("/my-profile");
   await expect(page.getByTestId("install-card")).toBeVisible();
+});
+
+test("the professional signs out from Settings", async ({ page }) => {
+  await signIn(page, professionalUserId);
+  await mockProfessionalRest(page);
+  const loggedOut = page.waitForRequest((request) => request.url().includes("/auth/v1/logout"));
+  await page.route("**/auth/v1/logout**", (route) => route.fulfill({ status: 204 }));
+
+  await page.goto("/my-profile/settings");
+  await page.getByTestId("profile-signout").click();
+
+  await loggedOut;
+  await expect(page).toHaveURL(/\/login/);
 });

@@ -59,10 +59,11 @@ test("the owner account tab is a profile hub with the same sections as the other
   for (const key of ["account", "security", "privacy", "settings", "about"]) {
     await expect(page.getByTestId(`menu-${key}`)).toBeVisible();
   }
-  await expect(page.getByTestId("profile-signout")).toBeVisible();
+  await expect(page.getByTestId("profile-signout")).toHaveCount(0);
 
   await page.getByTestId("menu-settings").click();
   await expect(page).toHaveURL(/\/owner-profile\/settings/);
+  await expect(page.getByTestId("profile-signout")).toBeVisible();
   await page.getByTestId("menu-language").click();
   await expect(page).toHaveURL(/\/language/);
 });
@@ -129,4 +130,17 @@ test("the owner account hub shows the install card", async ({ page }) => {
 
   await page.goto("/settings");
   await expect(page.getByTestId("install-card")).toBeVisible();
+});
+
+test("the owner signs out from Settings", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, { calls: {}, linked: false });
+  const loggedOut = page.waitForRequest((request) => request.url().includes("/auth/v1/logout"));
+  await page.route("**/auth/v1/logout**", (route) => route.fulfill({ status: 204 }));
+
+  await page.goto("/owner-profile/settings");
+  await page.getByTestId("profile-signout").click();
+
+  await loggedOut;
+  await expect(page).toHaveURL(/\/login/);
 });

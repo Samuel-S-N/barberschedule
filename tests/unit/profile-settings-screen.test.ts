@@ -24,15 +24,15 @@ describe("ProfileSettingsScreen sign out", () => {
     expect(view.getByTestId("notifications-switch-row")).toBeTruthy();
   });
 
-  it("shows no sign-out button unless asked", async () => {
-    const view = await render(React.createElement(ProfileSettingsScreen, { languageHref: "/me/language" }));
+  it.each(["/language", "/me/language", "/my-profile/language"])("shows the sign-out button on every role's Settings (%s)", async (languageHref) => {
+    const view = await render(React.createElement(ProfileSettingsScreen, { languageHref }));
 
-    expect(view.queryByTestId("profile-signout")).toBeNull();
+    expect(view.getByTestId("profile-signout")).toBeTruthy();
   });
 
   it("signs out through the shared auth helper", async () => {
     jest.mocked(signOut).mockResolvedValue(undefined);
-    const view = await render(React.createElement(ProfileSettingsScreen, { languageHref: "/me/language", showSignOut: true }));
+    const view = await render(React.createElement(ProfileSettingsScreen, { languageHref: "/me/language" }));
 
     await fireEvent.press(view.getByTestId("profile-signout"));
 
@@ -41,7 +41,7 @@ describe("ProfileSettingsScreen sign out", () => {
 
   it("shows the sign-out error", async () => {
     jest.mocked(signOut).mockRejectedValue(new Error("offline"));
-    const view = await render(React.createElement(ProfileSettingsScreen, { languageHref: "/me/language", showSignOut: true }));
+    const view = await render(React.createElement(ProfileSettingsScreen, { languageHref: "/me/language" }));
 
     await fireEvent.press(view.getByTestId("profile-signout"));
 

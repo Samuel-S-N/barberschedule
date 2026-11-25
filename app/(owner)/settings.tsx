@@ -1,8 +1,8 @@
 import { useRouter } from "expo-router";
-import { Info, Lock, LogOut, Scissors, Settings, ShieldCheck, User } from "lucide-react-native";
+import { Info, Lock, Scissors, Settings, ShieldCheck, User } from "lucide-react-native";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 import { Avatar } from "../../src/components/domain/Avatar";
 import { MenuBlock } from "../../src/components/domain/MenuBlock";
@@ -10,7 +10,6 @@ import { Toast } from "../../src/components/domain/Toast";
 import { Screen } from "../../src/components/ui/Screen";
 import { Toggle } from "../../src/components/ui/Toggle";
 import { useMyProfile } from "../../src/features/account/use-my-profile";
-import { signOut } from "../../src/features/auth/api";
 import { useOwnerAsProfessional } from "../../src/features/professionals/owner/use-owner-as-professional";
 import { errorMessage } from "../../src/i18n/errors";
 import { useColors } from "../../src/lib/design/theme/ThemeProvider";
@@ -21,7 +20,7 @@ export default function OwnerSettingsScreen() {
   const colors = useColors();
   const { t } = useTranslation();
   const router = useRouter();
-  const { profile: sessionProfile, session, supabase } = useSupabaseSession();
+  const { profile: sessionProfile, session } = useSupabaseSession();
   const profile = useMyProfile();
   const asProfessional = useOwnerAsProfessional();
   const [error, setError] = useState<string | null>(null);
@@ -74,21 +73,6 @@ export default function OwnerSettingsScreen() {
 
             <InstallPrompt />
 
-            <Pressable
-              accessibilityRole="button"
-              className="min-h-[56px] flex-row items-center justify-center gap-2 rounded-[20px] border border-neutral-200 bg-surface"
-              onPress={async () => {
-                try {
-                  await signOut(supabase);
-                } catch (caught) {
-                  setError(errorMessage(caught, t, t("profile.signOutError")));
-                }
-              }}
-              testID="profile-signout"
-            >
-              <LogOut color={colors.danger[500]} size={20} />
-              <Text className="text-base font-sans-semibold text-danger-500">{t("common.signOut")}</Text>
-            </Pressable>
             <Toast message={error ?? ""} onDismiss={() => setError(null)} variant="error" visible={error !== null} />
           </View>
         </View>
