@@ -17,6 +17,22 @@ import { clearRecovery, hasRecovery } from "../../src/features/auth/recovery";
 import { useSupabaseSession, AppProviders } from "../../src/providers/AppProviders";
 import { getSupabaseBrowserClient } from "../../src/lib/supabase/client";
 
+// AppProviders makes its own QueryClient (default gcTime: 5 minutes). Every query it ran leaves a 5-minute garbage-collection timer
+// after the test, and that timer keeps the Jest process alive. Clear every client that mounted so the run can exit.
+const mounted: QueryClient[] = [];
+const realMount = QueryClient.prototype.mount;
+
+QueryClient.prototype.mount = function mount(this: QueryClient) {
+  mounted.push(this);
+
+  return realMount.call(this);
+};
+
+afterAll(() => {
+  QueryClient.prototype.mount = realMount;
+  for (const client of mounted) client.clear();
+});
+
 type ProfileSnapshot = {
   role: "customer" | "owner";
   userId: string;
