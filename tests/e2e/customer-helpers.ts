@@ -32,19 +32,20 @@ export function appointmentRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
-export async function signInAsCustomer(page: Page) {
-  await page.addInitScript(({ id }) => {
+// `userMetadata` is what signup stored on the account (e.g. the accepted legal versions).
+export async function signInAsCustomer(page: Page, userMetadata: Record<string, unknown> = {}) {
+  await page.addInitScript(({ id, metadata }) => {
     const now = Math.floor(Date.now() / 1000);
     // Unsigned fake JWT assembled at runtime (no token-like literal in the repo).
     const header = btoa(JSON.stringify({ alg: "none" })).replace(/=+$/, "");
     const token = `${header}.${btoa(JSON.stringify({ exp: now + 3600, sub: id }))}.`;
     const session = JSON.stringify({
       access_token: token, expires_at: now + 3600, expires_in: 3600,
-      refresh_token: "e2e-refresh-token", token_type: "bearer", user: { email: "customer@example.com", id },
+      refresh_token: "e2e-refresh-token", token_type: "bearer", user: { email: "customer@example.com", id, user_metadata: metadata },
     });
     localStorage.setItem("sb-example-auth-token", session);
     localStorage.setItem("sb-127-auth-token", session);
-  }, { id: customerUserId });
+  }, { id: customerUserId, metadata: userMetadata });
 }
 
 // Return true from `handler` once it has fulfilled the route.

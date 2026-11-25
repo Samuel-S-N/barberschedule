@@ -83,3 +83,10 @@ row is merged into the account's own row if one exists). Turn it off again if co
 ## 7. Rollback
 
 Migrations are forward-only (append-only once applied, decision `018`). If something breaks, restore the backup from step 1 rather than hand-editing.
+
+## 8. Legal data (before the public launch)
+
+Fill `src/features/legal/company.ts` (razão social, CNPJ, endereço, foro) and have a lawyer review `docs/legal/revisao-juridica.md`.
+While a field is empty the documents show it as a highlighted placeholder, so after deploying open `/privacidade`, `/termos` and
+`/contrato` and confirm no `[RAZÃO SOCIAL]`, `[CNPJ]`, `[ENDEREÇO]` or `[FORO]` is left. Changing a document's text means bumping its
+`version` in `src/features/legal/documents/`: every user then sees the "Atualizamos nossos termos" screen once.

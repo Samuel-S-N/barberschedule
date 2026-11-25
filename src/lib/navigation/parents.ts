@@ -7,14 +7,14 @@ const text = (value: string | string[] | undefined) => (typeof value === "string
 
 // Tab roots and entry screens: no parent, the system back button keeps its default behaviour.
 export const ROOT_ROUTES = new Set([
-  "/", "/login",
+  "/", "/login", "/accept-terms",
   "/home", "/book", "/appointments", "/profile",
   "/my-agenda", "/clients", "/earnings", "/my-profile",
   "/agenda", "/revenue", "/manage", "/settings",
 ]);
 
 // Screens reachable from several places (terms, a password-reset e-mail link) keep the history behaviour.
-export const HISTORY_ROUTES = new Set(["/legal", "/reset-password"]);
+export const HISTORY_ROUTES = new Set(["/legal", "/privacidade", "/termos", "/contrato", "/reset-password"]);
 
 const bookingIds = (params: RouteParams) => ({
   professionalId: text(params.professionalId),

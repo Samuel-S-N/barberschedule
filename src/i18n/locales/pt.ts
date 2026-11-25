@@ -102,7 +102,6 @@ export const pt: DeepStringRecord<typeof en> = {
       checkEmailTitle: "Verifique seu e-mail",
       error: "Não foi possível criar sua conta.",
       haveAccount: "Já tenho uma conta",
-      readTerms: "Ler termos e política de privacidade",
       submit: "Criar conta",
       title: "Criar conta",
     },
@@ -379,7 +378,6 @@ export const pt: DeepStringRecord<typeof en> = {
     saved: "Perfil salvo.",
     signOut: "Sair",
     signOutError: "Não foi possível sair.",
-    terms: "Termos e política de privacidade",
     title: "Perfil",
     yourData: "Seus dados",
   },
@@ -417,27 +415,7 @@ export const pt: DeepStringRecord<typeof en> = {
     notFoundTitle: "Estabelecimento não encontrado",
     staffLoginHint: "Equipe: entre abaixo.",
   },
-  legal: {
-    sections: {
-      collect: {
-        body: "Seu nome, endereço de e-mail, telefone (opcional), seus agendamentos (serviço, profissional, data e hora, observações) e, se você ativar as notificações, um token de push do seu aparelho.",
-        title: "O que coletamos",
-      },
-      contact: { body: "Para qualquer pedido sobre seus dados, fale diretamente com o estabelecimento.", title: "Contato" },
-      rights: {
-        body: "No seu perfil você pode corrigir seu nome e telefone, baixar uma cópia dos seus dados e excluir sua conta. Excluir a conta remove seu login e anonimiza seu cadastro de cliente; os agendamentos passados permanecem nos registros do estabelecimento sem seu nome, telefone ou e-mail (as observações que você escreveu em um agendamento são mantidas como foram escritas; peça à estabelecimento para removê-las). Os registros de consentimento são mantidos de forma anônima como comprovante de aceite.",
-        title: "Seus direitos (LGPD)",
-      },
-      who: { body: "Você e o estabelecimento em que você agenda. Não vendemos seus dados.", title: "Quem pode ver" },
-      why: {
-        body: "Para criar sua conta, permitir que você agende, altere e cancele horários, lembrar você deles e permitir que o estabelecimento entre em contato sobre sua agenda. O telefone é opcional.",
-        title: "Por que coletamos",
-      },
-    },
-    title: "Termos e privacidade",
-    translationNote: "Este é o texto de referência.",
-    version: "Versão {{version}}",
-  },
+  legal: { gate: { accept: "Li e aceito", body: "Para continuar, leia e aceite as versões atuais dos documentos abaixo.", error: "Não foi possível registrar o aceite. Tente novamente.", title: "Atualizamos nossos termos" }, link: { business: "Contrato do Estabelecimento", privacy: "Política de Privacidade", terms: "Termos de Uso" }, ptOnlyNote: "Este documento está em português.", version: "Versão {{version}}" },
   owner: {
     appearance: {
       otherColor: "Outra cor",
@@ -1010,6 +988,7 @@ export const pt: DeepStringRecord<typeof en> = {
       REPORT_FORBIDDEN: "Só o dono do estabelecimento pode ver este relatório.",
       SHOP_SLUG_INVALID: "Esse link do estabelecimento já está em uso ou não é permitido.",
       SHOP_OWNER_INVALID: "Esta conta não pode ser dona de um novo estabelecimento.",
+      LEGAL_CONSENT_INVALID: "Não foi possível registrar seu aceite. Tente novamente.",
       SERVICE_STANDARD_LOCKED: "Este serviço é padrão e não pode ser desligado.",
       COMPENSATION_INVALID: "Informe uma comissão ou aluguel de cadeira válidos.",
       EARNINGS_INVALID_RANGE: "Escolha um período de até 92 dias.",
