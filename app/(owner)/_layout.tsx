@@ -7,6 +7,7 @@ import { Screen } from "../../src/components/ui/Screen";
 import { selectTab } from "../../src/lib/navigation/select-tab";
 import { usePushRegistration } from "../../src/features/notifications/use-push-registration";
 import { useHardwareBack } from "../../src/lib/navigation/use-back";
+import { useSetupPending } from "../../src/features/setup/use-setup-pending";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 // Screens reached from the Manage menu: not tabs themselves, and they keep "Manage" highlighted.
@@ -15,10 +16,13 @@ const MANAGE_SCREENS = ["appointment-form", "professional-new", "professional-pr
 const AGENDA_SCREENS = ["my-professional-agenda", "owner-notifications"] as const;
 // Reached from the Account tab.
 const ACCOUNT_SCREENS = ["language", "owner-profile"] as const;
+// The setup checklist a new owner sees instead of the panel (not reached from a tab).
+const SETUP_SCREENS = ["setup"] as const;
 
 export default function OwnerLayout() {
   const { t } = useTranslation();
   const { profile } = useSupabaseSession();
+  const setupPending = useSetupPending();
   const items = [
     { icon: CalendarDays, key: "agenda", label: t("tabs.calendar") },
     { icon: Coins, key: "revenue", label: t("tabs.revenue") },
@@ -33,11 +37,13 @@ export default function OwnerLayout() {
     <Tabs
       backBehavior="history"
       screenOptions={{ headerShown: false }}
-      tabBar={({ emitter, navigateToTab, state }) => (
-        <Screen className="bg-surface" edges={["bottom", "left", "right"]}>
-          <BottomTabBar activeKey={highlight(state.routes[state.index].name)} items={items} onSelect={(key) => selectTab({ emitter, navigateToTab, state }, key)} />
-        </Screen>
-      )}
+      tabBar={({ emitter, navigateToTab, state }) =>
+        setupPending ? null : (
+          <Screen className="bg-surface" edges={["bottom", "left", "right"]}>
+            <BottomTabBar activeKey={highlight(state.routes[state.index].name)} items={items} onSelect={(key) => selectTab({ emitter, navigateToTab, state }, key)} />
+          </Screen>
+        )
+      }
     >
       <Tabs.Screen name="agenda" />
       <Tabs.Screen name="revenue" />
@@ -45,7 +51,7 @@ export default function OwnerLayout() {
       <Tabs.Screen name="settings" />
       {/* Declared WITHOUT `href: null`: since SDK 58 a hidden or undeclared route is not navigable (the navigator redirects to the
           first tab), and the custom tab bar already shows only the four items above. */}
-      {[...MANAGE_SCREENS, ...ACCOUNT_SCREENS, ...AGENDA_SCREENS].map((name) => (
+      {[...MANAGE_SCREENS, ...ACCOUNT_SCREENS, ...AGENDA_SCREENS, ...SETUP_SCREENS].map((name) => (
         <Tabs.Screen key={name} name={name} />
       ))}
     </Tabs>

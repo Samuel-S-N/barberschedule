@@ -7,7 +7,7 @@ const text = (value: string | string[] | undefined) => (typeof value === "string
 
 // Tab roots and entry screens: no parent, the system back button keeps its default behaviour.
 export const ROOT_ROUTES = new Set([
-  "/", "/login", "/accept-terms",
+  "/", "/login", "/accept-terms", "/setup",
   "/home", "/book", "/appointments", "/profile",
   "/my-agenda", "/clients", "/earnings", "/my-profile",
   "/agenda", "/revenue", "/manage", "/settings",

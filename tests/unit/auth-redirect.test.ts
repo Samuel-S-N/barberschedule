@@ -25,3 +25,23 @@ describe("pending legal documents", () => {
     expect(resolveAuthRedirect({ pendingLegal: true, profileRole: null, segments: ["(auth)", "login"], session: null })).toBeNull();
   });
 });
+
+describe("owner setup pending", () => {
+  const owner = { profileRole: "owner", session: sessionStub } as const;
+
+  it.each(["agenda", "revenue", "manage", "settings"])("sends the owner from the %s tab to /setup", (tab) => {
+    expect(resolveAuthRedirect({ ...owner, ownerSetupPending: true, segments: ["(owner)", tab] })).toBe("/setup");
+  });
+
+  it.each(["shop", "services", "professionals", "professional-new", "professional-profile", "schedule", "appearance", "setup", "shop-link"])("lets the owner open /%s while pending", (screen) => {
+    expect(resolveAuthRedirect({ ...owner, ownerSetupPending: true, segments: ["(owner)", screen] })).toBeNull();
+  });
+
+  it("sends an owner with nothing pending away from /setup", () => {
+    expect(resolveAuthRedirect({ ...owner, ownerSetupPending: false, segments: ["(owner)", "setup"] })).toBe("/agenda");
+  });
+
+  it("never affects other roles", () => {
+    expect(resolveAuthRedirect({ ownerSetupPending: true, profileRole: "customer", segments: ["(customer)", "(tabs)", "home"], session: sessionStub })).toBeNull();
+  });
+});

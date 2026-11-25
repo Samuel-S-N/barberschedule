@@ -24,6 +24,7 @@ jest.mock("../../src/features/auth/session", () => ({
 }));
 jest.mock("../../src/features/shops/CurrentShopProvider", () => ({
   CurrentShopProvider: ({ children }: { children: unknown }) => children,
+  useCurrentShop: () => ({ shop: null }),
 }));
 jest.mock("../../src/features/legal/use-pending-legal", () => ({ usePendingLegal: () => ({ isLoading: false, pending: [] }) }));
 jest.mock("../../src/features/shops/ShopGate", () => ({
