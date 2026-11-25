@@ -1,5 +1,5 @@
 import { notificationPath } from "../_shared/notification-path.ts";
-import { buildMessage } from "./messages.ts";
+import { buildMessage, withShopName } from "./messages.ts";
 
 export type WebSubscription = { endpoint: string; keys: { auth: string; p256dh: string } };
 
@@ -13,6 +13,7 @@ export type ClaimedNotification = {
   max_attempts: number;
   payload: Record<string, unknown>;
   recipient_role: string | null;
+  shop_name: string | null;
   shop_slug: string | null;
   web_origin: string | null;
   web_subscription: WebSubscription | null;
@@ -69,8 +70,9 @@ export function createDispatcher(deps: Deps) {
   // One attempt per token row; it only deactivates dead tokens and reports what happened. The notification's own state is decided
   // once per outbox id by the caller (mark_notification_sent/failed act only on a row still "sending": the first call would win).
   async function attempt(row: ClaimedNotification): Promise<Attempt> {
+    const message = withShopName(buildMessage(row.event_type, row.locale, row.payload), row.shop_name);
+
     if (row.web_subscription) {
-      const message = buildMessage(row.event_type, row.locale, row.payload);
       const url = `${row.web_origin ?? ""}${notificationPath(row.event_type, row.recipient_role)}`;
       const { status } = await deps.sendWeb(row.web_subscription, { body: message.body, title: message.title, url });
 
@@ -85,7 +87,7 @@ export function createDispatcher(deps: Deps) {
 
     if (!row.expo_push_token) return { outcome: "skipped" };
 
-    const result = await deps.sendExpo(row.expo_push_token, buildMessage(row.event_type, row.locale, row.payload), row.payload);
+    const result = await deps.sendExpo(row.expo_push_token, message, row.payload);
 
     if (result.ok) return { outcome: "sent" };
     if (result.error === "DeviceNotRegistered") await deps.deactivateExpo(row.expo_push_token);

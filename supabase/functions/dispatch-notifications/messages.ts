@@ -12,6 +12,8 @@ export function normalizeLocale(value: unknown): Locale {
 
 const GENERIC_SERVICE: Record<Locale, string> = { en: "Appointment", es: "Cita", pt: "Agendamento" };
 
+const BRAND_TITLE = "Zenc";
+
 const UNKNOWN: Record<Locale, string> = {
   en: "You have a new notification.",
   es: "Tienes una nueva notificación.",
@@ -204,11 +206,21 @@ export function buildMessage(
   const catalog = APPOINTMENT_EVENTS[eventType];
 
   if (!catalog) {
-    return { body: UNKNOWN[language], title: "Zenc" };
+    return { body: UNKNOWN[language], title: BRAND_TITLE };
   }
 
   const template = catalog[language];
   const service = typeof payload.service_name === "string" && payload.service_name ? payload.service_name : GENERIC_SERVICE[language];
 
   return { body: template.body(service, formatWhen(payload.starts_at, language, timeZone)), title: template.title };
+}
+
+// A push names the shop it comes from: the shop's name is the title and the event title moves to the start of the body ("Studio
+// Bella" / "Agendamento confirmado: Corte em ..."). With no shop name (an event whose payload has no shop) the message is unchanged.
+export function withShopName(message: { body: string; title: string }, shopName: string | null | undefined) {
+  const name = typeof shopName === "string" ? shopName.trim() : "";
+
+  if (!name) return message;
+
+  return { body: message.title === BRAND_TITLE ? message.body : `${message.title}: ${message.body}`, title: name };
 }
