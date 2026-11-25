@@ -39,6 +39,28 @@ test.describe("re-accept gate", () => {
   });
 });
 
+test.describe("a brand-new customer", () => {
+  // No consent rows yet: they are written by ensure_my_customer, which only runs once the customer layout mounts.
+  test.use({ consents: { rows: [] } });
+
+  test("who accepted the current versions at signup lands in the app, not on /accept-terms", async ({ page }) => {
+    await signInAsCustomer(page, { accepted_privacy_version: LEGAL_VERSIONS.privacy, accepted_terms_version: LEGAL_VERSIONS.terms });
+    await mockCustomerRest(page);
+
+    await page.goto("/home");
+    await expect(page.getByTestId("tab-appointments")).toBeVisible();
+    await expect(page).not.toHaveURL(/accept-terms/);
+  });
+
+  test("who accepted an older version at signup is asked again", async ({ page }) => {
+    await signInAsCustomer(page, { accepted_terms_version: "2026-09-23" });
+    await mockCustomerRest(page);
+
+    await page.goto("/home");
+    await expect(page).toHaveURL(/\/accept-terms/);
+  });
+});
+
 test("a customer with current consents is not redirected", async ({ page }) => {
   await signInAsCustomer(page);
   await mockCustomerRest(page);

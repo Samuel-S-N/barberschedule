@@ -1,3 +1,4 @@
+import { LEGAL_VERSIONS } from "../../src/features/legal";
 import { expect, test } from "./fixtures";
 import type { Page } from "@playwright/test";
 
@@ -35,6 +36,8 @@ async function mockOwnerRest(page: Page, serves: boolean, calls: Record<string, 
 
     if (path.endsWith("/rpc/get_current_profile")) return json(route, [{ full_name: "Owner", role: "owner", user_id: ownerId }]);
     if (path.endsWith("/shops")) return json(route, [{ id: shopId }]);
+    // The second page (outside the fixture) must not hit the legal re-accept gate either.
+    if (path.endsWith("/consents")) return json(route, Object.entries(LEGAL_VERSIONS).map(([kind, version]) => ({ kind, version })));
     // This spec also opens a second page of the context (outside the fixture), so it answers the staff-shop lookup itself.
     if (path.endsWith("/rpc/get_my_shop")) return json(route, [{ shop_id: shopId, slug: "shop-a" }]);
     if (path.endsWith("/rpc/list_owner_professionals")) {

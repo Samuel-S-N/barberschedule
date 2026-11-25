@@ -1,4 +1,4 @@
-import { pendingKinds, requiredKinds } from "../../src/features/legal/pending";
+import { pendingKinds, requiredKinds, signupConsents } from "../../src/features/legal/pending";
 
 const versions = { business: "2026-11-26", privacy: "2026-11-26", terms: "2026-11-26" };
 
@@ -35,5 +35,26 @@ describe("pendingKinds", () => {
 
   it("a consent newer than the current version still counts", () => {
     expect(pendingKinds(["terms"], [{ kind: "terms", version: "2027-01-01" }], versions)).toEqual([]);
+  });
+});
+
+describe("signupConsents", () => {
+  it("reads the versions accepted at signup from the user metadata", () => {
+    expect(signupConsents({ accepted_privacy_version: "2026-11-26", accepted_terms_version: "2026-11-20" })).toEqual([
+      { kind: "terms", version: "2026-11-20" },
+      { kind: "privacy", version: "2026-11-26" },
+    ]);
+  });
+
+  it("falls back to the terms version for privacy, like ensure_my_customer", () => {
+    expect(signupConsents({ accepted_terms_version: "2026-11-26" })).toEqual([
+      { kind: "terms", version: "2026-11-26" },
+      { kind: "privacy", version: "2026-11-26" },
+    ]);
+  });
+
+  it("is empty without metadata or with blank values", () => {
+    expect(signupConsents(undefined)).toEqual([]);
+    expect(signupConsents({ accepted_terms_version: "  " })).toEqual([]);
   });
 });
