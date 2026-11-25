@@ -71,3 +71,19 @@ describe("terms of use", () => {
     expect(allText("terms")).toMatch(/\{\{foro\}\}/);
   });
 });
+
+describe("business agreement", () => {
+  it("has the commercial and operator clauses", () => {
+    expect(LEGAL_DOCUMENTS.business.sections.map((section) => section.id)).toEqual([
+      "objeto", "preco", "obrigacoes-estabelecimento", "papeis-dados", "instrucoes-confidencialidade", "suboperadores",
+      "seguranca-incidentes", "direitos-titulares", "devolucao-eliminacao", "responsabilidade", "vigencia-rescisao", "lei-foro",
+    ]);
+    const text = allText("business");
+
+    expect(text).toMatch(/primeiro mês/i);
+    expect(text).toMatch(/proposta comercial/i);
+    expect(text).toMatch(/48 \(quarenta e oito\) horas/);
+    expect(text).toMatch(/Resolução CD\/ANPD nº 15\/2024/);
+    expect(text).toMatch(/3 \(três\) dias úteis/);
+  });
+});
