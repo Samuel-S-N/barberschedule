@@ -12,16 +12,19 @@ import { errorMessage } from "../../i18n/errors";
 import { useBack } from "../../lib/navigation/use-back";
 import { useSupabaseSession } from "../../providers/AppProviders";
 import { buildExportFile, deleteMyAccount, exportMyData } from "./api";
+import { LegalLinks } from "../legal/LegalLinks";
 import { saveExportFile } from "./export-file";
 
 type Props = {
   // Owners cannot delete the account from the app (it would erase the shop): they see `note` instead.
   allowDelete: boolean;
   note?: string;
+  // Owners also read the business agreement here.
+  showBusiness?: boolean;
 };
 
 // Privacy and data is the same for every role: terms, data download and (client / professional) account deletion.
-export function PrivacyDataScreen({ allowDelete, note }: Props) {
+export function PrivacyDataScreen({ allowDelete, note, showBusiness = false }: Props) {
   const { t } = useTranslation();
   const router = useRouter();
   const back = useBack();
@@ -54,7 +57,7 @@ export function PrivacyDataScreen({ allowDelete, note }: Props) {
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("profile.privacy.title")} />
-            <Button label={t("profile.terms")} onPress={() => router.push("/legal")} testID="privacy-terms" variant="outline" />
+            <LegalLinks kinds={showBusiness ? ["privacy", "terms", "business"] : ["privacy", "terms"]} testIDPrefix="privacy-link" />
             <Button disabled={exportData.isPending} label={t("profile.download")} onPress={() => exportData.mutate()} testID="profile-export" variant="outline" />
             {allowDelete ? (
               confirmingDelete ? (

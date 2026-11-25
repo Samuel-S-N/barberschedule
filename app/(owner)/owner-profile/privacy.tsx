@@ -5,5 +5,5 @@ import { PrivacyDataScreen } from "../../../src/features/account/PrivacyDataScre
 export default function OwnerPrivacyScreen() {
   const { t } = useTranslation();
 
-  return <PrivacyDataScreen allowDelete={false} note={t("owner.profile.privacyNote")} />;
+  return <PrivacyDataScreen allowDelete={false} showBusiness note={t("owner.profile.privacyNote")} />;
 }

@@ -103,7 +103,6 @@ export const en = {
       checkEmailTitle: "Check your email",
       error: "Unable to create your account.",
       haveAccount: "I already have an account",
-      readTerms: "Read terms and privacy policy",
       submit: "Create account",
       title: "Create account",
     },
@@ -380,7 +379,6 @@ export const en = {
     saved: "Profile saved.",
     signOut: "Sign out",
     signOutError: "Unable to sign out.",
-    terms: "Terms and privacy policy",
     title: "Profile",
     yourData: "Your data",
   },
@@ -418,7 +416,7 @@ export const en = {
     notFoundTitle: "Business not found",
     staffLoginHint: "Staff: sign in below.",
   },
-  legal: { ptOnlyNote: "This document is in Portuguese, the official language of the service. Ask us if you need help understanding it.", version: "Version {{version}}" },
+  legal: { link: { business: "Business agreement", privacy: "Privacy policy", terms: "Terms of use" }, ptOnlyNote: "This document is in Portuguese, the official language of the service. Ask us if you need help understanding it.", version: "Version {{version}}" },
   owner: {
     appearance: {
       otherColor: "Other colour",

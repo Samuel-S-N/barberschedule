@@ -28,4 +28,14 @@ test.describe("public legal documents", () => {
       await expect(page.getByRole("heading", { name: "Termos de Uso", level: 1 })).toBeVisible();
     });
   });
+
+  test("signup links to the policy and the terms", async ({ page }) => {
+    await page.goto("/signup");
+    await page.getByTestId("signup-read-privacy").click();
+    await expect(page).toHaveURL(/\/privacidade/);
+    await page.goBack();
+    await page.getByTestId("signup-read-terms").click();
+    await expect(page).toHaveURL(/\/termos/);
+    await expect(page.getByRole("heading", { name: "Termos de Uso", level: 1 })).toBeVisible();
+  });
 });

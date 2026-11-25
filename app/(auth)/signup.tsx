@@ -98,7 +98,10 @@ export default function SignupScreen() {
               <Text className="flex-1 text-sm font-sans text-neutral-700">{t("auth.signup.acceptTerms")}</Text>
             </Pressable>
             {errors.acceptedTerms ? <Text className="text-sm font-sans text-danger-500">{fieldError("acceptedTerms")}</Text> : null}
-            <Button label={t("auth.signup.readTerms")} onPress={() => router.push("/legal")} size="sm" variant="ghost" />
+            <View className="flex-row flex-wrap gap-2">
+              <Button label={t("legal.link.privacy")} onPress={() => router.push("/privacidade")} size="sm" testID="signup-read-privacy" variant="ghost" />
+              <Button label={t("legal.link.terms")} onPress={() => router.push("/termos")} size="sm" testID="signup-read-terms" variant="ghost" />
+            </View>
             <Toast message={serverError ?? ""} onDismiss={() => setServerError(null)} variant="error" visible={serverError !== null} />
             <Button disabled={isSubmitting} label={t("auth.signup.submit")} onPress={submit} size="lg" />
             <Button label={t("auth.signup.haveAccount")} onPress={() => router.replace("/login")} variant="ghost" />

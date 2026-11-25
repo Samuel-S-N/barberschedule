@@ -102,7 +102,6 @@ export const es: DeepStringRecord<typeof en> = {
       checkEmailTitle: "Revisa tu correo",
       error: "No se pudo crear tu cuenta.",
       haveAccount: "Ya tengo una cuenta",
-      readTerms: "Leer términos y política de privacidad",
       submit: "Crear cuenta",
       title: "Crear cuenta",
     },
@@ -379,7 +378,6 @@ export const es: DeepStringRecord<typeof en> = {
     saved: "Perfil guardado.",
     signOut: "Cerrar sesión",
     signOutError: "No se pudo cerrar sesión.",
-    terms: "Términos y política de privacidad",
     title: "Perfil",
     yourData: "Tus datos",
   },
@@ -417,7 +415,7 @@ export const es: DeepStringRecord<typeof en> = {
     notFoundTitle: "Negocio no encontrado",
     staffLoginHint: "Equipo: ingresa abajo.",
   },
-  legal: { ptOnlyNote: "Este documento está en portugués, el idioma oficial del servicio. Escríbanos si necesita ayuda para entenderlo.", version: "Versión {{version}}" },
+  legal: { link: { business: "Contrato del establecimiento", privacy: "Política de privacidad", terms: "Términos de uso" }, ptOnlyNote: "Este documento está en portugués, el idioma oficial del servicio. Escríbanos si necesita ayuda para entenderlo.", version: "Versión {{version}}" },
   owner: {
     appearance: {
       otherColor: "Otro color",
