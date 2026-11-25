@@ -9,6 +9,9 @@ environment yet. The per-task history below is kept as the record of how it was 
 - **Product:** Zenc, a scheduling app for beauty businesses (barbershops, salons, nail and lash designers, braiders).
   Customer, owner and professional roles; Expo app for iOS/Android/Web on Supabase. Identity and vocabulary:
   decisions `015`, `017`, `018`.
+- **0.5 readiness, part A (legal texts, consent gate):** privacy policy, terms and business agreement as public pages
+  (`/privacidade`, `/termos`, `/contrato`) with per-document versions and a re-accept gate; lawyer review pending
+  (`docs/legal/revisao-juridica.md`).
 - **Repository:** 63 migration files (0001-0060 and 0064-0066; 0061-0063 are reserved by the unmerged payouts work),
   45 pgTAP files, 18 decision records, three Edge Functions (`delete-account`, `dispatch-notifications`,
   `invite-professional`).

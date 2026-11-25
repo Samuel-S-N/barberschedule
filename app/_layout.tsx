@@ -18,6 +18,7 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { resolveAuthRedirect } from "../src/features/auth/session";
+import { usePendingLegal } from "../src/features/legal/use-pending-legal";
 import { CurrentShopProvider } from "../src/features/shops/CurrentShopProvider";
 import { NotificationsPromptGate } from "../src/features/notifications/NotificationsPromptGate";
 import { ShopGate } from "../src/features/shops/ShopGate";
@@ -36,6 +37,8 @@ export function RootNavigator() {
   );
   const segments = useSegments();
   const { isLoading, profile, session } = useSupabaseSession();
+  const legal = usePendingLegal();
+  const pendingLegal = legal.pending.length > 0;
   const [fontsLoaded] = useFonts({
     Oswald_500Medium,
     Oswald_600SemiBold,
@@ -48,20 +51,22 @@ export function RootNavigator() {
   const redirect = useMemo(
     () =>
       resolveAuthRedirect({
+        pendingLegal,
         profileRole: profile?.role ?? null,
         segments,
         session,
       }),
-    [profile?.role, segments, session],
+    [pendingLegal, profile?.role, segments, session],
   );
 
   useEffect(() => {
-    if (!isLoading && redirect) {
+    // While the consents are loading `pending` is empty: redirecting then would bounce a blocked user off /accept-terms.
+    if (!isLoading && !legal.isLoading && redirect) {
       router.replace(redirect);
     }
-  }, [isLoading, redirect, router]);
+  }, [isLoading, legal.isLoading, redirect, router]);
 
-  if (isLoading || !fontsLoaded) {
+  if (isLoading || legal.isLoading || !fontsLoaded) {
     return (
       <View style={styles.loadingScreen}>
         <ActivityIndicator />

@@ -102,7 +102,6 @@ export const es: DeepStringRecord<typeof en> = {
       checkEmailTitle: "Revisa tu correo",
       error: "No se pudo crear tu cuenta.",
       haveAccount: "Ya tengo una cuenta",
-      readTerms: "Leer términos y política de privacidad",
       submit: "Crear cuenta",
       title: "Crear cuenta",
     },
@@ -379,7 +378,6 @@ export const es: DeepStringRecord<typeof en> = {
     saved: "Perfil guardado.",
     signOut: "Cerrar sesión",
     signOutError: "No se pudo cerrar sesión.",
-    terms: "Términos y política de privacidad",
     title: "Perfil",
     yourData: "Tus datos",
   },
@@ -418,27 +416,7 @@ export const es: DeepStringRecord<typeof en> = {
     notFoundTitle: "Negocio no encontrado",
     staffLoginHint: "Equipo: ingresa abajo.",
   },
-  legal: {
-    sections: {
-      collect: {
-        body: "Tu nombre, correo electrónico, teléfono (opcional), tus citas (servicio, profesional, fecha y hora, notas) y, si activas las notificaciones, un token de notificaciones push de tu dispositivo.",
-        title: "Qué recopilamos",
-      },
-      contact: { body: "Para cualquier solicitud sobre tus datos, contacta directamente con el establecimiento.", title: "Contacto" },
-      rights: {
-        body: "En tu perfil puedes corregir tu nombre y teléfono, descargar una copia de tus datos y eliminar tu cuenta. Eliminar la cuenta borra tu acceso y anonimiza tu registro de cliente; las citas pasadas permanecen en los registros del establecimiento sin tu nombre, teléfono ni correo (las notas que escribiste en una cita se conservan tal como las escribiste; pide al establecimiento que las elimine). Los registros de consentimiento se conservan de forma anónima como prueba de aceptación.",
-        title: "Tus derechos (LGPD)",
-      },
-      who: { body: "Tú y el establecimiento en el que reservas. No vendemos tus datos.", title: "Quién puede verlo" },
-      why: {
-        body: "Para crear tu cuenta, permitirte reservar, cambiar y cancelar citas, recordártelas y permitir que el establecimiento se ponga en contacto contigo sobre tu agenda. El teléfono es opcional.",
-        title: "Para qué lo recopilamos",
-      },
-    },
-    title: "Términos y privacidad",
-    translationNote: "El texto de referencia es el portugués; esta es una traducción de cortesía.",
-    version: "Versión {{version}}",
-  },
+  legal: { gate: { accept: "He leído y acepto", body: "Para continuar, lea y acepte las versiones actuales de los documentos a continuación.", error: "No se pudo registrar la aceptación. Inténtelo de nuevo.", title: "Actualizamos nuestros términos" }, link: { business: "Contrato del establecimiento", privacy: "Política de privacidad", terms: "Términos de uso" }, ptOnlyNote: "Este documento está en portugués, el idioma oficial del servicio. Escríbanos si necesita ayuda para entenderlo.", version: "Versión {{version}}" },
   owner: {
     appearance: {
       otherColor: "Otro color",
@@ -1011,6 +989,7 @@ export const es: DeepStringRecord<typeof en> = {
       REPORT_FORBIDDEN: "Solo el dueño del establecimiento puede ver este informe.",
       SHOP_SLUG_INVALID: "Ese enlace del negocio está en uso o no es válido.",
       SHOP_OWNER_INVALID: "Esta cuenta no puede ser dueña de un nuevo negocio.",
+      LEGAL_CONSENT_INVALID: "No se pudo registrar su aceptación. Inténtelo de nuevo.",
       SERVICE_STANDARD_LOCKED: "Este servicio es estándar y no se puede desactivar.",
       COMPENSATION_INVALID: "Ingresa una comisión o alquiler de silla válidos.",
       EARNINGS_INVALID_RANGE: "Elige un período de hasta 92 días.",

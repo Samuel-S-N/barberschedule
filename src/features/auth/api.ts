@@ -1,4 +1,4 @@
-import { TERMS_VERSION } from "../account/legal";
+import { LEGAL_VERSIONS } from "../legal";
 import { unsubscribeWebPush } from "../notifications/web-push";
 import { clearRecovery, markInvite, markRecovery } from "./recovery";
 import type { RecoveryFlow } from "./recovery";
@@ -75,7 +75,8 @@ export async function signUpCustomer(
     email: input.email,
     options: {
       data: {
-        accepted_terms_version: TERMS_VERSION,
+        accepted_privacy_version: LEGAL_VERSIONS.privacy,
+        accepted_terms_version: LEGAL_VERSIONS.terms,
         full_name: input.fullName,
         ...(input.nickname ? { nickname: input.nickname } : {}),
         ...(input.phone ? { phone: input.phone } : {}),

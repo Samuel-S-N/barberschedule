@@ -61,7 +61,7 @@ for (const role of ["customer", "professional", "owner"] as const) {
     await open(page, role);
     await page.goto(privacyRoutes[role]);
 
-    await expect(page.getByTestId("privacy-terms")).toBeVisible();
+    await expect(page.getByTestId("privacy-link-privacy")).toBeVisible();
     const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId("profile-export").click()]);
 
     expect(download.suggestedFilename()).toMatch(/^zenc-my-data-\d{4}-\d{2}-\d{2}\.json$/);

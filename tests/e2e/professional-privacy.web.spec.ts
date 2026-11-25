@@ -51,6 +51,6 @@ test("a professional reaches the privacy screen from the profile hub", async ({ 
 
   await expect(page).toHaveURL(/\/my-profile\/privacy/);
   await expect(page.getByTestId("profile-export")).toBeVisible();
-  await page.getByTestId("privacy-terms").click();
-  await expect(page).toHaveURL(/\/legal/);
+  await page.getByTestId("privacy-link-privacy").click();
+  await expect(page).toHaveURL(/\/privacidade/);
 });
