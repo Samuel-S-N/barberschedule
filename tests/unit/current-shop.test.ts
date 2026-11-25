@@ -11,7 +11,7 @@ import { getShopBySlug } from "../../src/features/shops/api";
 import { CurrentShopProvider, useCurrentShop } from "../../src/features/shops/CurrentShopProvider";
 import { currentShopSlug } from "../../src/features/shops/host";
 
-const shop = { address_cep: null, address_city: null, address_city_ibge: null, address_complement: null, address_district: null, address_number: null, address_state: null, address_street: null, id: "s1", name: "Barbearia Alfa", phone: null, slug: "alfa", whatsapp: null };
+const shop = { address_cep: null, address_city: null, address_city_ibge: null, address_complement: null, address_district: null, address_number: null, address_state: null, address_street: null, id: "s1", name: "Barbearia Alfa", phone: null, ready: true, slug: "alfa", whatsapp: null };
 
 function Probe() {
   const value = useCurrentShop();

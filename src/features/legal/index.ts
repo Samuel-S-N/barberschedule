@@ -10,3 +10,6 @@ export const LEGAL_DOCUMENTS: Record<LegalKind, LegalDocument> = {
 };
 
 export const LEGAL_VERSIONS = Object.fromEntries(Object.entries(LEGAL_DOCUMENTS).map(([kind, doc]) => [kind, doc.version])) as Record<LegalKind, string>;
+
+// Public documents: they stay reachable everywhere, even on a shop page that is closed to visitors.
+export const LEGAL_PATHS = ["/privacidade", "/termos", "/contrato"];

@@ -1,9 +1,12 @@
+import { usePathname } from "expo-router";
 import { useEffect } from "react";
-import type { PropsWithChildren } from "react";
+import type { PropsWithChildren, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Platform, Text, View } from "react-native";
 
 import { signOut } from "../auth/api";
+import { LEGAL_PATHS } from "../legal";
+import { LegalFooter } from "../legal/LegalLinks";
 import { Button } from "../../components/ui/Button";
 import { Screen } from "../../components/ui/Screen";
 import { useSupabaseSession } from "../../providers/AppProviders";
@@ -13,13 +16,14 @@ import { useMyShop } from "./my-shop";
 import { resolveShopRoute } from "./shop-route";
 import { shopUrl } from "./resolve-slug";
 
-function Message({ action, body, title }: { action?: { label: string; onPress: () => void }; body: string; title: string }) {
+function Message({ action, body, footer, title }: { action?: { label: string; onPress: () => void }; body: string; footer?: ReactNode; title: string }) {
   return (
     <Screen className="flex-1 bg-canvas">
       <View className="flex-1 items-center justify-center gap-4 p-5">
         <Text accessibilityRole="header" className="max-w-[420px] text-center text-3xl leading-[44px] font-display-bold text-ink">{title}</Text>
         <Text className="max-w-[420px] text-center text-base font-sans text-neutral-600">{body}</Text>
         {action ? <Button label={action.label} onPress={action.onPress} /> : null}
+        {footer}
       </View>
     </Screen>
   );
@@ -30,7 +34,8 @@ function Message({ action, body, title }: { action?: { label: string; onPress: (
 export function ShopGate({ children }: PropsWithChildren) {
   const { t } = useTranslation();
   const { profile, session, supabase } = useSupabaseSession();
-  const { retry, slug, status } = useCurrentShop();
+  const { retry, shop, slug, status } = useCurrentShop();
+  const pathname = usePathname();
   const mine = useMyShop();
   const staff = profile?.role === "owner" || profile?.role === "professional";
   const route = resolveShopRoute({
@@ -39,6 +44,7 @@ export function ShopGate({ children }: PropsWithChildren) {
     // Staff whose lookup failed or has no shop must not hang on the spinner: treat both as "no staff shop".
     mySlug: !staff ? null : mine.isPending ? undefined : mine.data?.slug ?? null,
     role: profile?.role ?? null,
+    shopReady: shop?.ready,
     signedIn: session !== null,
     status,
   });
@@ -54,6 +60,13 @@ export function ShopGate({ children }: PropsWithChildren) {
   if (route.kind === "error") return <Message action={{ label: t("common.tryAgain"), onPress: retry }} body={t("shopGate.errorBody")} title={t("shopGate.notFoundTitle")} />;
   if (route.kind === "bare") {
     return <Message action={{ label: t("common.signOut"), onPress: () => void signOut(supabase) }} body={t("shopGate.bareBody")} title={t("shopGate.bareTitle")} />;
+  }
+
+  if (route.kind === "coming-soon") {
+    // The legal documents stay readable: they are linked from this page and from signup, and have to open without a login.
+    if (LEGAL_PATHS.includes(pathname)) return <>{children}</>;
+
+    return <Message body={t("shopGate.comingSoonBody", { name: shop?.name ?? "" })} footer={<LegalFooter />} title={t("shopGate.comingSoonTitle")} />;
   }
 
   return <>{children}</>;

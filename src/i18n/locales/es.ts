@@ -409,6 +409,8 @@ export const es: DeepStringRecord<typeof en> = {
   },
   shopLinkScreen: { copied: "Enlace copiado", copy: "Copiar enlace", download: "Descargar QR (PNG)", downloadFailed: "No se pudo descargar el código QR.", failed: "No se pudo compartir. Copie el enlace manualmente.", introOwner: "Muestre este código QR o envíe el enlace para que sus clientes reserven.", introProfessional: "Este es el enlace del establecimiento. Compártalo con sus clientes: pueden reservar con cualquier profesional.", qrLabel: "Código QR del establecimiento", share: "Compartir", title: "Enlace y código QR", titleProfessional: "Enlace del establecimiento" },
   shopGate: {
+    comingSoonBody: "{{name}} está preparando la agenda.",
+    comingSoonTitle: "Próximamente",
     bareBody: "Zenc funciona con el enlace o código QR de cada negocio. Pídelo a tu negocio.",
     bareTitle: "Abre el enlace que te envió tu negocio",
     errorBody: "No pudimos cargar este negocio.",

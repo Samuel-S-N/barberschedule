@@ -5,10 +5,17 @@ import { addressToColumns } from "./address";
 import type { ShopAddress, ShopAddressColumns } from "./address";
 import type { ShopPeriod } from "./hours";
 
-export type PublicShop = ShopAddressColumns & { id: string; name: string; phone: string | null; slug: string; whatsapp: string | null };
+export type PublicShop = ShopAddressColumns & { id: string; name: string; phone: string | null; ready: boolean; slug: string; whatsapp: string | null };
 
 const PUBLIC_SHOP_COLUMNS =
-  "id, name, slug, phone, whatsapp, address_cep, address_street, address_number, address_complement, address_district, address_city, address_state, address_city_ibge";
+  "id, name, slug, phone, whatsapp, setup_completed_at, address_cep, address_street, address_number, address_complement, address_district, address_city, address_state, address_city_ibge";
+
+// A row without the column (older mocks) counts as open: only an explicit null means "not open yet".
+function toPublicShop(row: Record<string, unknown>): PublicShop {
+  const { setup_completed_at: completedAt, ...rest } = row;
+
+  return { ...(rest as Omit<PublicShop, "ready">), ready: completedAt !== null };
+}
 
 export async function listPublicShops(supabase: Pick<SupabaseClient, "from">) {
   const { data, error } = await supabase.from("shops").select(PUBLIC_SHOP_COLUMNS).order("name");
@@ -17,7 +24,7 @@ export async function listPublicShops(supabase: Pick<SupabaseClient, "from">) {
     throw error;
   }
 
-  return (data ?? []) as PublicShop[];
+  return ((data ?? []) as Record<string, unknown>[]).map(toPublicShop);
 }
 
 // `.limit(1)` and an array (not `.maybeSingle()`): one shop per slug, and the e2e mocks answer with plain arrays.
@@ -26,7 +33,9 @@ export async function getShopBySlug(supabase: Pick<SupabaseClient, "from">, slug
 
   if (error) throw error;
 
-  return ((data ?? []) as PublicShop[])[0] ?? null;
+  const row = (data ?? [])[0] as Record<string, unknown> | undefined;
+
+  return row ? toPublicShop(row) : null;
 }
 
 export async function listShopHours(supabase: Pick<SupabaseClient, "from">, shopId: string): Promise<ShopPeriod[]> {

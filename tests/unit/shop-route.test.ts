@@ -19,6 +19,12 @@ describe("resolveShopRoute", () => {
     ["native: staff of another shop cannot be redirected, they get the app", { ...base, canRedirect: false, mySlug: "beta", role: "owner", signedIn: true }, { kind: "app" }],
     ["native: staff with no dev slug at all", { ...base, canRedirect: false, currentSlug: null, mySlug: "beta", role: "owner", signedIn: true, status: "no-slug" }, { kind: "bare" }],
     ["owner with no shop yet", { ...base, mySlug: null, role: "owner", signedIn: true }, { kind: "app" }],
+    ["visitor on a closed shop", { ...base, shopReady: false }, { kind: "coming-soon" }],
+    ["customer on a closed shop", { ...base, role: "customer", shopReady: false, signedIn: true }, { kind: "coming-soon" }],
+    ["owner on their own closed shop", { ...base, mySlug: "alfa", role: "owner", shopReady: false, signedIn: true }, { kind: "app" }],
+    ["professional on their own closed shop", { ...base, mySlug: "alfa", role: "professional", shopReady: false, signedIn: true }, { kind: "app" }],
+    ["owner of another shop on a closed shop is redirected", { ...base, mySlug: "beta", role: "owner", shopReady: false, signedIn: true }, { kind: "redirect", slug: "beta" }],
+    ["an open shop", { ...base, shopReady: true }, { kind: "app" }],
   ] as const)("%s", (_name, input, expected) => {
     expect(resolveShopRoute(input as never)).toEqual(expected);
   });

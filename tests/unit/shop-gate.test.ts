@@ -1,9 +1,11 @@
 import { render } from "@testing-library/react-native";
+import { usePathname } from "expo-router";
 import React from "react";
 import { Text } from "react-native";
 
 // Screen pads by the safe-area insets; in the app Expo Router provides the provider above every layout.
 jest.mock("react-native-safe-area-context", () => ({ useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 0 }) }));
+jest.mock("expo-router", () => ({ usePathname: jest.fn(() => "/"), useRouter: () => ({ push: jest.fn() }) }));
 jest.mock("../../src/providers/AppProviders", () => ({ useSupabaseSession: jest.fn() }));
 jest.mock("../../src/features/shops/CurrentShopProvider", () => ({ useCurrentShop: jest.fn() }));
 jest.mock("../../src/features/shops/my-shop", () => ({ useMyShop: jest.fn() }));
@@ -60,5 +62,23 @@ describe("ShopGate", () => {
     const view = await render(React.createElement(ShopGate, null, child()));
 
     expect(view.getByText("Try again")).toBeTruthy();
+  });
+
+  it("shows the closed page for a shop that is not open, without a login or signup action", async () => {
+    setup({ shop: { id: "s", name: "Studio Aurora", ready: false, slug: "alfa" } }, {});
+    const view = await render(React.createElement(ShopGate, null, child()));
+
+    expect(view.getByText("Coming soon")).toBeTruthy();
+    expect(view.getByText("Studio Aurora is getting its agenda ready.")).toBeTruthy();
+    expect(view.queryByText("navigator")).toBeNull();
+    expect(view.getByTestId("legal-footer")).toBeTruthy();
+  });
+
+  it("lets the legal documents through on a closed shop", async () => {
+    jest.mocked(usePathname).mockReturnValue("/privacidade");
+    setup({ shop: { id: "s", name: "Studio Aurora", ready: false, slug: "alfa" } }, {});
+    const view = await render(React.createElement(ShopGate, null, child()));
+
+    expect(view.getByText("navigator")).toBeTruthy();
   });
 });

@@ -410,6 +410,8 @@ export const en = {
   },
   shopLinkScreen: { copied: "Link copied", copy: "Copy link", download: "Download QR (PNG)", downloadFailed: "Could not download the QR code.", failed: "Could not share. Copy the link by hand.", introOwner: "Show this QR code or send the link so your customers can book.", introProfessional: "This is the business link. Share it with your customers: they can book with any professional.", qrLabel: "Business QR code", share: "Share", title: "Link and QR code", titleProfessional: "Business link" },
   shopGate: {
+    comingSoonBody: "{{name}} is getting its agenda ready.",
+    comingSoonTitle: "Coming soon",
     bareBody: "Zenc works through each business's own link or QR code. Ask your business for it.",
     bareTitle: "Open the link your business sent you",
     errorBody: "We could not load this business.",
