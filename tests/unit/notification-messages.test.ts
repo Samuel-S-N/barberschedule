@@ -1,4 +1,4 @@
-import { buildMessage, normalizeLocale } from "../../supabase/functions/dispatch-notifications/messages";
+import { buildMessage, normalizeLocale, withShopName } from "../../supabase/functions/dispatch-notifications/messages";
 
 const appointment = { service_name: "Corte", starts_at: "2026-08-17T12:00:00Z" }; // 09:00 in America/Sao_Paulo
 
@@ -141,5 +141,40 @@ describe("payout push messages", () => {
 
     expect(message.title).toBe("Repasse recebido");
     expect(message.body).toContain("70,50");
+  });
+});
+
+describe("withShopName", () => {
+  const booked = (locale: string) => buildMessage("appointment.booked", locale, appointment);
+
+  it.each([["pt", "Agendamento confirmado"], ["en", "Appointment booked"], ["es", "Cita reservada"]])("%s: the shop name is the title and the event title starts the body", (locale, eventTitle) => {
+    const plain = booked(locale);
+
+    expect(withShopName(plain, "Studio Bella")).toEqual({ body: `${eventTitle}: ${plain.body}`, title: "Studio Bella" });
+  });
+
+  it("matches the example: pt, Corte, 17 Aug 09:00", () => {
+    expect(withShopName(booked("pt"), "Studio Bella").body).toMatch(/^Agendamento confirmado: Corte em .+\.$/);
+  });
+
+  it.each([[null], [undefined], [""], ["   "]])("keeps today's title and body exactly when the shop name is %p", (name) => {
+    expect(withShopName(booked("pt"), name)).toEqual(booked("pt"));
+  });
+
+  it("trims the name", () => {
+    expect(withShopName(booked("en"), "  Studio Bella ").title).toBe("Studio Bella");
+  });
+
+  it("the generic Zenc fallback keeps its body (no 'Zenc: ...' prefix)", () => {
+    const unknown = buildMessage("nothing.known", "en", {});
+
+    expect(unknown.title).toBe("Zenc");
+    expect(withShopName(unknown, "Studio Bella")).toEqual({ body: unknown.body, title: "Studio Bella" });
+  });
+
+  it("works for staff and recurrence events too", () => {
+    const staff = buildMessage("staff.awaiting_confirmation", "pt", { customer_name: "Ana", service_name: "Corte", starts_at: "2026-08-17T12:00:00Z" });
+
+    expect(withShopName(staff, "Studio Bella")).toEqual({ body: `Aguardando confirmação: ${staff.body}`, title: "Studio Bella" });
   });
 });

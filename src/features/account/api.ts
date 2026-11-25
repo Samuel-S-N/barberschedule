@@ -35,13 +35,11 @@ export async function updateMyProfile(
   supabase: RpcClient,
   input: { fullName: string; nickname: string | null; phone: string | null },
 ) {
-  const row = await callRpc(supabase, "update_my_profile", {
+  await callRpc(supabase, "update_my_profile", {
     p_full_name: input.fullName,
     p_nickname: input.nickname?.trim() || null,
     p_phone: input.phone,
   });
-
-  return toCustomer(row as CustomerRow);
 }
 
 export async function exportMyData(supabase: RpcClient) {

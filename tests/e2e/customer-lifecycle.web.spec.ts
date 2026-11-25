@@ -165,7 +165,7 @@ test("a customer can edit their name and phone", async ({ page }) => {
   await mockCustomerRest(page, async (route, url) => {
     if (url.pathname.endsWith("/rpc/update_my_profile")) {
       updatePayload = route.request().postDataJSON() as Record<string, unknown>;
-      await json(route, customerRow({ full_name: "Browser Renamed", phone: "+55 11 90000-0000" }));
+      await route.fulfill({ status: 204 });
       return true;
     }
   });

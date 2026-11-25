@@ -4,7 +4,7 @@ import type { ClaimedNotification, Deps } from "../../supabase/functions/dispatc
 const base: ClaimedNotification = {
   attempts: 1, event_type: "appointment.booked", expo_push_token: null, id: "n1", locale: "en", max_attempts: 3,
   payload: { service_name: "Cut", shop_id: "s1", starts_at: "2026-12-01T12:00:00Z" },
-  recipient_role: "customer", shop_slug: "shop-a", web_origin: null, web_subscription: null,
+  recipient_role: "customer", shop_name: null, shop_slug: "shop-a", web_origin: null, web_subscription: null,
 };
 const sub = (name: string) => ({ endpoint: `https://push.example/${name}`, keys: { auth: "a", p256dh: "p" } });
 const web = (name: string, origin: string, patch: Partial<ClaimedNotification> = {}): ClaimedNotification => ({ ...base, web_origin: origin, web_subscription: sub(name), ...patch });
@@ -183,5 +183,43 @@ describe("dispatcher: several tokens for one notification", () => {
       await dispatch([web("a", "https://shop-a.zencpro.app")]);
       expect(calls).toContain("deactivateWeb:https://push.example/a");
     }
+  });
+});
+
+describe("dispatcher: the shop name is the title", () => {
+  it("web: title is the shop name, the event title starts the body, the url is unchanged", async () => {
+    const sent: Array<{ body: string; title: string; url: string }> = [];
+    const { dispatch } = deps({ sendWeb: async (_subscription, message) => { sent.push(message); return { status: 201 }; } });
+
+    await dispatch([web("a", "https://shop-a.zencpro.app", { locale: "pt", shop_name: "Studio Bella" })]);
+
+    expect(sent[0].title).toBe("Studio Bella");
+    expect(sent[0].body).toMatch(/^Agendamento confirmado: Cut em /);
+    expect(sent[0].url).toBe("https://shop-a.zencpro.app/appointments");
+  });
+
+  it("Expo: the same title and body, and the data still carries the shop id", async () => {
+    const sent: Array<{ data: Record<string, unknown>; message: { body: string; title: string } }> = [];
+    const { dispatch } = deps({ sendExpo: async (_token, message, data) => { sent.push({ data, message }); return { ok: true }; } });
+
+    await dispatch([expo("T1", { locale: "en", shop_name: "Studio Bella" })]);
+
+    expect(sent[0].message.title).toBe("Studio Bella");
+    expect(sent[0].message.body).toMatch(/^Appointment booked: Cut on /);
+    expect(sent[0].data).toMatchObject({ shop_id: "s1" });
+  });
+
+  it("an event with no shop name keeps today's title on both channels", async () => {
+    const web_: string[] = [];
+    const expo_: string[] = [];
+    const { dispatch } = deps({
+      sendExpo: async (_token, message) => { expo_.push(message.title); return { ok: true }; },
+      sendWeb: async (_subscription, message) => { web_.push(message.title); return { status: 201 }; },
+    });
+
+    await dispatch([expo("T1", { shop_name: null }), web("a", "https://shop-a.zencpro.app", { id: "n2", shop_name: null })]);
+
+    expect(expo_).toEqual(["Appointment booked"]);
+    expect(web_).toEqual(["Appointment booked"]);
   });
 });
