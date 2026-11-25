@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
@@ -26,7 +25,6 @@ type Props = {
 // Privacy and data is the same for every role: terms, data download and (client / professional) account deletion.
 export function PrivacyDataScreen({ allowDelete, note, showBusiness = false }: Props) {
   const { t } = useTranslation();
-  const router = useRouter();
   const back = useBack();
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
