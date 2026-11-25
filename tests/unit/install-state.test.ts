@@ -6,6 +6,11 @@ const CHROME_MAC = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/
 const SAFARI_IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
 const CHROME_IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/120.0.0.0 Mobile/15E148 Safari/604.1";
 const CHROME_ANDROID = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
+const SAFARI_MAC_16 = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15";
+const SAFARI_MAC_NO_VERSION = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Safari/605.1.15";
+const FIREFOX_ANDROID = "Mozilla/5.0 (Android 14; Mobile; rv:128.0) Gecko/128.0 Firefox/128.0";
+const EDGE_ANDROID = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 EdgA/120.0.0.0";
+const SAMSUNG = "Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/23.0 Chrome/115.0.0.0 Mobile Safari/537.36";
 const FIREFOX = "Mozilla/5.0 (X11; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0";
 
 const env = (patch: Partial<InstallEnvironment>): InstallEnvironment => ({ capturedPrompt: null, isWeb: true, maxTouchPoints: 0, standalone: false, userAgent: FIREFOX, ...patch });
@@ -22,6 +27,12 @@ describe("resolveInstallState", () => {
     ["Safari on a Mac", env({ userAgent: SAFARI_MAC }), { status: "installable-mac-safari" }],
     ["Chrome on a Mac without a prompt", env({ userAgent: CHROME_MAC }), { status: "unsupported" }],
     ["Firefox", env({}), { status: "unsupported" }],
+    ["Safari 16 on a Mac (no Add to Dock yet)", env({ userAgent: SAFARI_MAC_16 }), { status: "unsupported" }],
+    ["a Safari whose version cannot be read", env({ userAgent: SAFARI_MAC_NO_VERSION }), { status: "unsupported" }],
+    ["Firefox on Android", env({ maxTouchPoints: 5, userAgent: FIREFOX_ANDROID }), { status: "installable-firefox-android" }],
+    ["Firefox on Android with a captured prompt (the prompt wins)", env({ capturedPrompt: prompt, userAgent: FIREFOX_ANDROID }), { promptEvent: prompt, status: "installable-chrome" }],
+    ["Edge on Android without a prompt", env({ userAgent: EDGE_ANDROID }), { status: "unsupported" }],
+    ["Samsung Internet without a prompt", env({ userAgent: SAMSUNG }), { status: "unsupported" }],
   ])("%s", (_name, environment, expected) => {
     expect(resolveInstallState(environment)).toEqual(expected);
   });

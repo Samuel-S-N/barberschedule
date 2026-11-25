@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { Info, Repeat, Settings, ShieldCheck, User, UserCog } from "lucide-react-native";
+import { Info, Lock, Repeat, Settings, ShieldCheck, User } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
 
@@ -52,7 +52,7 @@ export default function CustomerProfileScreen() {
             <MenuBlock
               items={[
                 { icon: Settings, key: "settings", label: t("profile.menu.settings"), onPress: () => router.push("/me/settings") },
-                { icon: UserCog, key: "privacy", label: t("profile.menu.privacy"), onPress: () => router.push("/me/privacy") },
+                { icon: Lock, key: "privacy", label: t("profile.menu.privacy"), onPress: () => router.push("/me/privacy") },
                 { icon: Info, key: "about", label: t("profile.menu.about"), onPress: () => router.push("/me/about") },
               ]}
             />

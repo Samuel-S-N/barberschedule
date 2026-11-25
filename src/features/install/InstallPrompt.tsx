@@ -20,7 +20,7 @@ function CardTitle() {
 }
 
 // "Add Zenc to your home screen", on the profile hub only (never as an automatic pop-up). One card per situation: Chrome gets
-// the browser's own prompt, iPhone/iPad and Safari on Mac get a short guide, everything else shows nothing.
+// the browser's own prompt, iPhone/iPad, Safari 17+ on Mac and Firefox on Android get a short guide, everything else shows nothing.
 export function InstallPrompt() {
   const colors = useColors();
   const { t } = useTranslation();
@@ -60,7 +60,7 @@ export function InstallPrompt() {
   }
 
   const mac = install.status === "installable-mac-safari";
-  const variant = mac ? "mac-safari" : install.browser === "chrome" ? "ios-chrome" : "ios-other";
+  const variant = mac ? "mac-safari" : install.status === "installable-firefox-android" ? "firefox-android" : install.browser === "chrome" ? "ios-chrome" : "ios-other";
 
   return (
     <>

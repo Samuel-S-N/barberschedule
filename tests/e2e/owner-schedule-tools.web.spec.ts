@@ -49,3 +49,44 @@ test("the owner sees a weekly summary with the professional's lunch and copies t
   expect(periods).toHaveLength(2);
   await expect(page.getByTestId("schedule-copy-shop-hours")).toHaveCount(0);
 });
+
+test.describe("the schedule screen can open on a given professional", () => {
+  const second = "44444444-4444-4444-8444-444444444444";
+  const row = (id: string, name: string) => ({ active: true, archived_at: null, commission_percent: "0.00", compensation_type: "commission", id, name, shop_id: shopId, user_id: null });
+
+  async function open(page: import("@playwright/test").Page, search: string) {
+    await page.addInitScript(({ id }) => {
+      const now = Math.floor(Date.now() / 1000);
+      const header = btoa(JSON.stringify({ alg: "none" })).replace(/=+$/, "");
+      const token = `${header}.${btoa(JSON.stringify({ exp: now + 3600, sub: id }))}.`;
+      const session = JSON.stringify({ access_token: token, expires_at: now + 3600, expires_in: 3600, refresh_token: "e2e-refresh-token", token_type: "bearer", user: { id } });
+      localStorage.setItem("sb-example-auth-token", session);
+      localStorage.setItem("sb-127-auth-token", session);
+    }, { id: ownerId });
+    await page.route("**/rest/v1/**", async (route) => {
+      const path = new URL(route.request().url()).pathname;
+
+      if (path.endsWith("/rpc/get_current_profile")) return json(route, [{ full_name: "Owner", role: "owner", user_id: ownerId }]);
+      if (path.endsWith("/shops")) return json(route, [{ id: shopId }]);
+      if (path.endsWith("/rpc/list_owner_professionals")) return json(route, [row(professionalId, "First Professional"), row(second, "Second Professional")]);
+      if (path.endsWith("/rpc/list_shop_lunch_breaks") || path.endsWith("/working_periods") || path.endsWith("/schedule_overrides")) return json(route, []);
+
+      return route.abort();
+    });
+    await page.goto(`/schedule${search}`);
+  }
+
+  test("?professional=<id> preselects that professional", async ({ page }) => {
+    await open(page, `?professional=${second}`);
+
+    await expect(page.getByTestId(`schedule-professional-${second}`)).toContainText("selected");
+    await expect(page.getByTestId(`schedule-professional-${professionalId}`)).not.toContainText("selected");
+  });
+
+  test("an unknown id falls back to the first professional", async ({ page }) => {
+    await open(page, "?professional=00000000-0000-4000-8000-000000000000");
+
+    await expect(page.getByTestId(`schedule-professional-${professionalId}`)).toContainText("selected");
+  });
+});
+

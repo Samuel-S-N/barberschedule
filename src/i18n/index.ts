@@ -3,7 +3,7 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 
 import { createKeyValueStorage } from "../lib/key-value-storage";
-import { effectiveLanguage, parseLanguagePreference, resolveLanguage } from "./language";
+import { effectiveLanguage, htmlLang, parseLanguagePreference, resolveLanguage } from "./language";
 import type { Language, LanguagePreference } from "./language";
 import { en } from "./locales/en";
 import { es } from "./locales/es";
@@ -20,6 +20,16 @@ void i18n.use(initReactI18next).init({
   lng: deviceLanguage(),
   resources: { en: { translation: en }, es: { translation: es }, pt: { translation: pt } },
 });
+
+// Web only (there is no document on native or in the static export's Node render): the page's own language follows the app's, at load
+// and on every change (device language, stored preference, Settings choice, app foreground). Screen readers, hyphenation and the
+// browser's "translate this page" read it.
+function applyHtmlLang(language: string) {
+  if (typeof document !== "undefined") document.documentElement.lang = htmlLang(resolveLanguage(language));
+}
+
+i18n.on("languageChanged", applyHtmlLang);
+applyHtmlLang(i18n.language);
 
 export function getCurrentLanguage(): Language {
   return resolveLanguage(i18n.language);

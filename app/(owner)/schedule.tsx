@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
@@ -22,9 +23,9 @@ import {
   listOwnerScheduleOverrides,
   listOwnerWorkingPeriods,
 } from "../../src/features/schedule/api";
+import { copyShopHoursToProfessional } from "../../src/features/schedule/copy-shop-hours";
 import type { ScheduleOverrideKind } from "../../src/features/schedule/types";
 import { assertNoOverlappingWorkingPeriod, parseWorkingPeriodInput } from "../../src/features/schedule/validation";
-import { listShopHours } from "../../src/features/shops/api";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
 import { useLanguage } from "../../src/i18n/use-language";
 import { errorMessage } from "../../src/i18n/errors";
@@ -42,6 +43,7 @@ export default function OwnerScheduleScreen() {
   const pull = useRefreshAll();
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
+  const { professional: wanted } = useLocalSearchParams<{ professional?: string }>();
   const shop = useOwnerShopId();
   const shopId = shop.data ?? null;
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -69,8 +71,9 @@ export default function OwnerScheduleScreen() {
   const professionals = data.data?.professionals ?? [];
 
   useEffect(() => {
-    if (selectedProfessionalId === null && professionals.length > 0) setSelectedProfessionalId(professionals[0].id);
-  }, [professionals, selectedProfessionalId]);
+    // `?professional=<id>` (the owner hub's guide) picks that professional when it belongs to the shop; otherwise the first one.
+    if (selectedProfessionalId === null && professionals.length > 0) setSelectedProfessionalId(professionals.find((item: OwnerProfessional) => item.id === wanted)?.id ?? professionals[0].id);
+  }, [professionals, selectedProfessionalId, wanted]);
 
   const selectedProfessional = professionals.find((professional: OwnerProfessional) => professional.id === selectedProfessionalId);
   const selectedPeriods = (data.data?.periods ?? []).filter((period) => period.professionalId === selectedProfessionalId);
@@ -92,11 +95,7 @@ export default function OwnerScheduleScreen() {
   });
 
   const copyShopHours = useMutation({
-    mutationFn: async () => {
-      for (const period of await listShopHours(supabase, shopId ?? "")) {
-        await createWorkingPeriod(supabase, parseWorkingPeriodInput({ professionalId: selectedProfessionalId ?? "", endTime: period.end, shopId: shopId ?? "", startTime: period.start, weekday: period.weekday }));
-      }
-    },
+    mutationFn: () => copyShopHoursToProfessional(supabase, shopId ?? "", selectedProfessionalId ?? ""),
     onError: (error) => fail(error, t("owner.schedule.addPeriodError")),
     onSuccess: () => void refresh(),
   });

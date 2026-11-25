@@ -1,4 +1,4 @@
-import { Ellipsis, Share, SquarePlus, X } from "lucide-react-native";
+import { Ellipsis, EllipsisVertical, Share, SquarePlus, X } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, Pressable, Text, View } from "react-native";
@@ -6,7 +6,7 @@ import { Modal, Pressable, Text, View } from "react-native";
 import { Button } from "../../components/ui/Button";
 import { useColors } from "../../lib/design/theme/ThemeProvider";
 
-export type InstallGuideVariant = "ios-chrome" | "ios-other" | "mac-safari";
+export type InstallGuideVariant = "firefox-android" | "ios-chrome" | "ios-other" | "mac-safari";
 
 export function InstallGuide({ onClose, variant, visible }: { onClose: () => void; variant: InstallGuideVariant; visible: boolean }) {
   const colors = useColors();
@@ -18,13 +18,15 @@ export function InstallGuide({ onClose, variant, visible }: { onClose: () => voi
   const steps: Array<{ icon: ReactNode; text: string }> =
     variant === "mac-safari"
       ? [{ icon: icon(Share), text: t("install.stepMacShare") }, { icon: icon(SquarePlus), text: t("install.stepMacAdd") }]
-      : variant === "ios-chrome"
-        ? [{ icon: icon(Ellipsis), text: t("install.stepMenuChrome") }, { icon: icon(SquarePlus), text: t("install.stepAddHome") }]
-        : [
-            { icon: <View className="flex-row gap-1">{icon(Share)}{icon(Ellipsis)}</View>, text: t("install.stepShareOrMenu") },
-            { icon: icon(SquarePlus), text: t("install.stepAddHomeOrShare") },
-          ];
-  const title = variant === "mac-safari" ? t("install.macTitle") : t("install.iosTitle");
+      : variant === "firefox-android"
+        ? [{ icon: icon(EllipsisVertical), text: t("install.stepFirefoxMenu") }, { icon: icon(SquarePlus), text: t("install.stepFirefoxInstall") }]
+        : variant === "ios-chrome"
+          ? [{ icon: icon(Ellipsis), text: t("install.stepMenuChrome") }, { icon: icon(SquarePlus), text: t("install.stepAddHome") }]
+          : [
+              { icon: <View className="flex-row gap-1">{icon(Share)}{icon(Ellipsis)}</View>, text: t("install.stepShareOrMenu") },
+              { icon: icon(SquarePlus), text: t("install.stepAddHomeOrShare") },
+            ];
+  const title = variant === "mac-safari" ? t("install.macTitle") : variant === "firefox-android" ? t("install.firefoxTitle") : t("install.iosTitle");
 
   return (
     <Modal animationType="fade" onRequestClose={onClose} transparent visible>

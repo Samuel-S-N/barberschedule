@@ -73,6 +73,18 @@ describe("InstallPrompt", () => {
     expect(view.getByText("Choose “Add to Dock”")).toBeTruthy();
   });
 
+  it("shows the Firefox Android card and its two-step guide", async () => {
+    state({ status: "installable-firefox-android" });
+    const view = await render(React.createElement(InstallPrompt));
+
+    expect(view.getByText("Install the Zenc app")).toBeTruthy();
+    await fireEvent.press(view.getByTestId("install-card"));
+
+    expect(view.getByText("Install the app")).toBeTruthy();
+    expect(view.getByText("Tap the browser menu (⋮)")).toBeTruthy();
+    expect(view.getByText("Tap “Install” (or “Add to Home screen”)")).toBeTruthy();
+  });
+
   it("closes the guide with the X, with Got it and by tapping outside", async () => {
     state({ browser: "other", status: "installable-ios" });
     const view = await render(React.createElement(InstallPrompt));

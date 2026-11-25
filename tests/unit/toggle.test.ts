@@ -3,6 +3,7 @@ import React from "react";
 
 import { Toggle } from "../../src/components/ui/Toggle";
 import { DEFAULT_COLORS } from "../../src/lib/design/colors";
+import { AppThemeProvider } from "../../src/lib/design/theme/ThemeProvider";
 
 // The host switch element carries the native names: thumbTintColor / onTintColor (on track) / tintColor (off track).
 describe("Toggle", () => {
@@ -21,5 +22,40 @@ describe("Toggle", () => {
 
     expect(props.onTintColor).toBe(DEFAULT_COLORS.primary[400]);
     expect(props.tintColor).toBe(DEFAULT_COLORS.neutral[200]);
+  });
+
+  it("follows the theme from a chosen colour back to the default", async () => {
+    const tree = (primary: string | null) =>
+      React.createElement(AppThemeProvider, { input: { primary } }, React.createElement(Toggle, { testID: "t", value: true }));
+    const view = await render(tree("#2F9E5B"));
+    const onTrack = () => (view.getByTestId("t").props as Record<string, unknown>).onTintColor;
+
+    expect(onTrack()).toBe("#2F9E5B");
+    await view.rerender(tree(null));
+
+    expect(onTrack()).toBe(DEFAULT_COLORS.primary[400]);
+  });
+
+  it("remounts when the track colour changes, so a native switch cannot keep the old track", async () => {
+    const ref = jest.fn();
+    const tree = (primary: string | null) =>
+      React.createElement(AppThemeProvider, { input: { primary } }, React.createElement(Toggle, { ref, testID: "t", value: true } as never));
+    const view = await render(tree("#2F9E5B"));
+    const mounts = () => ref.mock.calls.filter(([instance]) => instance).length;
+
+    expect(mounts()).toBe(1);
+    await view.rerender(tree(null));
+
+    expect(mounts()).toBe(2);
+  });
+
+  it("does not remount while the theme stays the same", async () => {
+    const ref = jest.fn();
+    const tree = (value: boolean) => React.createElement(Toggle, { ref, testID: "t", value } as never);
+    const view = await render(tree(true));
+
+    await view.rerender(tree(false));
+
+    expect(ref.mock.calls.filter(([instance]) => instance).length).toBe(1);
   });
 });

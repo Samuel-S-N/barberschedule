@@ -8,5 +8,7 @@ import { useColors } from "../../lib/design/theme/ThemeProvider";
 export function Toggle(props: Omit<SwitchProps, "thumbColor" | "trackColor">) {
   const colors = useColors();
 
-  return <Switch {...props} thumbColor={colors.white} trackColor={{ false: colors.neutral[200], true: colors.primary[400] }} {...({ activeThumbColor: colors.white } as object)} />;
+  // A switch is a leaf: remounting it when the track colour changes loses nothing (its state is the `value` prop) and makes sure a native
+  // switch repaints its track after the theme changes (e.g. "Back to the Zenc default").
+  return <Switch key={colors.primary[400]} {...props} thumbColor={colors.white} trackColor={{ false: colors.neutral[200], true: colors.primary[400] }} {...({ activeThumbColor: colors.white } as object)} />;
 }

@@ -2,6 +2,7 @@ import { expect, test } from "./fixtures";
 
 import { json, mockCustomerRest, signInAsCustomer } from "./customer-helpers";
 import { stubInstallPrompt } from "./install-helpers";
+import { HUB_ORDER, hubOrder } from "./profile-helpers";
 
 test("the profile tab is a hub of blocks that open each inner screen", async ({ page }) => {
   await signInAsCustomer(page);
@@ -147,6 +148,8 @@ test("the language is chosen in Settings > Language and only applied after confi
   await page.goto("/me/settings");
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   await expect(page.getByTestId("language-options")).toHaveCount(0);
+  // The page's own language follows the app's: English device here, Spanish after confirming, back to English on "Follow device".
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
 
   await page.getByTestId("menu-language").click();
   await expect(page).toHaveURL(/\/me\/language$/);
@@ -162,15 +165,18 @@ test("the language is chosen in Settings > Language and only applied after confi
   await page.getByTestId("language-confirm").click();
   await expect(page).toHaveURL(/\/me\/settings$/);
   await expect(page.getByRole("heading", { name: "Configuración" })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("lang", "es");
 
   await page.reload();
   await expect(page.getByRole("heading", { name: "Configuración" })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("lang", "es");
   await page.getByTestId("menu-language").click();
   await expect(page.getByTestId("option-es")).toHaveAttribute("aria-checked", "true");
 
   await page.getByTestId("option-device").click();
   await page.getByTestId("language-confirm").click();
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
 });
 
 test("leaving the language screen without confirming keeps the language", async ({ page }) => {
@@ -200,4 +206,15 @@ test("the profile hub offers to install the app and calls the browser prompt", a
   await page.getByTestId("install-button").click();
 
   expect(await page.evaluate(() => (window as unknown as Record<string, unknown>).__installPrompted)).toBe(true);
+});
+
+test("the customer hub lists the shared blocks in the common order", async ({ page }) => {
+  await stubInstallPrompt(page);
+  await signInAsCustomer(page);
+  await mockCustomerRest(page);
+
+  await page.goto("/profile");
+  await expect(page.getByTestId("profile-avatar")).toBeVisible();
+
+  expect(await hubOrder(page)).toEqual(HUB_ORDER);
 });

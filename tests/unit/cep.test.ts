@@ -1,4 +1,4 @@
-import { lookupCep, mergeCepResult } from "../../src/features/shops/cep";
+import { CEP_TIMEOUT_MS, lookupCep, mergeCepResult } from "../../src/features/shops/cep";
 import { EMPTY_ADDRESS } from "../../src/features/shops/address";
 import { formatCepInput } from "../../src/lib/input-masks";
 
@@ -20,7 +20,7 @@ describe("lookupCep", () => {
       status: "found",
     });
     expect(fetchFn).toHaveBeenCalledTimes(1);
-    expect(fetchFn).toHaveBeenCalledWith("https://viacep.com.br/ws/01310100/json/");
+    expect(fetchFn).toHaveBeenCalledWith("https://viacep.com.br/ws/01310100/json/", { signal: expect.any(AbortSignal) });
   });
 
   it("reports not-found without trying the fallback when ViaCEP says erro", async () => {
@@ -39,7 +39,7 @@ describe("lookupCep", () => {
       address: { city: "São Paulo", cityIbge: "", district: "Bela Vista", state: "SP", street: "Avenida Paulista" },
       status: "found",
     });
-    expect(fetchFn).toHaveBeenLastCalledWith("https://brasilapi.com.br/api/cep/v2/01310100");
+    expect(fetchFn).toHaveBeenLastCalledWith("https://brasilapi.com.br/api/cep/v2/01310100", { signal: expect.any(AbortSignal) });
   });
 
   it("falls back on a 5xx and treats a BrasilAPI 404 as not-found", async () => {
@@ -52,6 +52,60 @@ describe("lookupCep", () => {
     const fetchFn = jest.fn().mockRejectedValue(new TypeError("network"));
 
     await expect(lookupCep("01310100", fetchFn)).resolves.toEqual({ status: "unavailable" });
+  });
+});
+
+describe("lookupCep time limit", () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  // A request that only ends when it is aborted, like a hung connection.
+  const hang = (_url: string, init?: RequestInit) =>
+    new Promise<Response>((_, reject) => init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError"))));
+  const brasil = { city: "São Paulo", neighborhood: "Bela Vista", state: "SP", street: "Avenida Paulista" };
+
+  it("gives up on a hung ViaCEP after the limit and returns the BrasilAPI address", async () => {
+    const fetchFn = jest.fn((url: string, init?: RequestInit) => (url.includes("viacep") ? hang(url, init) : Promise.resolve(respond(200, brasil))));
+    const result = lookupCep("01310100", fetchFn as never);
+
+    await jest.advanceTimersByTimeAsync(CEP_TIMEOUT_MS);
+
+    await expect(result).resolves.toEqual({ address: { city: "São Paulo", cityIbge: "", district: "Bela Vista", state: "SP", street: "Avenida Paulista" }, status: "found" });
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+  });
+
+  it("is unavailable when both services hang (one limit each)", async () => {
+    const fetchFn = jest.fn(hang);
+    const result = lookupCep("01310100", fetchFn as never);
+
+    await jest.advanceTimersByTimeAsync(CEP_TIMEOUT_MS * 2);
+
+    await expect(result).resolves.toEqual({ status: "unavailable" });
+  });
+
+  it("also limits a fetch that ignores the abort signal", async () => {
+    const fetchFn = jest.fn(() => new Promise<Response>(() => undefined));
+    const result = lookupCep("01310100", fetchFn as never);
+
+    await jest.advanceTimersByTimeAsync(CEP_TIMEOUT_MS * 2);
+
+    await expect(result).resolves.toEqual({ status: "unavailable" });
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+  });
+
+  it("leaves no timer behind after a fast answer", async () => {
+    const fetchFn = jest.fn().mockResolvedValue(respond(200, viaCep));
+
+    await lookupCep("01310100", fetchFn);
+
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  it("a ViaCEP erro does not go to the fallback", async () => {
+    const fetchFn = jest.fn().mockResolvedValue(respond(200, { erro: true }));
+
+    await expect(lookupCep("99999999", fetchFn)).resolves.toEqual({ status: "not-found" });
+    expect(fetchFn).toHaveBeenCalledTimes(1);
   });
 });
 

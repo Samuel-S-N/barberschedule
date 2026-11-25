@@ -1,8 +1,8 @@
 import { useRouter } from "expo-router";
-import { Info, Lock, LogOut, Scissors, Settings, ShieldCheck, User } from "lucide-react-native";
+import { Info, Lock, Scissors, Settings, ShieldCheck, User } from "lucide-react-native";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 
 import { Avatar } from "../../src/components/domain/Avatar";
 import { MenuBlock } from "../../src/components/domain/MenuBlock";
@@ -10,21 +10,22 @@ import { Toast } from "../../src/components/domain/Toast";
 import { Screen } from "../../src/components/ui/Screen";
 import { Toggle } from "../../src/components/ui/Toggle";
 import { useMyProfile } from "../../src/features/account/use-my-profile";
-import { signOut } from "../../src/features/auth/api";
 import { useOwnerAsProfessional } from "../../src/features/professionals/owner/use-owner-as-professional";
 import { errorMessage } from "../../src/i18n/errors";
 import { useColors } from "../../src/lib/design/theme/ThemeProvider";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { InstallPrompt } from "../../src/features/install/InstallPrompt";
+import { OwnerProfessionalGuide } from "../../src/features/professionals/owner/OwnerProfessionalGuide";
 
 export default function OwnerSettingsScreen() {
   const colors = useColors();
   const { t } = useTranslation();
   const router = useRouter();
-  const { profile: sessionProfile, session, supabase } = useSupabaseSession();
+  const { profile: sessionProfile, session } = useSupabaseSession();
   const profile = useMyProfile();
   const asProfessional = useOwnerAsProfessional();
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const name = profile.data?.nickname || profile.data?.fullName || sessionProfile?.fullName || t("owner.settings.ownerFallback");
 
   return (
@@ -32,6 +33,7 @@ export default function OwnerSettingsScreen() {
       <ScrollView className="flex-1">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-6">
+            <InstallPrompt />
             <View className="items-center gap-1 pt-4">
               <Avatar accessibilityLabel={t("profile.menu.account")} name={name} onPress={() => router.push("/owner-profile/account")} testID="profile-avatar" uri={profile.data?.avatarUrl} />
               <Text accessibilityRole="header" className="pt-3 text-2xl font-display-bold text-ink">{name}</Text>
@@ -53,43 +55,27 @@ export default function OwnerSettingsScreen() {
                 <Toggle
                   accessibilityLabel={t("owner.profile.asProfessional")}
                   disabled={asProfessional.isLoading || asProfessional.toggle.isPending}
-                  onValueChange={(on) => asProfessional.toggle.mutate(on, { onError: (caught) => setError(errorMessage(caught, t, t("owner.professionals.updateError"))) })}
+                  onValueChange={(on) => asProfessional.toggle.mutate(on, { onError: (caught) => setError(errorMessage(caught, t, t("owner.professionals.updateError"))), onSuccess: (result) => setCopied((result?.copied ?? 0) > 0) })}
                   testID="owner-as-professional"
                   value={asProfessional.active}
                 />
               </View>
               <Text className="text-xs font-sans text-neutral-600">{t("owner.profile.asProfessionalHint")}</Text>
             </View>
+            {asProfessional.active && asProfessional.professionalId ? <OwnerProfessionalGuide professionalId={asProfessional.professionalId} /> : null}
             {asProfessional.active && asProfessional.professionalId ? (
               <MenuBlock items={[{ icon: Scissors, key: "my-professional", label: t("owner.profile.myProfessional"), onPress: () => router.push({ params: { id: asProfessional.professionalId ?? "" }, pathname: "/professional-profile" }) }]} />
             ) : null}
 
             <MenuBlock
               items={[
-                { icon: Lock, key: "privacy", label: t("profile.menu.privacy"), onPress: () => router.push("/owner-profile/privacy") },
                 { icon: Settings, key: "settings", label: t("profile.menu.settings"), onPress: () => router.push("/owner-profile/settings") },
+                { icon: Lock, key: "privacy", label: t("profile.menu.privacy"), onPress: () => router.push("/owner-profile/privacy") },
                 { icon: Info, key: "about", label: t("profile.menu.about"), onPress: () => router.push("/owner-profile/about") },
               ]}
             />
-
-            <InstallPrompt />
-
-            <Pressable
-              accessibilityRole="button"
-              className="min-h-[56px] flex-row items-center justify-center gap-2 rounded-[20px] border border-neutral-200 bg-surface"
-              onPress={async () => {
-                try {
-                  await signOut(supabase);
-                } catch (caught) {
-                  setError(errorMessage(caught, t, t("profile.signOutError")));
-                }
-              }}
-              testID="profile-signout"
-            >
-              <LogOut color={colors.danger[500]} size={20} />
-              <Text className="text-base font-sans-semibold text-danger-500">{t("common.signOut")}</Text>
-            </Pressable>
             <Toast message={error ?? ""} onDismiss={() => setError(null)} variant="error" visible={error !== null} />
+            <Toast message={t("owner.profile.shopHoursCopied")} onDismiss={() => setCopied(false)} variant="success" visible={copied} />
           </View>
         </View>
       </ScrollView>

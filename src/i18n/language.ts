@@ -15,3 +15,8 @@ export function parseLanguagePreference(value: string | null | undefined): Langu
 export function effectiveLanguage(preference: LanguagePreference, deviceCode: string | null | undefined): Language {
   return preference === "device" ? resolveLanguage(deviceCode) : preference;
 }
+
+// The app's Portuguese is Brazilian; the other two are written without a region.
+export function htmlLang(language: Language): string {
+  return language === "pt" ? "pt-BR" : language;
+}
