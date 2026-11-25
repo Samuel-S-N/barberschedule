@@ -2,13 +2,14 @@
 
 Date: 2026-11-25
 Status: written for review; **not started**. Rides in PR #112 (branch `fix-predeploy-polish`).
-The user's words (pt): "o botão de sair do perfil do owner está no perfil, e não dentro de configs, todos os perfis devem seguir o mesmo
+The user's words (pt) for item 4 are in its section. For items 1 to 3: "o botão de sair do perfil do owner está no perfil, e não dentro de configs, todos os perfis devem seguir o mesmo
 padrão, verifique o do profissional também" and "faça a investigação, padronize a ordem e o botão de sair".
 
 Wording: Zenc is for the whole beauty sector. Prose says "business" or "shop" (pt: estabelecimento / negócio).
 
-Three parts: (1) sign out lives in Settings for every role, (2) the three profile hubs share one order and one set of icons, (3) the
-WebKit e2e run: why 222 of 280 specs failed, and what to do about it.
+Four parts: (1) sign out lives in Settings for every role, (2) the three profile hubs share one order and one set of icons, (3) the
+WebKit e2e run: why 222 of 280 specs failed, and what to do about it, (4) an owner who starts serving as a professional gets the
+shop's hours copied once, and is guided when hours or services are missing.
 
 ## 1. Sign out lives in Settings, for every role
 
@@ -143,16 +144,94 @@ iPhone and Mac Safari stay a manual check** before deploy (open question 3).
 3. Rejected: stubbing `getSubscription` for WebKit in the shared fixture (it fixes 2 of the 9 and hides causes 1 and 3 behind a half-working
    emulation), and a product-code timeout (does not work, see cause 2).
 
+## 4. The owner as a professional: shop hours copied once, and a guide when something is missing
+
+The user's words (pt): "habilite por padrão que o owner segue os horários do estabelecimento por padrão, quando não disponível orientar a
+registrar os horarios"; then "copia única, apenas a primeira segue essa regra" (they chose a **one-time copy**). The separate idea of dimming
+professionals without hours in the Book tab is **parked by the user** and not part of this work.
+
+### The problem (found on the local database)
+
+The owner turned on "Atender como profissional" (`app/(owner)/settings.tsx`, `useOwnerAsProfessional`). That created the owner's professional
+with its services but **no `working_periods`**: booking has no slots, every day is dimmed, and nothing tells the owner. The shop's hours
+(`shop_hours`, edited in `app/(owner)/shop.tsx`) are informational only: they never open the agenda.
+
+### Design
+
+1. **Copy once, when the toggle goes on.** When "Atender como profissional" is turned **on** and the owner's professional has **no
+   working periods at all**, the shop's hours are copied into the owner's `working_periods`.
+   - "Apenas a primeira": the copy happens only when there are **zero** periods. Turning the switch off and on again, a later change to the
+     shop hours, or a professional who already has hours never copies or overwrites anything. This covers both a new professional (just created)
+     and an existing one being re-enabled (for example one created earlier with no hours).
+   - Known edge, accepted: an owner who deliberately deletes **every** period and then turns the switch off and on gets the shop hours again,
+     because "no periods" is the rule. Tracking "already copied once" would need a new column for a corner nobody asked about.
+2. **One copy function, not two.** The existing "Copy the shop hours" button of `app/(owner)/schedule.tsx` (`copyShopHours`, which reads
+   `listShopHours` and calls `createWorkingPeriod` per period) is lifted into `src/features/schedule/copy-shop-hours.ts`
+   (`copyShopHoursToProfessional(supabase, shopId, professionalId): Promise<number>`, the count copied). The schedule button and the toggle
+   both call it. `useOwnerAsProfessional` adds only the "no periods yet?" check around it.
+3. **Client-side, no RPC (decided).** Reasons: the logic already exists on the client and the user asked to reuse it, so an RPC would be a
+   **second copy** of it (in SQL) plus a migration (`0080`) and pgTAP; the owner can already write their own `working_periods` and read `shop_hours`
+   under RLS, so no privilege is missing; the only thing an RPC would add is atomicity, and the cost of its absence is small and visible:
+   at most seven inserts, run one after another; if one fails midway the owner gets the error toast, sees the periods that were written in
+   *Manage schedule*, and completes the rest by hand (the same weakness the existing manual button already has). The toggle is disabled while
+   the mutation runs, so there is no double tap. If this ever needs to be atomic, it is a drop-in swap of the one shared function for an RPC.
+   **No migration, no pgTAP.**
+4. **A guide when the owner's professional cannot be booked.** On the owner hub, under the "Serve as a professional" card, while the
+   switch is on, a guide row is shown for each thing missing:
+   - **no working periods** (the shop has no hours either, so nothing could be copied, or the copy failed, or the professional existed
+     before this change): "Cadastre seus horários para aparecer no agendamento" with a button that opens *Manage schedule* with the owner's
+     professional preselected;
+   - **no active services**: "Escolha os serviços que você atende para aparecer no agendamento" with a button that opens the owner's
+     professional profile (where the services are edited: the existing "My services and hours" row's target).
+   Both missing: both rows. Neither missing: no guide. The switch off: no guide.
+5. **Copy (pt / en / es), under `owner.profile`:**
+
+   | key | pt | en | es |
+   |---|---|---|---|
+   | `guideHours` | Cadastre seus horários para aparecer no agendamento. | Add your working hours to appear in booking. | Registra tus horarios para aparecer en la reserva. |
+   | `guideHoursAction` | Cadastrar horários | Add hours | Registrar horarios |
+   | `guideServices` | Escolha os serviços que você atende para aparecer no agendamento. | Choose the services you offer to appear in booking. | Elige los servicios que atiendes para aparecer en la reserva. |
+   | `guideServicesAction` | Escolher serviços | Choose services | Elegir servicios |
+   | `shopHoursCopied` (toast, success) | Copiamos o horário do estabelecimento para você. | We copied the shop hours for you. | Copiamos el horario del establecimiento para ti. |
+
+6. **Schedule screen takes a professional.** `app/(owner)/schedule.tsx` has no route parameters today and preselects the first professional.
+   It gains `professional` (`/schedule?professional=<id>`): used as the initial selection when it names a professional of the shop, otherwise
+   the current behaviour (first professional).
+7. **Freshness of the guide.** The hub reads two small queries, keyed so the existing invalidations reach them without new plumbing:
+   hours under `["owner-schedule", "setup", shopId]` (the schedule screen invalidates the prefix `["owner-schedule"]` after every change) and
+   services under `["owner-professional-services", "setup", shopId]` (the services editor invalidates that prefix). The toggle's mutation
+   invalidates both and `["owner-professionals"]` in `onSettled`, so the guide updates even after a failed copy.
+
+### Tests (TDD)
+
+- Unit, the shared function: copies each shop period for the professional; copies nothing and returns 0 when the shop has no hours; stops at
+  the first failed insert and rethrows.
+- Unit, the hook (`useOwnerAsProfessional`, mocked api): toggle on for a new professional with no periods and shop hours → created, then every
+  period copied; toggle on for an existing inactive professional with no periods → re-enabled and copied; toggle on with existing periods →
+  re-enabled and **no** period created; toggle off → no copy; toggle on again after periods exist → no copy; shop with no hours → professional
+  created and nothing copied.
+- Unit, the guide: shown with no periods, shown with no services, both rows, hidden when both exist or the switch is off; the hours action
+  navigates to `/schedule?professional=<id>`, the services action to the professional profile.
+- Schedule: `/schedule?professional=<id>` preselects that professional; an unknown id falls back to the first.
+- Playwright (owner hub, chromium): toggle on with shop hours → the professional's periods are inserted (request bodies), a success toast, no
+  guide about hours; toggle on with no shop hours → no inserts, the hours guide visible, its button lands on the schedule with the owner's
+  professional selected; a professional with periods and no services → only the services guide. Screenshots at 390 px and a browser check on
+  the local database (the owner's professional "Pereira", today with no periods, is the live case).
+
+
 ## Testing
 
 TDD per task. Unit: `profile-settings-screen` (button always shown, sign out and error path still work). Playwright (chromium, with
 screenshots at 390 px and computed CSS of the sign-out button): on each role's hub there is **no** sign-out button, the order is install card,
 avatar, Account/Security, (role blocks), Settings, Privacy, About; on each role's Settings screen there **is** one and pressing it ends on
 `/login`. The existing owner and professional specs that expect the button on the hub change accordingly.
-Gates: `npm run typecheck`, ROOT `npm run lint`, full Jest (no "did not exit" line), Playwright chromium whole suite, then
-Firefox and WebKit whole suite (expected 280/280 and 271 + 9 skipped). No database change.
+Item 4's tests are in its section. Gates: `npm run typecheck`, ROOT `npm run lint`, full Jest (no "did not exit" line), Playwright chromium whole
+suite, then Firefox and WebKit whole suite (expected 280/280 plus the new specs, and WebKit with the 9 push specs skipped). No database change.
 
 ## Open questions
+
+0. **Item 4, the "delete every period then toggle" edge** re-copies the shop hours (rule: no periods at all). Accept (recommended) or track a
+   "copied once" flag with a column and a migration?
 
 1. **Privacy icon** `Lock` for all (recommended) or keep `UserCog` on the customer hub and change the other two?
 2. **Install card at the top on all three hubs** (recommended; it moves owner and professional) or leave it at the bottom for them and put
@@ -164,5 +243,6 @@ Firefox and WebKit whole suite (expected 280/280 and 271 + 9 skipped). No databa
 
 ## Out of scope
 
-Changing what the hubs list for each role beyond order and icons, the role-specific blocks, the account/security screens, deep-linking the
+Dimming professionals without hours in the Book tab (parked by the user), a database function or migration for the copy, copying the lunch break,
+changing what the hubs list for each role beyond order and icons, the role-specific blocks, the account/security screens, deep-linking the
 web push tap, and any change to push behaviour.

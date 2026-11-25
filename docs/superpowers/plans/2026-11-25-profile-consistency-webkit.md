@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans (inline, in this session) to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** (1) "Sign out" lives in Settings for the customer, owner and professional; (2) the three profile hubs share one block order and one set of icons; (3) the WebKit e2e run is meaningful: the 9 push/service-worker specs that Playwright's WebKit cannot run are skipped there with the reason, and the run command is documented.
+**Goal:** (1) "Sign out" lives in Settings for the customer, owner and professional; (2) the three profile hubs share one block order and one set of icons; (3) the WebKit e2e run is meaningful: the 9 push/service-worker specs that Playwright's WebKit cannot run are skipped there with the reason, and the run command is documented; (4) turning on "Serve as a professional" copies the shop's hours into the owner's working periods once (only when there are none), and the owner hub guides the owner when hours or services are missing.
 
-**Architecture:** No database change. `ProfileSettingsScreen` always renders the shared `SignOutButton` (prop `showSignOut` removed); the owner and professional hubs lose their inline buttons; the three hubs are reordered to the customer's layout (install card first, then avatar, Account/Security, role blocks, Settings/Privacy/About) with the `Lock` icon for Privacy. Tests: a source-level consistency test (the repo's own pattern, see `hub-notification-card.test.ts`), the Settings unit test, and Playwright specs per role. WebKit: two `test.skip` lines and a comment in `playwright.config.ts`.
+**Architecture:** No database change. `ProfileSettingsScreen` always renders the shared `SignOutButton` (prop `showSignOut` removed); the owner and professional hubs lose their inline buttons; the three hubs are reordered to the customer's layout (install card first, then avatar, Account/Security, role blocks, Settings/Privacy/About) with the `Lock` icon for Privacy. Tests: a source-level consistency test (the repo's own pattern, see `hub-notification-card.test.ts`), the Settings unit test, and Playwright specs per role. WebKit: two `test.skip` lines and a comment in `playwright.config.ts`. Owner hours: the schedule screen's copy logic moves to one shared function (`copy-shop-hours.ts`), `useOwnerAsProfessional` calls it when the professional has no periods, a small hook feeds a guide under the toggle, and `schedule.tsx` accepts a `professional` route param. Client-side, no migration (decision in the spec).
 
 **Tech Stack:** Expo Router / React Native Web, lucide-react-native, Jest (RNTL), Playwright.
 
@@ -33,6 +33,13 @@
 | `tests/e2e/profile.web.spec.ts`, `owner-profile.web.spec.ts`, `owner-shell.web.spec.ts`, `professional-profile.web.spec.ts` | sign out through Settings; order |
 | `tests/e2e/profile-helpers.ts` (new) | `hubOrder(page)` |
 | `tests/e2e/notifications-prompt.web.spec.ts`, `web-push.web.spec.ts`, `playwright.config.ts` | WebKit skip + comment |
+| `src/features/schedule/copy-shop-hours.ts` (new) | `copyShopHoursToProfessional`, shared by the schedule button and the toggle |
+| `src/features/professionals/owner/use-owner-as-professional.ts` | copy once on toggle on; invalidate on settle |
+| `src/features/professionals/owner/use-owner-professional-setup.ts` (new) | `{ hasHours, hasServices }` for the owner's professional |
+| `src/features/professionals/owner/OwnerProfessionalGuide.tsx` (new) | the guide rows under the toggle |
+| `app/(owner)/settings.tsx`, `app/(owner)/schedule.tsx` | render the guide; `professional` route param, use the shared copy |
+| `src/i18n/locales/{pt,en,es}.ts` | `owner.profile.guide*`, `shopHoursCopied` |
+| `tests/unit/copy-shop-hours.test.ts`, `use-owner-as-professional.test.ts`, `owner-professional-guide.test.ts` (new), `tests/e2e/owner-profile.web.spec.ts`, `owner-schedule-tools.web.spec.ts` | tests |
 
 ## Findings (read from the code, then run)
 
@@ -41,10 +48,11 @@
 3. After removing the inline button the owner hub still needs `useState`, `Toast`, `errorMessage` (the "also a professional" toggle's errors) and `useColors`; the professional hub needs none of `useState`, `Toast`, `errorMessage`, `signOut`, `LogOut`, `Pressable`, `useColors`.
 4. Tests that expect the button on a hub: `owner-profile.web.spec.ts:62`, `owner-shell.web.spec.ts:60`; the `showSignOut` tests in `profile-settings-screen.test.ts`. `i18n.web.spec.ts:73` and `profile.web.spec.ts:28-30` already go through Settings.
 5. WebKit: see the spec (section 3): 271 passed, 9 failed with the right configuration; the 9 are the two push spec files.
+6. Owner hours: `useOwnerAsProfessional` creates the professional (or re-activates it) and nothing else; `schedule.tsx`'s `copyShopHours` mutation reads `listShopHours` and calls `createWorkingPeriod` per period, shown only when the selected professional has no periods; `schedule.tsx` has no route params (first professional preselected); the owner's services are read with `listOwnerProfessionalServices(supabase, shopId)` filtered by professional and `active`; the services editor invalidates `["owner-professional-services"]`, the schedule screen `["owner-schedule"]`.
 
 ## Open questions
 
-See the spec: Privacy icon, install card position, real-device checklist, permanent WebKit skip.
+See the spec: Privacy icon, install card position, real-device checklist, permanent WebKit skip, the "delete every period, then toggle" edge (question 0).
 
 ---
 
@@ -232,8 +240,150 @@ git commit -m "test(e2e): skip the push specs on WebKit (Linux) and document how
 
 ---
 
-### Task 4: Final gate and handoff
+### Task 4: Owner as a professional: copy the shop hours once, and guide
 
-- [ ] **Step 1:** `npm run typecheck; echo typecheck_exit=$?`, `npm run lint; echo lint_exit=$?` (read the output), `npx jest --runInBand` (read `Test Suites:` and confirm no "did not exit" line), then Playwright whole suite on chromium, Firefox and WebKit with the static export of the final commit. Re-run after the last commit. pgTAP: not needed (no database change).
+**Files:** `src/features/schedule/copy-shop-hours.ts` (new), `src/features/professionals/owner/use-owner-as-professional.ts`, `use-owner-professional-setup.ts` (new), `OwnerProfessionalGuide.tsx` (new), `app/(owner)/settings.tsx`, `app/(owner)/schedule.tsx`, `src/i18n/locales/{pt,en,es}.ts`, tests listed in the file map
+
+**Interfaces:**
+- Produces: `copyShopHoursToProfessional(supabase, shopId: string, professionalId: string): Promise<number>` (periods copied; 0 when the shop has no hours); `useOwnerProfessionalSetup(professionalId: string | null): { hasHours: boolean; hasServices: boolean; isLoading: boolean }`; `<OwnerProfessionalGuide professionalId={string} />` (renders nothing when nothing is missing); `/schedule?professional=<id>`.
+
+- [ ] **Step 1: Write the failing tests.**
+
+`tests/unit/copy-shop-hours.test.ts` (mock `../../src/features/shops/api` `listShopHours` and `../../src/features/schedule/api` `createWorkingPeriod`):
+
+```ts
+import { createWorkingPeriod } from "../../src/features/schedule/api";
+import { copyShopHoursToProfessional } from "../../src/features/schedule/copy-shop-hours";
+import { listShopHours } from "../../src/features/shops/api";
+
+jest.mock("../../src/features/shops/api", () => ({ listShopHours: jest.fn() }));
+jest.mock("../../src/features/schedule/api", () => ({ createWorkingPeriod: jest.fn() }));
+
+const supabase = {} as never;
+
+describe("copyShopHoursToProfessional", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("creates one working period per shop period and returns how many", async () => {
+    jest.mocked(listShopHours).mockResolvedValue([{ end: "12:00", start: "09:00", weekday: 1 }, { end: "18:00", start: "13:00", weekday: 1 }, { end: "17:00", start: "09:00", weekday: 6 }]);
+
+    await expect(copyShopHoursToProfessional(supabase, "s1", "p1")).resolves.toBe(3);
+
+    expect(createWorkingPeriod).toHaveBeenNthCalledWith(1, supabase, { endTime: "12:00", professionalId: "p1", shopId: "s1", startTime: "09:00", weekday: 1 });
+    expect(createWorkingPeriod).toHaveBeenCalledTimes(3);
+  });
+
+  it("copies nothing when the shop has no hours", async () => {
+    jest.mocked(listShopHours).mockResolvedValue([]);
+
+    await expect(copyShopHoursToProfessional(supabase, "s1", "p1")).resolves.toBe(0);
+    expect(createWorkingPeriod).not.toHaveBeenCalled();
+  });
+
+  it("stops at the first failed insert and rethrows", async () => {
+    jest.mocked(listShopHours).mockResolvedValue([{ end: "18:00", start: "09:00", weekday: 1 }, { end: "18:00", start: "09:00", weekday: 2 }]);
+    jest.mocked(createWorkingPeriod).mockRejectedValueOnce(new Error("insert failed"));
+
+    await expect(copyShopHoursToProfessional(supabase, "s1", "p1")).rejects.toThrow("insert failed");
+    expect(createWorkingPeriod).toHaveBeenCalledTimes(1);
+  });
+});
+```
+
+`tests/unit/use-owner-as-professional.test.ts` (RNTL `renderHook` with a `QueryClientProvider` whose client has `gcTime: 0, retry: false`; mock `AppProviders` `useSupabaseSession` → `{ profile: { fullName: "Liv", nickname: "", userId: "u1" }, supabase: {} }`, mock `./use-owner-professionals` to return `{ professionals: { data: { list }, isLoading: false }, shopId: "s1" }` with `list` set per test, mock `../api` (`createProfessional` → `{ id: "p-new" }`, `setProfessionalActive`), mock `../../schedule/api` (`listOwnerWorkingPeriods`) and `../../schedule/copy-shop-hours`). Cases, each calling `await act(() => result.current.toggle.mutateAsync(true))`:
+
+```ts
+it("a new professional with no periods gets the shop hours copied once", ...)          // list = [], periods = [] -> createProfessional called, copy called with ("s1", "p-new")
+it("an existing inactive professional with no periods is re-enabled and copied", ...)   // list = [{ id: "p1", userId: "u1", active: false }] -> setProfessionalActive(p1, true), copy("s1","p1")
+it("a professional that already has periods is re-enabled and never copied", ...)       // periods = [{ professionalId: "p1" }] -> copy not called
+it("turning the switch off never copies", ...)                                          // mutateAsync(false)
+it("a shop with no hours still creates the professional (copy returns 0, no error)", ...)
+it("invalidates the owner queries even when the copy fails", ...)                        // copy rejects -> mutateAsync rejects; the spy on queryClient.invalidateQueries was called with ["owner-schedule"]
+```
+
+`tests/unit/owner-professional-guide.test.ts` (mock `use-owner-professional-setup`, `expo-router` `useRouter` → `{ push }`): hours missing → text "Add your working hours to appear in booking." and pressing `guide-hours-action` calls `push({ params: { professional: "p1" }, pathname: "/schedule" })`; services missing → "Choose the services you offer to appear in booking." and its action pushes `{ params: { id: "p1" }, pathname: "/professional-profile" }`; both missing → both texts; neither → `toJSON()` is `null`.
+
+Schedule param: extend `tests/e2e/owner-schedule-tools.web.spec.ts` with `/schedule?professional=<second professional id>` → `schedule-professional-<id>` is selected (`aria-label` ends "(selected)"), and an unknown id falls back to the first.
+
+Playwright, `tests/e2e/owner-profile.web.spec.ts` (its `mockOwnerRest` gains `shopHours` and `periods` in the state; record POSTs to `/working_periods` in `state.calls.periods`): (a) toggle on with `shopHours: [{ weekday: 1, start_time: "09:00:00", end_time: "18:00:00" }, { weekday: 2, ... }]` and no periods → two period POSTs with `professional_id` of the new professional, no `owner-guide-hours`; (b) toggle on with no shop hours → no POSTs and `owner-guide-hours` visible, pressing `guide-hours-action` → `/schedule?professional=<id>`; (c) professional active, periods present, no services → only `owner-guide-services`; (d) toggle on again when periods exist → no POSTs.
+
+- [ ] **Step 2: Run, expect FAIL:** `npx jest tests/unit/copy-shop-hours.test.ts tests/unit/use-owner-as-professional.test.ts tests/unit/owner-professional-guide.test.ts` (modules do not exist / no copy), then the Playwright specs.
+
+- [ ] **Step 3: Implement.**
+
+`src/features/schedule/copy-shop-hours.ts`:
+
+```ts
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import { listShopHours } from "../shops/api";
+import { createWorkingPeriod } from "./api";
+import { parseWorkingPeriodInput } from "./validation";
+
+// Copies the shop's opening hours into one professional's working periods (the schedule screen's button and "Serve as a professional" both
+// use it). One insert per period, in order; the first failure stops and rethrows (what was written stays, the owner sees it on the schedule).
+export async function copyShopHoursToProfessional(supabase: SupabaseClient, shopId: string, professionalId: string): Promise<number> {
+  const periods = await listShopHours(supabase, shopId);
+
+  for (const period of periods) {
+    await createWorkingPeriod(supabase, parseWorkingPeriodInput({ endTime: period.end, professionalId, shopId, startTime: period.start, weekday: period.weekday }));
+  }
+
+  return periods.length;
+}
+```
+
+`schedule.tsx`: `copyShopHours.mutationFn` becomes `() => copyShopHoursToProfessional(supabase, shopId ?? "", selectedProfessionalId ?? "")` (drop the inline loop and the now unused `listShopHours` import); `useLocalSearchParams<{ professional?: string }>()` and in the preselect effect: `setSelectedProfessionalId(professionals.find((p) => p.id === professional)?.id ?? professionals[0].id)`.
+
+`use-owner-as-professional.ts`:
+
+```ts
+const toggle = useMutation({
+  mutationFn: async (on: boolean) => {
+    let professionalId = mine?.id ?? null;
+
+    if (mine) await setProfessionalActive(supabase, mine.id, on);
+    else if (on) professionalId = (await createProfessional(supabase, { name: profile?.nickname || profile?.fullName || "Owner", shopId: shopId ?? "", userId: profile?.userId })).id;
+    else return null;
+
+    // First time only: a professional with no working periods at all gets the shop's hours. Never again, never over existing hours.
+    if (on && professionalId && shopId) {
+      const periods = await listOwnerWorkingPeriods(supabase, shopId);
+
+      if (!periods.some((period) => period.professionalId === professionalId)) return { copied: await copyShopHoursToProfessional(supabase, shopId, professionalId), professionalId };
+    }
+
+    return { copied: 0, professionalId };
+  },
+  onSettled: () => {
+    void queryClient.invalidateQueries({ queryKey: ["owner-professionals"] });
+    void queryClient.invalidateQueries({ queryKey: ["owner-schedule"] });
+    void queryClient.invalidateQueries({ queryKey: ["owner-professional-services"] });
+  },
+});
+```
+
+`use-owner-professional-setup.ts`: two `useQuery`s as in the spec (hours `["owner-schedule", "setup", shopId]` from `listOwnerWorkingPeriods` filtered by professional; services `["owner-professional-services", "setup", shopId]` from `listOwnerProfessionalServices(supabase, shopId)` filtered by professional and `active`), both `enabled` only with a professional and a shop; returns `{ hasHours, hasServices, isLoading }` (while loading both are `true` so the guide does not flash).
+
+`OwnerProfessionalGuide.tsx`: for each missing item a row (`View` with the same border, radius and padding as the toggle card, text `t("owner.profile.guideHours")` / `guideServices`, an outline `Button` `guideHoursAction` / `guideServicesAction`, test ids `owner-guide-hours`, `guide-hours-action`, `owner-guide-services`, `guide-services-action`); renders `null` when nothing is missing. `app/(owner)/settings.tsx`: render `<OwnerProfessionalGuide professionalId={asProfessional.professionalId} />` right after the toggle card, only when `asProfessional.active && asProfessional.professionalId`; and show `t("owner.profile.shopHoursCopied")` as a success `Toast` when the toggle's result has `copied > 0` (the screen already has a `Toast` for errors: add a second message state for the success variant).
+
+Locales: the five keys of the spec's table under `owner.profile` in pt, en and es (the locale parity test covers the three).
+
+- [ ] **Step 4: Run, expect PASS:** the three unit files, `tests/unit/locale-parity.test.ts`, typecheck, lint, the owner Playwright specs (`owner-profile`, `owner-schedule-tools`, `owner-shell`, `owner-professionals`).
+
+- [ ] **Step 5: Browser check on the local database (390 px).** Metro on the branch, `owner@teste.com`: the owner's professional "Pereira" (no periods): the hub shows the hours guide; its button opens *Manage schedule* with Pereira selected; add hours with the existing "Copy the shop hours" button (now the shared function); the guide disappears when returning to the hub. Turn the switch off and on again: nothing is copied or duplicated. Screenshots of the guide (light, 390 px) and its computed style (same border-radius 20px and padding as the toggle card).
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src app tests
+git commit -m "feat(owner): serving as a professional copies the shop hours once and guides when hours or services are missing" -m "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
+```
+
+---
+
+### Task 5: Final gate and handoff
+
+- [ ] **Step 1:** `npm run typecheck; echo typecheck_exit=$?`, `npm run lint; echo lint_exit=$?` (read the output), `npx jest --runInBand` (read `Test Suites:` and confirm no "did not exit" line), then Playwright whole suite on chromium, Firefox and WebKit with the static export of the final commit. Re-run after the last commit. pgTAP: not needed (no database change, no migration).
 - [ ] **Step 2:** Report: commits, gate numbers per engine, deviations. Do not push; the orchestrator pushes.
 - [ ] **Step 3 (manual, for the user, real devices):** on an iPhone and a Mac Safari: sign in, Settings shows Language, Notifications and Sign out; sign out ends on the sign-in screen; install card/guide appears; turn notifications on from Settings (iPhone only after adding the app to the Home Screen); sign in again keeps the session across a reload.
