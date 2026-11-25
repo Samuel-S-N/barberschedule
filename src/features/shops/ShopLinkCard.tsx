@@ -6,7 +6,7 @@ import { Toast } from "../../components/domain/Toast";
 import { Button } from "../../components/ui/Button";
 import { shopBaseDomain } from "./host";
 import { useMyShop } from "./my-shop";
-import { QrCode } from "./QrCode";
+import { QrCode, qrSize } from "./QrCode";
 import { qrMatrix } from "./qr";
 import { copyLink, downloadQrPng, shareLink } from "./share-link";
 import { shopLink } from "./shop-link";
@@ -41,7 +41,7 @@ export function ShopLinkCard({ audience }: { audience: "owner" | "professional" 
     <View className="gap-4">
       <Text className="text-base font-sans text-neutral-700">{t(audience === "owner" ? "shopLinkScreen.introOwner" : "shopLinkScreen.introProfessional")}</Text>
       <View className="items-center gap-4 rounded-[20px] border border-neutral-200 bg-surface p-4">
-        <QrCode accessibilityLabel={t("shopLinkScreen.qrLabel")} matrix={matrix} size={240} />
+        <QrCode accessibilityLabel={t("shopLinkScreen.qrLabel")} matrix={matrix} size={qrSize(matrix.length, 240)} />
         <Text className="text-center text-lg font-display-semibold text-ink" selectable testID="shop-link-url">{link.display}</Text>
       </View>
       <Button label={t("shopLinkScreen.share")} onPress={() => void share()} testID="shop-link-share" />
