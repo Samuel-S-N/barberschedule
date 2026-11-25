@@ -1,8 +1,19 @@
-import { defineConfig } from "@playwright/test";
+import { defineConfig, devices } from "@playwright/test";
 
 import { getE2EWebBaseUrl } from "./src/lib/testing/e2e-web";
 
+// PLAYWRIGHT_ENGINES=all runs the suite on the three engines (a manual pre-deploy check, not part of CI); the default stays one project.
+// Needs the engines: `npx playwright install firefox webkit`.
+const engines = process.env.PLAYWRIGHT_ENGINES === "all";
+
 export default defineConfig({
+  projects: engines
+    ? [
+        { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+        { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+        { name: "webkit", use: { ...devices["Desktop Safari"] } },
+      ]
+    : undefined,
   testDir: "./tests/e2e",
   retries: 0,
   use: {
