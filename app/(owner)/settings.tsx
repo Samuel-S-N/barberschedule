@@ -15,6 +15,7 @@ import { errorMessage } from "../../src/i18n/errors";
 import { useColors } from "../../src/lib/design/theme/ThemeProvider";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { InstallPrompt } from "../../src/features/install/InstallPrompt";
+import { OwnerProfessionalGuide } from "../../src/features/professionals/owner/OwnerProfessionalGuide";
 
 export default function OwnerSettingsScreen() {
   const colors = useColors();
@@ -24,6 +25,7 @@ export default function OwnerSettingsScreen() {
   const profile = useMyProfile();
   const asProfessional = useOwnerAsProfessional();
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const name = profile.data?.nickname || profile.data?.fullName || sessionProfile?.fullName || t("owner.settings.ownerFallback");
 
   return (
@@ -53,13 +55,14 @@ export default function OwnerSettingsScreen() {
                 <Toggle
                   accessibilityLabel={t("owner.profile.asProfessional")}
                   disabled={asProfessional.isLoading || asProfessional.toggle.isPending}
-                  onValueChange={(on) => asProfessional.toggle.mutate(on, { onError: (caught) => setError(errorMessage(caught, t, t("owner.professionals.updateError"))) })}
+                  onValueChange={(on) => asProfessional.toggle.mutate(on, { onError: (caught) => setError(errorMessage(caught, t, t("owner.professionals.updateError"))), onSuccess: (result) => setCopied((result?.copied ?? 0) > 0) })}
                   testID="owner-as-professional"
                   value={asProfessional.active}
                 />
               </View>
               <Text className="text-xs font-sans text-neutral-600">{t("owner.profile.asProfessionalHint")}</Text>
             </View>
+            {asProfessional.active && asProfessional.professionalId ? <OwnerProfessionalGuide professionalId={asProfessional.professionalId} /> : null}
             {asProfessional.active && asProfessional.professionalId ? (
               <MenuBlock items={[{ icon: Scissors, key: "my-professional", label: t("owner.profile.myProfessional"), onPress: () => router.push({ params: { id: asProfessional.professionalId ?? "" }, pathname: "/professional-profile" }) }]} />
             ) : null}
@@ -72,6 +75,7 @@ export default function OwnerSettingsScreen() {
               ]}
             />
             <Toast message={error ?? ""} onDismiss={() => setError(null)} variant="error" visible={error !== null} />
+            <Toast message={t("owner.profile.shopHoursCopied")} onDismiss={() => setCopied(false)} variant="success" visible={copied} />
           </View>
         </View>
       </ScrollView>

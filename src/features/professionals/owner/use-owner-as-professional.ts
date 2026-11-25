@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useSupabaseSession } from "../../../providers/AppProviders";
+import { listOwnerWorkingPeriods } from "../../schedule/api";
+import { copyShopHoursToProfessional } from "../../schedule/copy-shop-hours";
 import { createProfessional, setProfessionalActive } from "../api";
 import { useOwnerProfessionals } from "./use-owner-professionals";
 
@@ -13,12 +15,27 @@ export function useOwnerAsProfessional() {
 
   const toggle = useMutation({
     mutationFn: async (on: boolean) => {
-      if (mine) return setProfessionalActive(supabase, mine.id, on);
-      if (!on) return null;
+      let professionalId = mine?.id ?? null;
 
-      return createProfessional(supabase, { name: profile?.nickname || profile?.fullName || "Owner", shopId: shopId ?? "", userId: profile?.userId });
+      if (mine) await setProfessionalActive(supabase, mine.id, on);
+      else if (on) professionalId = (await createProfessional(supabase, { name: profile?.nickname || profile?.fullName || "Owner", shopId: shopId ?? "", userId: profile?.userId })).id;
+      else return null;
+
+      // First time only: a professional with no working periods at all gets the shop's hours. Never again, never over existing hours.
+      if (on && professionalId && shopId) {
+        const periods = await listOwnerWorkingPeriods(supabase, shopId);
+
+        if (!periods.some((period) => period.professionalId === professionalId)) return { copied: await copyShopHoursToProfessional(supabase, shopId, professionalId), professionalId };
+      }
+
+      return { copied: 0, professionalId };
     },
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["owner-professionals"] }),
+    // Settled, not only successful: a copy that failed midway still left periods the schedule and the guide must show.
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ["owner-professionals"] });
+      void queryClient.invalidateQueries({ queryKey: ["owner-schedule"] });
+      void queryClient.invalidateQueries({ queryKey: ["owner-professional-services"] });
+    },
   });
 
   return { active: Boolean(mine?.active), professionalId: mine?.id ?? null, isLoading: professionals.isLoading, toggle };
