@@ -17,6 +17,7 @@ export type InstallState =
   | { promptEvent: BeforeInstallPromptEvent; status: "installable-chrome" }
   | { browser: "chrome" | "other"; status: "installable-ios" }
   | { status: "installable-mac-safari" }
+  | { status: "installable-firefox-android" }
   | { status: "unsupported" };
 
 const lower = (env: InstallEnvironment) => env.userAgent.toLowerCase();
@@ -32,9 +33,16 @@ export const isIos = (env: InstallEnvironment) => /iphone|ipad|ipod/.test(lower(
 // settings, so its guide covers both possibilities in the step text.
 const iosBrowser = (env: InstallEnvironment) => (/crios/.test(lower(env)) ? "chrome" : "other");
 
+// "Add to Dock" arrived with Safari 17 (macOS Sonoma). An unreadable version counts as too old: show nothing rather than a guide
+// for a menu item that may not exist.
+const safariMajor = (env: InstallEnvironment) => Number(/version\/(\d+)/.exec(lower(env))?.[1] ?? 0);
+
 // Safari on macOS never fires beforeinstallprompt and says "Add to Dock", not "Add to Home Screen".
 const isMacSafari = (env: InstallEnvironment) =>
-  /macintosh/.test(lower(env)) && !isTouchMac(env) && /safari/.test(lower(env)) && !/chrome|chromium|crios|edg|opr|firefox|fxios/.test(lower(env));
+  /macintosh/.test(lower(env)) && !isTouchMac(env) && /safari/.test(lower(env)) && !/chrome|chromium|crios|edg|opr|firefox|fxios/.test(lower(env)) && safariMajor(env) >= 17;
+
+// Firefox for Android installs a web app from its menu ("Install"); it never fires beforeinstallprompt.
+const isFirefoxAndroid = (env: InstallEnvironment) => /android/.test(lower(env)) && /firefox\//.test(lower(env)) && !/seamonkey/.test(lower(env));
 
 export function resolveInstallState(env: InstallEnvironment): InstallState {
   if (!env.isWeb) return { status: "native" };
@@ -42,6 +50,7 @@ export function resolveInstallState(env: InstallEnvironment): InstallState {
   if (env.capturedPrompt) return { promptEvent: env.capturedPrompt, status: "installable-chrome" };
   if (isIos(env)) return { browser: iosBrowser(env), status: "installable-ios" };
   if (isMacSafari(env)) return { status: "installable-mac-safari" };
+  if (isFirefoxAndroid(env)) return { status: "installable-firefox-android" };
 
   return { status: "unsupported" };
 }
