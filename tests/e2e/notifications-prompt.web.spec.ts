@@ -4,6 +4,10 @@ import { json, mockCustomerRest, signInAsCustomer } from "./customer-helpers";
 import { stubPushSubscription } from "./web-push-helpers";
 
 test.use({ notificationsPrompt: true, serviceWorkers: "allow" });
+// Playwright's WebKit (a Linux port) cannot run these: (1) context.grantPermissions(["notifications"]) is a silent no-op, so the permission
+// stays "default"; (2) the real PushManager.getSubscription() never settles and wedges the page (no push service on Linux); (3) once the
+// service worker controls the page, requests bypass page.route. Chromium and Firefox run them. Push on real Safari is a manual check.
+test.skip(({ browserName }) => browserName === "webkit", "push and service worker are not testable on Playwright's WebKit (Linux)");
 
 test("the first sign-in on a device asks once to turn notifications on", async ({ page }) => {
   let registered: Record<string, unknown> | null = null;
