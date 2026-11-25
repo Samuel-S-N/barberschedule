@@ -416,7 +416,7 @@ export const en = {
     notFoundTitle: "Business not found",
     staffLoginHint: "Staff: sign in below.",
   },
-  legal: { link: { business: "Business agreement", privacy: "Privacy policy", terms: "Terms of use" }, ptOnlyNote: "This document is in Portuguese, the official language of the service. Ask us if you need help understanding it.", version: "Version {{version}}" },
+  legal: { gate: { accept: "I have read and accept", body: "To continue, read and accept the current versions of the documents below.", error: "Could not record your acceptance. Please try again.", title: "We updated our terms" }, link: { business: "Business agreement", privacy: "Privacy policy", terms: "Terms of use" }, ptOnlyNote: "This document is in Portuguese, the official language of the service. Ask us if you need help understanding it.", version: "Version {{version}}" },
   owner: {
     appearance: {
       otherColor: "Other colour",

@@ -3,6 +3,8 @@ import type { Session } from "@supabase/supabase-js";
 import type { AppRole } from "./types";
 
 type ResolveAuthRedirectInput = {
+  // A legal document the user has not accepted in its current version: the app is blocked behind /accept-terms.
+  pendingLegal?: boolean;
   profileRole: AppRole | null;
   segments: string[];
   session: Session | null;
@@ -26,6 +28,7 @@ const GROUP_ROLE: Record<string, AppRole> = {
 };
 
 export function resolveAuthRedirect({
+  pendingLegal = false,
   profileRole,
   segments,
   session,
@@ -38,6 +41,14 @@ export function resolveAuthRedirect({
 
   if (!session) {
     return group === "(auth)" ? null : LOGIN_ROUTE;
+  }
+
+  if (segments[0] === "accept-terms") {
+    return pendingLegal ? null : HOME_ROUTE;
+  }
+
+  if (pendingLegal) {
+    return "/accept-terms";
   }
 
   if (group === "(auth)") {
