@@ -417,27 +417,7 @@ export const es: DeepStringRecord<typeof en> = {
     notFoundTitle: "Negocio no encontrado",
     staffLoginHint: "Equipo: ingresa abajo.",
   },
-  legal: {
-    sections: {
-      collect: {
-        body: "Tu nombre, correo electrónico, teléfono (opcional), tus citas (servicio, profesional, fecha y hora, notas) y, si activas las notificaciones, un token de notificaciones push de tu dispositivo.",
-        title: "Qué recopilamos",
-      },
-      contact: { body: "Para cualquier solicitud sobre tus datos, contacta directamente con el establecimiento.", title: "Contacto" },
-      rights: {
-        body: "En tu perfil puedes corregir tu nombre y teléfono, descargar una copia de tus datos y eliminar tu cuenta. Eliminar la cuenta borra tu acceso y anonimiza tu registro de cliente; las citas pasadas permanecen en los registros del establecimiento sin tu nombre, teléfono ni correo (las notas que escribiste en una cita se conservan tal como las escribiste; pide al establecimiento que las elimine). Los registros de consentimiento se conservan de forma anónima como prueba de aceptación.",
-        title: "Tus derechos (LGPD)",
-      },
-      who: { body: "Tú y el establecimiento en el que reservas. No vendemos tus datos.", title: "Quién puede verlo" },
-      why: {
-        body: "Para crear tu cuenta, permitirte reservar, cambiar y cancelar citas, recordártelas y permitir que el establecimiento se ponga en contacto contigo sobre tu agenda. El teléfono es opcional.",
-        title: "Para qué lo recopilamos",
-      },
-    },
-    title: "Términos y privacidad",
-    translationNote: "El texto de referencia es el portugués; esta es una traducción de cortesía.",
-    version: "Versión {{version}}",
-  },
+  legal: { ptOnlyNote: "Este documento está en portugués, el idioma oficial del servicio. Escríbanos si necesita ayuda para entenderlo.", version: "Versión {{version}}" },
   owner: {
     appearance: {
       otherColor: "Otro color",

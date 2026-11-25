@@ -8,6 +8,9 @@ type ResolveAuthRedirectInput = {
   session: Session | null;
 };
 
+// Readable without a session (and by anyone signed in): the legal documents and the password-reset landing.
+const PUBLIC_SEGMENTS = new Set(["legal", "privacidade", "termos", "contrato", "reset-password"]);
+
 export const LOGIN_ROUTE = "/login";
 export const HOME_ROUTE = "/";
 export const PROFESSIONAL_HOME_ROUTE = "/my-agenda";
@@ -27,7 +30,7 @@ export function resolveAuthRedirect({
   segments,
   session,
 }: ResolveAuthRedirectInput) {
-  if (segments[0] === "legal" || segments[0] === "reset-password") {
+  if (segments[0] && PUBLIC_SEGMENTS.has(segments[0])) {
     return null;
   }
 

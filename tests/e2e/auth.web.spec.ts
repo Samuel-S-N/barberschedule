@@ -1,3 +1,4 @@
+import { LEGAL_VERSIONS } from "../../src/features/legal";
 import { expect, test } from "./fixtures";
 
 import { customerRow, customerUserId, json, mockCustomerRest, signInAsCustomer } from "./customer-helpers";
@@ -114,7 +115,7 @@ test("a visitor can create an account and is asked to confirm their email", asyn
   await expect(page.getByText("Check your email")).toBeVisible();
   expect(signUpRedirect).toBe(new URL(page.url()).origin);
   expect(signUpPayload).toMatchObject({
-    data: { accepted_terms_version: "2026-09-23", full_name: "Ana Silva", nickname: "Aninha", phone: "(11)90000-0000" },
+    data: { accepted_privacy_version: LEGAL_VERSIONS.privacy, accepted_terms_version: LEGAL_VERSIONS.terms, full_name: "Ana Silva", nickname: "Aninha", phone: "(11)90000-0000" },
     email: "ana@example.test",
     password: "correct-password",
   });
@@ -147,8 +148,9 @@ test("design-system buttons render their variant styles", async ({ page }) => {
 test("the terms and privacy page is reachable while signed out", async ({ page }) => {
   await page.goto("/legal");
 
-  await expect(page.getByRole("heading", { name: "Terms and privacy" })).toBeVisible();
-  await expect(page.getByText("Your rights (LGPD)")).toBeVisible();
+  await expect(page).toHaveURL(/\/privacidade/);
+  await expect(page.getByRole("heading", { name: "Política de Privacidade", level: 1 })).toBeVisible();
+  await expect(page.getByText("10. Seus direitos")).toBeVisible();
 });
 
 function recoveryHash(type = "recovery") {

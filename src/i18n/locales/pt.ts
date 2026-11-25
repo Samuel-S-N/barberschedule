@@ -417,27 +417,7 @@ export const pt: DeepStringRecord<typeof en> = {
     notFoundTitle: "Estabelecimento não encontrado",
     staffLoginHint: "Equipe: entre abaixo.",
   },
-  legal: {
-    sections: {
-      collect: {
-        body: "Seu nome, endereço de e-mail, telefone (opcional), seus agendamentos (serviço, profissional, data e hora, observações) e, se você ativar as notificações, um token de push do seu aparelho.",
-        title: "O que coletamos",
-      },
-      contact: { body: "Para qualquer pedido sobre seus dados, fale diretamente com o estabelecimento.", title: "Contato" },
-      rights: {
-        body: "No seu perfil você pode corrigir seu nome e telefone, baixar uma cópia dos seus dados e excluir sua conta. Excluir a conta remove seu login e anonimiza seu cadastro de cliente; os agendamentos passados permanecem nos registros do estabelecimento sem seu nome, telefone ou e-mail (as observações que você escreveu em um agendamento são mantidas como foram escritas; peça à estabelecimento para removê-las). Os registros de consentimento são mantidos de forma anônima como comprovante de aceite.",
-        title: "Seus direitos (LGPD)",
-      },
-      who: { body: "Você e o estabelecimento em que você agenda. Não vendemos seus dados.", title: "Quem pode ver" },
-      why: {
-        body: "Para criar sua conta, permitir que você agende, altere e cancele horários, lembrar você deles e permitir que o estabelecimento entre em contato sobre sua agenda. O telefone é opcional.",
-        title: "Por que coletamos",
-      },
-    },
-    title: "Termos e privacidade",
-    translationNote: "Este é o texto de referência.",
-    version: "Versão {{version}}",
-  },
+  legal: { ptOnlyNote: "Este documento está em português.", version: "Versão {{version}}" },
   owner: {
     appearance: {
       otherColor: "Outra cor",

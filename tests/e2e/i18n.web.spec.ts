@@ -23,8 +23,8 @@ test.describe("Portuguese device", () => {
 
   test("the legal page is in Portuguese", async ({ page }) => {
     await page.goto("/legal");
-    await expect(page.getByRole("heading", { name: "Termos e privacidade" })).toBeVisible();
-    await expect(page.getByText("Seus direitos (LGPD)")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Política de Privacidade", level: 1 })).toBeVisible();
+    await expect(page.getByText("Versão 2026-11-26")).toBeVisible();
   });
 });
 

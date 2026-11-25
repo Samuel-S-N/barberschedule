@@ -38,12 +38,4 @@ describe("en resources", () => {
     expect(Object.entries(flatten(en)).filter(([, text]) => text.trim() === "")).toEqual([]);
   });
 
-  it("defines a title and body for every legal section", () => {
-    const keys = Object.keys(flatten(en));
-
-    for (const key of ["collect", "why", "who", "rights", "contact"]) {
-      expect(keys).toContain(`legal.sections.${key}.title`);
-      expect(keys).toContain(`legal.sections.${key}.body`);
-    }
-  });
 });

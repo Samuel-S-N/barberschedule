@@ -1,4 +1,7 @@
 import { signUpCustomer } from "../../src/features/auth/api";
+import { LEGAL_VERSIONS } from "../../src/features/legal";
+
+const versions = { accepted_privacy_version: LEGAL_VERSIONS.privacy, accepted_terms_version: LEGAL_VERSIONS.terms };
 
 describe("signUpCustomer", () => {
   const input = { acceptedTerms: true as const, email: "ana@example.com", fullName: "Ana", nickname: "Aninha", password: "12345678", phone: "+55 11 90000-0000" };
@@ -9,7 +12,7 @@ describe("signUpCustomer", () => {
     await expect(signUpCustomer({ auth: { signUp } } as never, input, "https://alfa.zencpro.app/")).resolves.toEqual({ needsEmailConfirmation: true });
     expect(signUp).toHaveBeenCalledWith({
       email: "ana@example.com",
-      options: { data: { accepted_terms_version: "2026-09-23", full_name: "Ana", nickname: "Aninha", phone: "+55 11 90000-0000" }, emailRedirectTo: "https://alfa.zencpro.app/" },
+      options: { data: { ...versions, full_name: "Ana", nickname: "Aninha", phone: "+55 11 90000-0000" }, emailRedirectTo: "https://alfa.zencpro.app/" },
       password: "12345678",
     });
   });
@@ -19,7 +22,7 @@ describe("signUpCustomer", () => {
 
     await signUpCustomer({ auth: { signUp } } as never, { ...input, nickname: null, phone: null }, "https://alfa.zencpro.app/");
 
-    expect(signUp.mock.calls[0][0].options.data).toEqual({ accepted_terms_version: "2026-09-23", full_name: "Ana" });
+    expect(signUp.mock.calls[0][0].options.data).toEqual({ ...versions, full_name: "Ana" });
   });
 
   it("reports no confirmation needed when a session is returned", async () => {

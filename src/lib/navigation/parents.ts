@@ -14,7 +14,7 @@ export const ROOT_ROUTES = new Set([
 ]);
 
 // Screens reachable from several places (terms, a password-reset e-mail link) keep the history behaviour.
-export const HISTORY_ROUTES = new Set(["/legal", "/reset-password"]);
+export const HISTORY_ROUTES = new Set(["/legal", "/privacidade", "/termos", "/contrato", "/reset-password"]);
 
 const bookingIds = (params: RouteParams) => ({
   professionalId: text(params.professionalId),
