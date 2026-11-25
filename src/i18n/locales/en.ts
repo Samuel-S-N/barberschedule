@@ -991,6 +991,8 @@ export const en = {
       SHOP_SLUG_INVALID: "That business link is taken or not allowed.",
       SHOP_OWNER_INVALID: "This account cannot own a new business.",
       LEGAL_CONSENT_INVALID: "We could not record your acceptance. Please try again.",
+      SHOP_NOT_READY: "This business is not open for bookings yet.",
+      SHOP_SETUP_INCOMPLETE: "Finish the required steps before opening your agenda.",
       SERVICE_STANDARD_LOCKED: "This service is standard and cannot be turned off.",
       COMPENSATION_INVALID: "Enter a valid commission or chair rental.",
       EARNINGS_INVALID_RANGE: "Choose a period of up to 92 days.",

@@ -990,6 +990,8 @@ export const pt: DeepStringRecord<typeof en> = {
       SHOP_SLUG_INVALID: "Esse link do estabelecimento já está em uso ou não é permitido.",
       SHOP_OWNER_INVALID: "Esta conta não pode ser dona de um novo estabelecimento.",
       LEGAL_CONSENT_INVALID: "Não foi possível registrar seu aceite. Tente novamente.",
+      SHOP_NOT_READY: "Este estabelecimento ainda não está aberto para agendamentos.",
+      SHOP_SETUP_INCOMPLETE: "Conclua as etapas obrigatórias antes de abrir sua agenda.",
       SERVICE_STANDARD_LOCKED: "Este serviço é padrão e não pode ser desligado.",
       COMPENSATION_INVALID: "Informe uma comissão ou aluguel de cadeira válidos.",
       EARNINGS_INVALID_RANGE: "Escolha um período de até 92 dias.",
