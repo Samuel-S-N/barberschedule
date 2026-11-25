@@ -9,6 +9,7 @@ test.describe("Portuguese device", () => {
     await page.goto("/login");
     await expect(page.getByRole("heading", { name: "Entrar" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Esqueci minha senha" })).toBeVisible();
+    await expect(page.locator("html")).toHaveAttribute("lang", "pt-BR");
 
     await page.getByRole("button", { name: "Criar conta" }).click();
     await expect(page.getByRole("heading", { name: "Criar conta" })).toBeVisible();
@@ -34,6 +35,7 @@ test.describe("Spanish device", () => {
     await page.goto("/login");
     await expect(page.getByRole("heading", { name: "Iniciar sesión" })).toBeVisible();
     await expect(page.getByRole("button", { name: "¿Olvidaste tu contraseña?" })).toBeVisible();
+    await expect(page.locator("html")).toHaveAttribute("lang", "es");
   });
 });
 
