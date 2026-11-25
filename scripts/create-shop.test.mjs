@@ -46,6 +46,7 @@ test("invites the owner with the shop link, creates the shop and prints the link
   assert.deepEqual(calls[2].body, { p_name: "Barbearia do João", p_owner_user_id: "user-1", p_slug: "barbeariadojoao", p_timezone: "America/Sao_Paulo" });
   assert.ok(out.lines.some((line) => line.includes("https://barbeariadojoao.zencpro.app")));
   assert.ok(out.lines.some((line) => /QR/i.test(line)));
+  assert.ok(out.lines.some((line) => /setup checklist/i.test(line) && line.includes("https://barbeariadojoao.zencpro.app")));
 });
 
 test("an existing account stops before create_shop", async () => {

@@ -103,6 +103,7 @@ export async function run({ argv, env, fetch: send, log }) {
 
     log(`Business created: ${buildShopUrl(template, args.slug)}`);
     log(`Invite sent to ${args.owner}. Generate the QR code from that link and send it to the business.`);
+    log(`The shop starts closed: its owner must finish the setup checklist at ${buildShopUrl(template, args.slug)} before customers can book (visitors see "Em breve" until then).`);
     return 0;
   } catch (error) {
     log(`Request failed: ${error.message}`);

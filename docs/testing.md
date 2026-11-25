@@ -79,3 +79,24 @@ PLAYWRIGHT_TEST_BASE_URL=http://127.0.0.1:4173 npx playwright test
 
 Rebuild with `npm run e2e:export` after any source change; the static server does not reload. Move `.env.local` aside
 only if you use the Metro-based runner; the export ignores dotenv files.
+
+### Trying the owner setup checklist with the dev owner account
+
+New shops start closed. To see the checklist with `owner@teste.com` (local database only, never `supabase db reset`), run in the
+local database (for example `docker exec supabase_db_zenc psql -U postgres -c "..."`):
+
+```sql
+-- close the dev owner's shop and forget the business agreement, so the checklist starts from the top
+update public.shops set setup_completed_at = null where owner_user_id = (select id from auth.users where email = 'owner@teste.com');
+delete from public.consents where kind = 'business' and user_id = (select id from auth.users where email = 'owner@teste.com');
+```
+
+Undo it (the owner's shop is open again; the agreement is asked once by the re-accept gate):
+
+```sql
+update public.shops set setup_completed_at = now() where owner_user_id = (select id from auth.users where email = 'owner@teste.com');
+```
+
+The account keeps its hours, services and professionals, so only the agreement and the final "Abrir minha agenda" are pending; delete
+some of them to see the other steps. Visitors on that shop's address see "Em breve" while it is closed.
+
