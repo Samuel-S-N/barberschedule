@@ -409,6 +409,7 @@ export const es: DeepStringRecord<typeof en> = {
     stepMenuChrome: "Toca el menú (⋯) del navegador",
     stepShareOrMenu: "Toca el icono de Compartir. Si no aparece, toca primero el menú del navegador.",
   },
+  shopLinkScreen: { copied: "Enlace copiado", copy: "Copiar enlace", download: "Descargar QR (PNG)", downloadFailed: "No se pudo descargar el código QR.", failed: "No se pudo compartir. Copie el enlace manualmente.", introOwner: "Muestre este código QR o envíe el enlace para que sus clientes reserven.", introProfessional: "Este es el enlace del establecimiento. Compártalo con sus clientes: pueden reservar con cualquier profesional.", qrLabel: "Código QR del establecimiento", share: "Compartir", title: "Enlace y código QR", titleProfessional: "Enlace del establecimiento" },
   shopGate: {
     bareBody: "Zenc funciona con el enlace o código QR de cada negocio. Pídelo a tu negocio.",
     bareTitle: "Abre el enlace que te envió tu negocio",
@@ -550,7 +551,7 @@ export const es: DeepStringRecord<typeof en> = {
       shopIncomeHint: "Tras el pago a colaboradores",
       title: "Facturación",
     },
-    manage: { payouts: "Pagos a profesionales", plans: "Planes de recurrencia", recurring: "Clientes recurrentes", conflicts: "Conflictos de recurrencia", title: "Gestionar" },
+    manage: { linkQr: "Enlace y código QR", payouts: "Pagos a profesionales", plans: "Planes de recurrencia", recurring: "Clientes recurrentes", conflicts: "Conflictos de recurrencia", title: "Gestionar" },
     settings: {
       appearanceLink: "Apariencia de la app",
       shopLink: "Datos y horarios del establecimiento",
@@ -920,7 +921,7 @@ export const es: DeepStringRecord<typeof en> = {
       lunchTitle: "Pausa para el almuerzo",
     },
     hub: {
-      menu: { account: "Mis datos", availability: "Disponibilidad", compensation: "Remuneración", recurrence: "Planes", services: "Mis servicios" },
+      menu: { linkQr: "Enlace del establecimiento", account: "Mis datos", availability: "Disponibilidad", compensation: "Remuneración", recurrence: "Planes", services: "Mis servicios" },
       role: "Profesional",
     },
     agenda: {
