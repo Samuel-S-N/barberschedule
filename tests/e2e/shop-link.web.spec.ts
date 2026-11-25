@@ -51,6 +51,18 @@ test.describe("owner", () => {
   });
 });
 
+test.describe("download", () => {
+  test("Baixar QR (PNG) downloads a PNG named after the shop", async ({ page }) => {
+    await signInAs(page, ownerId);
+    await mockRest(page, "owner");
+    await page.goto("/shop-link");
+
+    const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId("shop-link-download").click()]);
+
+    expect(download.suggestedFilename()).toBe("qr-shop-a.png");
+  });
+});
+
 test.describe("professional", () => {
   test("opens the same link from the profile hub", async ({ page }) => {
     await signInAs(page, professionalUserId);
