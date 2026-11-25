@@ -409,6 +409,53 @@ export const en = {
     stepShareOrMenu: "Tap the Share icon. If you do not see it, tap the browser menu first.",
   },
   shopLinkScreen: { copied: "Link copied", copy: "Copy link", download: "Download QR (PNG)", downloadFailed: "Could not download the QR code.", failed: "Could not share. Copy the link by hand.", introOwner: "Show this QR code or send the link so your customers can book.", introProfessional: "This is the business link. Share it with your customers: they can book with any professional.", qrLabel: "Business QR code", share: "Share", title: "Link and QR code", titleProfessional: "Business link" },
+  setup: {
+    agreement: {
+      accept: "I have read and accept",
+      hint: "Read and accept Zenc's terms for your business.",
+      read: "Read the agreement",
+      title: "Business agreement",
+    },
+    colours: {
+      hint: "Make your business page look like you.",
+      title: "Colours",
+    },
+    details: {
+      hint: "Name, WhatsApp or phone, and address with postcode.",
+      title: "Business details",
+    },
+    finish: {
+      error: "Could not open the agenda. Check the steps and try again.",
+      hint: "Once the required steps are complete you can open.",
+      title: "Open my agenda",
+    },
+    hours: {
+      hint: "The days and times you are open.",
+      title: "Opening hours",
+    },
+    intro: "Complete the required steps. Your customers only see your business after you open the agenda.",
+    loadError: "Could not load the steps.",
+    open: "Open",
+    optional: "Optional",
+    progress: "{{done}} of {{total}} required steps",
+    review: "Review",
+    services: {
+      hint: "Add at least one active service.",
+      title: "Services",
+    },
+    team: {
+      add: "Add a professional",
+      addHours: "Add hours",
+      addServices: "Choose services",
+      hint: "At least one professional with hours and services. Invites are optional: you can set everything up before they accept.",
+      lacksHours: "Hours are missing.",
+      lacksServices: "Services are missing.",
+      serve: "I serve customers myself",
+      serveHint: "You appear in the booking list with your own hours and services.",
+      title: "Team",
+    },
+    title: "Let's open your business",
+  },
   shopGate: {
     comingSoonBody: "{{name}} is getting its agenda ready.",
     comingSoonTitle: "Coming soon",

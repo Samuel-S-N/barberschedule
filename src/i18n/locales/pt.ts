@@ -408,6 +408,53 @@ export const pt: DeepStringRecord<typeof en> = {
     stepShareOrMenu: "Toque no ícone de Compartilhar. Se ele não aparecer, toque primeiro no menu do navegador.",
   },
   shopLinkScreen: { copied: "Link copiado", copy: "Copiar link", download: "Baixar QR (PNG)", downloadFailed: "Não foi possível baixar o QR code.", failed: "Não foi possível compartilhar. Copie o link manualmente.", introOwner: "Mostre este QR code ou envie o link para seus clientes agendarem.", introProfessional: "Este é o link do estabelecimento. Compartilhe com seus clientes: eles agendam com qualquer profissional.", qrLabel: "QR code do estabelecimento", share: "Compartilhar", title: "Link e QR code", titleProfessional: "Link do estabelecimento" },
+  setup: {
+    agreement: {
+      accept: "Li e aceito",
+      hint: "Leia e aceite os termos de uso da Zenc pelo seu estabelecimento.",
+      read: "Ler o contrato",
+      title: "Contrato do Estabelecimento",
+    },
+    colours: {
+      hint: "Deixe a página do seu estabelecimento com a sua cara.",
+      title: "Cores",
+    },
+    details: {
+      hint: "Nome, WhatsApp ou telefone e endereço com CEP.",
+      title: "Dados do estabelecimento",
+    },
+    finish: {
+      error: "Não foi possível abrir a agenda. Confira as etapas e tente de novo.",
+      hint: "Quando as etapas obrigatórias estiverem completas, você pode abrir.",
+      title: "Abrir minha agenda",
+    },
+    hours: {
+      hint: "Os dias e horários em que você atende.",
+      title: "Horário de funcionamento",
+    },
+    intro: "Complete as etapas obrigatórias. Seus clientes só veem seu estabelecimento depois que você abrir a agenda.",
+    loadError: "Não foi possível carregar as etapas.",
+    open: "Abrir",
+    optional: "Opcional",
+    progress: "{{done}} de {{total}} etapas obrigatórias",
+    review: "Revisar",
+    services: {
+      hint: "Cadastre pelo menos um serviço ativo.",
+      title: "Serviços",
+    },
+    team: {
+      add: "Adicionar profissional",
+      addHours: "Cadastrar horários",
+      addServices: "Escolher serviços",
+      hint: "Pelo menos um profissional com horários e serviços. Convites são opcionais: você pode configurar tudo antes de o profissional aceitar.",
+      lacksHours: "Falta cadastrar os horários.",
+      lacksServices: "Falta escolher os serviços.",
+      serve: "Eu atendo",
+      serveHint: "Você aparece na lista de agendamento com seus horários e serviços.",
+      title: "Equipe",
+    },
+    title: "Vamos abrir seu estabelecimento",
+  },
   shopGate: {
     comingSoonBody: "{{name}} está preparando a agenda.",
     comingSoonTitle: "Em breve",
