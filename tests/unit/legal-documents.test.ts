@@ -58,3 +58,16 @@ describe("privacy policy", () => {
     for (const processor of ["Supabase", "Cloudflare", "Resend", "Sentry"]) expect(text).toContain(processor);
   });
 });
+
+describe("terms of use", () => {
+  it("has the required sections and says Zenc is not a party to the service", () => {
+    expect(LEGAL_DOCUMENTS.terms.sections.map((section) => section.id)).toEqual([
+      "definicoes", "conta", "uso", "servico-prestado", "obrigacoes-estabelecimento", "responsabilidade",
+      "suspensao-encerramento", "privacidade", "alteracoes", "lei-foro",
+    ]);
+    expect(allText("terms")).toMatch(/não é parte/i);
+    expect(allText("terms")).toMatch(/18 anos/);
+    expect(allText("terms")).toMatch(/Código de Defesa do Consumidor/);
+    expect(allText("terms")).toMatch(/\{\{foro\}\}/);
+  });
+});
