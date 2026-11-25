@@ -27,6 +27,7 @@ export default function ProfessionalProfileHub() {
       <ScrollView refreshControl={pullToRefresh(pull)} className="flex-1">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-6">
+            <InstallPrompt />
             <View className="items-center gap-1 pt-4">
               <Avatar
                 accessibilityLabel={t("professional.hub.menu.account")}
@@ -61,8 +62,6 @@ export default function ProfessionalProfileHub() {
                 { icon: Info, key: "about", label: t("profile.menu.about"), onPress: () => router.push("/my-profile/about") },
               ]}
             />
-
-            <InstallPrompt />
           </View>
         </View>
       </ScrollView>

@@ -2,6 +2,7 @@ import { expect, test } from "./fixtures";
 
 import { json, mockCustomerRest, signInAsCustomer } from "./customer-helpers";
 import { stubInstallPrompt } from "./install-helpers";
+import { HUB_ORDER, hubOrder } from "./profile-helpers";
 
 test("the profile tab is a hub of blocks that open each inner screen", async ({ page }) => {
   await signInAsCustomer(page);
@@ -205,4 +206,15 @@ test("the profile hub offers to install the app and calls the browser prompt", a
   await page.getByTestId("install-button").click();
 
   expect(await page.evaluate(() => (window as unknown as Record<string, unknown>).__installPrompted)).toBe(true);
+});
+
+test("the customer hub lists the shared blocks in the common order", async ({ page }) => {
+  await stubInstallPrompt(page);
+  await signInAsCustomer(page);
+  await mockCustomerRest(page);
+
+  await page.goto("/profile");
+  await expect(page.getByTestId("profile-avatar")).toBeVisible();
+
+  expect(await hubOrder(page)).toEqual(HUB_ORDER);
 });

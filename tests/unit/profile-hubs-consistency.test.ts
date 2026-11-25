@@ -12,4 +12,22 @@ describe("profile hubs", () => {
     expect(source).not.toContain("profile-signout");
     expect(source).not.toContain("signOut(");
   });
+
+  it.each(HUBS)("%s uses the same Settings, Privacy, About order and the Lock icon for Privacy", (file) => {
+    const source = read(file);
+    const at = (key: string) => source.indexOf(`key: "${key}"`);
+
+    expect(at("settings")).toBeGreaterThan(-1);
+    expect(at("settings")).toBeLessThan(at("privacy"));
+    expect(at("privacy")).toBeLessThan(at("about"));
+    expect(source).toContain('icon: Lock, key: "privacy"');
+    expect(source).not.toContain("UserCog");
+  });
+
+  it.each(HUBS)("%s shows the install card before the avatar", (file) => {
+    const source = read(file);
+
+    expect(source.indexOf("<InstallPrompt />")).toBeGreaterThan(-1);
+    expect(source.indexOf("<InstallPrompt />")).toBeLessThan(source.indexOf("<Avatar"));
+  });
 });

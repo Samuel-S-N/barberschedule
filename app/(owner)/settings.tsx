@@ -31,6 +31,7 @@ export default function OwnerSettingsScreen() {
       <ScrollView className="flex-1">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-6">
+            <InstallPrompt />
             <View className="items-center gap-1 pt-4">
               <Avatar accessibilityLabel={t("profile.menu.account")} name={name} onPress={() => router.push("/owner-profile/account")} testID="profile-avatar" uri={profile.data?.avatarUrl} />
               <Text accessibilityRole="header" className="pt-3 text-2xl font-display-bold text-ink">{name}</Text>
@@ -65,14 +66,11 @@ export default function OwnerSettingsScreen() {
 
             <MenuBlock
               items={[
-                { icon: Lock, key: "privacy", label: t("profile.menu.privacy"), onPress: () => router.push("/owner-profile/privacy") },
                 { icon: Settings, key: "settings", label: t("profile.menu.settings"), onPress: () => router.push("/owner-profile/settings") },
+                { icon: Lock, key: "privacy", label: t("profile.menu.privacy"), onPress: () => router.push("/owner-profile/privacy") },
                 { icon: Info, key: "about", label: t("profile.menu.about"), onPress: () => router.push("/owner-profile/about") },
               ]}
             />
-
-            <InstallPrompt />
-
             <Toast message={error ?? ""} onDismiss={() => setError(null)} variant="error" visible={error !== null} />
           </View>
         </View>

@@ -4,6 +4,7 @@ import type { Page } from "@playwright/test";
 import { professionalId, json, shopId } from "./customer-helpers";
 import type { RestHandler } from "./customer-helpers";
 import { stubInstallPrompt } from "./install-helpers";
+import { HUB_ORDER, hubOrder } from "./profile-helpers";
 
 const professionalUserId = "66666666-6666-4666-8666-666666666666";
 
@@ -187,4 +188,15 @@ test("the professional signs out from Settings", async ({ page }) => {
 
   await loggedOut;
   await expect(page).toHaveURL(/\/login/);
+});
+
+test("the professional hub lists the shared blocks in the common order", async ({ page }) => {
+  await stubInstallPrompt(page);
+  await signIn(page, professionalUserId);
+  await mockProfessionalRest(page);
+
+  await page.goto("/my-profile");
+  await expect(page.getByTestId("profile-avatar")).toBeVisible();
+
+  expect(await hubOrder(page)).toEqual(HUB_ORDER);
 });

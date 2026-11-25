@@ -3,6 +3,7 @@ import type { Page } from "@playwright/test";
 
 import { json } from "./customer-helpers";
 import { stubInstallPrompt } from "./install-helpers";
+import { HUB_ORDER, hubOrder } from "./profile-helpers";
 
 const ownerId = "55555555-5555-4555-8555-555555555555";
 const shop = "11111111-1111-4111-8111-111111111111";
@@ -143,4 +144,15 @@ test("the owner signs out from Settings", async ({ page }) => {
 
   await loggedOut;
   await expect(page).toHaveURL(/\/login/);
+});
+
+test("the owner hub lists the shared blocks in the common order", async ({ page }) => {
+  await stubInstallPrompt(page);
+  await signInAsOwner(page);
+  await mockOwnerRest(page, { calls: {}, linked: false });
+
+  await page.goto("/settings");
+  await expect(page.getByTestId("profile-avatar")).toBeVisible();
+
+  expect(await hubOrder(page)).toEqual(HUB_ORDER);
 });
