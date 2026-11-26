@@ -47,6 +47,10 @@ if [ "$1" != "--fast" ]; then
   chk "jest" "see: npm test -- --runInBand" npm test -- --runInBand --silent
 fi
 
+# 6a. Edge Functions (invites): `npx supabase functions serve` must be running, or an owner's invite fails
+code=$(curl -s -m 5 -o /dev/null -w '%{http_code}' -X OPTIONS "http://$LAN_IP:55421/functions/v1/invite-professional" -H "apikey: $KEY")
+[ "$code" = 204 ] && ok "Edge Functions answer (invite-professional OPTIONS 204)" || bad "invite-professional OPTIONS returned $code" "cp supabase/functions/.env.example supabase/functions/.env.local; setsid nohup npx supabase functions serve --env-file supabase/functions/.env.local >/tmp/functions.log 2>&1 </dev/null &"
+
 # 6. Metro
 [ "$(curl -s -m 3 localhost:8081/status)" = "packager-status:running" ] && ok "Metro running on :8081" || bad "Metro not running" "setsid nohup npx expo start --lan --clear >log 2>&1 </dev/null &"
 if ps -o args= -p "$(ss -ltnp 2>/dev/null | grep ':8081' | grep -o 'pid=[0-9]*' | head -1 | cut -d= -f2)" 2>/dev/null | grep -q .; then

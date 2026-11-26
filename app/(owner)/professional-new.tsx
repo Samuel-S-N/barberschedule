@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { ScreenHeader } from "../../src/components/domain/ScreenHeader";
@@ -29,18 +29,51 @@ export default function OwnerProfessionalNewScreen() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  // A created professional is kept even when the invite fails: the screen then says so and offers to send the invite again (without
+  // creating the professional twice) or to finish and invite later from the professional's profile.
+  const [createdId, setCreatedId] = useState<string | null>(null);
+  const [status, setStatus] = useState<{ message: string; variant: "error" | "success" } | null>(null);
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const leave = () => {
+    void queryClient.invalidateQueries({ queryKey: ["owner-professionals"] });
+    if (fromSetup) returnToSetup();
+    else back();
+  };
+
+  useEffect(() => () => { if (leaveTimer.current) clearTimeout(leaveTimer.current); }, []);
+
   const create = useMutation({
     mutationFn: async () => {
-      const created = await createProfessional(supabase, { name, shopId: shopId ?? "" });
+      let id = createdId;
 
-      // The professional exists even if the invite fails; the profile screen can invite again.
-      if (email.includes("@")) await inviteProfessional(supabase, { professionalId: created.id, email: email.trim() }).catch(() => undefined);
+      if (!id) {
+        id = (await createProfessional(supabase, { name, shopId: shopId ?? "" })).id;
+        setCreatedId(id);
+      }
+      const address = email.trim();
+
+      if (!address.includes("@")) return { invited: null, inviteError: null };
+
+      try {
+        await inviteProfessional(supabase, { professionalId: id, email: address });
+
+        return { invited: address, inviteError: null };
+      } catch (caught) {
+        return { invited: null, inviteError: caught };
+      }
     },
     onError: (caught) => setError(errorMessage(caught, t, t("owner.professionals.saveError"))),
-    onSuccess: () => {
+    onSuccess: ({ invited, inviteError }) => {
       void queryClient.invalidateQueries({ queryKey: ["owner-professionals"] });
-      if (fromSetup) returnToSetup();
-      else back();
+      if (inviteError) {
+        setStatus({ message: `${t("owner.professionals.createdInviteFailed")} ${errorMessage(inviteError, t, t("owner.professionals.inviteError"))}`, variant: "error" });
+      } else if (invited) {
+        // Say it before leaving: this screen goes away with the message.
+        setStatus({ message: t("owner.professionals.inviteSentTo", { email: invited }), variant: "success" });
+        leaveTimer.current = setTimeout(leave, 1500);
+      } else {
+        leave();
+      }
     },
   });
 
@@ -52,7 +85,9 @@ export default function OwnerProfessionalNewScreen() {
             <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("owner.professionals.newTitle")} />
             <Input {...field(0)} label={t("owner.professionals.nameLabel")} onChangeText={setName} placeholder={t("examples.fullName")} testID="professional-name-input" value={name} />
             <Input {...field(1)} autoCapitalize="none" keyboardType="email-address" label={t("owner.professionals.inviteOptional")} onChangeText={setEmail} placeholder={t("examples.email")} testID="professional-invite-email" value={email} />
-            <Button disabled={create.isPending || name.trim().length === 0 || !shopId} label={t("owner.professionals.add")} onPress={() => create.mutate()} testID="professional-save" />
+            {status ? <Text accessibilityLiveRegion="polite" className={`text-sm font-sans-medium ${status.variant === "error" ? "text-danger-500" : "text-success-500"}`} testID="professional-new-status">{status.message}</Text> : null}
+            <Button disabled={create.isPending || name.trim().length === 0 || !shopId} label={createdId ? t("owner.professionals.inviteRetry") : t("owner.professionals.add")} onPress={() => create.mutate()} testID="professional-save" />
+            {createdId ? <Button label={t("owner.professionals.finish")} onPress={leave} testID="professional-new-finish" variant="outline" /> : null}
             <Toast message={error ?? ""} onDismiss={() => setError(null)} variant="error" visible={error !== null} />
           </View>
         </View>

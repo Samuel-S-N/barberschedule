@@ -14,6 +14,8 @@ environment yet. The per-task history below is kept as the record of how it was 
   (`docs/legal/revisao-juridica.md`).
 - **0.5 readiness, part C (owner setup form):** new shops start closed (`shops.setup_completed_at`, migration `0081`); the owner is routed to
   a `/setup` checklist, `complete_shop_setup` validates on the server, visitors see "Em breve" and bookings are rejected until it opens.
+- **0.5 readiness, part D (e-mails):** Zenc-branded Portuguese auth e-mail templates (`supabase/templates/`), invites that name the
+  business, and a 24 h reminder e-mail (own outbox row, Resend, opt-out "Lembretes por e-mail", migration `0082`).
 - **Repository:** 63 migration files (0001-0060 and 0064-0066; 0061-0063 are reserved by the unmerged payouts work),
   45 pgTAP files, 18 decision records, three Edge Functions (`delete-account`, `dispatch-notifications`,
   `invite-professional`).

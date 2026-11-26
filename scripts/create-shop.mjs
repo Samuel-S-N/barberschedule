@@ -53,7 +53,8 @@ export async function run({ argv, env, fetch: send, log }) {
       return 1;
     }
 
-    const invited = await send(`${base}/auth/v1/invite?redirect_to=${encodeURIComponent(redirectTo)}`, { body: JSON.stringify({ email: args.owner }), headers, method: "POST" });
+    // business_name feeds supabase/templates/invite.html ("Você foi convidado para <negócio> na Zenc").
+    const invited = await send(`${base}/auth/v1/invite?redirect_to=${encodeURIComponent(redirectTo)}`, { body: JSON.stringify({ data: { business_name: args.name }, email: args.owner }), headers, method: "POST" });
     if (!invited.ok) {
       const failure = await invited.json().catch(() => ({}));
 

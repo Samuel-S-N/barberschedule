@@ -53,12 +53,14 @@ export default function OwnerProfessionalProfileScreen() {
     },
   });
 
+  const [inviteStatus, setInviteStatus] = useState<{ message: string; variant: "error" | "success" } | null>(null);
   const invite = useMutation({
-    mutationFn: () => inviteProfessional(supabase, { professionalId: id, email: inviteEmail.trim() }),
-    onError: (error) => notify(errorMessage(error, t, t("owner.professionals.inviteError")), "error"),
-    onSuccess: () => {
+    mutationFn: (address: string) => inviteProfessional(supabase, { professionalId: id, email: address }),
+    // A message that stays until the next attempt (a toast fades after 3 s and was easy to miss).
+    onError: (error) => setInviteStatus({ message: errorMessage(error, t, t("owner.professionals.inviteError")), variant: "error" }),
+    onSuccess: (_result, variables) => {
       setInviteEmail("");
-      notify(t("owner.professionals.inviteSent"), "success");
+      setInviteStatus({ message: t("owner.professionals.inviteSentTo", { email: variables }), variant: "success" });
       void refresh();
     },
   });
@@ -105,7 +107,8 @@ export default function OwnerProfessionalProfileScreen() {
                     <View className="gap-3">
                       <Text accessibilityRole="header" className="text-lg font-display-semibold text-ink">{t("owner.professionals.accessTitle")}</Text>
                       <Input autoCapitalize="none" keyboardType="email-address" label={t("owner.professionals.inviteEmailLabel")} onChangeText={setInviteEmail} placeholder={t("examples.email")} testID="professional-invite-email" value={inviteEmail} />
-                      <Button disabled={invite.isPending || !inviteEmail.includes("@")} label={t("owner.professionals.sendInvite")} onPress={() => invite.mutate()} size="sm" testID="professional-invite-send" />
+                      <Button disabled={invite.isPending || !inviteEmail.includes("@")} label={t("owner.professionals.sendInvite")} onPress={() => { setInviteStatus(null); invite.mutate(inviteEmail.trim()); }} size="sm" testID="professional-invite-send" />
+                      {inviteStatus ? <Text accessibilityLiveRegion="polite" className={`text-sm font-sans-medium ${inviteStatus.variant === "error" ? "text-danger-500" : "text-success-500"}`} testID="professional-invite-status">{inviteStatus.message}</Text> : null}
                     </View>
                   </Card>
                 ) : null}

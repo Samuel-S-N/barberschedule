@@ -36,8 +36,9 @@ without understanding which migration is missing.
 ## 3. Auth settings (Dashboard > Authentication)
 
 1. **Email confirmations ON** (Providers > Email > "Confirm email"). The customer email claim relies on it.
-2. **URL Configuration:** Site URL = the production web origin; Redirect URLs = the production origin with `/**`
-   and `zenc://**`. Local-only `exp://` URLs do not belong here.
+2. **URL Configuration:** Site URL = the production web origin; Redirect URLs = the production origin with `/**`,
+   **`https://*.zencpro.app/**`** (invites and password recovery redirect to each business's own subdomain; without the wildcard the
+   link in the e-mail is refused and falls back to the Site URL) and `zenc://**`. Local-only `exp://` URLs do not belong here.
 3. **Minimum password length 8** (Providers > Email), the same rule as the app and `supabase/config.toml`.
 4. Verify with the repo's check (it fails while confirmations are off):
 
@@ -98,4 +99,25 @@ setup checklist (agreement, details, hours, a service, a team member with hours 
 "Abrir minha agenda" opens it and shows the link and QR code. Until then visitors see "Em breve" and `book_appointment` rejects
 bookings (`P0044`). Existing shops, and every seed or test shop, are open: the column defaults to `now()` and only `create_shop`
 sets it to null. Nothing to configure at deploy time; tell each new owner the checklist is their first step.
+
+## 10. E-mail (Resend and the auth templates)
+
+0. **Deploy the web app first**: the e-mails load their logo from `https://zencpro.app/email/zenc-logo.png`, a static file of the
+   web app (`public/email/`). Check it opens in the browser before sending real e-mails.
+1. Verify the sending domain in Resend (the DKIM and SPF records it shows) for `zencpro.app` and create an API key.
+2. **Auth e-mails use Resend SMTP.** In the hosted project's Dashboard > Authentication > SMTP settings (or `[auth.email.smtp]` in
+   `config.toml` with `pass = "env(RESEND_API_KEY)"`): host `smtp.resend.com`, port `465`, user `resend`, password = the Resend API
+   key, sender `Zenc <nao-responda@zencpro.app>`. Without custom SMTP the hosted project's built-in sender is rate-limited and not
+   for production.
+3. **Push the templates:** `npx supabase link --project-ref <ref>`, then `npx supabase config push` (sends the
+   `[auth.email.template.*]` subjects and `supabase/templates/*.html`: confirmation, recovery, e-mail change, invite). Check
+   Dashboard > Authentication > Email Templates shows the Portuguese templates. The invite subject and body use
+   `{{ .Data.business_name }}`, which `invite-professional` and `scripts/create-shop.mjs` send in the invite data.
+4. **Reminder e-mails:** `npx supabase secrets set RESEND_API_KEY=<key> EMAIL_FROM="Zenc <lembretes@zencpro.app>"`, then redeploy
+   `dispatch-notifications` (`npx supabase functions deploy dispatch-notifications`). Without `RESEND_API_KEY` the function logs
+   "skipping e-mail" and marks the rows done, so no reminder e-mail is sent.
+5. Apply migration `0082` with the others (`db push`, section 2).
+6. Smoke test: create a customer account, book an appointment 24 h ahead, run `select public.enqueue_notification_reminders();` and
+   invoke the function (or wait for the schedule). The e-mail arrives and "Ver meus agendamentos" opens the business page. Turn
+   "Lembretes por e-mail" off in that customer's Settings and confirm the next reminder creates no e-mail row.
 

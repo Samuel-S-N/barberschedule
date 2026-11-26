@@ -455,6 +455,7 @@ export const pt: DeepStringRecord<typeof en> = {
     },
     title: "Vamos abrir seu estabelecimento",
   },
+  emailReminders: { error: "Não foi possível salvar. Tente de novo.", hint: "Receba um e-mail 24 horas antes do seu agendamento, em qualquer estabelecimento.", label: "Lembretes por e-mail" },
   shopGate: {
     comingSoonBody: "{{name}} está preparando a agenda.",
     comingSoonTitle: "Em breve",
@@ -651,6 +652,10 @@ export const pt: DeepStringRecord<typeof en> = {
       inviteEmailLabel: "E-mail do profissional",
       inviteError: "Não foi possível enviar o convite.",
       invite: "Convidar para entrar",
+      createdInviteFailed: "Profissional criado, mas não foi possível enviar o convite.",
+      finish: "Concluir",
+      inviteRetry: "Enviar convite de novo",
+      inviteSentTo: "Convite enviado para {{email}}.",
       inviteSent: "Convite enviado.",
       rentalAmountLabel: "Aluguel da cadeira (R$)",
       saveCompensation: "Salvar remuneração",
@@ -1029,6 +1034,7 @@ export const pt: DeepStringRecord<typeof en> = {
     codes: {
       PROFESSIONAL_INVITE_CONFLICT: "Este profissional já tem conta ou o e-mail já está em uso.",
       PROFESSIONAL_NOT_LINKED: "Esta conta não está vinculada a um profissional ativo.",
+      PROFESSIONAL_INVITE_FAILED: "Não foi possível enviar o convite. Verifique a conexão e tente de novo.",
       PROFESSIONAL_REQUEST_FAILED: "Não foi possível concluir a solicitação do profissional.",
       CUSTOMER_EMAIL_INVALID: "Informe um email válido ou deixe em branco.",
       CUSTOMER_NAME_REQUIRED: "Informe o nome do cliente.",

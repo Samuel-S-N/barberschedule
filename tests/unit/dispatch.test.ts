@@ -4,7 +4,7 @@ import type { ClaimedNotification, Deps } from "../../supabase/functions/dispatc
 const base: ClaimedNotification = {
   attempts: 1, event_type: "appointment.booked", expo_push_token: null, id: "n1", locale: "en", max_attempts: 3,
   payload: { service_name: "Cut", shop_id: "s1", starts_at: "2026-12-01T12:00:00Z" },
-  recipient_role: "customer", shop_name: null, shop_slug: "shop-a", web_origin: null, web_subscription: null,
+  recipient_email: null, recipient_role: "customer", shop_name: null, shop_slug: "shop-a", web_origin: null, web_subscription: null,
 };
 const sub = (name: string) => ({ endpoint: `https://push.example/${name}`, keys: { auth: "a", p256dh: "p" } });
 const web = (name: string, origin: string, patch: Partial<ClaimedNotification> = {}): ClaimedNotification => ({ ...base, web_origin: origin, web_subscription: sub(name), ...patch });
@@ -19,6 +19,8 @@ function deps(patch: Partial<Deps> = {}) {
     markSent: async (id) => { calls.push(`sent:${id}`); },
     sendExpo: async (token) => { calls.push(`expo:${token}`); return { ok: true }; },
     sendWeb: async (subscription) => { calls.push(`web:${subscription.endpoint}`); return { status: 201 }; },
+    sendEmail: async (email, key) => { calls.push(`email:${email.to}:${key}`); return { ok: true }; },
+    appointmentsUrl: (slug) => `https://${slug}.zencpro.app/appointments`,
     ...patch,
   };
 
@@ -221,5 +223,66 @@ describe("dispatcher: the shop name is the title", () => {
 
     expect(expo_).toEqual(["Appointment booked"]);
     expect(web_).toEqual(["Appointment booked"]);
+  });
+});
+
+describe("reminder e-mails", () => {
+  const emailRow = (patch: Partial<ClaimedNotification> = {}): ClaimedNotification => ({
+    ...base,
+    event_type: "appointment.reminder_email",
+    id: "e1",
+    payload: { professional_name: "Ana", service_name: "Corte", shop_name: "Studio", starts_at: "2026-11-27T17:30:00Z" },
+    recipient_email: "ana@example.com",
+    ...patch,
+  });
+
+  it("sends the e-mail with the outbox id as idempotency key and marks the row sent", async () => {
+    const { calls, dispatch } = deps();
+
+    expect(await dispatch([emailRow()])).toEqual({ failed: 0, sent: 1, skipped: 0 });
+    expect(calls).toEqual(["email:ana@example.com:e1", "sent:e1"]);
+  });
+
+  it("never sends an e-mail row to a device, even if the claim carried a token", async () => {
+    const { calls, dispatch } = deps();
+
+    await dispatch([emailRow({ expo_push_token: "ExponentPushToken[x]" })]);
+
+    expect(calls.some((call) => call.startsWith("expo:") || call.startsWith("web:"))).toBe(false);
+  });
+
+  it("builds the link from the shop slug", async () => {
+    const sent: string[] = [];
+    const { dispatch } = deps({ sendEmail: async (email) => { sent.push(email.html); return { ok: true }; } });
+
+    await dispatch([emailRow()]);
+
+    expect(sent[0]).toContain("https://shop-a.zencpro.app/appointments");
+  });
+
+  it("a failed send marks the row failed so it is retried, and sends no push", async () => {
+    const { calls, dispatch } = deps({ sendEmail: async () => ({ error: "Resend HTTP 429", ok: false }) });
+
+    expect(await dispatch([emailRow()])).toEqual({ failed: 1, sent: 0, skipped: 0 });
+    expect(calls).toEqual(["failed:e1:Resend HTTP 429"]);
+  });
+
+  it("a row without a recipient e-mail, or a send skipped for lack of a key, is marked sent as skipped", async () => {
+    const noAddress = deps();
+    const noKey = deps({ sendEmail: async () => ({ ok: true, skipped: true }) });
+
+    expect(await noAddress.dispatch([emailRow({ recipient_email: null })])).toEqual({ failed: 0, sent: 0, skipped: 1 });
+    expect(await noKey.dispatch([emailRow()])).toEqual({ failed: 0, sent: 0, skipped: 1 });
+    expect(noAddress.calls).toEqual(["sent:e1"]);
+  });
+
+  it("a push row of the same appointment is not affected by the e-mail row failing", async () => {
+    const { calls, dispatch } = deps({ sendEmail: async () => ({ error: "boom", ok: false }) });
+
+    await dispatch([emailRow(), expo("ExponentPushToken[a]", { event_type: "appointment.reminder", id: "p1" })]);
+
+    expect(calls).toContain("expo:ExponentPushToken[a]");
+    expect(calls).toContain("sent:p1");
+    expect(calls).toContain("failed:e1:boom");
   });
 });

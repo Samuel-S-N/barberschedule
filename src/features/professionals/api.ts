@@ -315,7 +315,7 @@ export async function inviteProfessional(
       ? new DomainError("PROFESSIONAL_INVITE_CONFLICT", "This professional already has an account or the email is in use.")
       : status === 403
         ? new DomainError("BOOKING_FORBIDDEN", "You cannot create this appointment.")
-        : new DomainError("PROFESSIONAL_REQUEST_FAILED", "Unable to complete the professional request.");
+        : new DomainError("PROFESSIONAL_INVITE_FAILED", "Unable to send the invite.");
   }
 
   return data as { userId: string };

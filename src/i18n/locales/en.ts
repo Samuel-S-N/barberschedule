@@ -456,6 +456,7 @@ export const en = {
     },
     title: "Let's open your business",
   },
+  emailReminders: { error: "Could not save. Please try again.", hint: "Get an e-mail 24 hours before your appointment, at any business.", label: "E-mail reminders" },
   shopGate: {
     comingSoonBody: "{{name}} is getting its agenda ready.",
     comingSoonTitle: "Coming soon",
@@ -652,6 +653,10 @@ export const en = {
       inviteEmailLabel: "Professional email",
       inviteError: "Unable to send the invite.",
       invite: "Invite to sign in",
+      createdInviteFailed: "Professional created, but the invite could not be sent.",
+      finish: "Finish",
+      inviteRetry: "Send invite again",
+      inviteSentTo: "Invite sent to {{email}}.",
       inviteSent: "Invite sent.",
       rentalAmountLabel: "Chair rent (R$)",
       saveCompensation: "Save compensation",
@@ -1030,6 +1035,7 @@ export const en = {
     codes: {
       PROFESSIONAL_INVITE_CONFLICT: "This professional already has an account or the email is in use.",
       PROFESSIONAL_NOT_LINKED: "This account is not linked to an active professional.",
+      PROFESSIONAL_INVITE_FAILED: "Unable to send the invite. Check your connection and try again.",
       PROFESSIONAL_REQUEST_FAILED: "Unable to complete the professional request.",
       CUSTOMER_EMAIL_INVALID: "Enter a valid email or leave it blank.",
       CUSTOMER_NAME_REQUIRED: "Enter the customer's name.",

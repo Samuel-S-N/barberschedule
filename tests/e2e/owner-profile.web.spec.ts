@@ -216,6 +216,8 @@ test.describe("serving as a professional copies the shop hours once and guides w
 
     await page.getByTestId("owner-as-professional").click();
     await expect.poll(() => state.active).toBe(false);
+    // The switch is disabled while the previous change settles: a click before that is ignored (flaky under load).
+    await expect(page.getByTestId("owner-as-professional").locator("input")).toBeEnabled();
     await page.getByTestId("owner-as-professional").click();
     await expect.poll(() => state.active).toBe(true);
     await page.waitForTimeout(500);

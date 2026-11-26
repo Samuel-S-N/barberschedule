@@ -163,7 +163,7 @@ test("an owner invites a professional and sets a chair-rental compensation", asy
   await page.getByTestId(`professional-edit-${professionalId}`).click();
   await page.getByTestId("professional-invite-email").fill("new.professional@example.com");
   await page.getByRole("button", { name: "Send invite" }).click();
-  await expect(page.getByText("Invite sent.")).toBeVisible();
+  await expect(page.getByText("Invite sent to new.professional@example.com.")).toBeVisible();
   expect(invitePayload).toEqual({ professionalId, email: "new.professional@example.com" });
 
   await page.getByTestId("professional-comp-edit").click();

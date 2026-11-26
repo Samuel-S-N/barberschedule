@@ -42,6 +42,10 @@ export async function updateMyProfile(
   });
 }
 
+export async function setEmailReminders(supabase: RpcClient, enabled: boolean) {
+  await callRpc(supabase, "set_email_reminders", { p_enabled: enabled });
+}
+
 export async function exportMyData(supabase: RpcClient) {
   return (await callRpc(supabase, "export_my_data")) as Record<string, unknown>;
 }
