@@ -60,6 +60,7 @@ export const ROUTE_PARENTS: Record<string, Parent> = {
   "/my-profile/language": "/my-profile/settings",
   "/my-profile/privacy": "/my-profile",
   "/my-profile/about": "/my-profile",
+  "/my-profile/shop-link": "/my-profile",
 
   // owner
   "/owner-notifications": "/agenda",
@@ -82,6 +83,7 @@ export const ROUTE_PARENTS: Record<string, Parent> = {
   "/my-profile/recurrence-manual": "/my-profile/recurrence",
   "/schedule": "/manage",
   "/shop": "/manage",
+  "/shop-link": "/manage",
   "/appearance": "/manage",
   "/owner-profile/account": "/settings",
   "/owner-profile/security": "/settings",

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { Clock, Coins, Repeat, Info, Lock, Scissors, Settings, ShieldCheck, User } from "lucide-react-native";
+import { Clock, Coins, Repeat, Info, Lock, QrCode as QrCodeIcon, Scissors, Settings, ShieldCheck, User } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { ScrollView, Text, View } from "react-native";
 
@@ -49,6 +49,7 @@ export default function ProfessionalProfileHub() {
             />
             <MenuBlock
               items={[
+                { icon: QrCodeIcon, key: "shop-link", label: t("professional.hub.menu.linkQr"), onPress: () => router.push("/my-profile/shop-link") },
                 { icon: Scissors, key: "services", label: t("professional.hub.menu.services"), onPress: () => router.push("/my-profile/services") },
                 { icon: Clock, key: "availability", label: t("professional.hub.menu.availability"), onPress: () => router.push("/my-profile/availability") },
                 { icon: Repeat, key: "recurrence", label: t("professional.hub.menu.recurrence"), onPress: () => router.push("/my-profile/recurrence") },
