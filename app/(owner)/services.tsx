@@ -13,6 +13,7 @@ import { Screen } from "../../src/components/ui/Screen";
 import type { Service } from "../../src/features/services/types";
 import { useOwnerServiceCatalog } from "../../src/features/services/use-owner-catalog";
 import { errorMessage } from "../../src/i18n/errors";
+import { useFromSetup } from "../../src/features/setup/from-setup";
 import { useBack } from "../../src/lib/navigation/use-back";
 import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
 
@@ -21,6 +22,7 @@ export default function OwnerServicesScreen() {
   const pull = useRefreshAll();
   const router = useRouter();
   const back = useBack();
+  const { carry } = useFromSetup();
   const { catalog, shop } = useOwnerServiceCatalog();
   const loading = shop.isLoading || catalog.isLoading;
   const loadError = shop.error ?? catalog.error;
@@ -46,7 +48,7 @@ export default function OwnerServicesScreen() {
                     {service.description ? <Text className="text-sm font-sans text-neutral-500">{service.description}</Text> : null}
                   </View>
                   <View className="flex-row">
-                    <Button label={t("common.edit")} onPress={() => router.push({ params: { id: service.id }, pathname: "/service-form" })} size="sm" testID={`service-edit-${service.id}`} variant="outline" />
+                    <Button label={t("common.edit")} onPress={() => router.push({ params: carry({ id: service.id }), pathname: "/service-form" })} size="sm" testID={`service-edit-${service.id}`} variant="outline" />
                   </View>
                 </View>
               </Card>
@@ -54,7 +56,7 @@ export default function OwnerServicesScreen() {
           </View>
         </View>
       </ScrollView>
-      <FabAdd label={t("owner.services.add")} onPress={() => router.push("/service-form")} />
+      <FabAdd label={t("owner.services.add")} onPress={() => router.push({ params: carry({}), pathname: "/service-form" })} />
     </Screen>
   );
 }

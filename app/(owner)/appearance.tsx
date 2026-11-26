@@ -17,6 +17,7 @@ import { normalizeThemeColor, updateShopTheme } from "../../src/features/shops/t
 import type { ShopThemeValues } from "../../src/features/shops/theme";
 import { errorMessage } from "../../src/i18n/errors";
 import { deriveTheme } from "../../src/lib/design/theme/derive";
+import { useFromSetup } from "../../src/features/setup/from-setup";
 import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
@@ -56,12 +57,14 @@ export default function OwnerAppearanceScreen() {
   };
   const theme = useMemo(() => deriveTheme(values), [values.accent, values.base, values.primary]);
 
+  const { returnToSetup } = useFromSetup();
   const save = useMutation({
     mutationFn: (next: ShopThemeValues) => updateShopTheme(supabase, data!.shopId, next),
     onError: (error) => setFeedback({ message: errorMessage(error, t, t("owner.appearance.saveError")), variant: "error" }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["shop-theme"] });
       setFeedback({ message: t("owner.appearance.saved"), variant: "success" });
+      returnToSetup();
     },
   });
   const error = (result: { ok: boolean }) => (result.ok ? undefined : t("owner.appearance.invalidColor"));

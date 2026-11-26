@@ -19,6 +19,7 @@ import { ProfessionalServicesEditor } from "../../src/features/professionals/own
 import { CompensationEditor } from "../../src/features/professionals/owner/CompensationEditor";
 import { useOwnerProfessionals } from "../../src/features/professionals/owner/use-owner-professionals";
 import { errorMessage } from "../../src/i18n/errors";
+import { useFromSetup } from "../../src/features/setup/from-setup";
 import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
@@ -41,12 +42,14 @@ export default function OwnerProfessionalProfileScreen() {
 
   useEffect(() => setName(professional?.name ?? ""), [professional?.name]);
 
+  const { returnToSetup } = useFromSetup();
   const rename = useMutation({
     mutationFn: () => updateProfessional(supabase, id, { name }),
     onError: (error) => notify(errorMessage(error, t, t("owner.professionals.saveError")), "error"),
     onSuccess: () => {
       notify(t("owner.professionals.saved"), "success");
       void refresh();
+      returnToSetup();
     },
   });
 

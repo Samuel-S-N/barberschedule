@@ -71,7 +71,7 @@ test("a step opens the existing screen and the checklist shows the progress when
   await page.goto("/setup");
 
   await page.getByTestId("setup-details-open").click();
-  await expect(page).toHaveURL(/\/shop$/);
+  await expect(page).toHaveURL(/\/shop\?from=setup/);
 
   // What the owner saved on that screen: details and hours are now done on the server.
   state.missing = state.missing.filter((step) => step !== "details" && step !== "hours");

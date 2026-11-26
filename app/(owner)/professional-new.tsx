@@ -12,12 +12,14 @@ import { Screen } from "../../src/components/ui/Screen";
 import { createProfessional, inviteProfessional } from "../../src/features/professionals/api";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
 import { errorMessage } from "../../src/i18n/errors";
+import { useFromSetup } from "../../src/features/setup/from-setup";
 import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
 export default function OwnerProfessionalNewScreen() {
   const { t } = useTranslation();
   const back = useBack();
+  const { fromSetup, returnToSetup } = useFromSetup();
   const field = useFieldChain(2);
   const queryClient = useQueryClient();
   const { supabase } = useSupabaseSession();
@@ -37,7 +39,8 @@ export default function OwnerProfessionalNewScreen() {
     onError: (caught) => setError(errorMessage(caught, t, t("owner.professionals.saveError"))),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["owner-professionals"] });
-      back();
+      if (fromSetup) returnToSetup();
+      else back();
     },
   });
 

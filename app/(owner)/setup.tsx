@@ -12,6 +12,7 @@ import { completeShopSetup } from "../../src/features/setup/api";
 import { SetupAgreementStep } from "../../src/features/setup/SetupAgreementStep";
 import { SetupStepCard } from "../../src/features/setup/SetupStepCard";
 import { SetupTeamStep } from "../../src/features/setup/SetupTeamStep";
+import { FROM_SETUP } from "../../src/features/setup/from-setup";
 import { canOpen, progress, stepDone } from "../../src/features/setup/steps";
 import { useSetupStatus } from "../../src/features/setup/use-setup-status";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
@@ -39,7 +40,7 @@ export default function OwnerSetupScreen() {
       await queryClient.invalidateQueries({ queryKey: ["shop-setup-status"] });
     },
   });
-  const go = (path: string) => () => router.push(path as never);
+  const go = (pathname: string) => () => router.push({ params: FROM_SETUP, pathname } as never);
 
   if (status.isError) {
     return (

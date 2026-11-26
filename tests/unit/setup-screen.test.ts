@@ -66,11 +66,11 @@ describe("owner setup checklist", () => {
 
     await fireEvent.press(view.getByTestId("setup-details-open"));
     await fireEvent.press(view.getByTestId("setup-hours-open"));
-    expect(mockPush.mock.calls.filter(([path]) => path === "/shop")).toHaveLength(2);
+    expect(mockPush.mock.calls.filter(([target]) => target?.pathname === "/shop" && target?.params?.from === "setup")).toHaveLength(2);
     await fireEvent.press(view.getByTestId("setup-services-open"));
-    expect(mockPush).toHaveBeenCalledWith("/services");
+    expect(mockPush).toHaveBeenCalledWith({ params: { from: "setup" }, pathname: "/services" });
     await fireEvent.press(view.getByTestId("setup-colours-open"));
-    expect(mockPush).toHaveBeenCalledWith("/appearance");
+    expect(mockPush).toHaveBeenCalledWith({ params: { from: "setup" }, pathname: "/appearance" });
     await fireEvent.press(view.getByTestId("setup-agreement-read"));
     expect(mockPush).toHaveBeenCalledWith("/contrato");
   });

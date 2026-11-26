@@ -36,10 +36,10 @@ describe("SetupTeamStep", () => {
     const view = await render(createElement(SetupTeamStep, { done: false, onChanged: jest.fn(), professionals }));
 
     await fireEvent.press(view.getByText("Add hours"));
-    expect(mockPush).toHaveBeenCalledWith({ params: { professional: "p1" }, pathname: "/schedule" });
+    expect(mockPush).toHaveBeenCalledWith({ params: { from: "setup", professional: "p1" }, pathname: "/schedule" });
 
     await fireEvent.press(view.getByTestId("setup-team-add"));
-    expect(mockPush).toHaveBeenCalledWith("/professional-new");
+    expect(mockPush).toHaveBeenCalledWith({ params: { from: "setup" }, pathname: "/professional-new" });
   });
 
   it("the serve-myself switch turns the owner's professional on and refreshes the checklist", async () => {

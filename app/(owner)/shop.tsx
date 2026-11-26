@@ -28,6 +28,7 @@ import type { DayDraft, ShopPeriod } from "../../src/features/shops/hours";
 import { errorMessage } from "../../src/i18n/errors";
 import { useLanguage } from "../../src/i18n/use-language";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
+import { useFromSetup } from "../../src/features/setup/from-setup";
 import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
@@ -36,6 +37,7 @@ const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
 const CONTACT_EXAMPLE = { phone: "examples.phone", whatsapp: "examples.phone" } as const;
 
 export default function OwnerShopScreen() {
+  const { returnToSetup } = useFromSetup();
   const { t } = useTranslation();
   const pull = useRefreshAll();
   const language = useLanguage();
@@ -122,6 +124,7 @@ export default function OwnerShopScreen() {
       await queryClient.invalidateQueries({ queryKey: ["current-shop"] });
       await queryClient.invalidateQueries({ queryKey: ["shop-hours"] });
       setFeedback({ message: t("owner.shop.saved"), variant: "success" });
+      returnToSetup();
     } catch (error) {
       setFeedback({ message: errorMessage(error, t, t("owner.shop.saveError")), variant: "error" });
     } finally {
