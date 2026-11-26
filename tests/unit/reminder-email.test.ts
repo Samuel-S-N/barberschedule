@@ -16,6 +16,17 @@ describe("buildReminderEmail", () => {
     expect(email.subject).toBe("Lembrete: amanhã às 14:30, Corte com Ana em Studio Aurora");
   });
 
+  it("shows the wordmark image with an absolute https URL and styled alt text", () => {
+    const images = email.html.match(/<img [^>]*>/g) ?? [];
+
+    expect(images).toHaveLength(1);
+    expect(images[0]).toContain('src="https://zencpro.app/email/zenc-logo.png"');
+    expect(images[0]).toContain('alt="ZENC."');
+    expect(images[0]).toContain('width="119"');
+    expect(images[0]).toContain('height="48"');
+    expect(images[0]).toMatch(/style="[^"]*display:block;[^"]*border:0;/);
+  });
+
   it("shows the address, the button and the opt-out footer", () => {
     expect(email.html).toContain("Rua das Flores 120, Centro, Campinas - SP");
     expect(email.html).toContain('href="https://studio-aurora.zencpro.app/appointments"');

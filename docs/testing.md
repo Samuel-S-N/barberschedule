@@ -114,3 +114,11 @@ Edge runtime is off in `config.toml`, so locally read the outbox instead:
 `select public.enqueue_notification_reminders();`. The builder and the Resend client are covered by Jest (`reminder-email`, `resend`,
 `dispatch`).
 
+**The e-mail logo.** Every e-mail shows the wordmark as an image, `https://zencpro.app/email/zenc-logo.png` (an absolute URL, as mail
+clients require), which is `public/email/zenc-logo.png`: the web export copies `public/` as it is, so each deploy serves it, and as a
+real file it is served before the shop routing (the e2e checks it on a shop address and on the bare domain). **Locally the image does
+not load in the mailbox** (`http://127.0.0.1:55424`) until the web app is deployed at that domain: that is expected, and the styled
+alt text "ZENC." shows instead. To see an e-mail with the image, open its HTML with the `src` pointed at the local file. To
+regenerate the PNG (Oswald Bold, ink `#171412`, the period drawn as a wine `#7A1F2B` circle, transparent, 2x of 119 x 48):
+`node scripts/render-email-logo.mjs`.
+

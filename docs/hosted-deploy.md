@@ -101,6 +101,8 @@ sets it to null. Nothing to configure at deploy time; tell each new owner the ch
 
 ## 10. E-mail (Resend and the auth templates)
 
+0. **Deploy the web app first**: the e-mails load their logo from `https://zencpro.app/email/zenc-logo.png`, a static file of the
+   web app (`public/email/`). Check it opens in the browser before sending real e-mails.
 1. Verify the sending domain in Resend (the DKIM and SPF records it shows) for `zencpro.app` and create an API key.
 2. **Auth e-mails use Resend SMTP.** In the hosted project's Dashboard > Authentication > SMTP settings (or `[auth.email.smtp]` in
    `config.toml` with `pass = "env(RESEND_API_KEY)"`): host `smtp.resend.com`, port `465`, user `resend`, password = the Resend API

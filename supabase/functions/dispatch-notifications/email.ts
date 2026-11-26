@@ -8,6 +8,10 @@ export type ReminderPayload = {
 };
 export type Email = { html: string; subject: string; text: string };
 
+// The wordmark image is a static file of the web app (public/email/zenc-logo.png, rendered by scripts/render-email-logo.mjs), so every
+// deploy serves it at the production domain. The alt text is styled like the wordmark for clients that block images.
+const LOGO = '<img src="https://zencpro.app/email/zenc-logo.png" width="119" height="48" alt="ZENC." style="display:block;border:0;font-family:Arial,Helvetica,sans-serif;font-size:28px;font-weight:700;letter-spacing:2px;line-height:48px;color:#171412;">';
+
 const escapeHtml = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 function localTime(startsAt: string | undefined, timeZone: string | undefined): string {
@@ -35,7 +39,7 @@ export function buildReminderEmail(payload: ReminderPayload, appointmentsUrl: st
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F6F1E9;">
 <tr><td align="center" style="padding:32px 16px;">
 <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="width:100%;max-width:480px;background-color:#FFFFFF;border-radius:20px;">
-<tr><td style="padding:32px 32px 8px 32px;font-family:Arial,Helvetica,sans-serif;font-size:28px;font-weight:700;letter-spacing:2px;color:#1F1A14;">ZENC.</td></tr>
+<tr><td style="padding:32px 32px 8px 32px;">${LOGO}</td></tr>
 <tr><td style="padding:8px 32px 0 32px;${cell}font-size:20px;font-weight:700;color:#1F1A14;">${escapeHtml(headline)}</td></tr>
 ${address ? `<tr><td style="padding:12px 32px 0 32px;${cell}font-size:16px;line-height:24px;">Endereço: ${escapeHtml(address)}</td></tr>\n` : ""}<tr><td style="padding:24px 32px 8px 32px;"><a href="${escapeHtml(appointmentsUrl)}" style="display:inline-block;background-color:#DB9A34;color:#1F1A14;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;text-decoration:none;padding:14px 28px;border-radius:14px;">Ver meus agendamentos</a></td></tr>
 <tr><td style="padding:16px 32px 32px 32px;${cell}font-size:13px;line-height:20px;color:#6B5F52;">${escapeHtml(optOut)}</td></tr>
