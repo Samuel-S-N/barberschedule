@@ -463,6 +463,7 @@ export const es: DeepStringRecord<typeof en> = {
     errorBody: "No pudimos cargar este negocio.",
     notFoundBody: "Revisa el enlace que abriste o pide uno nuevo al negocio.",
     notFoundTitle: "Negocio no encontrado",
+    staffLogin: "Soy del equipo, entrar",
     staffLoginHint: "Equipo: ingresa abajo.",
   },
   legal: { gate: { accept: "He leído y acepto", body: "Para continuar, lea y acepte las versiones actuales de los documentos a continuación.", error: "No se pudo registrar la aceptación. Inténtelo de nuevo.", title: "Actualizamos nuestros términos" }, link: { business: "Contrato del establecimiento", privacy: "Política de privacidad", terms: "Términos de uso" }, ptOnlyNote: "Este documento está en portugués, el idioma oficial del servicio. Escríbanos si necesita ayuda para entenderlo.", version: "Versión {{version}}" },

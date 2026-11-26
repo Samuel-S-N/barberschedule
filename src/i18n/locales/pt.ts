@@ -463,6 +463,7 @@ export const pt: DeepStringRecord<typeof en> = {
     errorBody: "Não foi possível carregar este estabelecimento.",
     notFoundBody: "Confira o link que você abriu ou peça um novo ao estabelecimento.",
     notFoundTitle: "Estabelecimento não encontrado",
+    staffLogin: "Sou da equipe, entrar",
     staffLoginHint: "Equipe: entre abaixo.",
   },
   legal: { gate: { accept: "Li e aceito", body: "Para continuar, leia e aceite as versões atuais dos documentos abaixo.", error: "Não foi possível registrar o aceite. Tente novamente.", title: "Atualizamos nossos termos" }, link: { business: "Contrato do Estabelecimento", privacy: "Política de Privacidade", terms: "Termos de Uso" }, ptOnlyNote: "Este documento está em português.", version: "Versão {{version}}" },

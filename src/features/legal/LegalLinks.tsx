@@ -27,14 +27,14 @@ export function LegalLinks({ kinds, testIDPrefix = "legal-link" }: { kinds: Lega
 
 // Small footer for pages shown before login (the closed-shop page): the two documents every visitor may read. That page renders
 // BEFORE the navigator exists, so on the web it navigates with a full page load instead of router.push.
-export function LegalFooter() {
+export function LegalFooter({ onOpen }: { onOpen?: (path: string) => void } = {}) {
   const { t } = useTranslation();
   const router = useRouter();
 
   return (
     <View className="flex-row flex-wrap justify-center gap-2" testID="legal-footer">
-      <Button label={t("legal.link.privacy")} onPress={open(router, "/privacidade")} size="sm" variant="ghost" />
-      <Button label={t("legal.link.terms")} onPress={open(router, "/termos")} size="sm" variant="ghost" />
+      <Button label={t("legal.link.privacy")} onPress={onOpen ? () => onOpen("/privacidade") : open(router, "/privacidade")} size="sm" variant="ghost" />
+      <Button label={t("legal.link.terms")} onPress={onOpen ? () => onOpen("/termos") : open(router, "/termos")} size="sm" variant="ghost" />
     </View>
   );
 }

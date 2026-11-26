@@ -464,6 +464,7 @@ export const en = {
     errorBody: "We could not load this business.",
     notFoundBody: "Check the link you opened or ask the business for a new one.",
     notFoundTitle: "Business not found",
+    staffLogin: "I'm staff, sign in",
     staffLoginHint: "Staff: sign in below.",
   },
   legal: { gate: { accept: "I have read and accept", body: "To continue, read and accept the current versions of the documents below.", error: "Could not record your acceptance. Please try again.", title: "We updated our terms" }, link: { business: "Business agreement", privacy: "Privacy policy", terms: "Terms of use" }, ptOnlyNote: "This document is in Portuguese, the official language of the service. Ask us if you need help understanding it.", version: "Version {{version}}" },
