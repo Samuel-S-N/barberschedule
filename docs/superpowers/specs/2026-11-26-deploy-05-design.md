@@ -204,8 +204,8 @@ Everything here is done by the user (the person typing secrets is never Claude).
    (workers.dev **and** preview URLs), policy "Allow" for the e-mails listed by the user; open the address and log in once to check.
 
 **B. Before plan 2 (production)**
-10. Cloudflare DNS for `zencpro.app`: proxied `A` record `@` (100::, "dummy") and proxied wildcard `*` (the plan gives the exact values);
-    no other record may shadow them.
+10. Cloudflare DNS for `zencpro.app`: proxied `A` records `@` and `*` with the placeholder address `192.0.2.1` (the Worker Route answers before it is
+    contacted; plan 2 Task 4 has the exact steps); no other record may shadow them.
 11. Cloudflare Email Routing for `zencpro.com.br`: `contato@` and `privacidade@` forward to `zencpro.admin@gmail.com`; confirm the
     verification e-mail. Gmail "send as" is not needed (the app only receives at those addresses).
 12. First production deploy: approve it in GitHub (Actions > the run > Review deployments).
