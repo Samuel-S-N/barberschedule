@@ -42,7 +42,8 @@ test("invites the owner with the shop link, creates the shop and prints the link
   assert.equal(calls[0].method, "GET");
   assert.match(calls[0].url, /\/rest\/v1\/shops\?slug=eq\.barbeariadojoao/);
   assert.match(calls[1].url, /\/auth\/v1\/invite\?redirect_to=https%3A%2F%2Fbarbeariadojoao\.zencpro\.app%2Freset-password$/);
-  assert.deepEqual(calls[1].body, { email: "joao@email.com" });
+  // business_name feeds the invite template ("Você foi convidado para <negócio> na Zenc").
+  assert.deepEqual(calls[1].body, { data: { business_name: "Barbearia do João" }, email: "joao@email.com" });
   assert.deepEqual(calls[2].body, { p_name: "Barbearia do João", p_owner_user_id: "user-1", p_slug: "barbeariadojoao", p_timezone: "America/Sao_Paulo" });
   assert.ok(out.lines.some((line) => line.includes("https://barbeariadojoao.zencpro.app")));
   assert.ok(out.lines.some((line) => /QR/i.test(line)));

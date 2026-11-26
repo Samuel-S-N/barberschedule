@@ -70,14 +70,15 @@ Deno.serve(async (request) => {
   if (professional.user_id || !professional.active) return json(409, { code: "PROFESSIONAL_INVITE_CONFLICT" });
 
   // The invite link lands on the professional's own shop (its subdomain), where they create their password.
-  const shopResponse = await fetch(`${url}/rest/v1/shops?id=eq.${professional.shop_id}&select=slug`, { headers: service });
-  const shops = shopResponse.ok ? ((await shopResponse.json().catch(() => [])) as Array<{ slug: string }>) : [];
+  const shopResponse = await fetch(`${url}/rest/v1/shops?id=eq.${professional.shop_id}&select=slug,name`, { headers: service });
+  const shops = shopResponse.ok ? ((await shopResponse.json().catch(() => [])) as Array<{ name: string; slug: string }>) : [];
   const [shop] = Array.isArray(shops) ? shops : [];
   if (!shop) return json(500, { code: "INVITE_FAILED" });
   const redirectTo = buildShopUrl(Deno.env.get("SHOP_URL_TEMPLATE") ?? DEFAULT_SHOP_URL_TEMPLATE, shop.slug, "/reset-password");
 
   const invited = await fetch(`${url}/auth/v1/invite?redirect_to=${encodeURIComponent(redirectTo)}`, {
-    body: JSON.stringify({ email }),
+    // business_name feeds supabase/templates/invite.html ("Você foi convidado para <negócio> na Zenc").
+    body: JSON.stringify({ data: { business_name: shop.name }, email }),
     headers: service,
     method: "POST",
   });
