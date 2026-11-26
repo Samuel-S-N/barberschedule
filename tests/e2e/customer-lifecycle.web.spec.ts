@@ -177,11 +177,11 @@ test("a customer can edit their name and phone", async ({ page }) => {
   await page.getByLabel("Full name").fill("Browser Renamed");
   await page.getByLabel("What should we call you? (optional)").fill("Bia");
   await page.getByLabel("Phone (optional)").fill("11900000000");
-  await expect(page.getByLabel("Phone (optional)")).toHaveValue("(11)90000-0000");
+  await expect(page.getByLabel("Phone (optional)")).toHaveValue("(11) 90000-0000");
   await page.getByTestId("profile-save").click();
 
   await expect(page.getByText("Profile saved.")).toBeVisible();
-  expect(updatePayload).toEqual({ p_full_name: "Browser Renamed", p_nickname: "Bia", p_phone: "(11)90000-0000" });
+  expect(updatePayload).toEqual({ p_full_name: "Browser Renamed", p_nickname: "Bia", p_phone: "11900000000" });
 });
 
 test("the home tab greets the customer by the nickname they chose", async ({ page }) => {
@@ -207,7 +207,7 @@ test("a stored phone is shown with the mask", async ({ page }) => {
   });
 
   await page.goto("/me/account");
-  await expect(page.getByLabel("Phone (optional)")).toHaveValue("(11)90000-0000");
+  await expect(page.getByLabel("Phone (optional)")).toHaveValue("(11) 90000-0000");
 });
 
 test("a customer can download their data as a JSON file", async ({ page }) => {
