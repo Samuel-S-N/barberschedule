@@ -4,12 +4,15 @@ import type { ClaimedNotification, Message, WebSubscription } from "./dispatch.t
 import { createResendSender } from "./resend.ts";
 import type { OutgoingEmail } from "./resend.ts";
 import { createWebSender } from "./web-push-lib.ts";
+import { createReporter, withMonitoring } from "../_shared/monitoring.ts";
 import { buildShopUrl, DEFAULT_SHOP_URL_TEMPLATE } from "../_shared/shop-url.ts";
 
 declare const Deno: {
   env: { get(name: string): string | undefined };
   serve(handler: (request: Request) => Response | Promise<Response>): void;
 };
+
+const report = createReporter({ dsn: Deno.env.get("SENTRY_DSN_FUNCTIONS"), environment: Deno.env.get("SENTRY_ENVIRONMENT") ?? "dev" });
 
 const expoPushUrl = "https://exp.host/--/api/v2/push/send";
 
@@ -93,4 +96,4 @@ async function dispatch(request: Request) {
   return Response.json(await dispatchRows(claimed ?? []));
 }
 
-Deno.serve(dispatch);
+Deno.serve(withMonitoring(dispatch, report));
