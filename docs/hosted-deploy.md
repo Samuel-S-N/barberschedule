@@ -87,10 +87,9 @@ Migrations are forward-only (append-only once applied, decision `018`). If somet
 
 ## 8. Legal data (before the public launch)
 
-Fill `src/features/legal/company.ts` (razão social, CNPJ, endereço, foro) and have a lawyer review `docs/legal/revisao-juridica.md`.
-While a field is empty the documents show it as a highlighted placeholder, so after deploying open `/privacidade`, `/termos` and
-`/contrato` and confirm no `[RAZÃO SOCIAL]`, `[CNPJ]`, `[ENDEREÇO]` or `[FORO]` is left. Changing a document's text means bumping its
-`version` in `src/features/legal/documents/`: every user then sees the "Atualizamos nossos termos" screen once.
+Publish the official legal version reviewed by the lawyer (`docs/legal/revisao-juridica.md`): the documents in
+`src/features/legal/documents/` only name "Zenc" until then. Changing a document's text means bumping its `version` there: every
+user then sees the "Atualizamos nossos termos" screen once.
 
 ## 9. New shops start closed (setup checklist)
 
@@ -104,16 +103,16 @@ sets it to null. Nothing to configure at deploy time; tell each new owner the ch
 
 0. **Deploy the web app first**: the e-mails load their logo from `https://zencpro.app/email/zenc-logo.png`, a static file of the
    web app (`public/email/`). Check it opens in the browser before sending real e-mails.
-1. Verify the sending domain in Resend (the DKIM and SPF records it shows) for `zencpro.app` and create an API key.
+1. Verify the sending domain **`zencpro.com.br`** in Resend (the DKIM and SPF records it shows) and create an API key. Every e-mail is sent from the same address, `Zenc <nao-responda@zencpro.com.br>`; the templates say it is automatic and point account questions to `contato@zencpro.com.br`, so that mailbox must exist.
 2. **Auth e-mails use Resend SMTP.** In the hosted project's Dashboard > Authentication > SMTP settings (or `[auth.email.smtp]` in
    `config.toml` with `pass = "env(RESEND_API_KEY)"`): host `smtp.resend.com`, port `465`, user `resend`, password = the Resend API
-   key, sender `Zenc <nao-responda@zencpro.app>`. Without custom SMTP the hosted project's built-in sender is rate-limited and not
+   key, sender `Zenc <nao-responda@zencpro.com.br>` (the same address). Without custom SMTP the hosted project's built-in sender is rate-limited and not
    for production.
 3. **Push the templates:** `npx supabase link --project-ref <ref>`, then `npx supabase config push` (sends the
    `[auth.email.template.*]` subjects and `supabase/templates/*.html`: confirmation, recovery, e-mail change, invite). Check
    Dashboard > Authentication > Email Templates shows the Portuguese templates. The invite subject and body use
    `{{ .Data.business_name }}`, which `invite-professional` and `scripts/create-shop.mjs` send in the invite data.
-4. **Reminder e-mails:** `npx supabase secrets set RESEND_API_KEY=<key> EMAIL_FROM="Zenc <lembretes@zencpro.app>"`, then redeploy
+4. **Reminder e-mails:** `npx supabase secrets set RESEND_API_KEY=<key> EMAIL_FROM="Zenc <nao-responda@zencpro.com.br>"`, then redeploy
    `dispatch-notifications` (`npx supabase functions deploy dispatch-notifications`). Without `RESEND_API_KEY` the function logs
    "skipping e-mail" and marks the rows done, so no reminder e-mail is sent.
 5. Apply migration `0082` with the others (`db push`, section 2).

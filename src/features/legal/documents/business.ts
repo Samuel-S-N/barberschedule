@@ -9,7 +9,7 @@ export const businessDocument: LegalDocument = {
       id: "objeto",
       title: "1. Objeto",
       paragraphs: [
-        "{{razaoSocial}}, CNPJ {{cnpj}}, com sede em {{endereco}} (\"Zenc\"), fornece ao estabelecimento que aceita este Contrato (\"Estabelecimento\") a plataforma de agendamento Zenc: página própria do estabelecimento, agenda, cadastro de profissionais e serviços, lembretes e relatórios.",
+        "A Zenc fornece ao estabelecimento que aceita este Contrato (\"Estabelecimento\") a plataforma de agendamento Zenc: página própria do estabelecimento, agenda, cadastro de profissionais e serviços, lembretes e relatórios.",
       ],
     },
     {
@@ -88,7 +88,7 @@ export const businessDocument: LegalDocument = {
     {
       id: "lei-foro",
       title: "12. Lei aplicável e foro",
-      paragraphs: ["Este Contrato segue a lei brasileira. Fica eleito o foro de {{foro}}."],
+      paragraphs: ["Este Contrato segue a lei brasileira. Fica eleito o foro do domicílio do Estabelecimento."],
     },
   ],
 };

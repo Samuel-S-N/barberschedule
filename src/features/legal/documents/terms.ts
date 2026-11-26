@@ -9,7 +9,7 @@ export const termsDocument: LegalDocument = {
       id: "definicoes",
       title: "1. Definições",
       paragraphs: [
-        "Zenc: a plataforma de agendamento operada por {{razaoSocial}}, CNPJ {{cnpj}}. Estabelecimento: o negócio de beleza que usa a Zenc para receber agendamentos. Profissional: quem atende em um estabelecimento. Cliente: quem agenda um serviço. Conta: o seu cadastro único na Zenc.",
+        "Zenc: a plataforma de agendamento. Estabelecimento: o negócio de beleza que usa a Zenc para receber agendamentos. Profissional: quem atende em um estabelecimento. Cliente: quem agenda um serviço. Conta: o seu cadastro único na Zenc.",
       ],
     },
     {
@@ -73,7 +73,7 @@ export const termsDocument: LegalDocument = {
       id: "lei-foro",
       title: "10. Lei aplicável e foro",
       paragraphs: [
-        "Estes Termos seguem a lei brasileira. Fica eleito o foro de {{foro}} para resolver conflitos, ressalvado o direito do consumidor de ajuizar ação no foro do seu domicílio.",
+        "Estes Termos seguem a lei brasileira. Conflitos serão resolvidos no foro do domicílio do usuário.",
       ],
     },
   ],

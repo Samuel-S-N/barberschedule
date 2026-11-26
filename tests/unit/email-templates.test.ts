@@ -32,6 +32,13 @@ describe.each(templates)("%s template", (name) => {
   });
 });
 
+describe.each(templates)("%s template automatic notice", (name) => {
+  it("says the e-mail is automatic and where to ask about the account (mailto contato@zencpro.com.br)", () => {
+    expect(html(name)).toContain('Este e-mail é automático. Dúvidas sobre sua conta: <a href="mailto:contato@zencpro.com.br"');
+    expect(html(name)).toContain(">contato@zencpro.com.br</a>");
+  });
+});
+
 describe.each(templates)("%s template logo", (name) => {
   it("shows the wordmark image from the web app's static files, with readable alt text for clients that block images", () => {
     const images = html(name).match(/<img [^>]*>/g) ?? [];

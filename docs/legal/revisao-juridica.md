@@ -14,8 +14,9 @@ voltam a aceitar.
    Registros de atendimento: "prazo definido pelo estabelecimento". Confirmar os três.
 4. **Prazo de 48 horas.** Aviso de incidente ao estabelecimento em até 48 horas após a Zenc confirmar o incidente, para que ele
    cumpra os 3 dias úteis da Resolução CD/ANPD nº 15/2024. Confirmar o prazo e a redação.
-5. **Foro e dados da empresa.** Preencher `src/features/legal/company.ts` (razão social, CNPJ, endereço, foro). Enquanto
-   estiverem vazios, os documentos mostram os campos destacados.
+5. **Dados da empresa e foro.** Os textos citam só o nome "Zenc". O advogado informa razão social, CNPJ e endereço (que entram
+   na versão oficial dos três documentos) e confirma o foro: hoje o foro do domicílio do usuário nos Termos e o do domicílio do
+   Estabelecimento no Contrato; a alternativa é eleger uma comarca.
 6. **Resoluções da ANPD.** Verificar os números e o conteúdo atual das Resoluções CD/ANPD nº 15/2024 (comunicação de incidentes)
    e nº 2/2022 (agentes de pequeno porte).
 7. **Papéis controlador / operador.** Confirmar a divisão: Zenc controladora da conta, dos logs e dos erros; estabelecimento
