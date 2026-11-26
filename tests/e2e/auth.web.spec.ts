@@ -115,7 +115,7 @@ test("a visitor can create an account and is asked to confirm their email", asyn
   await expect(page.getByText("Check your email")).toBeVisible();
   expect(signUpRedirect).toBe(new URL(page.url()).origin);
   expect(signUpPayload).toMatchObject({
-    data: { accepted_privacy_version: LEGAL_VERSIONS.privacy, accepted_terms_version: LEGAL_VERSIONS.terms, full_name: "Ana Silva", nickname: "Aninha", phone: "(11)90000-0000" },
+    data: { accepted_privacy_version: LEGAL_VERSIONS.privacy, accepted_terms_version: LEGAL_VERSIONS.terms, full_name: "Ana Silva", nickname: "Aninha", phone: "11900000000" },
     email: "ana@example.test",
     password: "correct-password",
   });

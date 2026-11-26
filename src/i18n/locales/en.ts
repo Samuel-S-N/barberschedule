@@ -18,7 +18,7 @@ export const en = {
     notes: "Anything we should know?",
     payoutNote: "First half",
     percent: "40",
-    phone: "(11)91234-5678",
+    phone: "(11) 91234-5678",
     search: "Ana Souza",
     planTitle: "Monthly cut",
     serviceName: "Haircut",

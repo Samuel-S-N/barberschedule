@@ -10,7 +10,7 @@ import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Input } from "../../src/components/ui/Input";
-import { CepInput, TimeInput } from "../../src/components/ui/MaskedInputs";
+import { CepInput, PhoneInput, TimeInput } from "../../src/components/ui/MaskedInputs";
 import { Screen } from "../../src/components/ui/Screen";
 import { Toggle } from "../../src/components/ui/Toggle";
 import { listOwnerProfessionals } from "../../src/features/professionals/api";
@@ -28,6 +28,7 @@ import type { DayDraft, ShopPeriod } from "../../src/features/shops/hours";
 import { errorMessage } from "../../src/i18n/errors";
 import { useLanguage } from "../../src/i18n/use-language";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
+import { phoneDigits } from "../../src/features/account/phone";
 import { useFromSetup } from "../../src/features/setup/from-setup";
 import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
@@ -95,7 +96,7 @@ export default function OwnerShopScreen() {
   });
 
   useEffect(() => {
-    if (shop) setContact({ address: addressFromColumns(shop), phone: shop.phone ?? "", whatsapp: shop.whatsapp ?? "" });
+    if (shop) setContact({ address: addressFromColumns(shop), phone: phoneDigits(shop.phone ?? ""), whatsapp: phoneDigits(shop.whatsapp ?? "") });
   }, [shop]);
   useEffect(() => {
     if (!hours.data) return;
@@ -133,7 +134,7 @@ export default function OwnerShopScreen() {
   };
 
   const field = (key: "phone" | "whatsapp", label: string) => (
-    <Input label={label} onChangeText={(value) => setContact((current) => ({ ...current, [key]: value }))} placeholder={t(CONTACT_EXAMPLE[key])} testID={`shop-${key}`} value={contact[key]} />
+    <PhoneInput label={label} onChangeValue={(value) => setContact((current) => ({ ...current, [key]: value }))} placeholder={t(CONTACT_EXAMPLE[key])} testID={`shop-${key}`} value={contact[key]} />
   );
   // Editing the city by hand invalidates the IBGE code the lookup filled in.
   const patchAddress = (patch: Partial<ShopAddress>) => setContact((current) => ({ ...current, address: { ...current.address, ...patch, ...("city" in patch ? { cityIbge: "" } : {}) } }));

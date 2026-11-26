@@ -17,7 +17,7 @@ export const pt: DeepStringRecord<typeof en> = {
     notes: "Algo que devemos saber?",
     payoutNote: "Primeira quinzena",
     percent: "40",
-    phone: "(11)91234-5678",
+    phone: "(11) 91234-5678",
     search: "Ana Souza",
     planTitle: "Corte mensal",
     serviceName: "Corte",

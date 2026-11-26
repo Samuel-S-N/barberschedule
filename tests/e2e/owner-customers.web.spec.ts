@@ -91,10 +91,10 @@ test("the + button opens the registration screen; it needs a name and a contact"
   await expect(page.getByTestId("customer-save")).toBeDisabled();
   await page.getByTestId("customer-email").fill("dani@x.com");
   await page.getByTestId("customer-phone").pressSequentially("11912345678");
-  await expect(page.getByTestId("customer-phone")).toHaveValue("(11)91234-5678");
+  await expect(page.getByTestId("customer-phone")).toHaveValue("(11) 91234-5678");
   await page.getByTestId("customer-save").click();
 
-  await expect.poll(() => calls.create).toMatchObject({ email: "dani@x.com", full_name: "Dani Costa", shop_id: shop });
+  await expect.poll(() => calls.create).toMatchObject({ email: "dani@x.com", full_name: "Dani Costa", phone: "11912345678", shop_id: shop });
   await expect(page).toHaveURL(/\/customers/);
 });
 
