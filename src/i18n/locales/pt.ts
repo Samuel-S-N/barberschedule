@@ -17,7 +17,7 @@ export const pt: DeepStringRecord<typeof en> = {
     notes: "Algo que devemos saber?",
     payoutNote: "Primeira quinzena",
     percent: "40",
-    phone: "(11)91234-5678",
+    phone: "(11) 91234-5678",
     search: "Ana Souza",
     planTitle: "Corte mensal",
     serviceName: "Corte",
@@ -407,7 +407,7 @@ export const pt: DeepStringRecord<typeof en> = {
     stepMenuChrome: "Toque no menu (⋯) do navegador",
     stepShareOrMenu: "Toque no ícone de Compartilhar. Se ele não aparecer, toque primeiro no menu do navegador.",
   },
-  shopLinkScreen: { copied: "Link copiado", copy: "Copiar link", download: "Baixar QR (PNG)", downloadFailed: "Não foi possível baixar o QR code.", failed: "Não foi possível compartilhar. Copie o link manualmente.", introOwner: "Mostre este QR code ou envie o link para seus clientes agendarem.", introProfessional: "Este é o link do estabelecimento. Compartilhe com seus clientes: eles agendam com qualquer profissional.", qrLabel: "QR code do estabelecimento", share: "Compartilhar", title: "Link e QR code", titleProfessional: "Link do estabelecimento" },
+  shopLinkScreen: { copied: "Link copiado", copy: "Copiar link", download: "Baixar QR (PNG)", downloadFailed: "Não foi possível baixar o QR code.", failed: "Não foi possível compartilhar. Copie o link manualmente.", introOwner: "Mostre este QR code ou envie o link para seus clientes agendarem.", introProfessional: "Este é o link do estabelecimento. Compartilhe com seus clientes: eles agendam com qualquer profissional.", qrLabel: "QR code do estabelecimento", share: "Compartilhar", toAgenda: "Ir para a agenda", title: "Link e QR code", titleProfessional: "Link do estabelecimento" },
   setup: {
     agreement: {
       accept: "Li e aceito",
@@ -464,6 +464,7 @@ export const pt: DeepStringRecord<typeof en> = {
     errorBody: "Não foi possível carregar este estabelecimento.",
     notFoundBody: "Confira o link que você abriu ou peça um novo ao estabelecimento.",
     notFoundTitle: "Estabelecimento não encontrado",
+    staffLogin: "Sou da equipe, entrar",
     staffLoginHint: "Equipe: entre abaixo.",
   },
   legal: { gate: { accept: "Li e aceito", body: "Para continuar, leia e aceite as versões atuais dos documentos abaixo.", error: "Não foi possível registrar o aceite. Tente novamente.", title: "Atualizamos nossos termos" }, link: { business: "Contrato do Estabelecimento", privacy: "Política de Privacidade", terms: "Termos de Uso" }, ptOnlyNote: "Este documento está em português.", version: "Versão {{version}}" },

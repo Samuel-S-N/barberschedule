@@ -1,11 +1,10 @@
-import { usePathname } from "expo-router";
-import { useEffect } from "react";
+import { usePathname, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import type { PropsWithChildren, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Platform, Text, View } from "react-native";
 
 import { signOut } from "../auth/api";
-import { LEGAL_PATHS } from "../legal";
 import { LegalFooter } from "../legal/LegalLinks";
 import { Button } from "../../components/ui/Button";
 import { Screen } from "../../components/ui/Screen";
@@ -13,7 +12,7 @@ import { useSupabaseSession } from "../../providers/AppProviders";
 import { useCurrentShop } from "./CurrentShopProvider";
 import { shopBaseDomain } from "./host";
 import { useMyShop } from "./my-shop";
-import { resolveShopRoute } from "./shop-route";
+import { closedShopAction, closedShopAllows, resolveShopRoute } from "./shop-route";
 import { shopUrl } from "./resolve-slug";
 
 function Message({ action, body, footer, title }: { action?: { label: string; onPress: () => void }; body: string; footer?: ReactNode; title: string }) {
@@ -36,6 +35,12 @@ export function ShopGate({ children }: PropsWithChildren) {
   const { profile, session, supabase } = useSupabaseSession();
   const { retry, shop, slug, status } = useCurrentShop();
   const pathname = usePathname();
+  const router = useRouter();
+  // The closed page renders BEFORE the navigator exists, so it cannot navigate itself: a tap records where to go, the navigator is
+  // rendered for that one visit, and then this effect moves there (the page returns whenever the visitor is back on a blocked path).
+  const [entry, setEntry] = useState<string | null>(null);
+  // The staff chose to sign in: from then on the login and password recovery are reachable (see closedShopAllows).
+  const [staffEntry, setStaffEntry] = useState(false);
   const mine = useMyShop();
   const staff = profile?.role === "owner" || profile?.role === "professional";
   const route = resolveShopRoute({
@@ -48,6 +53,12 @@ export function ShopGate({ children }: PropsWithChildren) {
     signedIn: session !== null,
     status,
   });
+
+  useEffect(() => {
+    if (entry === null) return;
+    if (pathname === entry) setEntry(null);
+    else router.replace(entry as never);
+  }, [entry, pathname, router]);
 
   useEffect(() => {
     if (route.kind === "redirect") window.location.replace(shopUrl(route.slug, shopBaseDomain(), window.location));
@@ -63,10 +74,19 @@ export function ShopGate({ children }: PropsWithChildren) {
   }
 
   if (route.kind === "coming-soon") {
-    // The legal documents stay readable: they are linked from this page and from signup, and have to open without a login.
-    if (LEGAL_PATHS.includes(pathname)) return <>{children}</>;
+    // The legal documents stay readable and the staff can reach the login (and password recovery) to finish the setup.
+    if (closedShopAllows(pathname, staffEntry) || entry !== null) return <>{children}</>;
 
-    return <Message body={t("shopGate.comingSoonBody", { name: shop?.name ?? "" })} footer={<LegalFooter />} title={t("shopGate.comingSoonTitle")} />;
+    const action = closedShopAction(session !== null);
+
+    return (
+      <Message
+        action={action === "sign-out" ? { label: t("common.signOut"), onPress: () => void signOut(supabase) } : { label: t("shopGate.staffLogin"), onPress: () => { setStaffEntry(true); setEntry("/login"); } }}
+        body={t("shopGate.comingSoonBody", { name: shop?.name ?? "" })}
+        footer={<LegalFooter onOpen={setEntry} />}
+        title={t("shopGate.comingSoonTitle")}
+      />
+    );
   }
 
   return <>{children}</>;

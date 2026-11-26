@@ -71,7 +71,7 @@ test("a step opens the existing screen and the checklist shows the progress when
   await page.goto("/setup");
 
   await page.getByTestId("setup-details-open").click();
-  await expect(page).toHaveURL(/\/shop$/);
+  await expect(page).toHaveURL(/\/shop\?from=setup/);
 
   // What the owner saved on that screen: details and hours are now done on the server.
   state.missing = state.missing.filter((step) => step !== "details" && step !== "hours");
@@ -97,7 +97,7 @@ test("accepting the business agreement records it and marks the step done", asyn
   expect(state.accepted).toEqual([{ p_documents: [{ kind: "business", version: LEGAL_VERSIONS.business }] }]);
 });
 
-test("with every required step done the owner opens the agenda, lands on the link screen and never sees the checklist again", async ({ page }) => {
+test("with every required step done the owner opens the agenda, sees the link screen first, goes to the agenda and never sees the checklist again", async ({ page }) => {
   const state = fresh();
 
   state.missing = [];
@@ -108,10 +108,17 @@ test("with every required step done the owner opens the agenda, lands on the lin
   await expect(page.getByTestId("setup-open")).toBeEnabled();
   await page.getByTestId("setup-open").click();
 
+  // The link and QR come first (the routing gate must not yank the owner to the panel when the shop flips to open)...
   await expect(page).toHaveURL(/\/shop-link/);
   await expect(page.getByTestId("shop-link-qr")).toBeVisible();
-  await expect(page.getByTestId("tab-manage")).toBeVisible();
+  await page.waitForTimeout(500);
+  await expect(page).toHaveURL(/\/shop-link/);
   expect(state.completed).toBe(1);
+
+  // ...and "Ir para a agenda" opens the panel.
+  await page.getByTestId("shop-link-to-agenda").click();
+  await expect(page).toHaveURL(/\/agenda/);
+  await expect(page.getByTestId("tab-manage")).toBeVisible();
 
   await page.goto("/setup");
   await expect(page).toHaveURL(/\/agenda/);

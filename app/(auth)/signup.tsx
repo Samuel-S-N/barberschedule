@@ -10,12 +10,12 @@ import { EmptyState } from "../../src/components/domain/EmptyState";
 import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Input, useFieldChain } from "../../src/components/ui/Input";
+import { PhoneInput } from "../../src/components/ui/MaskedInputs";
 import { Screen } from "../../src/components/ui/Screen";
 import { signUpCustomer } from "../../src/features/auth/api";
 import { parseSignupInput } from "../../src/features/auth/validation";
 import { useCurrentShop } from "../../src/features/shops/CurrentShopProvider";
 import { errorMessage } from "../../src/i18n/errors";
-import { formatPhone } from "../../src/features/account/phone";
 import { useColors } from "../../src/lib/design/theme/ThemeProvider";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
@@ -81,7 +81,7 @@ export default function SignupScreen() {
             <Input {...field(0)} autoCapitalize="words" autoComplete="name" error={fieldError("fullName")} label={t("common.fullName")} onChangeText={set("fullName")} placeholder={t("examples.fullName")} testID="signup-name" value={form.fullName} />
             <Input {...field(1)} autoCapitalize="words" error={fieldError("nickname")} label={t("common.nicknameOptional")} onChangeText={set("nickname")} placeholder={t("examples.nickname")} testID="signup-nickname" value={form.nickname} />
             <Input {...field(2)} autoCapitalize="none" autoComplete="email" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" error={fieldError("email")} label={t("common.email")} onChangeText={set("email")} placeholder={t("examples.email")} testID="signup-email" value={form.email} />
-            <Input {...field(3)} autoComplete="tel" keyboardType="phone-pad" error={fieldError("phone")} label={t("common.phoneOptional")} onChangeText={(value) => set("phone")(formatPhone(value))} placeholder={t("examples.phone")} testID="signup-phone" value={form.phone} />
+            <PhoneInput {...field(3)} error={fieldError("phone")} label={t("common.phoneOptional")} onChangeValue={set("phone")} testID="signup-phone" value={form.phone} />
             <Input {...field(4)} autoComplete="new-password" error={fieldError("password")} label={t("common.password")} onChangeText={set("password")} secureTextEntry testID="signup-password" textContentType="newPassword" value={form.password} />
             <Input {...field(5)} autoComplete="new-password" error={fieldError("confirmPassword")} label={t("auth.signup.confirmPassword")} onChangeText={set("confirmPassword")} secureTextEntry onSubmitEditing={() => !isSubmitting && void submit()} returnKeyType="go" testID="signup-confirm-password" textContentType="newPassword" value={form.confirmPassword} />
             <Pressable

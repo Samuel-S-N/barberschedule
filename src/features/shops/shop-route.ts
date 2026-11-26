@@ -1,4 +1,5 @@
 import type { AppRole } from "../auth/types";
+import { LEGAL_PATHS } from "../legal";
 import type { CurrentShopStatus } from "./CurrentShopProvider";
 
 export type ShopRoute =
@@ -39,3 +40,15 @@ export function resolveShopRoute({ canRedirect, currentSlug, mySlug, role, shopR
 
   return { kind: "app" };
 }
+
+// What a closed business's visitor can still open: the legal documents and the password-reset landing (an invited owner opens it from the
+// e-mail before anything else) always; the staff's login and password recovery only after they chose "I'm staff, sign in" on the closed
+// page (`staffEntry`), so an ordinary visitor of a closed business never lands on a login form. Signup stays blocked.
+const STAFF_PATHS = ["/login", "/forgot-password"];
+
+export const closedShopAllows = (pathname: string, staffEntry = false) =>
+  LEGAL_PATHS.includes(pathname) || pathname === "/reset-password" || (staffEntry && STAFF_PATHS.includes(pathname));
+
+// The one action on the closed page: staff of this business (the owner finishing the setup) sign in; anyone already signed in who is not
+// staff of it can only sign out.
+export const closedShopAction = (signedIn: boolean): "sign-out" | "staff-login" => (signedIn ? "sign-out" : "staff-login");

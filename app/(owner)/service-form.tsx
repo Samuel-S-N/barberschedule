@@ -19,6 +19,7 @@ import { useOwnerServiceCatalog } from "../../src/features/services/use-owner-ca
 import { isIntegerInput, parseIntegerInput } from "../../src/features/services/validation";
 import { errorMessage } from "../../src/i18n/errors";
 import { centsToReaisInput, parseReaisToCents } from "../../src/lib/money";
+import { useFromSetup } from "../../src/features/setup/from-setup";
 import { useBack } from "../../src/lib/navigation/use-back";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
 
@@ -51,6 +52,7 @@ export default function OwnerServiceFormScreen() {
   const priceCents = parseReaisToCents(price);
   const validForm = name.trim().length > 0 && isIntegerInput(durationMinutes) && priceCents !== null;
 
+  const { fromSetup, returnToSetup } = useFromSetup();
   const save = useMutation({
     mutationFn: () => {
       const payload = { description: description.trim() || null, durationMinutes: parseIntegerInput(durationMinutes, "Duration"), name, priceCents: priceCents ?? 0 };
@@ -61,7 +63,8 @@ export default function OwnerServiceFormScreen() {
     onSuccess: () => {
       void refresh();
       if (id) notify(t("owner.services.saved"), "success");
-      else back();
+      else if (!fromSetup) back();
+      returnToSetup();
     },
   });
 

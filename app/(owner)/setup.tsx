@@ -12,6 +12,7 @@ import { completeShopSetup } from "../../src/features/setup/api";
 import { SetupAgreementStep } from "../../src/features/setup/SetupAgreementStep";
 import { SetupStepCard } from "../../src/features/setup/SetupStepCard";
 import { SetupTeamStep } from "../../src/features/setup/SetupTeamStep";
+import { FROM_SETUP } from "../../src/features/setup/from-setup";
 import { canOpen, progress, stepDone } from "../../src/features/setup/steps";
 import { useSetupStatus } from "../../src/features/setup/use-setup-status";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
@@ -32,12 +33,14 @@ export default function OwnerSetupScreen() {
   const open = useMutation({
     mutationFn: () => completeShopSetup(supabase, shopId ?? ""),
     onSuccess: async () => {
+      // Show the link and QR first. Flipping `setup_completed_at` makes the routing gate send /setup to the panel, so the owner must
+      // already be on the link screen (which then offers "Ir para a agenda") before the shop is refreshed.
+      router.replace({ params: { from: "setup" }, pathname: "/shop-link" });
       await queryClient.invalidateQueries({ queryKey: ["current-shop"] });
       await queryClient.invalidateQueries({ queryKey: ["shop-setup-status"] });
-      router.push("/shop-link");
     },
   });
-  const go = (path: string) => () => router.push(path as never);
+  const go = (pathname: string) => () => router.push({ params: FROM_SETUP, pathname } as never);
 
   if (status.isError) {
     return (

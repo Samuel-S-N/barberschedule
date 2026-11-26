@@ -18,7 +18,7 @@ export const en = {
     notes: "Anything we should know?",
     payoutNote: "First half",
     percent: "40",
-    phone: "(11)91234-5678",
+    phone: "(11) 91234-5678",
     search: "Ana Souza",
     planTitle: "Monthly cut",
     serviceName: "Haircut",
@@ -408,7 +408,7 @@ export const en = {
     stepMenuChrome: "Tap the browser menu (⋯)",
     stepShareOrMenu: "Tap the Share icon. If you do not see it, tap the browser menu first.",
   },
-  shopLinkScreen: { copied: "Link copied", copy: "Copy link", download: "Download QR (PNG)", downloadFailed: "Could not download the QR code.", failed: "Could not share. Copy the link by hand.", introOwner: "Show this QR code or send the link so your customers can book.", introProfessional: "This is the business link. Share it with your customers: they can book with any professional.", qrLabel: "Business QR code", share: "Share", title: "Link and QR code", titleProfessional: "Business link" },
+  shopLinkScreen: { copied: "Link copied", copy: "Copy link", download: "Download QR (PNG)", downloadFailed: "Could not download the QR code.", failed: "Could not share. Copy the link by hand.", introOwner: "Show this QR code or send the link so your customers can book.", introProfessional: "This is the business link. Share it with your customers: they can book with any professional.", qrLabel: "Business QR code", share: "Share", toAgenda: "Go to the agenda", title: "Link and QR code", titleProfessional: "Business link" },
   setup: {
     agreement: {
       accept: "I have read and accept",
@@ -465,6 +465,7 @@ export const en = {
     errorBody: "We could not load this business.",
     notFoundBody: "Check the link you opened or ask the business for a new one.",
     notFoundTitle: "Business not found",
+    staffLogin: "I'm staff, sign in",
     staffLoginHint: "Staff: sign in below.",
   },
   legal: { gate: { accept: "I have read and accept", body: "To continue, read and accept the current versions of the documents below.", error: "Could not record your acceptance. Please try again.", title: "We updated our terms" }, link: { business: "Business agreement", privacy: "Privacy policy", terms: "Terms of use" }, ptOnlyNote: "This document is in Portuguese, the official language of the service. Ask us if you need help understanding it.", version: "Version {{version}}" },

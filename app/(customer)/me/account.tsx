@@ -11,10 +11,11 @@ import { ScreenHeader } from "../../../src/components/domain/ScreenHeader";
 import { Toast } from "../../../src/components/domain/Toast";
 import { Button } from "../../../src/components/ui/Button";
 import { Input, useFieldChain } from "../../../src/components/ui/Input";
+import { PhoneInput } from "../../../src/components/ui/MaskedInputs";
 import { Screen } from "../../../src/components/ui/Screen";
 import { changeEmail, updateMyProfile, uploadMyAvatar } from "../../../src/features/account/api";
 import { base64ToArrayBuffer, validateAvatar } from "../../../src/features/account/avatar";
-import { formatPhone } from "../../../src/features/account/phone";
+import { phoneDigits } from "../../../src/features/account/phone";
 import { isValidEmail } from "../../../src/features/account/security";
 import { useMyProfile } from "../../../src/features/account/use-my-profile";
 import { listMyCustomers } from "../../../src/features/customers/api";
@@ -47,7 +48,7 @@ export default function AccountScreen() {
   useEffect(() => {
     if (customer) {
       setFullName(customer.fullName);
-      setPhone(formatPhone(customer.phone ?? ""));
+      setPhone(phoneDigits(customer.phone ?? ""));
     }
   }, [customer]);
 
@@ -120,7 +121,7 @@ export default function AccountScreen() {
 
             <Input {...field(0)} autoCapitalize="words" autoComplete="name" label={t("common.fullName")} maxLength={100} onChangeText={setFullName} placeholder={t("examples.fullName")} testID="profile-name" value={fullName} />
             <Input {...field(1)} autoCapitalize="words" label={t("common.nicknameOptional")} onChangeText={setNickname} placeholder={t("examples.nickname")} testID="profile-nickname" value={nickname} />
-            <Input {...field(2)} autoComplete="tel" keyboardType="phone-pad" label={t("common.phoneOptional")} onChangeText={(value) => setPhone(formatPhone(value))} onSubmitEditing={() => !save.isPending && customer && save.mutate()} returnKeyType="done" placeholder={t("examples.phone")} testID="profile-phone" value={phone} />
+            <PhoneInput {...field(2)} label={t("common.phoneOptional")} onChangeValue={setPhone} onSubmitEditing={() => !save.isPending && customer && save.mutate()} returnKeyType="done" testID="profile-phone" value={phone} />
             <Button disabled={save.isPending || !customer} label={t("profile.save")} onPress={() => save.mutate()} testID="profile-save" />
 
             <Text className="pt-2 text-sm font-sans-medium text-neutral-600">{t("profile.account.emailLabel")}</Text>

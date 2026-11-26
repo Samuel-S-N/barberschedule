@@ -1,4 +1,4 @@
-import { resolveShopRoute } from "../../src/features/shops/shop-route";
+import { closedShopAction, closedShopAllows, resolveShopRoute } from "../../src/features/shops/shop-route";
 
 const base = { canRedirect: true, currentSlug: "alfa", mySlug: null, role: null, signedIn: false, status: "ready" } as const;
 
@@ -27,5 +27,26 @@ describe("resolveShopRoute", () => {
     ["an open shop", { ...base, shopReady: true }, { kind: "app" }],
   ] as const)("%s", (_name, input, expected) => {
     expect(resolveShopRoute(input as never)).toEqual(expected);
+  });
+});
+
+describe("closed shop pages", () => {
+  it.each(["/reset-password", "/privacidade", "/termos", "/contrato"])("%s is always reachable", (path) => {
+    expect(closedShopAllows(path)).toBe(true);
+  });
+
+  it.each(["/login", "/forgot-password"])("%s is reachable only after the staff chose to sign in", (path) => {
+    expect(closedShopAllows(path)).toBe(false);
+    expect(closedShopAllows(path, true)).toBe(true);
+  });
+
+  it.each(["/", "/signup", "/home", "/agenda", "/book/professional"])("%s shows the closed page, even for staff", (path) => {
+    expect(closedShopAllows(path)).toBe(false);
+    expect(closedShopAllows(path, true)).toBe(false);
+  });
+
+  it("offers staff a way in when signed out, and a way out when signed in", () => {
+    expect(closedShopAction(false)).toBe("staff-login");
+    expect(closedShopAction(true)).toBe("sign-out");
   });
 });

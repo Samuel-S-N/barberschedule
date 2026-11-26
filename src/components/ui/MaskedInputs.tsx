@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { formatPhone, phoneDigits } from "../../features/account/phone";
 import { useLanguage } from "../../i18n/use-language";
 import { formatDateNumeric } from "../../lib/i18n/format";
 import { formatCepInput, formatDateInput, formatTimeInput, parseDateInput } from "../../lib/input-masks";
@@ -42,4 +43,12 @@ export function CepInput({ value, onChangeValue, placeholder, ...rest }: MaskedP
   const { t } = useTranslation();
 
   return <Input {...rest} keyboardType="number-pad" maxLength={9} onChangeText={(text) => onChangeValue(formatCepInput(text))} placeholder={placeholder ?? t("examples.cep")} value={value} />;
+}
+
+// Phone / WhatsApp: `value` is the stored DIGITS; the field shows them formatted and reports digits only (any other character typed or
+// pasted is dropped, a "+55" prefix too). One behaviour for every phone field in the app.
+export function PhoneInput({ value, onChangeValue, placeholder, ...rest }: MaskedProps) {
+  const { t } = useTranslation();
+
+  return <Input {...rest} autoComplete="tel" keyboardType="phone-pad" onChangeText={(text) => onChangeValue(phoneDigits(text))} placeholder={placeholder ?? t("examples.phone")} value={formatPhone(value)} />;
 }

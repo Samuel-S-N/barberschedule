@@ -9,6 +9,8 @@ import type { MyProfessionalService } from "../../features/professionals/types";
 import { useColors } from "../../lib/design/theme/ThemeProvider";
 import { Button } from "../ui/Button";
 import { Input, useFieldChain } from "../ui/Input";
+import { PhoneInput } from "../ui/MaskedInputs";
+import { phoneDigits } from "../../features/account/phone";
 import { formatPriceBRL } from "./ServiceCard";
 
 export type ProfessionalBookingSheetProps = {
@@ -55,7 +57,7 @@ export function ProfessionalBookingSheet({ busy = false, fitsService, initialCus
       inFlight.current = false;
       setName(initialCustomer?.fullName ?? "");
       setEmail(initialCustomer?.email ?? "");
-      setPhone(initialCustomer?.phone ?? "");
+      setPhone(phoneDigits(initialCustomer?.phone ?? ""));
       setPickedId(initialCustomer?.id ?? null);
       setServiceId(null);
     }
@@ -70,7 +72,7 @@ export function ProfessionalBookingSheet({ busy = false, fitsService, initialCus
     setPickedId(customer.id);
     setName(customer.fullName);
     setEmail(customer.email ?? "");
-    setPhone(customer.phone ?? "");
+    setPhone(phoneDigits(customer.phone ?? ""));
   };
 
   const canConfirm = name.trim() !== "" && selected !== null && !busy;
@@ -126,7 +128,7 @@ export function ProfessionalBookingSheet({ busy = false, fitsService, initialCus
                   </View>
                 ) : null}
                 <Input {...field(1)} autoCapitalize="none" keyboardType="email-address" label={t("professional.agenda.bookEmail")} onChangeText={edit(setEmail)} placeholder={t("examples.email")} testID="professional-book-email" value={email} />
-                <Input {...field(2)} keyboardType="phone-pad" label={t("professional.agenda.bookPhone")} onChangeText={edit(setPhone)} placeholder={t("examples.phone")} testID="professional-book-phone" value={phone} />
+                <PhoneInput {...field(2)} label={t("professional.agenda.bookPhone")} onChangeValue={edit(setPhone)} testID="professional-book-phone" value={phone} />
                 {name.trim() !== "" && email.trim() === "" ? (
                   <Text className="text-sm font-sans text-neutral-600" testID="professional-book-no-email">
                     {t("professional.agenda.bookNoEmailHint")}

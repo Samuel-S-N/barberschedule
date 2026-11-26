@@ -10,7 +10,7 @@ test("customer account fields show grey examples instead of format hints in the 
   await page.getByTestId("profile-name").fill("");
   await expect(page.getByTestId("profile-name")).toHaveAttribute("placeholder", "Maria Silva");
   await page.getByTestId("profile-phone").fill("");
-  await expect(page.getByTestId("profile-phone")).toHaveAttribute("placeholder", "(11)91234-5678");
+  await expect(page.getByTestId("profile-phone")).toHaveAttribute("placeholder", "(11) 91234-5678");
   await page.getByTestId("profile-nickname").fill("");
   await expect(page.getByTestId("profile-nickname")).toHaveAttribute("placeholder", "Mari");
 });

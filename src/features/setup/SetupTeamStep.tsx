@@ -6,6 +6,7 @@ import { Button } from "../../components/ui/Button";
 import { Toggle } from "../../components/ui/Toggle";
 import { useOwnerAsProfessional } from "../professionals/owner/use-owner-as-professional";
 import type { SetupProfessional } from "./api";
+import { FROM_SETUP } from "./from-setup";
 import { SetupStepCard } from "./SetupStepCard";
 import { professionalLacks } from "./steps";
 
@@ -39,12 +40,12 @@ export function SetupTeamStep({ done, onChanged, professionals }: { done: boolea
             <Text className="text-sm font-sans-semibold text-ink">{professional.name}</Text>
             {lacks.includes("hours") ? <Text className="text-xs font-sans text-neutral-600">{t("setup.team.lacksHours")}</Text> : null}
             {lacks.includes("services") ? <Text className="text-xs font-sans text-neutral-600">{t("setup.team.lacksServices")}</Text> : null}
-            {lacks.includes("hours") ? <Button label={t("setup.team.addHours")} onPress={() => router.push({ params: { professional: professional.id }, pathname: "/schedule" })} size="sm" variant="outline" /> : null}
-            {lacks.includes("services") ? <Button label={t("setup.team.addServices")} onPress={() => router.push({ params: { id: professional.id }, pathname: "/professional-profile" })} size="sm" variant="outline" /> : null}
+            {lacks.includes("hours") ? <Button label={t("setup.team.addHours")} onPress={() => router.push({ params: { ...FROM_SETUP, professional: professional.id }, pathname: "/schedule" })} size="sm" variant="outline" /> : null}
+            {lacks.includes("services") ? <Button label={t("setup.team.addServices")} onPress={() => router.push({ params: { ...FROM_SETUP, id: professional.id }, pathname: "/professional-profile" })} size="sm" variant="outline" /> : null}
           </View>
         );
       })}
-      <Button label={t("setup.team.add")} onPress={() => router.push("/professional-new" as never)} size="sm" testID="setup-team-add" variant="outline" />
+      <Button label={t("setup.team.add")} onPress={() => router.push({ params: FROM_SETUP, pathname: "/professional-new" } as never)} size="sm" testID="setup-team-add" variant="outline" />
     </SetupStepCard>
   );
 }
