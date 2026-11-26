@@ -15,13 +15,13 @@ import { useMyShop } from "./my-shop";
 import { closedShopAction, closedShopAllows, resolveShopRoute } from "./shop-route";
 import { shopUrl } from "./resolve-slug";
 
-function Message({ action, body, footer, title }: { action?: { label: string; onPress: () => void }; body: string; footer?: ReactNode; title: string }) {
+function Message({ action, body, footer, title }: { action?: { label: string; onPress: () => void; quiet?: boolean }; body: string; footer?: ReactNode; title: string }) {
   return (
     <Screen className="flex-1 bg-canvas">
       <View className="flex-1 items-center justify-center gap-4 p-5">
         <Text accessibilityRole="header" className="max-w-[420px] text-center text-3xl leading-[44px] font-display-bold text-ink">{title}</Text>
         <Text className="max-w-[420px] text-center text-base font-sans text-neutral-600">{body}</Text>
-        {action ? <Button label={action.label} onPress={action.onPress} /> : null}
+        {action ? <Button label={action.label} onPress={action.onPress} size={action.quiet ? "sm" : "md"} variant={action.quiet ? "outline" : "primary"} /> : null}
         {footer}
       </View>
     </Screen>
@@ -81,7 +81,7 @@ export function ShopGate({ children }: PropsWithChildren) {
 
     return (
       <Message
-        action={action === "sign-out" ? { label: t("common.signOut"), onPress: () => void signOut(supabase) } : { label: t("shopGate.staffLogin"), onPress: () => { setStaffEntry(true); setEntry("/login"); } }}
+        action={action === "sign-out" ? { label: t("common.signOut"), onPress: () => void signOut(supabase), quiet: true } : { label: t("shopGate.staffLogin"), onPress: () => { setStaffEntry(true); setEntry("/login"); }, quiet: true }}
         body={t("shopGate.comingSoonBody", { name: shop?.name ?? "" })}
         footer={<LegalFooter onOpen={setEntry} />}
         title={t("shopGate.comingSoonTitle")}
