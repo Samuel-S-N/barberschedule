@@ -28,6 +28,31 @@ describe("supabase/config.toml hosted overrides", () => {
   });
 });
 
+describe("supabase/config.toml production overrides", () => {
+  const config = read("supabase/config.toml");
+  const section = (name: string) => config.split(`[remotes.${name}]`)[1]?.split(/\n\[(?!remotes\.)/)[0] ?? "";
+  const prod = config.split("[remotes.prod.auth]")[1]?.split("\n[remotes.prod.")[0] ?? "";
+
+  it("sends invites and recovery links to each business's own address", () => {
+    expect(section("prod")).toMatch(/project_id = "[a-z]{20}"/);
+    expect(prod).toContain('site_url = "https://zencpro.app"');
+    expect(prod).toContain('"https://zencpro.app/**"');
+    expect(prod).toContain('"https://*.zencpro.app/**"');
+    expect(prod).not.toMatch(/127\.0\.0\.1|localhost|exp:\/\//);
+    expect(config).toMatch(/\[remotes\.prod\.auth\.email\][^[]*enable_confirmations = true/);
+    expect(config).toMatch(/\[remotes\.prod\.auth\.email\.smtp\][^[]*pass = "env\(RESEND_API_KEY\)"/);
+    expect(config).toMatch(/\[remotes\.prod\.db\.vault\][^[]*dispatch_url = "env\(DISPATCH_URL\)"[^[]*dispatch_token = "env\(DISPATCH_TOKEN\)"/);
+  });
+
+  it("dev and prod are different projects", () => {
+    const ref = (name: string) => section(name).match(/project_id = "([a-z]{20})"/)?.[1];
+
+    expect(ref("dev")).toBeDefined();
+    expect(ref("prod")).toBeDefined();
+    expect(ref("dev")).not.toBe(ref("prod"));
+  });
+});
+
 describe("wrangler.jsonc", () => {
   const wrangler = JSON.parse(read("wrangler.jsonc").replace(/^\s*\/\/.*$/gm, ""));
 

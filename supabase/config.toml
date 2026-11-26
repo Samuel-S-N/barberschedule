@@ -112,3 +112,28 @@ sender_name = "Zenc"
 [remotes.dev.db.vault]
 dispatch_url = "env(DISPATCH_URL)"
 dispatch_token = "env(DISPATCH_TOKEN)"
+
+# Production. FILL IN (owner): the zenc-prod project ref (20 letters). The deploy workflow refuses to run with a ref that has no block here.
+[remotes.prod]
+project_id = "bbbbbbbbbbbbbbbbbbbb"
+
+[remotes.prod.auth]
+site_url = "https://zencpro.app"
+# Invites and password recovery redirect to each business's own subdomain; without the wildcard the e-mail link is refused and falls
+# back to the site URL. No Expo Go or local URLs here. The zenc scheme stays for the later store build.
+additional_redirect_urls = ["https://zencpro.app/**", "https://*.zencpro.app/**", "zenc://**"]
+
+[remotes.prod.auth.email]
+enable_confirmations = true
+
+[remotes.prod.auth.email.smtp]
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+admin_email = "nao-responda@zencpro.com.br"
+sender_name = "Zenc"
+
+[remotes.prod.db.vault]
+dispatch_url = "env(DISPATCH_URL)"
+dispatch_token = "env(DISPATCH_TOKEN)"
