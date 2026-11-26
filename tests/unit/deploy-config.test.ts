@@ -116,6 +116,18 @@ describe("workflows", () => {
     }
   });
 
+  it("production waits for dev and for the production environment's reviewer, on the same commit", () => {
+    expect(deploy).toMatch(/production:\s+needs: dev\s+uses: \.\/\.github\/workflows\/deploy-env\.yml\s+with:\s+environment: production\s+secrets: inherit/);
+    expect(deploy).not.toMatch(/ref:/);
+  });
+
+  it("the production run checks the live site and the e-mail logo after deploying", () => {
+    expect(deployEnv).toContain("inputs.environment == 'production'");
+    expect(deployEnv).toContain("https://zencpro.app/email/zenc-logo.png");
+    expect(deployEnv).toContain("image/png");
+    expect(deployEnv.indexOf("https://zencpro.app/email/zenc-logo.png")).toBeGreaterThan(deployEnv.indexOf("wrangler deploy"));
+  });
+
   it("deploys the database before anything that depends on it, and the web build last", () => {
     const order = ["supabase db push", "supabase config push", "supabase functions deploy", "expo export", "wrangler deploy"].map((step) => deployEnv.indexOf(step));
 
