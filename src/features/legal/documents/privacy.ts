@@ -1,3 +1,4 @@
+import { DPO_EMAIL } from "../company";
 import type { LegalDocument } from "../types";
 
 export const privacyDocument: LegalDocument = {
@@ -9,7 +10,7 @@ export const privacyDocument: LegalDocument = {
       id: "quem-somos",
       title: "1. Quem somos",
       paragraphs: [
-        "A Zenc é uma plataforma de agendamento para estabelecimentos do setor de beleza, operada por {{razaoSocial}}, CNPJ {{cnpj}}, com sede em {{endereco}} (\"Zenc\").",
+        "A Zenc é uma plataforma de agendamento para estabelecimentos do setor de beleza.",
         "Esta Política explica como tratamos dados pessoais de clientes, profissionais e donos de estabelecimentos, em conformidade com a Lei Geral de Proteção de Dados (Lei 13.709/2018, \"LGPD\").",
       ],
     },
@@ -105,7 +106,7 @@ export const privacyDocument: LegalDocument = {
       id: "encarregado",
       title: "12. Encarregado (DPO)",
       paragraphs: [
-        "Para exercer direitos ou tirar dúvidas, escreva ao encarregado pela proteção de dados: {{dpoEmail}} (art. 41 da LGPD).",
+        `Para exercer direitos ou tirar dúvidas, escreva ao encarregado pela proteção de dados: ${DPO_EMAIL} (art. 41 da LGPD).`,
       ],
     },
     {

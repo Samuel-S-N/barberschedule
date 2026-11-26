@@ -5,7 +5,6 @@ import { ScreenHeader } from "../../components/domain/ScreenHeader";
 import { Screen } from "../../components/ui/Screen";
 import { useBack } from "../../lib/navigation/use-back";
 import { LEGAL_DOCUMENTS } from "./index";
-import { splitSegments } from "./placeholders";
 import type { LegalKind } from "./types";
 
 // The three documents are Portuguese data. Other app languages show the same text with a short note in their own language.
@@ -26,15 +25,7 @@ export function LegalDocumentScreen({ kind }: { kind: LegalKind }) {
               <View className="gap-2" key={section.id} testID="legal-section">
                 <Text accessibilityRole="header" className="text-lg font-display-semibold text-ink">{section.title}</Text>
                 {section.paragraphs.map((paragraph, index) => (
-                  <Text className="text-base font-sans text-neutral-700" key={index}>
-                    {splitSegments(paragraph).map((segment, part) =>
-                      segment.highlight ? (
-                        <Text className="bg-warning-400/40 font-sans-semibold text-ink" key={part} testID="legal-placeholder">{segment.text}</Text>
-                      ) : (
-                        segment.text
-                      ),
-                    )}
-                  </Text>
+                  <Text className="text-base font-sans text-neutral-700" key={index}>{paragraph}</Text>
                 ))}
               </View>
             ))}

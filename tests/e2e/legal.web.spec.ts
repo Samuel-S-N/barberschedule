@@ -9,9 +9,10 @@ test.describe("public legal documents", () => {
     });
   }
 
-  test("the privacy policy shows the highlight on [RAZÃO SOCIAL]", async ({ page }) => {
+  test("the privacy policy introduces Zenc by name and shows no placeholder", async ({ page }) => {
     await page.goto("/privacidade");
-    await expect(page.getByTestId("legal-placeholder").first()).toHaveText("[RAZÃO SOCIAL]");
+    await expect(page.getByText("A Zenc é uma plataforma de agendamento para estabelecimentos do setor de beleza.")).toBeVisible();
+    await expect(page.getByText(/\[[A-ZÀ-Ú ]{3,}\]/)).toHaveCount(0);
   });
 
   test("/legal redirects to the privacy policy", async ({ page }) => {

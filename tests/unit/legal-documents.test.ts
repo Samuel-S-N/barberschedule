@@ -1,7 +1,7 @@
 import { LEGAL_DOCUMENTS, LEGAL_VERSIONS } from "../../src/features/legal";
+import { DPO_EMAIL } from "../../src/features/legal/company";
 import type { LegalKind } from "../../src/features/legal/types";
 
-const TOKENS = /\{\{(razaoSocial|cnpj|endereco|foro|dpoEmail)\}\}/g;
 const allText = (kind: LegalKind) => LEGAL_DOCUMENTS[kind].sections.flatMap((section) => [section.title, ...section.paragraphs]).join("\n");
 
 describe.each(Object.keys(LEGAL_DOCUMENTS) as LegalKind[])("%s document", (kind) => {
@@ -28,10 +28,8 @@ describe.each(Object.keys(LEGAL_DOCUMENTS) as LegalKind[])("%s document", (kind)
     expect(allText(kind)).not.toMatch(/Ă|Ã§|Ã£|Ã©|Â/);
   });
 
-  it("only uses known company tokens", () => {
-    const stray = allText(kind).replace(TOKENS, "").match(/\{\{.*?\}\}/g);
-
-    expect(stray).toBeNull();
+  it("ships no template variable and no [PLACEHOLDER] (the official data comes with the lawyer's version)", () => {
+    expect(allText(kind)).not.toMatch(/\{\{|\}\}|\[[A-ZÀ-Ú ]{3,}\]|CNPJ|razão social|undefined/i);
   });
 });
 
@@ -45,6 +43,10 @@ describe("privacy policy", () => {
     ]);
   });
 
+  it("introduces Zenc by name only", () => {
+    expect(allText("privacy")).toContain("A Zenc é uma plataforma de agendamento para estabelecimentos do setor de beleza.");
+  });
+
   it("states the controller / operator split, art. 33 transfer, minors and the 6-month log retention", () => {
     const text = allText("privacy");
 
@@ -54,7 +56,8 @@ describe("privacy policy", () => {
     expect(text).toMatch(/art\. 33/);
     expect(text).toMatch(/art\. 14/);
     expect(text).toMatch(/6 \(seis\) meses/);
-    expect(text).toMatch(/privacidade@zencpro\.com\.br|\{\{dpoEmail\}\}/);
+    expect(text).toContain("privacidade@zencpro.com.br");
+    expect(DPO_EMAIL).toBe("privacidade@zencpro.com.br");
     for (const processor of ["Supabase", "Cloudflare", "Resend", "Sentry"]) expect(text).toContain(processor);
   });
 });
@@ -68,7 +71,8 @@ describe("terms of use", () => {
     expect(allText("terms")).toMatch(/não é parte/i);
     expect(allText("terms")).toMatch(/18 anos/);
     expect(allText("terms")).toMatch(/Código de Defesa do Consumidor/);
-    expect(allText("terms")).toMatch(/\{\{foro\}\}/);
+    expect(allText("terms")).toContain("Zenc: a plataforma de agendamento.");
+    expect(allText("terms")).toContain("Estes Termos seguem a lei brasileira. Conflitos serão resolvidos no foro do domicílio do usuário.");
   });
 });
 
@@ -80,6 +84,8 @@ describe("business agreement", () => {
     ]);
     const text = allText("business");
 
+    expect(text).toContain("A Zenc fornece ao estabelecimento que aceita este Contrato (\"Estabelecimento\")");
+    expect(text).toContain("Este Contrato segue a lei brasileira. Fica eleito o foro do domicílio do Estabelecimento.");
     expect(text).toMatch(/primeiro mês/i);
     expect(text).toMatch(/proposta comercial/i);
     expect(text).toMatch(/48 \(quarenta e oito\) horas/);
