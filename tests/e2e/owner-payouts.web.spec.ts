@@ -78,8 +78,8 @@ test("registering a payment opens a pop-up with what is open, filled with the to
   expect(sheetBox.y + sheetBox.height).toBeLessThan(viewport.height);
   await expect(page.getByTestId("payout-sheet")).toHaveCSS("border-top-left-radius", "16px");
 
-  await expect(page.getByTestId("payout-amount")).toHaveValue("70,00");
-  await page.getByTestId("payout-amount").fill("20");
+  await expect(page.getByTestId("payout-amount")).toHaveValue("R$ 70,00");
+  await page.getByTestId("payout-amount").fill("2000");
   await page.getByTestId("payout-note").fill("Semana 1");
   await page.getByTestId("payout-submit").click();
 
@@ -127,7 +127,7 @@ test("a one-off payout works for a professional without a schedule", async ({ pa
   await page.goto("/payouts");
   await expect(page.getByTestId("payout-period-b2-current")).toHaveCount(0);
   await page.getByTestId("payout-pay-b2").click();
-  await page.getByTestId("payout-amount").fill("10");
+  await page.getByTestId("payout-amount").fill("1000");
   await page.getByTestId("payout-submit").click();
 
   await expect.poll(() => calls.payout).toMatchObject({ payout_amount_cents: 1000, target_professional_id: "b2" });

@@ -6,7 +6,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import { Button } from "../../../components/ui/Button";
 import { Input } from "../../../components/ui/Input";
-import { DateInput } from "../../../components/ui/MaskedInputs";
+import { DateInput, MoneyInput } from "../../../components/ui/MaskedInputs";
 import { useColors } from "../../../lib/design/theme/ThemeProvider";
 import { centsToReaisInput, parseReaisToCents } from "../../../lib/money";
 import type { PayoutOverviewItem } from "../types";
@@ -70,7 +70,7 @@ export function PayoutSheet({ busy, item, onClose, onSubmit, today }: Props) {
                 <Text className="text-xs font-sans-medium text-neutral-500">{t("payouts.sheet.open")}</Text>
                 <PeriodBreakdown item={item} showTotal testIdPrefix="payout-sheet-period" />
               </View>
-              <Input keyboardType="numeric" label={t("payouts.form.amount")} onChangeText={setAmount} placeholder={t("examples.money")} testID="payout-amount" value={amount} />
+              <MoneyInput label={t("payouts.form.amount")} onChangeValue={setAmount} testID="payout-amount" value={amount} />
               <DateInput label={t("payouts.form.date")} onChangeValue={setPaidOn} testID="payout-date" value={paidOn} />
               <Input label={t("payouts.form.note")} onChangeText={setNote} placeholder={t("examples.payoutNote")} testID="payout-note" value={note} />
               {error ? <Text className="text-sm font-sans text-danger-500">{error}</Text> : null}

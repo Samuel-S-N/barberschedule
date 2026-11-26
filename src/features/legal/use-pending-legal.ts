@@ -5,13 +5,16 @@ import { listMyConsents } from "./api";
 import { pendingKinds, requiredKinds, signupConsents } from "./pending";
 import type { LegalKind } from "./types";
 
+// The consents query key: shared with every place that records a consent (see use-accept-legal).
+export const consentsQueryKey = (userId: string | undefined) => ["my-consents", userId] as const;
+
 // `setupComplete` is part C's flag (an owner whose business is not open yet accepts the business agreement in the checklist).
 export function usePendingLegal(setupComplete = true): { isLoading: boolean; pending: LegalKind[] } {
   const { profile, session, supabase } = useSupabaseSession();
   const query = useQuery({
     enabled: Boolean(session) && Boolean(profile),
     queryFn: () => listMyConsents(supabase),
-    queryKey: ["my-consents", session?.user.id],
+    queryKey: consentsQueryKey(session?.user.id),
     staleTime: 60_000,
   });
 

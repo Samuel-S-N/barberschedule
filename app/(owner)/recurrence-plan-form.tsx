@@ -12,6 +12,7 @@ import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
 import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Input, useFieldChain } from "../../src/components/ui/Input";
+import { IntegerInput, MoneyInput } from "../../src/components/ui/MaskedInputs";
 import { Screen } from "../../src/components/ui/Screen";
 import { listRecurrencePlans, saveRecurrencePlan } from "../../src/features/recurrence/plans-api";
 import { recurrencePriceText } from "../../src/features/recurrence/price-text";
@@ -83,12 +84,12 @@ export default function RecurrencePlanFormScreen() {
                 <Text accessibilityRole="header" className="text-lg font-display-semibold text-ink">{t("owner.plans.service")}</Text>
                 <RadioBlock items={services.map((service) => ({ key: `plan-service-${service.id}`, label: service.name, onPress: () => setServiceId(service.id), selected: service.id === serviceId }))} />
                 <Input {...field(0)} error={nameTouched && !nameValid ? t("owner.plans.nameRequired") : undefined} label={t("owner.plans.name")} onChangeText={(value) => { setNameTouched(true); setName(value.slice(0, 60)); }} placeholder={t("examples.planTitle")} testID="plan-name" value={name} />
-                <Input {...field(1)} keyboardType="numeric" label={t("owner.plans.price")} onChangeText={setPriceText} placeholder={t("examples.money")} testID="plan-price" value={priceText} />
+                <MoneyInput {...field(1)} label={t("owner.plans.price")} onChangeValue={setPriceText} testID="plan-price" value={priceText} />
                 <View className="flex-row gap-2">
                   <Button label={t("owner.plans.quickMonthly")} onPress={() => setWeeksText("1")} size="sm" testID="plan-weeks-1" variant={weeksText === "1" ? "dark" : "outline"} />
                   <Button label={t("owner.plans.quickBiweekly")} onPress={() => setWeeksText("2")} size="sm" testID="plan-weeks-2" variant={weeksText === "2" ? "dark" : "outline"} />
                 </View>
-                <Input {...field(2)} keyboardType="number-pad" label={t("owner.plans.every")} onChangeText={setWeeksText} placeholder={t("examples.weeks")} testID="plan-weeks" value={weeksText} />
+                <IntegerInput {...field(2)} label={t("owner.plans.every")} maxDigits={2} onChangeValue={setWeeksText} placeholder={t("examples.weeks")} testID="plan-weeks" value={weeksText} />
                 {priceCents !== null && weeksValid ? <Text className="text-sm font-sans-medium text-ink" testID="plan-summary">{recurrencePriceText(t, priceCents, weeks)}</Text> : null}
                 <Button disabled={!valid || save.isPending} label={t("owner.plans.save")} onPress={() => save.mutate(plan ? plan.active : true)} testID="plan-save" />
                 {plan ? (

@@ -4,8 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 
 import { Button } from "../../../components/ui/Button";
-import { Input } from "../../../components/ui/Input";
-import { DateInput } from "../../../components/ui/MaskedInputs";
+import { DateInput, IntegerInput } from "../../../components/ui/MaskedInputs";
 import { errorMessage } from "../../../i18n/errors";
 import { useSupabaseSession } from "../../../providers/AppProviders";
 import { setProfessionalPayoutSchedule } from "../api";
@@ -67,11 +66,11 @@ export function ScheduleEditor({ professionalId, current, onFeedback }: Props) {
       ) : null}
       {schedule === "biweekly" ? (
         <View className="flex-row gap-2">
-          <View className="flex-1"><Input keyboardType="numeric" label={t("payouts.schedule.firstDay")} onChangeText={setDay1} placeholder={t("examples.day")} testID="payout-day-1" value={day1} /></View>
-          <View className="flex-1"><Input keyboardType="numeric" label={t("payouts.schedule.secondDay")} onChangeText={setDay2} placeholder={t("examples.day")} testID="payout-day-2" value={day2} /></View>
+          <View className="flex-1"><IntegerInput label={t("payouts.schedule.firstDay")} maxDigits={2} onChangeValue={setDay1} placeholder={t("examples.day")} testID="payout-day-1" value={day1} /></View>
+          <View className="flex-1"><IntegerInput label={t("payouts.schedule.secondDay")} maxDigits={2} onChangeValue={setDay2} placeholder={t("examples.day")} testID="payout-day-2" value={day2} /></View>
         </View>
       ) : null}
-      {schedule === "monthly" ? <Input keyboardType="numeric" label={t("payouts.schedule.dayOfMonth")} onChangeText={setDay1} placeholder={t("examples.day")} testID="payout-day-1" value={day1} /> : null}
+      {schedule === "monthly" ? <IntegerInput label={t("payouts.schedule.dayOfMonth")} maxDigits={2} onChangeValue={setDay1} placeholder={t("examples.day")} testID="payout-day-1" value={day1} /> : null}
       {schedule === "biweekly" || schedule === "monthly" ? <Text className="text-xs font-sans text-neutral-600">{t("payouts.schedule.shortMonthHint")}</Text> : null}
       <DateInput label={t("payouts.schedule.trackingStart")} onChangeValue={setTrackingStart} testID="payout-tracking-start" value={trackingStart} />
       <Button disabled={!valid || save.isPending} label={t("payouts.schedule.save")} onPress={() => save.mutate()} size="sm" testID="payout-schedule-save" />

@@ -7,7 +7,7 @@ import { ScrollView, Text, View } from "react-native";
 
 import { Toast } from "../../src/components/domain/Toast";
 import { Input } from "../../src/components/ui/Input";
-import { DateInput } from "../../src/components/ui/MaskedInputs";
+import { DateInput, MoneyInput } from "../../src/components/ui/MaskedInputs";
 
 import { ChartSection } from "../../src/components/charts/ChartSection";
 import { ColumnChart } from "../../src/components/charts/ColumnChart";
@@ -303,7 +303,7 @@ export default function OwnerRevenueScreen() {
                       {row.compensationType === "commission" ? payoutLines(row.professionalId) : null}
                       {payingFor === row.professionalId ? (
                         <View className="gap-2">
-                          <Input label={t("owner.revenue.paymentAmount")} onChangeText={setAmount} placeholder={t("examples.money")} testID="rent-amount" value={amount} />
+                          <MoneyInput label={t("owner.revenue.paymentAmount")} onChangeValue={setAmount} testID="rent-amount" value={amount} />
                           <DateInput label={t("owner.revenue.paymentDate")} onChangeValue={setPaidOn} testID="rent-date" value={paidOn} />
                           <Input label={t("owner.revenue.paymentNote")} onChangeText={setNote} placeholder={t("examples.note")} testID="rent-note" value={note} />
                           <View className="flex-row gap-2">

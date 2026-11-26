@@ -108,7 +108,7 @@ test("the owner records and removes a chair rent payment", async ({ page }) => {
   await page.goto("/revenue");
   await page.getByTestId("rent-pay-b2").click();
   // Prefilled with what is still owed: the 70,00 estimate minus nothing paid yet.
-  await expect(page.getByTestId("rent-amount")).toHaveValue("70,00");
+  await expect(page.getByTestId("rent-amount")).toHaveValue("R$ 70,00");
   await page.getByTestId("rent-amount").fill("50,00");
   await page.getByTestId("rent-pay-save").click();
 

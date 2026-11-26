@@ -4,7 +4,8 @@ import { useTranslation } from "react-i18next";
 import { formatPhone, phoneDigits } from "../../features/account/phone";
 import { useLanguage } from "../../i18n/use-language";
 import { formatDateNumeric } from "../../lib/i18n/format";
-import { formatCepInput, formatDateInput, formatTimeInput, parseDateInput } from "../../lib/input-masks";
+import { formatCepInput, formatDateInput, formatIntegerInput, formatTimeInput, nextPercentState, parseDateInput, percentDisplay } from "../../lib/input-masks";
+import { formatMoneyInput } from "../../lib/money";
 import { Input } from "./Input";
 import type { InputProps } from "./Input";
 
@@ -39,10 +40,11 @@ export function TimeInput({ value, onChangeValue, placeholder, ...rest }: Masked
   return <Input {...rest} keyboardType="number-pad" onChangeText={(text) => onChangeValue(formatTimeInput(text))} placeholder={placeholder ?? t("examples.time")} value={value} />;
 }
 
+// `value` may be digits (the stored form), an old formatted value or what the user typed: it is always DISPLAYED as 00000-000.
 export function CepInput({ value, onChangeValue, placeholder, ...rest }: MaskedProps) {
   const { t } = useTranslation();
 
-  return <Input {...rest} keyboardType="number-pad" maxLength={9} onChangeText={(text) => onChangeValue(formatCepInput(text))} placeholder={placeholder ?? t("examples.cep")} value={value} />;
+  return <Input {...rest} keyboardType="number-pad" maxLength={9} onChangeText={(text) => onChangeValue(formatCepInput(text))} placeholder={placeholder ?? t("examples.cep")} value={formatCepInput(value)} />;
 }
 
 // Phone / WhatsApp: `value` is the stored DIGITS; the field shows them formatted and reports digits only (any other character typed or
@@ -51,4 +53,25 @@ export function PhoneInput({ value, onChangeValue, placeholder, ...rest }: Maske
   const { t } = useTranslation();
 
   return <Input {...rest} autoComplete="tel" keyboardType="phone-pad" onChangeText={(text) => onChangeValue(phoneDigits(text))} placeholder={placeholder ?? t("examples.phone")} value={formatPhone(value)} />;
+}
+
+// Money (BRL), cents-first: the user types digits and the field fills from the cents ("4500" -> "R$ 45,00"). `value` is the formatted
+// text (or the plain "45,00" a screen seeds with centsToReaisInput); read it back with parseReaisToCents.
+export function MoneyInput({ value, onChangeValue, placeholder, ...rest }: MaskedProps) {
+  const { t } = useTranslation();
+
+  return <Input {...rest} keyboardType="number-pad" onChangeText={(text) => onChangeValue(formatMoneyInput(text))} placeholder={placeholder ?? t("examples.money")} value={formatMoneyInput(value)} />;
+}
+
+// Percent (commission): digits and one decimal separator, at most 2 decimals, clamped at 100, shown with a % suffix. `value` is the plain
+// number string with a dot ("40.5"), the same thing the screens parse with Number().
+export function PercentInput({ value, onChangeValue, placeholder, ...rest }: MaskedProps) {
+  const { t } = useTranslation();
+
+  return <Input {...rest} keyboardType="decimal-pad" onChangeText={(text) => onChangeValue(nextPercentState(value, text))} placeholder={placeholder ?? t("examples.percent")} value={percentDisplay(value)} />;
+}
+
+// Whole numbers (minutes, weeks, days of the month): number keyboard, anything that is not a digit is dropped.
+export function IntegerInput({ value, onChangeValue, maxDigits, placeholder, ...rest }: MaskedProps & { maxDigits?: number }) {
+  return <Input {...rest} keyboardType="number-pad" onChangeText={(text) => onChangeValue(formatIntegerInput(text, maxDigits))} placeholder={placeholder} value={value} />;
 }

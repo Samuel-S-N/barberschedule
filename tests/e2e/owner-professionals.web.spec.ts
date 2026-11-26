@@ -114,6 +114,12 @@ test("Edit opens the professional profile: rename, compensation and a red Deacti
 
   await page.getByTestId("professional-comp-edit").click();
   await page.getByTestId("comp-percent").fill("55");
+  await expect(page.getByTestId("comp-percent")).toHaveValue("55%");
+  await page.getByTestId("comp-percent").fill("55,5abc");
+  await expect(page.getByTestId("comp-percent")).toHaveValue("55,5%");
+  await page.getByTestId("comp-percent").fill("250");
+  await expect(page.getByTestId("comp-percent")).toHaveValue("100%");
+  await page.getByTestId("comp-percent").fill("55");
   await page.getByTestId("comp-save").click();
   await page.getByTestId("confirm-dialog-confirm").click();
   await expect.poll(() => calls.compensation).toMatchObject({ apply_retroactively: false, new_commission_percent: 55 });

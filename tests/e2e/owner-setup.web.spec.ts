@@ -22,7 +22,7 @@ async function signInAsOwner(page: Page) {
 // A server-side stand-in for the shop's setup state: the test flips `missing` the way the owner's edits on the existing screens would.
 type State = { accepted: unknown[]; completeFails?: boolean; completedAt: string | null; completed: number; missing: string[] };
 
-function mockSetup(page: Page, state: State) {
+function mockSetup(page: Page, state: State, onAccept?: () => void) {
   return page.route("**/rest/v1/**", async (route) => {
     const url = new URL(route.request().url());
     const path = url.pathname;
@@ -33,6 +33,7 @@ function mockSetup(page: Page, state: State) {
     if (path.endsWith("/rpc/shop_setup_status")) return json(route, { completed: state.completedAt !== null, missing: state.missing, professionals: [] });
     if (path.endsWith("/rpc/accept_legal_documents")) {
       state.accepted.push(route.request().postDataJSON());
+      onAccept?.();
       state.missing = state.missing.filter((step) => step !== "agreement");
 
       return json(route, null);
@@ -136,4 +137,32 @@ test("when the server refuses to open, the owner sees the error and stays on the
   await page.getByTestId("setup-open").click();
   await expect(page.getByText("Conclua as etapas obrigatórias antes de abrir sua agenda.")).toBeVisible();
   await expect(page).toHaveURL(/\/setup/);
+});
+
+test.describe("the business agreement accepted in step 1", () => {
+  // The signed-in owner has accepted terms and privacy, not yet the business agreement (a new owner).
+  test.use({ consents: { rows: [{ kind: "terms", version: LEGAL_VERSIONS.terms }, { kind: "privacy", version: LEGAL_VERSIONS.privacy }] } });
+
+  test("is not asked again by the re-accept gate once the business is open", async ({ consents, page }) => {
+    const state = fresh();
+
+    state.missing = ["agreement"];
+    await signInAsOwner(page);
+    // The server records the consent: from now on the consents lookup (answered by the fixture) includes it.
+    await mockSetup(page, state, () => consents.rows.push({ kind: "business", version: LEGAL_VERSIONS.business }));
+    await page.goto("/setup");
+
+    await page.getByTestId("setup-agreement-accept").click();
+    await expect(page.getByTestId("setup-step-agreement-done")).toBeVisible();
+    await page.getByTestId("setup-open").click();
+    await expect(page).toHaveURL(/\/shop-link/);
+    await page.getByTestId("shop-link-to-agenda").click();
+
+    await expect(page).toHaveURL(/\/agenda/);
+    await expect(page.getByTestId("tab-manage")).toBeVisible();
+    // Give the gate time to (wrongly) redirect, then check it did not.
+    await page.waitForTimeout(1500);
+    await expect(page).not.toHaveURL(/accept-terms/);
+    await expect(page.getByTestId("tab-manage")).toBeVisible();
+  });
 });

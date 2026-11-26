@@ -249,3 +249,21 @@ test("an unknown CEP shows a message and clears nothing", async ({ page }) => {
   await expect(page.getByText("CEP not found, fill in the address.")).toBeVisible();
   await expect(page.getByTestId("shop-street")).toHaveValue("Rua que eu digitei");
 });
+
+test.describe("a stored CEP", () => {
+  test.use({ shop: { ...defaultShop, address_cep: "01310100", address_city: "Recife", address_number: "10", address_state: "PE", address_street: "Rua A", phone: "1133334444", whatsapp: null } });
+
+  test("opens formatted as 00000-000 and is saved as digits", async ({ page }) => {
+    const calls: Record<string, unknown> = {};
+
+    await signInAsOwner(page);
+    await mockOwnerRest(page, calls);
+
+    await page.goto("/shop");
+    await expect(page.getByTestId("shop-cep")).toHaveValue("01310-100");
+    await page.getByTestId("shop-save").click();
+
+    await expect(page.getByText("Shop details saved.")).toBeVisible();
+    expect(calls.contact).toMatchObject({ address_cep: "01310100" });
+  });
+});
