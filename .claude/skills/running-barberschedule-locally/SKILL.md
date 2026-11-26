@@ -23,6 +23,14 @@ Run from the repo root. Each step names the failure it prevents.
 6. **Metro.** Start detached, **without `CI=1`** (CI mode disables hot reload):
    `REACT_NATIVE_PACKAGER_HOSTNAME=$(.claude/skills/running-barberschedule-locally/lan-ip.sh) setsid nohup npx expo start --lan --clear > /tmp/expo.log 2>&1 < /dev/null &`
    Restart after any `.env.local` change, with `--clear`.
+6b. **Edge Functions** (invites, account deletion, notifications). Without them an owner's invite to a professional or to a new business
+   fails (the app now says "Unable to send the invite"). `config.toml` has `edge_runtime` off, but `functions serve` brings its own runtime:
+   `cp supabase/functions/.env.example supabase/functions/.env.local` once (git ignores it), then start it detached, like Metro:
+   `setsid nohup npx supabase functions serve --env-file supabase/functions/.env.local > /tmp/functions.log 2>&1 < /dev/null &`
+   (it may need the sandbox disabled, like `supabase start`). **`SHOP_URL_TEMPLATE=http://{slug}.localhost:8081` in that file matters:** the
+   invite's redirect (where the e-mail link opens) is built from it; without it the link falls back to the auth `site_url`
+   (`http://127.0.0.1:3000`), which is not the app. The invite e-mail lands in the local mailbox, `http://127.0.0.1:55424`. Production
+   needs `https://*.zencpro.app/**` in the Supabase redirect allow-list (see `docs/hosted-deploy.md`).
 7. **QR.** Expo prints none without a TTY. `node .claude/skills/running-barberschedule-locally/qr.mjs` prints an SVG (stdout) and the URL (stderr). Pass the SVG to `show_widget` as the widget code (add `read_me` first if this session has not). **Never paste block-character QR text in chat: Expo Go could not scan it.** Also give the `exp://<LAN-IP>:8081` URL for manual entry. Phone must be on the same Wi-Fi.
 8. **Validate.** `.claude/skills/running-barberschedule-locally/validate.sh` (`--fast` skips typecheck/lint/jest). Exit code = number of failures. Fix using the `->` hint on each FAIL line, rerun until 0.
 
@@ -36,6 +44,7 @@ Run from the repo root. Each step names the failure it prevents.
 | migrations applied = files | missing tables/functions (e.g. new signups can't book) |
 | test user login = 200 | user missing / wrong DB |
 | typecheck, lint, jest | broken checkout |
+| Edge Functions answer (`/functions/v1/invite-professional` OPTIONS = 204) | invites fail silently-looking (`functions serve` not running) |
 | Metro `packager-status:running`, no `CI=1` | server down / no hot reload |
 | Android bundle = 200 | compile error in app code |
 
@@ -46,6 +55,7 @@ Not covered: what the screens look like. Confirm the UI on the device, or in a b
 - **`pkill -f "expo start"`** matches your own shell command and kills it (exit 144). Kill by port instead: `kill $(ss -ltnp | grep :8081 | grep -o 'pid=[0-9]*' | cut -d= -f2)`.
 - **LAN IP is DHCP.** After reconnecting to Wi-Fi it may change: rerun step 4, restart Metro, regenerate the QR.
 - **Claiming success from `curl /status` alone.** It is up before the bundle compiles; the bundle check is what catches app errors.
+- **Invites "do nothing".** `npx supabase functions serve` is not running (the function is unreachable), or `SHOP_URL_TEMPLATE` is not set so the link in the e-mail points at `127.0.0.1:3000`. Step 6b; `validate.sh` checks it.
 - `docker exec` and `supabase start` may need the sandbox disabled; the daemon socket is outside it.
 
 ## Red flags — stop and rerun validate.sh

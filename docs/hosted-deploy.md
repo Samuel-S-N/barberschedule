@@ -36,8 +36,9 @@ without understanding which migration is missing.
 ## 3. Auth settings (Dashboard > Authentication)
 
 1. **Email confirmations ON** (Providers > Email > "Confirm email"). The customer email claim relies on it.
-2. **URL Configuration:** Site URL = the production web origin; Redirect URLs = the production origin with `/**`
-   and `zenc://**`. Local-only `exp://` URLs do not belong here.
+2. **URL Configuration:** Site URL = the production web origin; Redirect URLs = the production origin with `/**`,
+   **`https://*.zencpro.app/**`** (invites and password recovery redirect to each business's own subdomain; without the wildcard the
+   link in the e-mail is refused and falls back to the Site URL) and `zenc://**`. Local-only `exp://` URLs do not belong here.
 3. **Minimum password length 8** (Providers > Email), the same rule as the app and `supabase/config.toml`.
 4. Verify with the repo's check (it fails while confirmations are off):
 
