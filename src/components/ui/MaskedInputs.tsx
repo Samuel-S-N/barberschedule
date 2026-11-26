@@ -39,10 +39,11 @@ export function TimeInput({ value, onChangeValue, placeholder, ...rest }: Masked
   return <Input {...rest} keyboardType="number-pad" onChangeText={(text) => onChangeValue(formatTimeInput(text))} placeholder={placeholder ?? t("examples.time")} value={value} />;
 }
 
+// `value` may be digits (the stored form), an old formatted value or what the user typed: it is always DISPLAYED as 00000-000.
 export function CepInput({ value, onChangeValue, placeholder, ...rest }: MaskedProps) {
   const { t } = useTranslation();
 
-  return <Input {...rest} keyboardType="number-pad" maxLength={9} onChangeText={(text) => onChangeValue(formatCepInput(text))} placeholder={placeholder ?? t("examples.cep")} value={value} />;
+  return <Input {...rest} keyboardType="number-pad" maxLength={9} onChangeText={(text) => onChangeValue(formatCepInput(text))} placeholder={placeholder ?? t("examples.cep")} value={formatCepInput(value)} />;
 }
 
 // Phone / WhatsApp: `value` is the stored DIGITS; the field shows them formatted and reports digits only (any other character typed or

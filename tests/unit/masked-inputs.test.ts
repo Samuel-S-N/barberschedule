@@ -13,6 +13,12 @@ describe("CepInput", () => {
     expect(view.getByTestId("cep").props.maxLength).toBe(9);
   });
 
+  it.each([["01310100", "01310-100"], ["01310-100", "01310-100"], ["", ""], ["013", "013"], ["013101", "01310-1"]])("always DISPLAYS a stored value (digits or old formatted) as 00000-000: %s", async (stored, shown) => {
+    const view = await render(React.createElement(CepInput, { label: "ZIP", onChangeValue: jest.fn(), testID: "cep", value: stored }));
+
+    expect(view.getByTestId("cep").props.value).toBe(shown);
+  });
+
   it("masks typed digits", async () => {
     const onChangeValue = jest.fn();
     const view = await render(React.createElement(CepInput, { label: "ZIP", onChangeValue, testID: "cep", value: "" }));
