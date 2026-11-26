@@ -1,15 +1,50 @@
-# Hosted Supabase deploy checklist
+# Hosted deploy (dev, production, backups)
 
-Run these **in order**, by a human with access to the hosted project. Nothing here has been applied to the hosted
-project yet. Never run `supabase db reset` against it.
+> **Status (2026-11-26): target flow, not applied yet.** Nothing is deployed. The flow below is designed in
+> `docs/superpowers/specs/2026-11-26-deploy-05-design.md` and built by three plans: `2026-11-26-deploy-1-dev.md`,
+> `-deploy-2-prod.md` and `-deploy-3-backups.md`. Each plan's last task removes this banner for what it delivered. Until then,
+> sections 1 to 10 are the manual steps a human would run; once the pipeline exists the pipeline runs sections 2, 3 (config) and 5
+> (functions) for every deploy and a human only does the one-time parts marked **(user)**.
 
-Migrations: the hosted project does not exist yet, so the first deploy applies **every** migration in `supabase/migrations`
-(file order, currently `0001` … `0066`; `0061`-`0063` are intentionally absent until the payouts work lands). After the first
-deploy migrations are append-only (decision `018`): never rewrite an applied file, add a new one.
+## 0. The flow in one screen
+
+- **One branch, `main`.** Every merge runs `verify` (typecheck, lint, Jest, script tests, pgTAP on a clean database) and then deploys
+  to **dev** (`zenc-dev` + the `zenc-web-dev` Worker behind Cloudflare Access) by itself.
+- **Production** is the same commit promoted by one approval in the GitHub Environment `production` (reviewer: the owner): `zenc-prod`
+  + the `zenc-web` Worker on `zencpro.app` and `*.zencpro.app`.
+- **Backups:** nightly encrypted dump of `zenc-prod` to Cloudflare R2 (30 daily, 12 monthly); restore runbook `docs/restore-runbook.md`.
+- Migrations are **append-only from the first hosted deploy** (decision `018`); never `db reset` and never `db push --include-seed` on
+  a hosted project (`supabase/seed.sql` has fictional users).
+- Every account is owned by `zencpro.admin@gmail.com` (2FA). Secrets are pasted by the owner into GitHub, Supabase or Cloudflare,
+  never into the repo, a chat or a tool.
+
+### Secrets and variables (names exactly as the workflows read them)
+
+| Name | Kind | Where | Used by |
+|---|---|---|---|
+| `SUPABASE_ACCESS_TOKEN` | secret | GitHub env `dev`, `production` | `db push`, `config push`, `functions deploy` |
+| `SUPABASE_DB_PASSWORD` | secret | GitHub env `dev`, `production` | `db push` |
+| `SUPABASE_PROJECT_REF` | variable | GitHub env `dev`, `production` | every Supabase command |
+| `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | variable (public values) | GitHub env `dev`, `production` | web build, smoke checks |
+| `EXPO_PUBLIC_SHOP_BASE_DOMAIN`, `EXPO_PUBLIC_AUTH_COOKIE_DOMAIN`, `EXPO_PUBLIC_DEV_SHOP_SLUG`, `EXPO_PUBLIC_VAPID_PUBLIC_KEY`, `EXPO_PUBLIC_SENTRY_DSN` | variable | GitHub env `dev`, `production` | web build |
+| `RESEND_API_KEY` | secret | GitHub env (one key per env) **and** Supabase function secret | SMTP in `config push`; `dispatch-notifications` |
+| `DISPATCH_TOKEN` | secret | GitHub env **and** Supabase function secret (same value) | cron job to `dispatch-notifications` (Vault via `db push`) |
+| `CLOUDFLARE_API_TOKEN` | secret | GitHub env `dev`, `production` (a separate token each) | `wrangler deploy` |
+| `CLOUDFLARE_ACCOUNT_ID` | variable | GitHub env `dev`, `production` | `wrangler deploy` |
+| `SENTRY_AUTH_TOKEN` | secret | GitHub env `dev`, `production` | source map upload |
+| `SENTRY_DSN_FUNCTIONS`, `SENTRY_ENVIRONMENT`, `EMAIL_FROM`, `SHOP_URL_TEMPLATE`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `EXPO_ACCESS_TOKEN` (optional) | Supabase function secrets | each Supabase project | Edge Functions |
+| `SUPABASE_DB_URL` (session pooler of `zenc-prod`), `AGE_PUBLIC_KEY`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | secret | GitHub env `backup` only | nightly backup |
+| `R2_ACCOUNT_ID`, `R2_BUCKET` | variable | GitHub env `backup` only | nightly backup |
+| age **private** key | (never in a system) | the owner's password manager | restore only |
+
+The step-by-step owner checklist (R2 card, bucket, tokens, key pair, Access policy, Resend domain, Email Routing, approving the first
+production run) is section 6 of the spec; each plan repeats the items it needs.
 
 ## 1. Before touching the database
 
-1. **Back up** (Dashboard > Database > Backups, or `supabase db dump --linked -f backup.sql`).
+(Only relevant for a project that already holds data. A new project has none: skip to section 2.)
+
+1. **Back up** (the nightly job, or `supabase db dump --linked -f backup.sql`).
 2. **Duplicate emails.** `0031` creates a unique index on `lower(email)` per shop and fails if duplicates exist:
 
    ```sql
@@ -67,10 +102,12 @@ row is merged into the account's own row if one exists). Turn it off again if co
   put the same **public** key in the web build environment as `EXPO_PUBLIC_VAPID_PUBLIC_KEY`. The private key is never committed
   (local development uses the git-ignored `supabase/functions/.env`). Without the three secrets, web notifications fail with
   `Missing VAPID_...` in `notification_outbox.last_error` while Expo pushes keep working.
-- `pg_cron` registers the jobs in migration `0022` when the extension is available; otherwise schedule
-  `enqueue_notification_reminders()` every 15 minutes and `materialize_recurrence_job()` hourly.
-- Whatever schedules `dispatch-notifications` must send `Authorization: Bearer <service role key>`; any other caller
-  gets 401 (the anon key ships inside the app).
+- `pg_cron` registers the jobs in migrations `0022` and `0062` (`zenc-notification-reminders` every 15 minutes,
+  `zenc-materialize-recurrence` hourly, `barberschedule-payout-due` hourly at :05). They only **enqueue** rows. Until migration
+  `0083` (plan 1) nothing called `dispatch-notifications`: it was only run by hand, so no push or reminder e-mail would leave a
+  hosted project. `0083` adds the job `zenc-dispatch-notifications` (every minute, `pg_net`) that calls the function with
+  `Authorization: Bearer <DISPATCH_TOKEN>`; the URL and the token come from Supabase Vault (`dispatch_url`, `dispatch_token`,
+  filled from `[remotes.*.db.vault]` by `db push`). The service-role bearer is still accepted for manual calls; the anon key gets 401.
 
 ## 6. Smoke test on hosted
 

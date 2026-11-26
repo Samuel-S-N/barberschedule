@@ -1,11 +1,18 @@
 # Release checklist
 
+> **Target flow (planned, see `docs/hosted-deploy.md` section 0):** a merge to `main` deploys to dev; production is the same commit
+> approved in the GitHub Environment `production`. The 0.5 release is web/PWA only: no EAS or store build. Until the pipeline
+> exists, the manual steps in `docs/hosted-deploy.md` apply.
+
 ## Required environment
 
-Configure these values in the deployment platform, never in source control:
+Configure these values in the deployment platform (GitHub Environments and Supabase function secrets), never in source control.
+The full list with names and places is the table in `docs/hosted-deploy.md` section 0. In short:
 
-- App: `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-- Edge Function: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, optional `EXPO_ACCESS_TOKEN`
+- Web build: `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `EXPO_PUBLIC_SHOP_BASE_DOMAIN`,
+  `EXPO_PUBLIC_AUTH_COOKIE_DOMAIN`, `EXPO_PUBLIC_VAPID_PUBLIC_KEY`, `EXPO_PUBLIC_SENTRY_DSN`
+- Edge Functions: platform-provided `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`; set by us `RESEND_API_KEY`,
+  `EMAIL_FROM`, `SHOP_URL_TEMPLATE`, `DISPATCH_TOKEN`, the VAPID three, `SENTRY_DSN_FUNCTIONS`, `SENTRY_ENVIRONMENT`
 
 ## Local checks
 
@@ -16,7 +23,7 @@ npm run test:e2e:web
 npm run export:web
 ```
 
-`pg_cron` jobs are registered by migration `0022` when the extension is available. Otherwise schedule `enqueue_notification_reminders()` every 15 minutes and `materialize_recurrence_job()` hourly through the deployment scheduler.
+`pg_cron` jobs are registered by migrations `0022`, `0062` and (from plan 1) `0083`; hosted Supabase has `pg_cron` and `pg_net`, so no external scheduler is needed. `0083` is what makes `dispatch-notifications` run (see `docs/hosted-deploy.md` section 5).
 
 ## Store identifiers
 

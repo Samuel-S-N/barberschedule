@@ -240,6 +240,10 @@ Everything here is done by the user (the person typing secrets is never Claude).
   compares against `SUPABASE_SERVICE_ROLE_KEY` and `create-shop.mjs` sends it as a bearer; spike S4 checks what the hosted project injects.
 - **R9 Restoring `auth` data.** `auth.users` has internal triggers and hashes; the restore into dev is exactly where problems show up (that
   is the point of the drill).
+- **R10 Storage files are not in the database dump.** Avatars are Supabase Storage objects (migration `0027`); `db dump` keeps the
+  `storage.objects` rows but not the files, so a restore leaves profile pictures missing until re-uploaded. Accepted for 0.5 (see
+  open question 7); plan 3 documents it in the runbook.
+- **R11 Dev and production share one Sentry project per surface** (`zenc-app`, `zenc-functions`), told apart by the `environment` tag.
 
 ## 8. Open questions (for the orchestrator / user)
 
@@ -251,6 +255,10 @@ Everything here is done by the user (the person typing secrets is never Claude).
 4. Should `zencpro.com` redirect somewhere (to `.com.br`)? Out of scope here unless the user wants it.
 5. Branch protection: require `verify` on PRs to `main`? Proposed yes (setting in the checklist).
 6. After the first real business, a second restore drill on real data: schedule it? Proposed: yes, the week after the first business goes live.
+7. Avatars (Supabase Storage files) are not part of the nightly backup (R10). Accept for 0.5, or add a bucket copy through Supabase's
+   S3-compatible endpoint to `scripts/backup.sh` (a small follow-up in plan 3)? Proposed: accept.
+8. Should the dev data ever be seeded with the demo business automatically, or always by the owner running `create-shop.mjs` once
+   (plan 1 Task 8 Step 9, proposed)?
 
 ## 9. Decisions in this document that are mine, not the user's
 
