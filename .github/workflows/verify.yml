@@ -1,8 +1,12 @@
 name: verify
 
+# Runs on pull requests and when deploy.yml calls it for a merge to main (so a merge is verified once, not twice).
 on:
-  push:
   pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
   verify:

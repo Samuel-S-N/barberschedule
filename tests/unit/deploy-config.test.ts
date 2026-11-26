@@ -47,3 +47,58 @@ describe("public/_headers", () => {
     expect(headers).toMatch(/\/manifest\.json\n\s+Cache-Control: no-cache/);
   });
 });
+
+describe("workflows", () => {
+  const verify = read(".github/workflows/verify.yml");
+  const deploy = read(".github/workflows/deploy.yml");
+  const deployEnv = read(".github/workflows/deploy-env.yml");
+
+  it("verify runs on pull requests and when called, not on every push", () => {
+    expect(verify).toContain("pull_request:");
+    expect(verify).toContain("workflow_call:");
+    expect(verify).not.toMatch(/^ {2}push:/m);
+    expect(verify).toContain("npm run verify");
+  });
+
+  it("deploy runs only for main, verifies first, never overlaps and never cancels a running deploy", () => {
+    expect(deploy).toMatch(/branches: \[main\]/);
+    expect(deploy).toContain("uses: ./.github/workflows/verify.yml");
+    expect(deploy).toMatch(/concurrency:\s+group: deploy\s+cancel-in-progress: false/);
+    expect(deploy).toMatch(/dev:\s+needs: verify\s+uses: \.\/\.github\/workflows\/deploy-env\.yml\s+with:\s+environment: dev/);
+  });
+
+  it("the deploy steps are one reusable workflow, never push seed data and never reset", () => {
+    expect(deployEnv).toContain("workflow_call:");
+    expect(deployEnv).toContain("environment: ${{ inputs.environment }}");
+    expect(deployEnv).not.toMatch(/--include-seed|db reset/);
+    for (const command of ["npx supabase db push --linked", "npx supabase config push", "npx supabase functions deploy", "npx wrangler deploy", "npx sentry-expo-upload-sourcemaps"]) {
+      expect(deployEnv).toContain(command);
+    }
+  });
+
+  it("deploys the database before anything that depends on it, and the web build last", () => {
+    const order = ["supabase db push", "supabase config push", "supabase functions deploy", "expo export", "wrangler deploy"].map((step) => deployEnv.indexOf(step));
+
+    expect(order.every((position) => position > -1)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+  });
+
+  it("refuses to run while a placeholder is left in the hosted config, or when its project is not in config.toml", () => {
+    expect(deployEnv).toContain("REPLACE-");
+    expect(deployEnv).toContain('project_id = \\"$REF\\"');
+  });
+
+  it("source maps are uploaded and then removed from what is published", () => {
+    expect(deployEnv).toContain("--source-maps");
+    expect(deployEnv.indexOf("sentry-expo-upload-sourcemaps")).toBeLessThan(deployEnv.indexOf("-name '*.map' -delete"));
+    expect(deployEnv.indexOf("-name '*.map' -delete")).toBeLessThan(deployEnv.indexOf("wrangler deploy"));
+  });
+
+  it("every secret and variable a workflow reads is documented in docs/hosted-deploy.md", () => {
+    const docs = read("docs/hosted-deploy.md");
+    const used = new Set([...(verify + deploy + deployEnv).matchAll(/\b(?:secrets|vars)\.([A-Z0-9_]+)/g)].map((match) => match[1]));
+
+    expect(used.size).toBeGreaterThan(5);
+    for (const name of used) expect(docs).toContain(name);
+  });
+});

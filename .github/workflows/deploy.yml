@@ -1,0 +1,26 @@
+name: deploy
+
+# Every merge to main: verify, then deploy to dev. Production (plan 2) is the same commit behind the `production` environment's approval.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy at a time; a newer merge waits instead of cancelling a deploy that is already applying migrations.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    uses: ./.github/workflows/verify.yml
+
+  dev:
+    needs: verify
+    uses: ./.github/workflows/deploy-env.yml
+    with:
+      environment: dev
+    secrets: inherit

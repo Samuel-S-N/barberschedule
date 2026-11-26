@@ -1,0 +1,73 @@
+name: deploy-env
+
+# The deploy steps for ONE environment (dev or production), so the two cannot drift. The job's `environment` supplies that
+# environment's secrets and variables, and a required reviewer on it gates the whole job.
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    env:
+      REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      DISPATCH_TOKEN: ${{ secrets.DISPATCH_TOKEN }}
+      DISPATCH_URL: https://${{ vars.SUPABASE_PROJECT_REF }}.supabase.co/functions/v1/dispatch-notifications
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      SENTRY_ORG: zenc
+      SENTRY_PROJECT: zenc-app
+      SENTRY_URL: https://de.sentry.io/
+      EXPO_PUBLIC_SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      EXPO_PUBLIC_SHOP_BASE_DOMAIN: ${{ vars.EXPO_PUBLIC_SHOP_BASE_DOMAIN }}
+      EXPO_PUBLIC_AUTH_COOKIE_DOMAIN: ${{ vars.EXPO_PUBLIC_AUTH_COOKIE_DOMAIN }}
+      EXPO_PUBLIC_DEV_SHOP_SLUG: ${{ vars.EXPO_PUBLIC_DEV_SHOP_SLUG }}
+      EXPO_PUBLIC_VAPID_PUBLIC_KEY: ${{ vars.EXPO_PUBLIC_VAPID_PUBLIC_KEY }}
+      EXPO_PUBLIC_SENTRY_DSN: ${{ vars.EXPO_PUBLIC_SENTRY_DSN }}
+      EXPO_PUBLIC_APP_ENV: ${{ inputs.environment == 'production' && 'production' || 'dev' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # Guards: `config push` applies the [remotes.*] block whose project_id equals REF. If REF is not in config.toml the push would send the
+      # LOCAL values (127.0.0.1 site URL, confirmations off) to a hosted project, and a placeholder left in the hosted blocks is a typo.
+      - name: Hosted config is filled in
+        run: |
+          test -n "$REF" || { echo "SUPABASE_PROJECT_REF is not set for this environment"; exit 1; }
+          grep -q "project_id = \"$REF\"" supabase/config.toml || { echo "No [remotes.*] block for project $REF in supabase/config.toml"; exit 1; }
+          ! grep -n "REPLACE-" supabase/config.toml wrangler.jsonc || { echo "Fill in the REPLACE- placeholders first"; exit 1; }
+
+      # Database first: a function or a web build that needs a new column must never run before its migration.
+      - run: npx supabase link --project-ref "$REF"
+      - run: npx supabase db push --linked --yes
+      - run: npx supabase config push --project-ref "$REF" --yes
+      - run: npx supabase functions deploy --project-ref "$REF" --use-api
+
+      - run: npx expo export --platform web --source-maps --output-dir dist
+      - run: npx sentry-expo-upload-sourcemaps dist
+      # Source maps go to Sentry only; they are never published with the site.
+      - run: find dist -name '*.map' -delete
+      - run: npx wrangler deploy ${{ inputs.environment == 'production' && '--env production' || '' }}
+
+      # Smoke: e-mail confirmations are enforced and the functions gateway answers the browser preflight.
+      - run: node scripts/assert-hosted-auth.mjs
+        env:
+          SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      - run: test "$(curl -s -o /dev/null -w '%{http_code}' -X OPTIONS "$EXPO_PUBLIC_SUPABASE_URL/functions/v1/invite-professional")" = "204"
