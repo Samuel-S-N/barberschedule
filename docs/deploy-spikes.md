@@ -12,7 +12,7 @@ line under "Risks" in the spec.
 | S4a Vault values from `db push` | R4 | dev project | checked by the first dev deploy |
 | S4b key model on the hosted project | R8 | dev project | to do after the first deploy |
 | S4c source maps reach Sentry | R2/Sentry | `SENTRY_AUTH_TOKEN` | checked by the first dev deploy |
-| P1 what a dump contains | R9 | dev session-pooler URL | plan 3 |
+| P1 what a dump contains | R9 | dev session-pooler URL | to do before the first backup (below) |
 
 ## S3: what would `config push` change? (before the first deploy)
 
@@ -53,3 +53,22 @@ issue shows readable file names, tagged `dev`, with no e-mail address.
 Only if the owner wants the SDK instead of `supabase/functions/_shared/monitoring.ts`. Deploy a scratch function to `zenc-dev`
 that calls `Sentry.init({ dsn, defaultIntegrations: false, sendDefaultPii: false })` from `npm:@sentry/deno` and captures one
 exception; pass = the event arrives and the function boots. Delete the scratch function afterwards.
+
+## P1: what does a dump of this project really contain? (before the first backup; against zenc-dev, never production)
+
+The owner runs it with the session-pooler string of `zenc-dev` typed only into their own shell:
+
+```bash
+read -rs DEV_DB_URL && export DEV_DB_URL
+mkdir -p /tmp/zenc-p1 && cd /tmp/zenc-p1
+npx supabase db dump --db-url "$DEV_DB_URL" -f roles.sql --role-only
+npx supabase db dump --db-url "$DEV_DB_URL" -f schema.sql
+npx supabase db dump --db-url "$DEV_DB_URL" -f data.sql --data-only --use-copy
+grep -c '^COPY ' data.sql
+grep -E '^COPY (auth\.users|public\.shops|public\.appointments|vault\.secrets|storage\.objects)' data.sql
+```
+
+Pass: the three dumps run (the CLI needs Docker for a matching `pg_dump`) and `COPY auth.users` and `COPY public.shops` are present. Record
+whether `vault.secrets` appears (if so, the encryption matters even more), whether the dump needs the `--exclude` flags from Supabase's
+own backup guide, and the time and size. If `auth.users` is missing from `data.sql`, stop: `scripts/backup.sh` must dump `auth` explicitly
+(`--schema`) before the first production backup. Then `shred -u` the files and remove `/tmp/zenc-p1`.

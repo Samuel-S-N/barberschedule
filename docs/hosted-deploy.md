@@ -1,8 +1,10 @@
 # Hosted deploy (dev, production, backups)
 
 > **Status (2026-11-26):** plans 1 (dev pipeline, scheduled dispatch, Sentry) and 2 (production promotion) are **in the repository** but
-> have never run: nothing is deployed yet, because they need the owner's secrets (sections 0b to 0e). Backups (plan 3) are designed in
+> have never run: nothing is deployed yet, because they need the owner's secrets (sections 0b to 0f). Backups (plan 3, section 0f) are
+> built too and also never ran; the plans and the design are in
 > `docs/superpowers/specs/2026-11-26-deploy-05-design.md` and `docs/superpowers/plans/2026-11-26-deploy-{1-dev,2-prod,3-backups}.md`.
+> Restore: `docs/restore-runbook.md`.
 > Sections 1 to 10 below are the manual steps; the pipeline runs sections 2, 3 (config) and 5 (functions) for every deploy, and a human
 > only does the one-time parts. Spikes and their pass criteria: `docs/deploy-spikes.md`.
 
@@ -139,11 +141,31 @@ The script checks the slug first and sends nothing if it is taken. Never run it,
    shared with dev: do this once). Turn "Lembretes por e-mail" off and confirm no second reminder row appears.
 4. iPhone Safari: install the PWA from the business address, sign in, enable push. Record the result (it is unverified until then).
 
+## 0f. Backups: what the owner does (once, after production is live)
+
+1. **R2:** Cloudflare > R2 > add a payment card (the free tier is 10 GB; stay inside it) and create the bucket `zenc-backups` (no public access).
+   Lifecycle rules (bucket > Settings > Object lifecycle rules): prefix `daily/` delete after **30** days; prefix `monthly/` delete after **366** days.
+2. **R2 token:** R2 > Manage API tokens > Create > **Object Read & Write limited to the bucket `zenc-backups`**. Copy the Access Key ID and the Secret.
+3. **Key pair, on your own computer:** `age-keygen -o zenc-backup.key`. It prints `Public key: age1...`. Store the **whole file** in the
+   password manager and keep one offline copy, then delete it from the computer (`shred -u zenc-backup.key`). The line starting
+   `AGE-SECRET-KEY-` is the private key and goes nowhere else.
+4. **GitHub environment `backup`** (no reviewer). Secrets: `SUPABASE_DB_URL` (zenc-prod > Connect > **Session pooler**, password filled in
+   and percent-encoded: the direct host is IPv6-only and GitHub runners are IPv4), `AGE_PUBLIC_KEY` (the `age1...` line only; the workflow
+   refuses anything else, including a private key), `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`. Variables: `R2_ACCOUNT_ID`, `R2_BUCKET=zenc-backups`.
+5. **First run:** Actions > backup > Run workflow. The log ends with `Uploaded daily/zenc-prod-<date>.tar.age (N bytes)`; the object is in R2.
+6. **Prove the encryption is real** (the unit tests use a stub): download the object, then `file zenc-prod-<date>.tar.age` must not say
+   "tar archive", and `age -d -i zenc-backup.key zenc-prod-<date>.tar.age | tar -tf -` lists `roles.sql schema.sql data.sql counts.csv`
+   (key retrieved from the password manager just for this command). A wrong key must fail.
+7. **Drill 1:** follow `docs/restore-runbook.md` into `zenc-dev`, time it, fix the runbook where it was wrong, and fill the drill log.
+8. **Weekly check** (runbook section 7) and **drill 2** one week after the first real business goes live.
+
+Never in this chain: the private key in GitHub or a chat, a dump uploaded unencrypted, a restore against production without the runbook.
+
 ## 1. Before touching the database
 
 (Only relevant for a project that already holds data. A new project has none: skip to section 2.)
 
-1. **Back up** (the nightly job, or `supabase db dump --linked -f backup.sql`).
+1. **Back up** (the nightly job in section 0f, or a manual run of it; `supabase db dump --linked -f backup.sql` for a quick copy).
 2. **Duplicate emails.** `0031` creates a unique index on `lower(email)` per shop and fails if duplicates exist:
 
    ```sql
