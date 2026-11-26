@@ -32,9 +32,11 @@ export default function OwnerSetupScreen() {
   const open = useMutation({
     mutationFn: () => completeShopSetup(supabase, shopId ?? ""),
     onSuccess: async () => {
+      // Show the link and QR first. Flipping `setup_completed_at` makes the routing gate send /setup to the panel, so the owner must
+      // already be on the link screen (which then offers "Ir para a agenda") before the shop is refreshed.
+      router.replace({ params: { from: "setup" }, pathname: "/shop-link" });
       await queryClient.invalidateQueries({ queryKey: ["current-shop"] });
       await queryClient.invalidateQueries({ queryKey: ["shop-setup-status"] });
-      router.push("/shop-link");
     },
   });
   const go = (path: string) => () => router.push(path as never);

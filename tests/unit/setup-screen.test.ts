@@ -7,13 +7,15 @@ import i18n from "../../src/i18n";
 import OwnerSetupScreen from "../../app/(owner)/setup";
 
 const mockPush = jest.fn();
+const mockReplace = jest.fn();
+const order: string[] = [];
 const mockRefetch = jest.fn();
 const mockStatus = jest.fn();
 const mockComplete = jest.fn();
 const mockAccept = jest.fn();
 
 jest.mock("react-native-safe-area-context", () => ({ useSafeAreaInsets: () => ({ bottom: 0, left: 0, right: 0, top: 0 }) }));
-jest.mock("expo-router", () => ({ useFocusEffect: (callback: () => void) => callback(), useRouter: () => ({ push: mockPush }) }));
+jest.mock("expo-router", () => ({ useFocusEffect: (callback: () => void) => callback(), useRouter: () => ({ push: mockPush, replace: mockReplace }) }));
 jest.mock("../../src/providers/AppProviders", () => ({ useSupabaseSession: () => ({ profile: { role: "owner" }, supabase: { auth: { signOut: jest.fn() } } }) }));
 jest.mock("../../src/features/setup/use-setup-status", () => ({ useSetupStatus: () => mockStatus() }));
 jest.mock("../../src/features/shops/use-owner-shop-id", () => ({ useOwnerShopId: () => ({ data: "s1" }) }));
@@ -84,16 +86,25 @@ describe("owner setup checklist", () => {
     await waitFor(() => expect(mockRefetch).toHaveBeenCalled());
   });
 
-  it("opens the agenda when everything is done: completes the setup, then goes to the link screen", async () => {
+  it("opens the agenda when everything is done: completes the setup, shows the link screen FIRST, and only then lets the shop flip to open", async () => {
     status([]);
     mockComplete.mockResolvedValue("2026-11-26T10:00:00Z");
+    order.length = 0;
+    mockReplace.mockImplementation(() => order.push("navigate"));
+    const invalidate = jest.spyOn(QueryClient.prototype, "invalidateQueries").mockImplementation(async () => {
+      order.push("invalidate");
+    });
     const view = await renderScreen();
 
     expect(view.getByTestId("setup-open").props.accessibilityState.disabled).toBeFalsy();
     await fireEvent.press(view.getByTestId("setup-open"));
 
     await waitFor(() => expect(mockComplete).toHaveBeenCalledWith(expect.anything(), "s1"));
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/shop-link"));
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith({ params: { from: "setup" }, pathname: "/shop-link" }));
+    await waitFor(() => expect(invalidate).toHaveBeenCalled());
+    // Flipping setup_completed_at makes the routing gate send /setup to the panel: the owner must already be on the link screen.
+    expect(order[0]).toBe("navigate");
+    invalidate.mockRestore();
   });
 
   it("shows an error when the server refuses to open", async () => {

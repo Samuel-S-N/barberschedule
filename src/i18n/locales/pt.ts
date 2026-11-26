@@ -407,7 +407,7 @@ export const pt: DeepStringRecord<typeof en> = {
     stepMenuChrome: "Toque no menu (⋯) do navegador",
     stepShareOrMenu: "Toque no ícone de Compartilhar. Se ele não aparecer, toque primeiro no menu do navegador.",
   },
-  shopLinkScreen: { copied: "Link copiado", copy: "Copiar link", download: "Baixar QR (PNG)", downloadFailed: "Não foi possível baixar o QR code.", failed: "Não foi possível compartilhar. Copie o link manualmente.", introOwner: "Mostre este QR code ou envie o link para seus clientes agendarem.", introProfessional: "Este é o link do estabelecimento. Compartilhe com seus clientes: eles agendam com qualquer profissional.", qrLabel: "QR code do estabelecimento", share: "Compartilhar", title: "Link e QR code", titleProfessional: "Link do estabelecimento" },
+  shopLinkScreen: { copied: "Link copiado", copy: "Copiar link", download: "Baixar QR (PNG)", downloadFailed: "Não foi possível baixar o QR code.", failed: "Não foi possível compartilhar. Copie o link manualmente.", introOwner: "Mostre este QR code ou envie o link para seus clientes agendarem.", introProfessional: "Este é o link do estabelecimento. Compartilhe com seus clientes: eles agendam com qualquer profissional.", qrLabel: "QR code do estabelecimento", share: "Compartilhar", toAgenda: "Ir para a agenda", title: "Link e QR code", titleProfessional: "Link do estabelecimento" },
   setup: {
     agreement: {
       accept: "Li e aceito",

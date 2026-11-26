@@ -408,7 +408,7 @@ export const en = {
     stepMenuChrome: "Tap the browser menu (⋯)",
     stepShareOrMenu: "Tap the Share icon. If you do not see it, tap the browser menu first.",
   },
-  shopLinkScreen: { copied: "Link copied", copy: "Copy link", download: "Download QR (PNG)", downloadFailed: "Could not download the QR code.", failed: "Could not share. Copy the link by hand.", introOwner: "Show this QR code or send the link so your customers can book.", introProfessional: "This is the business link. Share it with your customers: they can book with any professional.", qrLabel: "Business QR code", share: "Share", title: "Link and QR code", titleProfessional: "Business link" },
+  shopLinkScreen: { copied: "Link copied", copy: "Copy link", download: "Download QR (PNG)", downloadFailed: "Could not download the QR code.", failed: "Could not share. Copy the link by hand.", introOwner: "Show this QR code or send the link so your customers can book.", introProfessional: "This is the business link. Share it with your customers: they can book with any professional.", qrLabel: "Business QR code", share: "Share", toAgenda: "Go to the agenda", title: "Link and QR code", titleProfessional: "Business link" },
   setup: {
     agreement: {
       accept: "I have read and accept",
