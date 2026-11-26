@@ -31,6 +31,7 @@ export function buildReminderEmail(payload: ReminderPayload, appointmentsUrl: st
   const time = localTime(payload.starts_at, payload.shop_timezone);
   const headline = `Lembrete: amanhã${time ? ` às ${time}` : ""}, ${service}${professional ? ` com ${professional}` : ""} em ${shop}`;
   const optOut = "Para não receber, desative em Configurações > Notificações.";
+  const automatic = "Este e-mail é automático. Para falar com o estabelecimento, use o contato dele no app.";
   const cell = "font-family:Arial,Helvetica,sans-serif;color:#4A4036;";
   const html = `<!doctype html>
 <html lang="pt-BR">
@@ -42,13 +43,14 @@ export function buildReminderEmail(payload: ReminderPayload, appointmentsUrl: st
 <tr><td style="padding:32px 32px 8px 32px;">${LOGO}</td></tr>
 <tr><td style="padding:8px 32px 0 32px;${cell}font-size:20px;font-weight:700;color:#1F1A14;">${escapeHtml(headline)}</td></tr>
 ${address ? `<tr><td style="padding:12px 32px 0 32px;${cell}font-size:16px;line-height:24px;">Endereço: ${escapeHtml(address)}</td></tr>\n` : ""}<tr><td style="padding:24px 32px 8px 32px;"><a href="${escapeHtml(appointmentsUrl)}" style="display:inline-block;background-color:#DB9A34;color:#1F1A14;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;text-decoration:none;padding:14px 28px;border-radius:14px;">Ver meus agendamentos</a></td></tr>
-<tr><td style="padding:16px 32px 32px 32px;${cell}font-size:13px;line-height:20px;color:#6B5F52;">${escapeHtml(optOut)}</td></tr>
+<tr><td style="padding:16px 32px 12px 32px;${cell}font-size:13px;line-height:20px;color:#6B5F52;">${escapeHtml(optOut)}</td></tr>
+<tr><td style="padding:0 32px 32px 32px;${cell}font-size:13px;line-height:20px;color:#6B5F52;">${automatic}</td></tr>
 </table>
 </td></tr>
 </table>
 </body>
 </html>`;
-  const text = [headline, address ? `Endereço: ${address}` : "", `Ver meus agendamentos: ${appointmentsUrl}`, optOut].filter(Boolean).join("\n\n");
+  const text = [headline, address ? `Endereço: ${address}` : "", `Ver meus agendamentos: ${appointmentsUrl}`, optOut, automatic].filter(Boolean).join("\n\n");
 
   return { html, subject: headline, text };
 }

@@ -36,6 +36,14 @@ describe("buildReminderEmail", () => {
     expect(email.text).toContain("https://studio-aurora.zencpro.app/appointments");
   });
 
+  it("says it is automatic and sends questions to the business through the app, in html and text", () => {
+    const notice = "Este e-mail é automático. Para falar com o estabelecimento, use o contato dele no app.";
+
+    expect(email.html).toContain(notice);
+    expect(email.text).toContain(notice);
+    expect(email.text.endsWith(notice)).toBe(true);
+  });
+
   it("uses the shop's time zone", () => {
     const manaus = buildReminderEmail({ ...payload, shop_timezone: "America/Manaus" }, "https://x.zencpro.app/appointments");
 
