@@ -125,7 +125,7 @@ Alternative rejected: a GitHub scheduled workflow (5-minute floor, frequent dela
 
 - `wrangler.jsonc` at the root with two environments. Assets directory `dist` (the output of `expo export --platform web`),
   `not_found_handling: "single-page-application"`, no Worker script unless spike S1 shows the dynamic route needs one.
-- `zenc-web-dev`: workers.dev only, Cloudflare Access enabled on it (policy: the allowed e-mails, one-time PIN). Preview URLs
+- `zenc-web-dev`: workers.dev only, Cloudflare Access enabled on it (policy: exactly two e-mails, `zencpro.admin@gmail.com` and the owner's personal e-mail, one-time PIN). Preview URLs
   disabled, so there is no unprotected address.
 - `zenc-web` (production): Workers Routes `zencpro.app/*` and `*.zencpro.app/*` in zone `zencpro.app`, plus proxied DNS records for the
   apex and `*`. Universal SSL covers the apex and one wildcard level. Custom Domains do not support wildcards, hence Routes.
@@ -195,13 +195,14 @@ Everything here is done by the user (the person typing secrets is never Claude).
 5. Cloudflare: API token `zenc-deploy` from the template "Edit Cloudflare Workers" (account scope plus zone `zencpro.app` for routes):
    GitHub secret `CLOUDFLARE_API_TOKEN`; `CLOUDFLARE_ACCOUNT_ID` as var.
 6. GitHub: create environments `dev`, `production` (required reviewer: the user; self-review allowed since they are the only member),
-   `backup`. Repo settings: Actions allowed, require the `verify` check on PRs to `main`, GitGuardian check present.
+   `backup`. Repo settings: Actions allowed; **branch protection on `main`: require pull requests and the `verify` status check before
+   merging** (decision 5); GitGuardian check present.
 7. VAPID: `npx web-push generate-vapid-keys` twice (dev and prod). Public key into var `EXPO_PUBLIC_VAPID_PUBLIC_KEY`; both keys and
    `VAPID_SUBJECT=mailto:contato@zencpro.com.br` into the Supabase function secrets of that project.
 8. Supabase function secrets per project (Dashboard > Edge Functions > Secrets, or the CLI): `RESEND_API_KEY`, `EMAIL_FROM`,
    `SHOP_URL_TEMPLATE`, `DISPATCH_TOKEN` (generate with `openssl rand -hex 32`), `SENTRY_DSN_FUNCTIONS`, `SENTRY_ENVIRONMENT`, the VAPID three.
 9. After the first dev deploy: Cloudflare > Workers & Pages > `zenc-web-dev` > Settings > Domains & Routes > Enable Cloudflare Access
-   (workers.dev **and** preview URLs), policy "Allow" for the e-mails listed by the user; open the address and log in once to check.
+   (workers.dev **and** preview URLs), policy "Allow" for exactly two e-mails: zencpro.admin@gmail.com and your personal e-mail; open the address and log in once to check.
 
 **B. Before plan 2 (production)**
 10. Cloudflare DNS for `zencpro.app`: proxied `A` records `@` and `*` with the placeholder address `192.0.2.1` (the Worker Route answers before it is
@@ -245,20 +246,19 @@ Everything here is done by the user (the person typing secrets is never Claude).
   open question 7); plan 3 documents it in the runbook.
 - **R11 Dev and production share one Sentry project per surface** (`zenc-app`, `zenc-functions`), told apart by the `environment` tag.
 
-## 8. Open questions (for the orchestrator / user)
+## 8. Decisions taken after review (2026-11-26, the user's)
 
-1. Dev web shop addressing with `SHOP_URL_TEMPLATE`: e-mail links must open `<dev worker>/<path>?shop=<slug>`, but `buildShopUrl` appends
-   the path after the whole template, so a template with a query string would produce `...?shop=demo/reset-password`. Proposal (plan 1,
-   TDD): `buildShopUrl` inserts the path before the template's query string. Production and local templates are unchanged. Confirm.
-2. Dev test business: slug name (proposal `demo`) and who creates it (proposal: the user runs `create-shop.mjs` once against dev).
-3. Access allow-list: which e-mail addresses besides `zencpro.admin@gmail.com`?
-4. Should `zencpro.com` redirect somewhere (to `.com.br`)? Out of scope here unless the user wants it.
-5. Branch protection: require `verify` on PRs to `main`? Proposed yes (setting in the checklist).
-6. After the first real business, a second restore drill on real data: schedule it? Proposed: yes, the week after the first business goes live.
-7. Avatars (Supabase Storage files) are not part of the nightly backup (R10). Accept for 0.5, or add a bucket copy through Supabase's
-   S3-compatible endpoint to `scripts/backup.sh` (a small follow-up in plan 3)? Proposed: accept.
-8. Should the dev data ever be seeded with the demo business automatically, or always by the owner running `create-shop.mjs` once
-   (plan 1 Task 8 Step 9, proposed)?
+All former open questions are answered; D1 to D10 below are accepted.
+
+1. **Dev link template: yes.** `buildShopUrl` inserts the path before the template's query string (plan 1 Task 1).
+2. **Dev test business: slug `demo`**, created by hand once by the owner with `create-shop.mjs` against dev (not by CI).
+3. **Cloudflare Access allow-list for the dev site: exactly two e-mails**, `zencpro.admin@gmail.com` and the owner's personal e-mail.
+   The personal address is private and never written in the repository; checklists say "zencpro.admin@gmail.com and your personal e-mail".
+4. **`zencpro.com`:** no redirect for now; out of scope until the landing page exists.
+5. **Branch protection: yes**, require the `verify` check on pull requests to `main` (a GitHub settings step for the owner, in the checklist).
+6. **Second restore drill:** yes, one week after the first real business goes live.
+7. **Avatars:** the gap (R10) is accepted for 0.5 and stays documented as a known gap in the runbook.
+8. **Dev data:** `demo` is created by hand once; CI never seeds.
 
 ## 9. Decisions in this document that are mine, not the user's
 
