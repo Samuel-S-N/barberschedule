@@ -1,10 +1,10 @@
 # Hosted deploy (dev, production, backups)
 
-> **Status (2026-11-26): target flow, not applied yet.** Nothing is deployed. The flow below is designed in
-> `docs/superpowers/specs/2026-11-26-deploy-05-design.md` and built by three plans: `2026-11-26-deploy-1-dev.md`,
-> `-deploy-2-prod.md` and `-deploy-3-backups.md`. Each plan's last task removes this banner for what it delivered. Until then,
-> sections 1 to 10 are the manual steps a human would run; once the pipeline exists the pipeline runs sections 2, 3 (config) and 5
-> (functions) for every deploy and a human only does the one-time parts marked **(user)**.
+> **Status (2026-11-26):** plan 1 (dev pipeline, scheduled dispatch, Sentry) is **in the repository** but has never run: nothing is
+> deployed yet, because it needs the owner's secrets (section 0b). Production (plan 2) and backups (plan 3) are designed in
+> `docs/superpowers/specs/2026-11-26-deploy-05-design.md` and `docs/superpowers/plans/2026-11-26-deploy-{1-dev,2-prod,3-backups}.md`.
+> Sections 1 to 10 below are the manual steps; the pipeline runs sections 2, 3 (config) and 5 (functions) for every deploy, and a human
+> only does the one-time parts. Spikes and their pass criteria: `docs/deploy-spikes.md`.
 
 ## 0. The flow in one screen
 
@@ -17,6 +17,27 @@
   a hosted project (`supabase/seed.sql` has fictional users).
 - Every account is owned by `zencpro.admin@gmail.com` (2FA). Secrets are pasted by the owner into GitHub, Supabase or Cloudflare,
   never into the repo, a chat or a tool.
+
+## 0b. First dev deploy: what the owner does (once)
+
+1. Fill the two placeholders in `supabase/config.toml` `[remotes.dev]` (the dev project ref, 20 letters, and the account part of
+   `zenc-web-dev.<account>.workers.dev`, shown in Cloudflare > Workers & Pages) and merge that. The deploy workflow refuses to run
+   while `REPLACE-` is left, or while `SUPABASE_PROJECT_REF` has no `[remotes.*]` block.
+2. GitHub > Settings > Environments > `dev`: add the secrets and variables of the table below (the owner pastes every value).
+3. GitHub > Settings > Branches: protect `main`: require a pull request and the `verify` status check before merging.
+4. Run `docs/deploy-spikes.md` S3 (config diff, answer "no") before the first merge.
+5. Merge to `main`: `verify` runs, then `dev` deploys. Read the log; then S4a and S4c.
+6. Cloudflare > Workers & Pages > `zenc-web-dev` > Settings > Domains & Routes > Enable Cloudflare Access (workers.dev **and**
+   preview URLs); policy "Allow" for exactly two e-mails: zencpro.admin@gmail.com and your personal e-mail. Open the address, log in once.
+7. Create the dev test business once (the owner's own shell, service-role key pasted by them):
+
+   ```bash
+   read -rs SUPABASE_SERVICE_ROLE_KEY && export SUPABASE_SERVICE_ROLE_KEY
+   SUPABASE_URL=https://<DEV_REF>.supabase.co SHOP_URL_TEMPLATE='https://zenc-web-dev.<account>.workers.dev/?shop={slug}' node scripts/create-shop.mjs --name "Demo" --slug demo --owner <your test e-mail>
+   unset SUPABASE_SERVICE_ROLE_KEY
+   ```
+
+   then set the GitHub variable `EXPO_PUBLIC_DEV_SHOP_SLUG=demo` and re-run the `deploy` workflow.
 
 ### Secrets and variables (names exactly as the workflows read them)
 
