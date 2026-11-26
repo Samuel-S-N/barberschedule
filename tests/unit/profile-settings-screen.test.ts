@@ -6,6 +6,9 @@ jest.mock("expo-router", () => ({ useRouter: () => ({ push: jest.fn() }) }));
 jest.mock("../../src/lib/navigation/use-back", () => ({ useBack: () => jest.fn() }));
 jest.mock("../../src/providers/AppProviders", () => ({ useSupabaseSession: () => ({ supabase: { id: "client" } }) }));
 jest.mock("../../src/features/auth/api", () => ({ signOut: jest.fn() }));
+jest.mock("../../src/features/account/EmailRemindersSwitch", () => ({
+  EmailRemindersSwitch: () => jest.requireActual("react").createElement(jest.requireActual("react-native").Text, { testID: "email-reminders-row" }, "row"),
+}));
 jest.mock("../../src/features/notifications/NotificationsSwitch", () => ({
   NotificationsSwitch: () => jest.requireActual("react").createElement(jest.requireActual("react-native").Text, { testID: "notifications-switch-row" }, "row"),
 }));
@@ -22,6 +25,18 @@ describe("ProfileSettingsScreen sign out", () => {
     const view = await render(React.createElement(ProfileSettingsScreen, { languageHref: "/language" }));
 
     expect(view.getByTestId("notifications-switch-row")).toBeTruthy();
+  });
+
+  it("shows the e-mail reminders row only where asked (the customer's settings), below notifications", async () => {
+    const without = await render(React.createElement(ProfileSettingsScreen, { languageHref: "/language" }));
+
+    expect(without.queryByTestId("email-reminders-row")).toBeNull();
+    await without.unmount();
+
+    const withIt = await render(React.createElement(ProfileSettingsScreen, { emailReminders: true, languageHref: "/me/language" }));
+
+    expect(withIt.getByTestId("email-reminders-row")).toBeTruthy();
+    expect(withIt.getByTestId("notifications-switch-row")).toBeTruthy();
   });
 
   it.each(["/language", "/me/language", "/my-profile/language"])("shows the sign-out button on every role's Settings (%s)", async (languageHref) => {

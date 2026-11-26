@@ -8,10 +8,12 @@ import { ScreenHeader } from "../../components/domain/ScreenHeader";
 import { Screen } from "../../components/ui/Screen";
 import { useBack } from "../../lib/navigation/use-back";
 import { NotificationsSwitch } from "../notifications/NotificationsSwitch";
+import { EmailRemindersSwitch } from "./EmailRemindersSwitch";
 import { SignOutButton } from "./SignOutButton";
 
 // Settings is the same for every role: language, notifications and sign out. `languageHref` is the role's own language route.
-export function ProfileSettingsScreen({ languageHref }: { languageHref: string }) {
+// `emailReminders` adds the 24 h reminder e-mail switch (customers only: it is about their own appointments).
+export function ProfileSettingsScreen({ emailReminders = false, languageHref }: { emailReminders?: boolean; languageHref: string }) {
   const { t } = useTranslation();
   const router = useRouter();
   const back = useBack();
@@ -24,6 +26,7 @@ export function ProfileSettingsScreen({ languageHref }: { languageHref: string }
             <ScreenHeader backLabel={t("common.back")} onBack={back} title={t("profile.settings.title")} />
             <MenuBlock items={[{ icon: Globe, key: "language", label: t("profile.settings.language"), onPress: () => router.push(languageHref as never) }]} />
             <NotificationsSwitch />
+            {emailReminders ? <EmailRemindersSwitch /> : null}
             <SignOutButton />
           </View>
         </View>

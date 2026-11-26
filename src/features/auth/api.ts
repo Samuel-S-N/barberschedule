@@ -7,6 +7,7 @@ import type { SignupInput } from "./validation";
 
 type CurrentProfileRow = {
   avatar_path?: string | null;
+  email_reminders?: boolean;
   full_name?: string | null;
   nickname?: string | null;
   role: Profile["role"];
@@ -22,6 +23,7 @@ function throwIfError(error: Error | null) {
 function toProfile(row: CurrentProfileRow): Profile {
   return {
     ...(typeof row.avatar_path !== "undefined" ? { avatarPath: row.avatar_path } : {}),
+    ...(typeof row.email_reminders !== "undefined" ? { emailReminders: row.email_reminders } : {}),
     ...(typeof row.nickname !== "undefined" ? { nickname: row.nickname } : {}),
     ...(typeof row.full_name !== "undefined"
       ? { fullName: row.full_name ?? null }
