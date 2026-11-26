@@ -100,3 +100,17 @@ update public.shops set setup_completed_at = now() where owner_user_id = (select
 The account keeps its hours, services and professionals, so only the agreement and the final "Abrir minha agenda" are pending; delete
 some of them to see the other steps. Visitors on that shop's address see "Em breve" while it is closed.
 
+### E-mails locally
+
+Account e-mails (confirmation, recovery, e-mail change, invite) are visible in the local Supabase mailbox
+(`http://127.0.0.1:55424`; its API lists them at `/api/v1/messages`). The templates in `supabase/templates/` are read when the stack
+starts, so after editing one run `npx supabase stop` and `npx supabase start` (keeps the database; never `db reset`). With e-mail
+confirmations off locally, signup sends no confirmation: create an unconfirmed user through the admin API
+(`email_confirm: false`) and call `POST /auth/v1/resend` with `type: "signup"`.
+
+The 24 h reminder e-mail needs `RESEND_API_KEY` and `EMAIL_FROM` for `dispatch-notifications` (Resend has no local sandbox) and the
+Edge runtime is off in `config.toml`, so locally read the outbox instead:
+`select payload from notification_outbox where event_type = 'appointment.reminder_email'` after
+`select public.enqueue_notification_reminders();`. The builder and the Resend client are covered by Jest (`reminder-email`, `resend`,
+`dispatch`).
+

@@ -99,3 +99,22 @@ setup checklist (agreement, details, hours, a service, a team member with hours 
 bookings (`P0044`). Existing shops, and every seed or test shop, are open: the column defaults to `now()` and only `create_shop`
 sets it to null. Nothing to configure at deploy time; tell each new owner the checklist is their first step.
 
+## 10. E-mail (Resend and the auth templates)
+
+1. Verify the sending domain in Resend (the DKIM and SPF records it shows) for `zencpro.app` and create an API key.
+2. **Auth e-mails use Resend SMTP.** In the hosted project's Dashboard > Authentication > SMTP settings (or `[auth.email.smtp]` in
+   `config.toml` with `pass = "env(RESEND_API_KEY)"`): host `smtp.resend.com`, port `465`, user `resend`, password = the Resend API
+   key, sender `Zenc <nao-responda@zencpro.app>`. Without custom SMTP the hosted project's built-in sender is rate-limited and not
+   for production.
+3. **Push the templates:** `npx supabase link --project-ref <ref>`, then `npx supabase config push` (sends the
+   `[auth.email.template.*]` subjects and `supabase/templates/*.html`: confirmation, recovery, e-mail change, invite). Check
+   Dashboard > Authentication > Email Templates shows the Portuguese templates. The invite subject and body use
+   `{{ .Data.business_name }}`, which `invite-professional` and `scripts/create-shop.mjs` send in the invite data.
+4. **Reminder e-mails:** `npx supabase secrets set RESEND_API_KEY=<key> EMAIL_FROM="Zenc <lembretes@zencpro.app>"`, then redeploy
+   `dispatch-notifications` (`npx supabase functions deploy dispatch-notifications`). Without `RESEND_API_KEY` the function logs
+   "skipping e-mail" and marks the rows done, so no reminder e-mail is sent.
+5. Apply migration `0082` with the others (`db push`, section 2).
+6. Smoke test: create a customer account, book an appointment 24 h ahead, run `select public.enqueue_notification_reminders();` and
+   invoke the function (or wait for the schedule). The e-mail arrives and "Ver meus agendamentos" opens the business page. Turn
+   "Lembretes por e-mail" off in that customer's Settings and confirm the next reminder creates no e-mail row.
+
