@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { formatPhone, phoneDigits } from "../../features/account/phone";
 import { useLanguage } from "../../i18n/use-language";
 import { formatDateNumeric } from "../../lib/i18n/format";
-import { formatCepInput, formatDateInput, formatTimeInput, parseDateInput } from "../../lib/input-masks";
+import { formatCepInput, formatDateInput, formatTimeInput, nextPercentState, parseDateInput, percentDisplay } from "../../lib/input-masks";
 import { formatMoneyInput } from "../../lib/money";
 import { Input } from "./Input";
 import type { InputProps } from "./Input";
@@ -61,4 +61,12 @@ export function MoneyInput({ value, onChangeValue, placeholder, ...rest }: Maske
   const { t } = useTranslation();
 
   return <Input {...rest} keyboardType="number-pad" onChangeText={(text) => onChangeValue(formatMoneyInput(text))} placeholder={placeholder ?? t("examples.money")} value={formatMoneyInput(value)} />;
+}
+
+// Percent (commission): digits and one decimal separator, at most 2 decimals, clamped at 100, shown with a % suffix. `value` is the plain
+// number string with a dot ("40.5"), the same thing the screens parse with Number().
+export function PercentInput({ value, onChangeValue, placeholder, ...rest }: MaskedProps) {
+  const { t } = useTranslation();
+
+  return <Input {...rest} keyboardType="decimal-pad" onChangeText={(text) => onChangeValue(nextPercentState(value, text))} placeholder={placeholder ?? t("examples.percent")} value={percentDisplay(value)} />;
 }

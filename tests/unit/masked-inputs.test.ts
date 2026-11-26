@@ -1,7 +1,7 @@
 import { fireEvent, render } from "@testing-library/react-native";
 import React from "react";
 
-import { CepInput, MoneyInput, PhoneInput } from "../../src/components/ui/MaskedInputs";
+import { CepInput, MoneyInput, PercentInput, PhoneInput } from "../../src/components/ui/MaskedInputs";
 import i18n from "../../src/i18n";
 
 describe("CepInput", () => {
@@ -100,5 +100,45 @@ describe("MoneyInput", () => {
     const view = await render(React.createElement(MoneyInput, { label: "Price", onChangeValue: jest.fn(), testID: "money", value: "" }));
 
     expect(view.getByTestId("money").props.keyboardType).toBe("number-pad");
+  });
+});
+
+describe("PercentInput", () => {
+  beforeAll(async () => i18n.changeLanguage("en"));
+
+  it("shows the value with a % suffix and a decimal comma, and nothing when empty", async () => {
+    const filled = await render(React.createElement(PercentInput, { label: "Commission", onChangeValue: jest.fn(), testID: "pct", value: "40.5" }));
+
+    expect(filled.getByTestId("pct").props.value).toBe("40,5%");
+    await filled.unmount();
+
+    const empty = await render(React.createElement(PercentInput, { label: "Commission", onChangeValue: jest.fn(), testID: "pct", value: "" }));
+
+    expect(empty.getByTestId("pct").props.value).toBe("");
+  });
+
+  it("reports a plain number string, digits and one separator only, clamped at 100", async () => {
+    const onChangeValue = jest.fn();
+    const view = await render(React.createElement(PercentInput, { label: "Commission", onChangeValue, testID: "pct", value: "" }));
+
+    await fireEvent.changeText(view.getByTestId("pct"), "4a0,5%");
+    expect(onChangeValue).toHaveBeenLastCalledWith("40.5");
+
+    await fireEvent.changeText(view.getByTestId("pct"), "150");
+    expect(onChangeValue).toHaveBeenLastCalledWith("100");
+  });
+
+  it("backspace over the % suffix removes the last digit", async () => {
+    const onChangeValue = jest.fn();
+    const view = await render(React.createElement(PercentInput, { label: "Commission", onChangeValue, testID: "pct", value: "40" }));
+
+    await fireEvent.changeText(view.getByTestId("pct"), "40");
+    expect(onChangeValue).toHaveBeenLastCalledWith("4");
+  });
+
+  it("uses the decimal keyboard", async () => {
+    const view = await render(React.createElement(PercentInput, { label: "Commission", onChangeValue: jest.fn(), testID: "pct", value: "" }));
+
+    expect(view.getByTestId("pct").props.keyboardType).toBe("decimal-pad");
   });
 });

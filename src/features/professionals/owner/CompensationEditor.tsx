@@ -7,8 +7,7 @@ import { ConfirmDialog } from "../../../components/domain/ConfirmDialog";
 import { formatPriceBRL } from "../../../components/domain/ServiceCard";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
-import { Input } from "../../../components/ui/Input";
-import { MoneyInput } from "../../../components/ui/MaskedInputs";
+import { MoneyInput, PercentInput } from "../../../components/ui/MaskedInputs";
 import { errorMessage } from "../../../i18n/errors";
 import { centsToReaisInput, parseReaisToCents } from "../../../lib/money";
 import { useSupabaseSession } from "../../../providers/AppProviders";
@@ -71,7 +70,7 @@ export function CompensationEditor({ professional, onFeedback }: { professional:
               <Button label={t("owner.professionals.chairRentalTab")} onPress={() => setCompType("chair_rental")} size="sm" testID="comp-type-chair_rental" variant={compType === "chair_rental" ? "dark" : "outline"} />
             </View>
             {compType === "commission" ? (
-              <Input keyboardType="numeric" label={t("owner.professionals.commissionPercentLabel")} onChangeText={setPercent} placeholder={t("examples.percent")} testID="comp-percent" value={percent} />
+              <PercentInput label={t("owner.professionals.commissionPercentLabel")} onChangeValue={setPercent} testID="comp-percent" value={percent} />
             ) : (
               <>
                 <MoneyInput label={t("owner.professionals.rentalAmountLabel")} onChangeValue={setRent} testID="comp-rent" value={rent} />
