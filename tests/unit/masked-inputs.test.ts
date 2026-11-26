@@ -1,7 +1,7 @@
 import { fireEvent, render } from "@testing-library/react-native";
 import React from "react";
 
-import { CepInput, PhoneInput } from "../../src/components/ui/MaskedInputs";
+import { CepInput, MoneyInput, PhoneInput } from "../../src/components/ui/MaskedInputs";
 import i18n from "../../src/i18n";
 
 describe("CepInput", () => {
@@ -59,5 +59,46 @@ describe("PhoneInput", () => {
     const view = await render(React.createElement(PhoneInput, { label: "Phone", onChangeValue: jest.fn(), testID: "phone", value: "" }));
 
     expect(view.getByTestId("phone").props.keyboardType).toBe("phone-pad");
+  });
+});
+
+describe("MoneyInput", () => {
+  beforeAll(async () => i18n.changeLanguage("en"));
+
+  it("opens an existing value formatted (the text the screens seed with centsToReaisInput)", async () => {
+    const view = await render(React.createElement(MoneyInput, { label: "Price", onChangeValue: jest.fn(), testID: "money", value: "45,00" }));
+
+    expect(view.getByTestId("money").props.value).toBe("R$ 45,00");
+  });
+
+  it("is empty, not R$ 0,00, when there is no value", async () => {
+    const view = await render(React.createElement(MoneyInput, { label: "Price", onChangeValue: jest.fn(), testID: "money", value: "" }));
+
+    expect(view.getByTestId("money").props.value).toBe("");
+  });
+
+  it("fills from the cents while typing and reports the formatted text", async () => {
+    const onChangeValue = jest.fn();
+    const view = await render(React.createElement(MoneyInput, { label: "Price", onChangeValue, testID: "money", value: "" }));
+
+    await fireEvent.changeText(view.getByTestId("money"), "4500");
+    expect(onChangeValue).toHaveBeenLastCalledWith("R$ 45,00");
+
+    await fireEvent.changeText(view.getByTestId("money"), "123456");
+    expect(onChangeValue).toHaveBeenLastCalledWith("R$ 1.234,56");
+  });
+
+  it("backspace removes the last digit", async () => {
+    const onChangeValue = jest.fn();
+    const view = await render(React.createElement(MoneyInput, { label: "Price", onChangeValue, testID: "money", value: "R$ 1.234,56" }));
+
+    await fireEvent.changeText(view.getByTestId("money"), "R$ 1.234,5");
+    expect(onChangeValue).toHaveBeenLastCalledWith("R$ 123,45");
+  });
+
+  it("uses the number keyboard", async () => {
+    const view = await render(React.createElement(MoneyInput, { label: "Price", onChangeValue: jest.fn(), testID: "money", value: "" }));
+
+    expect(view.getByTestId("money").props.keyboardType).toBe("number-pad");
   });
 });

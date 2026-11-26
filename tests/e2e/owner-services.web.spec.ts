@@ -87,6 +87,26 @@ test("the list has a + button instead of a form, and it opens the registration s
   await expect(page).toHaveURL(/\/service-form/);
 });
 
+test("the price field fills from the cents while typing and backspace removes the last digit", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, {});
+
+  await page.goto("/services");
+  await page.getByTestId("fab-add").click();
+  const price = page.getByTestId("service-price");
+
+  // A new service starts with the default 25,00 (now shown formatted); clearing it leaves the field empty, not R$ 0,00.
+  await expect(price).toHaveValue("R$ 25,00");
+  await price.fill("");
+  await expect(price).toHaveValue("");
+  await price.pressSequentially("123456");
+  await expect(price).toHaveValue("R$ 1.234,56");
+  await price.press("Backspace");
+  await expect(price).toHaveValue("R$ 123,45");
+  await price.fill("");
+  await expect(price).toHaveValue("");
+});
+
 test("the owner adds a service typing the price in reais", async ({ page }) => {
   const calls: Record<string, unknown> = {};
 
@@ -115,7 +135,7 @@ test("Edit opens the service form with its professionals, price overrides and a 
   await page.getByTestId(`service-edit-${S1}`).click();
   await expect(page).toHaveURL(new RegExp(`/service-form\\?id=${S1}`));
   await expect(page.getByTestId("service-name")).toHaveValue("Cut");
-  await expect(page.getByTestId("service-price")).toHaveValue("25,00");
+  await expect(page.getByTestId("service-price")).toHaveValue("R$ 25,00");
 
   // Ana already offers it with an override; Bruno does not offer it yet.
   await expect(page.getByTestId(`assignment-${S1}-${B1}`)).toContainText("R$ 30,00");

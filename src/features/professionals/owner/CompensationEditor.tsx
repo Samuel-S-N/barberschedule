@@ -8,6 +8,7 @@ import { formatPriceBRL } from "../../../components/domain/ServiceCard";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import { Input } from "../../../components/ui/Input";
+import { MoneyInput } from "../../../components/ui/MaskedInputs";
 import { errorMessage } from "../../../i18n/errors";
 import { centsToReaisInput, parseReaisToCents } from "../../../lib/money";
 import { useSupabaseSession } from "../../../providers/AppProviders";
@@ -73,7 +74,7 @@ export function CompensationEditor({ professional, onFeedback }: { professional:
               <Input keyboardType="numeric" label={t("owner.professionals.commissionPercentLabel")} onChangeText={setPercent} placeholder={t("examples.percent")} testID="comp-percent" value={percent} />
             ) : (
               <>
-                <Input keyboardType="numeric" label={t("owner.professionals.rentalAmountLabel")} onChangeText={setRent} placeholder={t("examples.money")} testID="comp-rent" value={rent} />
+                <MoneyInput label={t("owner.professionals.rentalAmountLabel")} onChangeValue={setRent} testID="comp-rent" value={rent} />
                 <View className="flex-row gap-2">
                   {(["weekly", "monthly"] as const).map((frequency) => (
                     <Button key={frequency} label={t(`professional.frequency.${frequency}`)} onPress={() => setRentFrequency(frequency)} size="sm" testID={`comp-freq-${frequency}`} variant={rentFrequency === frequency ? "dark" : "outline"} />

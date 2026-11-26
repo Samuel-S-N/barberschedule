@@ -5,6 +5,7 @@ import { formatPhone, phoneDigits } from "../../features/account/phone";
 import { useLanguage } from "../../i18n/use-language";
 import { formatDateNumeric } from "../../lib/i18n/format";
 import { formatCepInput, formatDateInput, formatTimeInput, parseDateInput } from "../../lib/input-masks";
+import { formatMoneyInput } from "../../lib/money";
 import { Input } from "./Input";
 import type { InputProps } from "./Input";
 
@@ -52,4 +53,12 @@ export function PhoneInput({ value, onChangeValue, placeholder, ...rest }: Maske
   const { t } = useTranslation();
 
   return <Input {...rest} autoComplete="tel" keyboardType="phone-pad" onChangeText={(text) => onChangeValue(phoneDigits(text))} placeholder={placeholder ?? t("examples.phone")} value={formatPhone(value)} />;
+}
+
+// Money (BRL), cents-first: the user types digits and the field fills from the cents ("4500" -> "R$ 45,00"). `value` is the formatted
+// text (or the plain "45,00" a screen seeds with centsToReaisInput); read it back with parseReaisToCents.
+export function MoneyInput({ value, onChangeValue, placeholder, ...rest }: MaskedProps) {
+  const { t } = useTranslation();
+
+  return <Input {...rest} keyboardType="number-pad" onChangeText={(text) => onChangeValue(formatMoneyInput(text))} placeholder={placeholder ?? t("examples.money")} value={formatMoneyInput(value)} />;
 }

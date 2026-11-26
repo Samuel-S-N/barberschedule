@@ -6,6 +6,7 @@ import { Text, View } from "react-native";
 import { formatPriceBRL } from "../../components/domain/ServiceCard";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { MoneyInput } from "../../components/ui/MaskedInputs";
 import { errorMessage } from "../../i18n/errors";
 import { centsToReaisInput, parseReaisToCents } from "../../lib/money";
 import { useSupabaseSession } from "../../providers/AppProviders";
@@ -93,7 +94,7 @@ export function ServiceAssignments({ professionalServices, professionals, onFeed
             </View>
             {overrideId !== null && overrideId === assignment?.id ? (
               <View className="gap-2">
-                <Input keyboardType="numeric" label={t("owner.services.overridePrice")} onChangeText={setOverridePrice} placeholder={t("examples.money")} testID="override-price" value={overridePrice} />
+                <MoneyInput label={t("owner.services.overridePrice")} onChangeValue={setOverridePrice} testID="override-price" value={overridePrice} />
                 <Input keyboardType="numeric" label={t("owner.services.overrideDuration")} onChangeText={setOverrideDuration} placeholder={t("examples.minutes")} testID="override-duration" value={overrideDuration} />
                 <Text className="text-xs font-sans text-neutral-500">{t("owner.services.overrideHint")}</Text>
                 <View className="flex-row gap-2">
