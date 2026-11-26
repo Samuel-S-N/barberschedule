@@ -1,4 +1,4 @@
-import { isServiceRequest } from "./auth.ts";
+import { dispatchToken, isServiceRequest } from "./auth.ts";
 import { createDispatcher } from "./dispatch.ts";
 import type { ClaimedNotification, Message, WebSubscription } from "./dispatch.ts";
 import { createResendSender } from "./resend.ts";
@@ -84,7 +84,7 @@ const dispatchRows = createDispatcher({
 
 async function dispatch(request: Request) {
   if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
-  if (!isServiceRequest(request.headers.get("Authorization"), requiredEnv("SUPABASE_SERVICE_ROLE_KEY"))) {
+  if (!isServiceRequest(request.headers.get("Authorization"), requiredEnv("SUPABASE_SERVICE_ROLE_KEY"), dispatchToken(Deno.env.get("DISPATCH_TOKEN")))) {
     return new Response("Unauthorized", { status: 401 });
   }
 

@@ -81,3 +81,7 @@ enabled = false
 
 [experimental]
 orioledb_version = ""
+
+# dispatch-notifications authenticates itself (service-role key or DISPATCH_TOKEN); the cron token is not a JWT, so the gateway must not check it.
+[functions.dispatch-notifications]
+verify_jwt = false
