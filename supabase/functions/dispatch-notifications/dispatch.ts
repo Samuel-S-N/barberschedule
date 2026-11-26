@@ -1,5 +1,11 @@
 import { notificationPath } from "../_shared/notification-path.ts";
+import { buildReminderEmail } from "./email.ts";
+import type { ReminderPayload } from "./email.ts";
 import { buildMessage, withShopName } from "./messages.ts";
+import type { EmailSendResult, OutgoingEmail } from "./resend.ts";
+
+// The reminder e-mail is its own outbox row (see migration 0082): it is only ever sent as e-mail, and a retry never touches push.
+export const EMAIL_REMINDER_EVENT = "appointment.reminder_email";
 
 export type WebSubscription = { endpoint: string; keys: { auth: string; p256dh: string } };
 
@@ -12,6 +18,7 @@ export type ClaimedNotification = {
   locale: string | null;
   max_attempts: number;
   payload: Record<string, unknown>;
+  recipient_email: string | null;
   recipient_role: string | null;
   shop_name: string | null;
   shop_slug: string | null;
@@ -22,10 +29,12 @@ export type ClaimedNotification = {
 export type Message = { body: string; title: string; url?: string };
 
 export type Deps = {
+  appointmentsUrl: (slug: string | null) => string;
   deactivateExpo: (token: string) => Promise<void>;
   deactivateWeb: (endpoint: string) => Promise<void>;
   markFailed: (id: string, error: string) => Promise<void>;
   markSent: (id: string) => Promise<void>;
+  sendEmail: (email: OutgoingEmail, idempotencyKey: string) => Promise<EmailSendResult>;
   sendExpo: (token: string, message: Message, data: Record<string, unknown>) => Promise<{ error?: string; ok: boolean }>;
   sendWeb: (subscription: WebSubscription, message: Required<Message>) => Promise<{ status: number }>;
 };
@@ -70,6 +79,17 @@ export function createDispatcher(deps: Deps) {
   // One attempt per token row; it only deactivates dead tokens and reports what happened. The notification's own state is decided
   // once per outbox id by the caller (mark_notification_sent/failed act only on a row still "sending": the first call would win).
   async function attempt(row: ClaimedNotification): Promise<Attempt> {
+    if (row.event_type === EMAIL_REMINDER_EVENT) {
+      if (!row.recipient_email) return { outcome: "skipped" };
+
+      const email = buildReminderEmail(row.payload as ReminderPayload, deps.appointmentsUrl(row.shop_slug));
+      const result = await deps.sendEmail({ ...email, to: row.recipient_email }, row.id);
+
+      if (!result.ok) return { error: result.error ?? "E-mail delivery failed", outcome: "failed" };
+
+      return { outcome: result.skipped ? "skipped" : "sent" };
+    }
+
     const message = withShopName(buildMessage(row.event_type, row.locale, row.payload), row.shop_name);
 
     if (row.web_subscription) {

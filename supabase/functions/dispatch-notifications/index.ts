@@ -1,7 +1,10 @@
 import { isServiceRequest } from "./auth.ts";
 import { createDispatcher } from "./dispatch.ts";
 import type { ClaimedNotification, Message, WebSubscription } from "./dispatch.ts";
+import { createResendSender } from "./resend.ts";
+import type { OutgoingEmail } from "./resend.ts";
 import { createWebSender } from "./web-push-lib.ts";
+import { buildShopUrl, DEFAULT_SHOP_URL_TEMPLATE } from "../_shared/shop-url.ts";
 
 declare const Deno: {
   env: { get(name: string): string | undefined };
@@ -62,11 +65,19 @@ function sendWeb(subscription: WebSubscription, message: { body: string; title: 
   return webSender(subscription, message);
 }
 
+// Built per send: the key may be absent (then the e-mail is skipped and logged), and Deno reads secrets lazily.
+const sendEmail = (email: OutgoingEmail, idempotencyKey: string) =>
+  createResendSender({ apiKey: Deno.env.get("RESEND_API_KEY"), from: Deno.env.get("EMAIL_FROM") })(email, idempotencyKey);
+
+const appointmentsUrl = (slug: string | null) => buildShopUrl(Deno.env.get("SHOP_URL_TEMPLATE") ?? DEFAULT_SHOP_URL_TEMPLATE, slug ?? "app", "/appointments");
+
 const dispatchRows = createDispatcher({
+  appointmentsUrl,
   deactivateExpo: async (token) => { await supabaseRpc("deactivate_notification_token", { target_expo_push_token: token }); },
   deactivateWeb: async (endpoint) => { await supabaseRpc("deactivate_web_subscription", { target_endpoint: endpoint }); },
   markFailed: async (id, error) => { await supabaseRpc("mark_notification_failed", { target_error: error, target_id: id }); },
   markSent: async (id) => { await supabaseRpc("mark_notification_sent", { target_id: id }); },
+  sendEmail,
   sendExpo,
   sendWeb,
 });
