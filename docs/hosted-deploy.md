@@ -87,10 +87,9 @@ Migrations are forward-only (append-only once applied, decision `018`). If somet
 
 ## 8. Legal data (before the public launch)
 
-Fill `src/features/legal/company.ts` (razão social, CNPJ, endereço, foro) and have a lawyer review `docs/legal/revisao-juridica.md`.
-While a field is empty the documents show it as a highlighted placeholder, so after deploying open `/privacidade`, `/termos` and
-`/contrato` and confirm no `[RAZÃO SOCIAL]`, `[CNPJ]`, `[ENDEREÇO]` or `[FORO]` is left. Changing a document's text means bumping its
-`version` in `src/features/legal/documents/`: every user then sees the "Atualizamos nossos termos" screen once.
+Publish the official legal version reviewed by the lawyer (`docs/legal/revisao-juridica.md`): the documents in
+`src/features/legal/documents/` only name "Zenc" until then. Changing a document's text means bumping its `version` there: every
+user then sees the "Atualizamos nossos termos" screen once.
 
 ## 9. New shops start closed (setup checklist)
 
