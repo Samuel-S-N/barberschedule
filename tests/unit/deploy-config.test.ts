@@ -27,3 +27,23 @@ describe("supabase/config.toml hosted overrides", () => {
     expect(config).toMatch(/\[remotes\.dev\.db\.vault\][^[]*dispatch_url = "env\(DISPATCH_URL\)"[^[]*dispatch_token = "env\(DISPATCH_TOKEN\)"/);
   });
 });
+
+describe("wrangler.jsonc", () => {
+  const wrangler = JSON.parse(read("wrangler.jsonc").replace(/^\s*\/\/.*$/gm, ""));
+
+  it("serves the web export as a single-page app on the free workers.dev address (dev)", () => {
+    expect(wrangler.name).toBe("zenc-web-dev");
+    expect(wrangler.assets).toEqual({ directory: "./dist", not_found_handling: "single-page-application" });
+    expect(wrangler.workers_dev).toBe(true);
+    expect(wrangler.preview_urls).toBe(false);
+  });
+});
+
+describe("public/_headers", () => {
+  it("never caches the service worker or the manifest", () => {
+    const headers = read("public/_headers");
+
+    expect(headers).toMatch(/\/sw\.js\n\s+Cache-Control: no-cache/);
+    expect(headers).toMatch(/\/manifest\.json\n\s+Cache-Control: no-cache/);
+  });
+});

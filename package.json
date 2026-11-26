@@ -58,7 +58,8 @@
     "jest-expo": "~58.0.12",
     "supabase": "^2.114.0",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.67.0"
+    "typescript-eslint": "^8.67.0",
+    "wrangler": "^4.168.0"
   },
   "scripts": {
     "start": "expo start",

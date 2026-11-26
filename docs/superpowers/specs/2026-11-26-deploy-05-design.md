@@ -225,6 +225,9 @@ Everything here is done by the user (the person typing secrets is never Claude).
 - **R1 Dynamic route on static hosting.** The export has one dynamic route (`clients/[id]`). `serve-web-static.mjs` maps it to
   `clients/[id].html`; Workers asset routing will not. SPA fallback serves root `index.html` for `/clients/123`, which may hydrate wrong.
   Spike S1 (local `wrangler dev` + Playwright) decides; fallback is a 25-line Worker script porting `resolveDynamic`.
+- **R1 resolved (2026-11-26, local):** the export served by `wrangler dev` with `not_found_handling: "single-page-application"` passes the
+  existing Playwright specs that open `/clients/<id>` (11 passed, `professional-clients` and `back-navigation`, Chrome). No Worker
+  script is needed. Not tested: the real Cloudflare edge.
 - **R2 `@sentry/deno` on the hosted runtime.** Sentry's v11 docs need Deno ≥ 2.8.3; local supabase edge-runtime 1.74.3 reports Deno 2.1.4
   compatibility. Sentry's Deno SDK also does not instrument `Deno.serve` (no per-request scope). Spike S2, fallback in 4.5.
 - **R3 `config push` overwrites hosted auth settings with local values** unless the `[remotes.*]` overrides work as expected. Spike S3.
