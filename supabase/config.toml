@@ -91,11 +91,11 @@ verify_jwt = false
 # FILL IN (owner): the dev project ref (Project Settings > General, 20 letters) and the account part of the workers.dev address
 # (Cloudflare > Workers & Pages > Account details). The deploy workflow refuses to run while a placeholder is left.
 [remotes.dev]
-project_id = "aaaaaaaaaaaaaaaaaaaa"
+project_id = "ezmvbpoypqlghgrgtlxa"
 
 [remotes.dev.auth]
-site_url = "https://zenc-web-dev.REPLACE-ACCOUNT.workers.dev"
-additional_redirect_urls = ["https://zenc-web-dev.REPLACE-ACCOUNT.workers.dev/**"]
+site_url = "https://zenc-web-dev.zenc.workers.dev"
+additional_redirect_urls = ["https://zenc-web-dev.zenc.workers.dev/**"]
 
 [remotes.dev.auth.email]
 enable_confirmations = true
