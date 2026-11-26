@@ -213,11 +213,20 @@ describe("invite-professional client", () => {
   it.each([
     [409, "PROFESSIONAL_INVITE_CONFLICT"],
     [403, "BOOKING_FORBIDDEN"],
-    [500, "PROFESSIONAL_REQUEST_FAILED"],
+    [500, "PROFESSIONAL_INVITE_FAILED"],
   ])("maps HTTP %s to %s", async (status, code) => {
     const invoke = jest.fn().mockResolvedValue({ data: null, error: { context: { status } } });
 
     await expect(inviteProfessional({ functions: { invoke } } as never, { professionalId: "b1", email: "a@x.com" })).rejects.toMatchObject({ code });
+  });
+});
+
+describe("invite-professional client, the function cannot be reached", () => {
+  it("says the invite could not be sent (function not running, offline), not a generic professional error", async () => {
+    // supabase-js reports a network failure without an HTTP status.
+    const invoke = jest.fn().mockResolvedValue({ data: null, error: { context: new TypeError("Failed to fetch"), name: "FunctionsFetchError" } });
+
+    await expect(inviteProfessional({ functions: { invoke } } as never, { professionalId: "b1", email: "a@x.com" })).rejects.toMatchObject({ code: "PROFESSIONAL_INVITE_FAILED" });
   });
 });
 

@@ -236,3 +236,75 @@ test("a chair-rental professional has no payout schedule", async ({ page }) => {
   await expect(page.getByTestId("professional-comp-edit")).toBeVisible();
   await expect(page.getByTestId("payout-schedule-weekly")).toHaveCount(0);
 });
+
+test.describe("inviting a professional by e-mail", () => {
+  test("a failed re-invite on the profile shows a clear error that stays, and a later success confirms", async ({ page }) => {
+    let attempt = 0;
+
+    await signInAsOwner(page);
+    await mockOwnerRest(page, {});
+    await page.route("**/functions/v1/invite-professional", async (route) => {
+      attempt += 1;
+      if (attempt === 1) return route.abort("connectionrefused");
+      if (attempt === 2) return route.fulfill({ body: JSON.stringify({ code: "PROFESSIONAL_INVITE_CONFLICT" }), contentType: "application/json", status: 409 });
+
+      return route.fulfill({ body: JSON.stringify({ userId: "u9" }), contentType: "application/json", status: 200 });
+    });
+
+    await page.goto("/professional-profile?id=b2");
+    await page.getByTestId("professional-invite-email").fill("novo@example.com");
+    await page.getByTestId("professional-invite-send").click();
+    // The function could not be reached (not running, offline): a message that stays until the next attempt.
+    await expect(page.getByTestId("professional-invite-status")).toContainText("Unable to send the invite");
+    await page.waitForTimeout(3500);
+    await expect(page.getByTestId("professional-invite-status")).toContainText("Unable to send the invite");
+
+    await page.getByTestId("professional-invite-send").click();
+    await expect(page.getByTestId("professional-invite-status")).toContainText("already has an account");
+
+    await page.getByTestId("professional-invite-send").click();
+    await expect(page.getByTestId("professional-invite-status")).toContainText("Invite sent to novo@example.com");
+  });
+
+  test("creating a professional with an e-mail: an invite that fails keeps the professional and says so, with a retry", async ({ page }) => {
+    const calls: Record<string, unknown> = {};
+    let attempt = 0;
+
+    await signInAsOwner(page);
+    await mockOwnerRest(page, calls);
+    await page.route("**/functions/v1/invite-professional", async (route) => {
+      attempt += 1;
+      if (attempt === 1) return route.abort("connectionrefused");
+
+      return route.fulfill({ body: JSON.stringify({ userId: "u9" }), contentType: "application/json", status: 200 });
+    });
+
+    await page.goto("/professional-new");
+    await page.getByTestId("professional-name-input").fill("Caio New");
+    await page.getByTestId("professional-invite-email").fill("caio@example.com");
+    await page.getByTestId("professional-save").click();
+
+    await expect(page.getByTestId("professional-new-status")).toContainText("Professional created, but the invite could not be sent");
+    await expect(page).toHaveURL(/\/professional-new/);
+    expect(calls.create).toMatchObject({ name: "Caio New" });
+
+    // Retrying only re-sends the invite: the professional is not created twice.
+    await page.getByTestId("professional-save").click();
+    await expect(page.getByTestId("professional-new-status")).toContainText("Invite sent to caio@example.com");
+    await expect(page).toHaveURL(/\/professionals/);
+  });
+
+  test("creating a professional with an e-mail whose invite works confirms it before leaving", async ({ page }) => {
+    await signInAsOwner(page);
+    await mockOwnerRest(page, {});
+    await page.route("**/functions/v1/invite-professional", (route) => route.fulfill({ body: JSON.stringify({ userId: "u9" }), contentType: "application/json", status: 200 }));
+
+    await page.goto("/professional-new");
+    await page.getByTestId("professional-name-input").fill("Caio New");
+    await page.getByTestId("professional-invite-email").fill("caio@example.com");
+    await page.getByTestId("professional-save").click();
+
+    await expect(page.getByTestId("professional-new-status")).toContainText("Invite sent to caio@example.com");
+    await expect(page).toHaveURL(/\/professionals/);
+  });
+});

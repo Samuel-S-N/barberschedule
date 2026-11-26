@@ -652,6 +652,10 @@ export const es: DeepStringRecord<typeof en> = {
       inviteEmailLabel: "Correo del profesional",
       inviteError: "No se pudo enviar la invitación.",
       invite: "Invitar a iniciar sesión",
+      createdInviteFailed: "Profesional creado, pero no se pudo enviar la invitación.",
+      finish: "Terminar",
+      inviteRetry: "Enviar invitación de nuevo",
+      inviteSentTo: "Invitación enviada a {{email}}.",
       inviteSent: "Invitación enviada.",
       rentalAmountLabel: "Alquiler de silla (R$)",
       saveCompensation: "Guardar remuneración",
@@ -1030,6 +1034,7 @@ export const es: DeepStringRecord<typeof en> = {
     codes: {
       PROFESSIONAL_INVITE_CONFLICT: "Este profesional ya tiene cuenta o el correo ya está en uso.",
       PROFESSIONAL_NOT_LINKED: "Esta cuenta no está vinculada a un profesional activo.",
+      PROFESSIONAL_INVITE_FAILED: "No se pudo enviar la invitación. Revise la conexión e inténtelo de nuevo.",
       PROFESSIONAL_REQUEST_FAILED: "No se pudo completar la solicitud del profesional.",
       CUSTOMER_EMAIL_INVALID: "Ingresa un email válido o déjalo en blanco.",
       CUSTOMER_NAME_REQUIRED: "Ingresa el nombre del cliente.",
