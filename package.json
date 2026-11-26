@@ -71,7 +71,7 @@
     "lint": "eslint .",
     "test": "jest",
     "test:db": "npx supabase test db",
-    "test:e2e:runner": "node --test scripts/run-e2e-web.test.mjs scripts/assert-hosted-auth.test.mjs scripts/create-shop.test.mjs",
+    "test:e2e:runner": "node --test scripts/run-e2e-web.test.mjs scripts/assert-hosted-auth.test.mjs scripts/create-shop.test.mjs scripts/backup.test.mjs",
     "test:e2e:web": "node scripts/run-e2e-web.mjs",
     "export:web": "expo export --platform web",
     "e2e:export": "EXPO_NO_DOTENV=1 EXPO_PUBLIC_SHOP_BASE_DOMAIN=localhost EXPO_PUBLIC_SUPABASE_URL=https://example.supabase.co EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=test-publishable-key expo export --platform web --output-dir .e2e-dist",
