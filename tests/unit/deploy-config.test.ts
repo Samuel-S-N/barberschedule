@@ -39,6 +39,21 @@ describe("wrangler.jsonc", () => {
   });
 });
 
+describe("wrangler.jsonc production", () => {
+  const production = JSON.parse(read("wrangler.jsonc").replace(/^\s*\/\/.*$/gm, "")).env.production;
+
+  it("is its own Worker on the apex and every business subdomain, never on workers.dev", () => {
+    expect(production.name).toBe("zenc-web");
+    expect(production.workers_dev).toBe(false);
+    expect(production.preview_urls).toBe(false);
+    expect(production.routes).toEqual([
+      { pattern: "zencpro.app/*", zone_name: "zencpro.app" },
+      { pattern: "*.zencpro.app/*", zone_name: "zencpro.app" },
+    ]);
+    expect(production.assets).toEqual({ directory: "./dist", not_found_handling: "single-page-application" });
+  });
+});
+
 describe("public/_headers", () => {
   it("never caches the service worker or the manifest", () => {
     const headers = read("public/_headers");
