@@ -1,0 +1,31 @@
+name: backup
+
+# Nightly encrypted dump of zenc-prod to Cloudflare R2 (scripts/backup.sh; restore: docs/restore-runbook.md).
+# Its own environment, with no reviewer (a nightly run must not wait for an approval) and only the backup credentials.
+on:
+  schedule:
+    - cron: "0 5 * * *" # 05:00 UTC = 02:00 in Brasília
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: backup
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      AGE_PUBLIC_KEY: ${{ secrets.AGE_PUBLIC_KEY }}
+      R2_ACCOUNT_ID: ${{ vars.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ vars.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.114.0
+      - run: sudo apt-get update && sudo apt-get install -y age postgresql-client
+      - run: bash scripts/backup.sh
