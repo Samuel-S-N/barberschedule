@@ -14,6 +14,7 @@ import { Card } from "../../src/components/ui/Card";
 import { FabAdd } from "../../src/components/ui/FabAdd";
 import { Screen } from "../../src/components/ui/Screen";
 import { SearchInput } from "../../src/components/ui/SearchInput";
+import { formatPhone } from "../../src/features/account/phone";
 import { listOwnerCustomers, setCustomerActive } from "../../src/features/customers/api";
 import type { Customer } from "../../src/features/customers/types";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
@@ -49,8 +50,10 @@ export default function OwnerCustomersScreen() {
   const loading = shop.isLoading || customers.isLoading;
   const loadError = shop.error ?? customers.error;
   const term = search.trim().toLowerCase();
+  // The phone is stored as digits: a search typed with the mask ("(11) 9...") still matches.
+  const termDigits = term.replace(/\D/g, "");
   const shown = (customers.data ?? []).filter(
-    (customer: Customer) => !term || customer.fullName.toLowerCase().includes(term) || (customer.email ?? "").toLowerCase().includes(term) || (customer.phone ?? "").includes(term),
+    (customer: Customer) => !term || customer.fullName.toLowerCase().includes(term) || (customer.email ?? "").toLowerCase().includes(term) || (customer.phone ?? "").includes(term) || (termDigits !== "" && (customer.phone ?? "").replace(/\D/g, "").includes(termDigits)),
   );
 
   return (
@@ -71,7 +74,7 @@ export default function OwnerCustomersScreen() {
                     <Avatar name={customer.fullName} size={44} />
                     <View className="flex-1 gap-0.5">
                       <Text className="text-base font-sans-semibold text-ink">{customer.fullName}{customer.active ? "" : ` ${t("common.archived")}`}</Text>
-                      <Text className="text-sm font-sans text-neutral-600">{customer.email ?? t("owner.customers.noEmail")} · {customer.phone ?? t("owner.customers.noPhone")}</Text>
+                      <Text className="text-sm font-sans text-neutral-600">{customer.email ?? t("owner.customers.noEmail")} · {customer.phone ? formatPhone(customer.phone) : t("owner.customers.noPhone")}</Text>
                     </View>
                   </View>
                   <View className="flex-row flex-wrap gap-2">

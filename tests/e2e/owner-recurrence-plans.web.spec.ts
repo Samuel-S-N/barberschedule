@@ -99,7 +99,7 @@ test("the owner edits a plan and deactivates it with the red button", async ({ p
   await page.goto("/recurrence-plans");
   await page.getByTestId(`plan-edit-${P1}`).click();
   await expect(page).toHaveURL(new RegExp(`/recurrence-plan-form\\?id=${P1}`));
-  await expect(page.getByTestId("plan-price")).toHaveValue("25,00");
+  await expect(page.getByTestId("plan-price")).toHaveValue("R$ 25,00");
   await expect(page.getByTestId("plan-weeks")).toHaveValue("1");
   await page.getByTestId("plan-price").fill("27,00");
   await page.getByTestId("plan-save").click();

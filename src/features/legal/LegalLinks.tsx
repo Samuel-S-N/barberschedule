@@ -1,11 +1,16 @@
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { View } from "react-native";
+import { Platform, View } from "react-native";
 
 import { Button } from "../../components/ui/Button";
 import type { LegalKind } from "./types";
 
 const PATH: Record<LegalKind, string> = { business: "/contrato", privacy: "/privacidade", terms: "/termos" };
+
+const open = (router: ReturnType<typeof useRouter>, path: string) => () => {
+  if (Platform.OS === "web" && typeof window !== "undefined") window.location.assign(path);
+  else router.push(path as never);
+};
 
 export function LegalLinks({ kinds, testIDPrefix = "legal-link" }: { kinds: LegalKind[]; testIDPrefix?: string }) {
   const { t } = useTranslation();
@@ -20,15 +25,16 @@ export function LegalLinks({ kinds, testIDPrefix = "legal-link" }: { kinds: Lega
   );
 }
 
-// Small footer for pages shown before login (the closed-shop page): the two documents every visitor may read.
-export function LegalFooter() {
+// Small footer for pages shown before login (the closed-shop page): the two documents every visitor may read. That page renders
+// BEFORE the navigator exists, so on the web it navigates with a full page load instead of router.push.
+export function LegalFooter({ onOpen }: { onOpen?: (path: string) => void } = {}) {
   const { t } = useTranslation();
   const router = useRouter();
 
   return (
     <View className="flex-row flex-wrap justify-center gap-2" testID="legal-footer">
-      <Button label={t("legal.link.privacy")} onPress={() => router.push("/privacidade" as never)} size="sm" variant="ghost" />
-      <Button label={t("legal.link.terms")} onPress={() => router.push("/termos" as never)} size="sm" variant="ghost" />
+      <Button label={t("legal.link.privacy")} onPress={onOpen ? () => onOpen("/privacidade") : open(router, "/privacidade")} size="sm" variant="ghost" />
+      <Button label={t("legal.link.terms")} onPress={onOpen ? () => onOpen("/termos") : open(router, "/termos")} size="sm" variant="ghost" />
     </View>
   );
 }

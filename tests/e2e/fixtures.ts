@@ -8,7 +8,7 @@ type Shop = Record<string, unknown>;
 
 export const defaultShop: Shop = {
   address_cep: null, address_city: null, address_city_ibge: null, address_complement: null, address_district: null,
-  address_number: null, address_state: null, address_street: null, id: "11111111-1111-4111-8111-111111111111", name: "Shop", phone: null, slug: "shop-a",
+  address_number: null, address_state: null, address_street: null, id: "11111111-1111-4111-8111-111111111111", name: "Shop", phone: null, setup_completed_at: "2026-11-01T00:00:00Z", slug: "shop-a",
   theme_accent: null, theme_base: null, theme_primary: null, whatsapp: null,
 };
 

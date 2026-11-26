@@ -20,7 +20,9 @@ export default function LoginScreen() {
   const { t } = useTranslation();
   const { isLoading, supabase } = useSupabaseSession();
   // On the bare domain there is no shop: staff can still sign in, but there is nothing to sign up to.
-  const bare = useCurrentShop().status === "no-slug";
+  const { shop, status } = useCurrentShop();
+  // No account can be created on the bare domain, nor at a business that is not open yet.
+  const bare = status === "no-slug" || shop?.ready === false;
   const field = useFieldChain(2);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

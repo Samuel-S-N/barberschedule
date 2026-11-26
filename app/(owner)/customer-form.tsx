@@ -12,8 +12,9 @@ import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Input, useFieldChain } from "../../src/components/ui/Input";
+import { PhoneInput } from "../../src/components/ui/MaskedInputs";
 import { Screen } from "../../src/components/ui/Screen";
-import { formatPhone } from "../../src/features/account/phone";
+import { phoneDigits } from "../../src/features/account/phone";
 import { createCustomer, listOwnerCustomers, updateCustomer } from "../../src/features/customers/api";
 import { canSubmitCustomerForm } from "../../src/features/customers/validation";
 import { useOwnerShopId } from "../../src/features/shops/use-owner-shop-id";
@@ -46,7 +47,7 @@ export default function OwnerCustomerFormScreen() {
     if (!customer) return;
     setFullName(customer.fullName);
     setEmail(customer.email ?? "");
-    setPhone(formatPhone(customer.phone ?? ""));
+    setPhone(phoneDigits(customer.phone ?? ""));
   }, [customer]);
 
   const save = useMutation({
@@ -78,7 +79,7 @@ export default function OwnerCustomerFormScreen() {
                 <View className="gap-3">
                   <Input {...field(0)} label={t("owner.customers.nameLabel")} onChangeText={setFullName} placeholder={t("examples.fullName")} testID="customer-name" value={fullName} />
                   <Input {...field(1)} autoCapitalize="none" autoComplete="email" keyboardType="email-address" label={t("owner.customers.emailLabel")} onChangeText={setEmail} placeholder={t("examples.email")} testID="customer-email" value={email} />
-                  <Input {...field(2)} keyboardType="phone-pad" label={t("common.phoneOptional")} onChangeText={(value) => setPhone(formatPhone(value))} placeholder={t("examples.phone")} testID="customer-phone" value={phone} />
+                  <PhoneInput {...field(2)} label={t("common.phoneOptional")} onChangeValue={setPhone} testID="customer-phone" value={phone} />
                   <Button
                     disabled={!canSubmitCustomerForm({ editingId: id ?? null, email, fullName, isLoading: loading, isSaving: save.isPending, phone, shopId })}
                     label={id ? t("owner.customers.save") : t("owner.customers.add")}

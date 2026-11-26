@@ -45,7 +45,9 @@ export type DomainErrorCode =
   | "REPORT_FORBIDDEN"
   | "SHOP_SLUG_INVALID"
   | "SHOP_OWNER_INVALID"
-  | "LEGAL_CONSENT_INVALID";
+  | "LEGAL_CONSENT_INVALID"
+  | "SHOP_NOT_READY"
+  | "SHOP_SETUP_INCOMPLETE";
 
 export class DomainError extends Error {
   constructor(
@@ -156,6 +158,10 @@ export function toDomainError(error: { code?: string; message?: string }): Domai
       return new DomainError("SHOP_SLUG_INVALID", "That business link is taken or not allowed.");
     case "P0042":
       return new DomainError("SHOP_OWNER_INVALID", "This account cannot own a new business.");
+    case "P0044":
+      return new DomainError("SHOP_NOT_READY", "This business is not open for bookings yet.");
+    case "P0045":
+      return new DomainError("SHOP_SETUP_INCOMPLETE", "Finish the required steps before opening your agenda.");
     case "P0046":
       return new DomainError("LEGAL_CONSENT_INVALID", "We could not record your acceptance. Please try again.");
     case "P0029":

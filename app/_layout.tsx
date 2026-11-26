@@ -18,6 +18,7 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { resolveAuthRedirect } from "../src/features/auth/session";
+import { useSetupPending } from "../src/features/setup/use-setup-pending";
 import { usePendingLegal } from "../src/features/legal/use-pending-legal";
 import { CurrentShopProvider } from "../src/features/shops/CurrentShopProvider";
 import { NotificationsPromptGate } from "../src/features/notifications/NotificationsPromptGate";
@@ -37,7 +38,9 @@ export function RootNavigator() {
   );
   const segments = useSegments();
   const { isLoading, profile, session } = useSupabaseSession();
-  const legal = usePendingLegal();
+  const setupPending = useSetupPending();
+  // An owner accepts the business agreement in the setup checklist the first time; the gate asks for it only after opening.
+  const legal = usePendingLegal(!setupPending);
   const pendingLegal = legal.pending.length > 0;
   const [fontsLoaded] = useFonts({
     Oswald_500Medium,
@@ -51,12 +54,13 @@ export function RootNavigator() {
   const redirect = useMemo(
     () =>
       resolveAuthRedirect({
+        ownerSetupPending: setupPending,
         pendingLegal,
         profileRole: profile?.role ?? null,
         segments,
         session,
       }),
-    [pendingLegal, profile?.role, segments, session],
+    [pendingLegal, profile?.role, segments, session, setupPending],
   );
 
   useEffect(() => {

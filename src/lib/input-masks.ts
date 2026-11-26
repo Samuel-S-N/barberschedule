@@ -32,3 +32,31 @@ export function formatCepInput(input: string) {
 
   return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
 }
+
+// Whole numbers (minutes, weeks, days): digits only, no leading zeros, at most `maxDigits` (9 by default).
+export function formatIntegerInput(input: string, maxDigits = 9) {
+  return digits(input).slice(0, maxDigits).replace(/^0+(?=\d)/, "");
+}
+
+// Percent (commission): digits and ONE decimal separator (comma or dot), at most 2 decimals (the database stores numeric(5,2)),
+// clamped at 100. Returns the value as a plain number string with a dot ("40.5"), which is what the code parses.
+export function formatPercentInput(input: string) {
+  const cleaned = input.replace(/[^\d.,]/g, "");
+  const separator = cleaned.search(/[.,]/);
+  const integerPart = (separator === -1 ? cleaned : cleaned.slice(0, separator)).replace(/\D/g, "");
+  const decimals = separator === -1 ? "" : cleaned.slice(separator + 1).replace(/\D/g, "").slice(0, 2);
+  const integer = integerPart.replace(/^0+(?=\d)/, "") || (separator === -1 ? "" : "0");
+  const value = separator === -1 ? integer : `${integer}.${decimals}`;
+
+  return Number(value) > 100 ? "100" : value;
+}
+
+// What the field shows: a decimal comma and a % suffix; nothing while empty.
+export const percentDisplay = (value: string) => (value ? `${value.replace(".", ",")}%` : "");
+
+// Backspace at the end of "40%" only deletes the "%": that must delete the last digit instead, or the suffix would undo the key press.
+export function nextPercentState(previous: string, text: string) {
+  if (previous && text === percentDisplay(previous).slice(0, -1)) return formatPercentInput(previous.slice(0, -1));
+
+  return formatPercentInput(text);
+}

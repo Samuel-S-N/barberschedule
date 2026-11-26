@@ -90,3 +90,12 @@ Fill `src/features/legal/company.ts` (razão social, CNPJ, endereço, foro) and 
 While a field is empty the documents show it as a highlighted placeholder, so after deploying open `/privacidade`, `/termos` and
 `/contrato` and confirm no `[RAZÃO SOCIAL]`, `[CNPJ]`, `[ENDEREÇO]` or `[FORO]` is left. Changing a document's text means bumping its
 `version` in `src/features/legal/documents/`: every user then sees the "Atualizamos nossos termos" screen once.
+
+## 9. New shops start closed (setup checklist)
+
+A shop created by `scripts/create-shop.mjs` (or `create_shop`) has `shops.setup_completed_at = null`: its owner must finish the
+setup checklist (agreement, details, hours, a service, a team member with hours and services) at `<slug>.zencpro.app`, and then
+"Abrir minha agenda" opens it and shows the link and QR code. Until then visitors see "Em breve" and `book_appointment` rejects
+bookings (`P0044`). Existing shops, and every seed or test shop, are open: the column defaults to `now()` and only `create_shop`
+sets it to null. Nothing to configure at deploy time; tell each new owner the checklist is their first step.
+

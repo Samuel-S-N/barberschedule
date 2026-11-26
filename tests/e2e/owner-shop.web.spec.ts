@@ -101,6 +101,23 @@ test("saving writes the contact and turns a break into two periods", async ({ pa
   expect(calls.hours).toEqual({ p_periods: [{ end: "12:00", start: "09:00", weekday: 1 }, { end: "18:00", start: "14:00", weekday: 1 }] });
 });
 
+test("phone and WhatsApp show formatted, accept digits only and are stored as digits", async ({ page }) => {
+  const calls: Record<string, unknown> = {};
+
+  await signInAsOwner(page);
+  await mockOwnerRest(page, calls);
+
+  await page.goto("/shop");
+  // The stored 10 digits are shown in the 10-digit format.
+  await expect(page.getByTestId("shop-phone")).toHaveValue("(11) 3333-4444");
+  await page.getByTestId("shop-whatsapp").pressSequentially("11a9-1234 56x78");
+  await expect(page.getByTestId("shop-whatsapp")).toHaveValue("(11) 91234-5678");
+  await page.getByTestId("shop-save").click();
+
+  await expect(page.getByText("Shop details saved.")).toBeVisible();
+  expect(calls.contact).toMatchObject({ phone: "1133334444", whatsapp: "11912345678" });
+});
+
 test("an invalid time is explained and nothing is saved", async ({ page }) => {
   const calls: Record<string, unknown> = {};
 
@@ -231,4 +248,22 @@ test("an unknown CEP shows a message and clears nothing", async ({ page }) => {
 
   await expect(page.getByText("CEP not found, fill in the address.")).toBeVisible();
   await expect(page.getByTestId("shop-street")).toHaveValue("Rua que eu digitei");
+});
+
+test.describe("a stored CEP", () => {
+  test.use({ shop: { ...defaultShop, address_cep: "01310100", address_city: "Recife", address_number: "10", address_state: "PE", address_street: "Rua A", phone: "1133334444", whatsapp: null } });
+
+  test("opens formatted as 00000-000 and is saved as digits", async ({ page }) => {
+    const calls: Record<string, unknown> = {};
+
+    await signInAsOwner(page);
+    await mockOwnerRest(page, calls);
+
+    await page.goto("/shop");
+    await expect(page.getByTestId("shop-cep")).toHaveValue("01310-100");
+    await page.getByTestId("shop-save").click();
+
+    await expect(page.getByText("Shop details saved.")).toBeVisible();
+    expect(calls.contact).toMatchObject({ address_cep: "01310100" });
+  });
 });

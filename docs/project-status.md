@@ -12,6 +12,8 @@ environment yet. The per-task history below is kept as the record of how it was 
 - **0.5 readiness, part A (legal texts, consent gate):** privacy policy, terms and business agreement as public pages
   (`/privacidade`, `/termos`, `/contrato`) with per-document versions and a re-accept gate; lawyer review pending
   (`docs/legal/revisao-juridica.md`).
+- **0.5 readiness, part C (owner setup form):** new shops start closed (`shops.setup_completed_at`, migration `0081`); the owner is routed to
+  a `/setup` checklist, `complete_shop_setup` validates on the server, visitors see "Em breve" and bookings are rejected until it opens.
 - **Repository:** 63 migration files (0001-0060 and 0064-0066; 0061-0063 are reserved by the unmerged payouts work),
   45 pgTAP files, 18 decision records, three Edge Functions (`delete-account`, `dispatch-notifications`,
   `invite-professional`).

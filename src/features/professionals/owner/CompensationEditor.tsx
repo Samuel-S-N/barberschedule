@@ -7,7 +7,7 @@ import { ConfirmDialog } from "../../../components/domain/ConfirmDialog";
 import { formatPriceBRL } from "../../../components/domain/ServiceCard";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
-import { Input } from "../../../components/ui/Input";
+import { MoneyInput, PercentInput } from "../../../components/ui/MaskedInputs";
 import { errorMessage } from "../../../i18n/errors";
 import { centsToReaisInput, parseReaisToCents } from "../../../lib/money";
 import { useSupabaseSession } from "../../../providers/AppProviders";
@@ -70,10 +70,10 @@ export function CompensationEditor({ professional, onFeedback }: { professional:
               <Button label={t("owner.professionals.chairRentalTab")} onPress={() => setCompType("chair_rental")} size="sm" testID="comp-type-chair_rental" variant={compType === "chair_rental" ? "dark" : "outline"} />
             </View>
             {compType === "commission" ? (
-              <Input keyboardType="numeric" label={t("owner.professionals.commissionPercentLabel")} onChangeText={setPercent} placeholder={t("examples.percent")} testID="comp-percent" value={percent} />
+              <PercentInput label={t("owner.professionals.commissionPercentLabel")} onChangeValue={setPercent} testID="comp-percent" value={percent} />
             ) : (
               <>
-                <Input keyboardType="numeric" label={t("owner.professionals.rentalAmountLabel")} onChangeText={setRent} placeholder={t("examples.money")} testID="comp-rent" value={rent} />
+                <MoneyInput label={t("owner.professionals.rentalAmountLabel")} onChangeValue={setRent} testID="comp-rent" value={rent} />
                 <View className="flex-row gap-2">
                   {(["weekly", "monthly"] as const).map((frequency) => (
                     <Button key={frequency} label={t(`professional.frequency.${frequency}`)} onPress={() => setRentFrequency(frequency)} size="sm" testID={`comp-freq-${frequency}`} variant={rentFrequency === frequency ? "dark" : "outline"} />

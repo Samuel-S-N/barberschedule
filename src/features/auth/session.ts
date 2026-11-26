@@ -3,6 +3,8 @@ import type { Session } from "@supabase/supabase-js";
 import type { AppRole } from "./types";
 
 type ResolveAuthRedirectInput = {
+  // An owner whose business is not open yet is kept on the setup checklist instead of the panel.
+  ownerSetupPending?: boolean;
   // A legal document the user has not accepted in its current version: the app is blocked behind /accept-terms.
   pendingLegal?: boolean;
   profileRole: AppRole | null;
@@ -12,6 +14,9 @@ type ResolveAuthRedirectInput = {
 
 // Readable without a session (and by anyone signed in): the legal documents and the password-reset landing.
 const PUBLIC_SEGMENTS = new Set(["legal", "privacidade", "termos", "contrato", "reset-password"]);
+
+// The four panel tabs: while the setup is pending they lead to /setup. The screens the checklist steps open stay reachable.
+const OWNER_PANEL_ROOTS = new Set(["agenda", "revenue", "manage", "settings"]);
 
 export const LOGIN_ROUTE = "/login";
 export const HOME_ROUTE = "/";
@@ -28,6 +33,7 @@ const GROUP_ROLE: Record<string, AppRole> = {
 };
 
 export function resolveAuthRedirect({
+  ownerSetupPending = false,
   pendingLegal = false,
   profileRole,
   segments,
@@ -53,6 +59,13 @@ export function resolveAuthRedirect({
 
   if (group === "(auth)") {
     return HOME_ROUTE;
+  }
+
+  if (profileRole === "owner" && group === "(owner)") {
+    const screen = segments[segments.length - 1];
+
+    if (ownerSetupPending && OWNER_PANEL_ROOTS.has(screen)) return "/setup";
+    if (!ownerSetupPending && screen === "setup") return "/agenda";
   }
 
   const requiredRole = group ? GROUP_ROLE[group] : undefined;
