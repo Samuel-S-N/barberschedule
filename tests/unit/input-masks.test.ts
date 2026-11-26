@@ -1,4 +1,4 @@
-import { formatDateInput, formatPercentInput, formatTimeInput, nextPercentState, parseDateInput, percentDisplay } from "../../src/lib/input-masks";
+import { formatDateInput, formatIntegerInput, formatPercentInput, formatTimeInput, nextPercentState, parseDateInput, percentDisplay } from "../../src/lib/input-masks";
 
 describe("formatDateInput", () => {
   it("masks pt/es as DD/MM/YYYY", () => {
@@ -30,6 +30,26 @@ describe("formatTimeInput", () => {
     expect(formatTimeInput("123")).toBe("12:3");
     expect(formatTimeInput("12:30")).toBe("12:30");
     expect(formatTimeInput("123099")).toBe("12:30");
+  });
+});
+
+describe("formatIntegerInput", () => {
+  it("keeps digits only", () => {
+    expect(formatIntegerInput("")).toBe("");
+    expect(formatIntegerInput("45")).toBe("45");
+    expect(formatIntegerInput("4a5-,.")).toBe("45");
+    expect(formatIntegerInput("  30 min")).toBe("30");
+  });
+
+  it("drops leading zeros but keeps a lone zero", () => {
+    expect(formatIntegerInput("007")).toBe("7");
+    expect(formatIntegerInput("0")).toBe("0");
+    expect(formatIntegerInput("00")).toBe("0");
+  });
+
+  it("caps the length when asked", () => {
+    expect(formatIntegerInput("123456", 4)).toBe("1234");
+    expect(formatIntegerInput("99999999999999999999")).toBe("99999999999999999999".slice(0, 9));
   });
 });
 

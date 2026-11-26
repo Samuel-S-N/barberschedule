@@ -1,7 +1,7 @@
 import { fireEvent, render } from "@testing-library/react-native";
 import React from "react";
 
-import { CepInput, MoneyInput, PercentInput, PhoneInput } from "../../src/components/ui/MaskedInputs";
+import { CepInput, IntegerInput, MoneyInput, PercentInput, PhoneInput } from "../../src/components/ui/MaskedInputs";
 import i18n from "../../src/i18n";
 
 describe("CepInput", () => {
@@ -140,5 +140,35 @@ describe("PercentInput", () => {
     const view = await render(React.createElement(PercentInput, { label: "Commission", onChangeValue: jest.fn(), testID: "pct", value: "" }));
 
     expect(view.getByTestId("pct").props.keyboardType).toBe("decimal-pad");
+  });
+});
+
+describe("IntegerInput", () => {
+  beforeAll(async () => i18n.changeLanguage("en"));
+
+  it("shows the value and uses the number keyboard", async () => {
+    const view = await render(React.createElement(IntegerInput, { label: "Minutes", onChangeValue: jest.fn(), testID: "int", value: "30" }));
+
+    expect(view.getByTestId("int").props.value).toBe("30");
+    expect(view.getByTestId("int").props.keyboardType).toBe("number-pad");
+  });
+
+  it("reports digits only", async () => {
+    const onChangeValue = jest.fn();
+    const view = await render(React.createElement(IntegerInput, { label: "Minutes", onChangeValue, testID: "int", value: "" }));
+
+    await fireEvent.changeText(view.getByTestId("int"), "4a5-,.");
+    expect(onChangeValue).toHaveBeenLastCalledWith("45");
+
+    await fireEvent.changeText(view.getByTestId("int"), "");
+    expect(onChangeValue).toHaveBeenLastCalledWith("");
+  });
+
+  it("stops at maxDigits", async () => {
+    const onChangeValue = jest.fn();
+    const view = await render(React.createElement(IntegerInput, { label: "Day", maxDigits: 2, onChangeValue, testID: "int", value: "" }));
+
+    await fireEvent.changeText(view.getByTestId("int"), "1234");
+    expect(onChangeValue).toHaveBeenLastCalledWith("12");
   });
 });

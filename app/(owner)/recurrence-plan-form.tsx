@@ -12,7 +12,7 @@ import { SkeletonBlock } from "../../src/components/domain/SkeletonLoader";
 import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Input, useFieldChain } from "../../src/components/ui/Input";
-import { MoneyInput } from "../../src/components/ui/MaskedInputs";
+import { IntegerInput, MoneyInput } from "../../src/components/ui/MaskedInputs";
 import { Screen } from "../../src/components/ui/Screen";
 import { listRecurrencePlans, saveRecurrencePlan } from "../../src/features/recurrence/plans-api";
 import { recurrencePriceText } from "../../src/features/recurrence/price-text";
@@ -89,7 +89,7 @@ export default function RecurrencePlanFormScreen() {
                   <Button label={t("owner.plans.quickMonthly")} onPress={() => setWeeksText("1")} size="sm" testID="plan-weeks-1" variant={weeksText === "1" ? "dark" : "outline"} />
                   <Button label={t("owner.plans.quickBiweekly")} onPress={() => setWeeksText("2")} size="sm" testID="plan-weeks-2" variant={weeksText === "2" ? "dark" : "outline"} />
                 </View>
-                <Input {...field(2)} keyboardType="number-pad" label={t("owner.plans.every")} onChangeText={setWeeksText} placeholder={t("examples.weeks")} testID="plan-weeks" value={weeksText} />
+                <IntegerInput {...field(2)} label={t("owner.plans.every")} maxDigits={2} onChangeValue={setWeeksText} placeholder={t("examples.weeks")} testID="plan-weeks" value={weeksText} />
                 {priceCents !== null && weeksValid ? <Text className="text-sm font-sans-medium text-ink" testID="plan-summary">{recurrencePriceText(t, priceCents, weeks)}</Text> : null}
                 <Button disabled={!valid || save.isPending} label={t("owner.plans.save")} onPress={() => save.mutate(plan ? plan.active : true)} testID="plan-save" />
                 {plan ? (

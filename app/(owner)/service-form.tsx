@@ -12,7 +12,7 @@ import { Toast } from "../../src/components/domain/Toast";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Input, useFieldChain } from "../../src/components/ui/Input";
-import { MoneyInput } from "../../src/components/ui/MaskedInputs";
+import { IntegerInput, MoneyInput } from "../../src/components/ui/MaskedInputs";
 import { Screen } from "../../src/components/ui/Screen";
 import { createService, setServiceActive, setServiceStandard, updateService } from "../../src/features/services/api";
 import { ServiceAssignments } from "../../src/features/services/ServiceAssignments";
@@ -92,7 +92,7 @@ export default function OwnerServiceFormScreen() {
               <Card>
                 <View className="gap-3">
                   <Input {...field(0)} label={t("owner.services.nameLabel")} onChangeText={setName} placeholder={t("examples.serviceName")} testID="service-name" value={name} />
-                  <Input {...field(1)} keyboardType="numeric" label={t("owner.services.durationLabel")} onChangeText={setDurationMinutes} placeholder={t("examples.minutes")} testID="service-duration" value={durationMinutes} />
+                  <IntegerInput {...field(1)} label={t("owner.services.durationLabel")} maxDigits={4} onChangeValue={setDurationMinutes} placeholder={t("examples.minutes")} testID="service-duration" value={durationMinutes} />
                   <MoneyInput {...field(2)} label={t("owner.services.priceLabel")} onChangeValue={setPrice} testID="service-price" value={price} />
                   <Input {...field(3)} label={t("owner.services.descriptionLabel")} onChangeText={setDescription} placeholder={t("examples.description")} testID="service-description" value={description} />
                   <Button disabled={!validForm || loading || busy || !shopId} label={id ? t("owner.services.save") : t("owner.services.add")} onPress={() => save.mutate()} testID="service-save" />

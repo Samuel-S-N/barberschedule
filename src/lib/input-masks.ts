@@ -33,6 +33,11 @@ export function formatCepInput(input: string) {
   return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
 }
 
+// Whole numbers (minutes, weeks, days): digits only, no leading zeros, at most `maxDigits` (9 by default).
+export function formatIntegerInput(input: string, maxDigits = 9) {
+  return digits(input).slice(0, maxDigits).replace(/^0+(?=\d)/, "");
+}
+
 // Percent (commission): digits and ONE decimal separator (comma or dot), at most 2 decimals (the database stores numeric(5,2)),
 // clamped at 100. Returns the value as a plain number string with a dot ("40.5"), which is what the code parses.
 export function formatPercentInput(input: string) {

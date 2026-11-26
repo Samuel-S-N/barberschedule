@@ -107,6 +107,22 @@ test("the price field fills from the cents while typing and backspace removes th
   await expect(price).toHaveValue("");
 });
 
+test("the duration field accepts digits only", async ({ page }) => {
+  await signInAsOwner(page);
+  await mockOwnerRest(page, {});
+
+  await page.goto("/services");
+  await page.getByTestId("fab-add").click();
+  const duration = page.getByTestId("service-duration");
+
+  await expect(duration).toHaveValue("30");
+  await duration.fill("");
+  await duration.pressSequentially("4a5-,.0");
+  await expect(duration).toHaveValue("450");
+  await duration.fill("12345678");
+  await expect(duration).toHaveValue("1234");
+});
+
 test("the owner adds a service typing the price in reais", async ({ page }) => {
   const calls: Record<string, unknown> = {};
 

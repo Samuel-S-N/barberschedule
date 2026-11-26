@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { formatPhone, phoneDigits } from "../../features/account/phone";
 import { useLanguage } from "../../i18n/use-language";
 import { formatDateNumeric } from "../../lib/i18n/format";
-import { formatCepInput, formatDateInput, formatTimeInput, nextPercentState, parseDateInput, percentDisplay } from "../../lib/input-masks";
+import { formatCepInput, formatDateInput, formatIntegerInput, formatTimeInput, nextPercentState, parseDateInput, percentDisplay } from "../../lib/input-masks";
 import { formatMoneyInput } from "../../lib/money";
 import { Input } from "./Input";
 import type { InputProps } from "./Input";
@@ -69,4 +69,9 @@ export function PercentInput({ value, onChangeValue, placeholder, ...rest }: Mas
   const { t } = useTranslation();
 
   return <Input {...rest} keyboardType="decimal-pad" onChangeText={(text) => onChangeValue(nextPercentState(value, text))} placeholder={placeholder ?? t("examples.percent")} value={percentDisplay(value)} />;
+}
+
+// Whole numbers (minutes, weeks, days of the month): number keyboard, anything that is not a digit is dropped.
+export function IntegerInput({ value, onChangeValue, maxDigits, placeholder, ...rest }: MaskedProps & { maxDigits?: number }) {
+  return <Input {...rest} keyboardType="number-pad" onChangeText={(text) => onChangeValue(formatIntegerInput(text, maxDigits))} placeholder={placeholder} value={value} />;
 }

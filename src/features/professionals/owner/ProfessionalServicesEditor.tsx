@@ -6,8 +6,7 @@ import { Text, View } from "react-native";
 import { formatPriceBRL } from "../../../components/domain/ServiceCard";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
-import { Input } from "../../../components/ui/Input";
-import { MoneyInput } from "../../../components/ui/MaskedInputs";
+import { IntegerInput, MoneyInput } from "../../../components/ui/MaskedInputs";
 import { errorMessage } from "../../../i18n/errors";
 import { centsToReaisInput, parseReaisToCents } from "../../../lib/money";
 import { useSupabaseSession } from "../../../providers/AppProviders";
@@ -104,7 +103,7 @@ export function ProfessionalServicesEditor({ professional, onFeedback }: { profe
               {overrideId !== null && overrideId === assignment?.id ? (
                 <View className="gap-2">
                   <MoneyInput label={t("owner.services.overridePrice")} onChangeValue={setOverridePrice} testID="professional-override-price" value={overridePrice} />
-                  <Input keyboardType="numeric" label={t("owner.services.overrideDuration")} onChangeText={setOverrideDuration} placeholder={t("examples.minutes")} testID="professional-override-duration" value={overrideDuration} />
+                  <IntegerInput label={t("owner.services.overrideDuration")} maxDigits={4} onChangeValue={setOverrideDuration} placeholder={t("examples.minutes")} testID="professional-override-duration" value={overrideDuration} />
                   <Text className="text-xs font-sans text-neutral-500">{t("owner.services.overrideHint")}</Text>
                   <View className="flex-row gap-2">
                     <Button disabled={busy} label={t("owner.services.overrideSave")} onPress={() => saveOverride.mutate()} size="sm" testID="professional-override-save" />
