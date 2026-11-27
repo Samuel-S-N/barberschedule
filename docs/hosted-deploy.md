@@ -28,7 +28,7 @@
 2. GitHub > Settings > Environments > `dev`: add the secrets and variables of the table below, and set the Supabase **function secrets** of
    `zenc-dev` (section 0c). The owner pastes every value.
 3. GitHub > Settings > Branches: protect `main`: require a pull request and the `verify` status check before merging.
-4. Run `docs/deploy-spikes.md` S3 (config diff, answer "no") before the first merge.
+4. Review the config diff once in your own interactive terminal (`docs/deploy-spikes.md` S3: `config push` has no dry run, so use `--agent no` and answer "n"). It already ran once; the findings are fixed. Otherwise trust the first pipeline run.
 5. Merge to `main`: `verify` runs, then `dev` deploys. Read the log; then S4a and S4c.
 6. Cloudflare > Workers & Pages > `zenc-web-dev` > Settings > Domains & Routes > Enable Cloudflare Access (workers.dev **and**
    preview URLs); policy "Allow" for exactly two e-mails: zencpro.admin@gmail.com and your personal e-mail. Open the address, log in once.
@@ -41,6 +41,21 @@
    ```
 
    then set the GitHub variable `EXPO_PUBLIC_DEV_SHOP_SLUG=demo` and re-run the `deploy` workflow.
+
+### Supabase access token (GitHub secret `SUPABASE_ACCESS_TOKEN`, and any local CLI token)
+
+`config push` lists the project's add-ons first, so a token without `infra_add_ons_read` fails with 403 ("Missing required permission(s):
+infra_add_ons_read"). Recipe (Account > Access Tokens > Generate a scoped token), one token per environment (`github-deploy-dev`,
+`github-deploy-prod`): resource = the **single project**; preset **Full access**; Infrastructure and delivery = **Read**;
+Account and organization: Projects (account-wide) = **Read**, SQL Snippets = **None**, Organization Settings = **None**.
+
+### Accepted differences when `config push` runs (found by spike S3, no override)
+
+The local `config.toml` values below replace the hosted ones on every push. They are accepted on purpose: TOTP MFA enroll/verify true to
+**false** (the app has no MFA), `otp_length` 8 to **6**, `minimum_password_length` **8** (the app's rule), `sms.enable_confirmations`
+true (SMS is disabled). Two other local defaults would have been harmful and **are** overridden in every `[remotes.*]`: the SMTP block
+(`enabled = true`) and the e-mail rate limit (`max_frequency = "1m0s"`). A new local default that matters on hosted projects goes into
+the remotes the same way, with a test in `tests/unit/deploy-config.test.ts`.
 
 ### Secrets and variables (names exactly as the workflows read them)
 
@@ -106,7 +121,7 @@ GitHub and in Supabase (never print it; compare lengths only).
 7. **Resend:** the domain `zencpro.com.br` shows "Verified" and the `zenc-prod` key can send from it.
 8. **Dry run (read only):** `npx supabase link --project-ref <PROD_REF>` then `npx supabase db push --dry-run`: all 83 migrations
    (`0001` to `0083`) are listed and nothing else (the project is empty, so no duplicate e-mail pre-check is needed). Then
-   `docs/deploy-spikes.md` S3 against the prod ref: answer "no"; the diff shows only production values.
+   the config diff against the prod ref, in your own interactive terminal (`docs/deploy-spikes.md` S3: `config push --agent no`, answer "n"; the token needs `infra_add_ons_read`): only production values, no `127.0.0.1`.
 9. **Promote:** merge to `main` (or Actions > deploy > Run workflow). `verify` and `dev` run; the `production` job waits. Actions > the
    run > "Review deployments" > tick `production` > Approve. This is the first and last time migrations are applied from zero:
    **from now on they are append-only** (decision `018`).
