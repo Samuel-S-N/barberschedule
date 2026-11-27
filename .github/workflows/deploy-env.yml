@@ -56,6 +56,9 @@ jobs:
       # Database first: a function or a web build that needs a new column must never run before its migration.
       - run: npx supabase link --project-ref "$REF"
       - run: npx supabase db push --linked --yes
+      # The auth e-mail templates load their logo from the web app's own static file: point it at this environment's site (production's is
+      # zencpro.app, so production is unchanged). Rewrites the CI workspace only; the repository's templates stay as they are.
+      - run: node scripts/set-email-logo.mjs "$REF"
       - run: npx supabase config push --project-ref "$REF" --yes
       - run: npx supabase functions deploy --project-ref "$REF" --use-api
 
@@ -63,6 +66,9 @@ jobs:
       - run: npx sentry-expo-upload-sourcemaps dist
       # Source maps go to Sentry only; they are never published with the site.
       - run: find dist -name '*.map' -delete
+      # The public dev site doubles as the demo shown to businesses: keep it out of search engines. Production stays indexable.
+      - if: ${{ inputs.environment != 'production' }}
+        run: node scripts/mark-noindex.mjs dist
       - run: npx wrangler deploy ${{ inputs.environment == 'production' && '--env production' || '' }}
 
       # Smoke: e-mail confirmations are enforced and the functions gateway answers the browser preflight.

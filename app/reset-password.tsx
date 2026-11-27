@@ -11,7 +11,7 @@ import { Button } from "../src/components/ui/Button";
 import { Input, useFieldChain } from "../src/components/ui/Input";
 import { Screen } from "../src/components/ui/Screen";
 import { validateNewPassword } from "../src/features/account/security";
-import { completePasswordReset, startRecoverySession } from "../src/features/auth/api";
+import { completePasswordSetup, startRecoverySession } from "../src/features/auth/api";
 import { hasRecovery, isInvite, parseRecoveryUrl, resolveRecoveryStatus, type RecoveryStatus } from "../src/features/auth/recovery";
 import { errorMessage } from "../src/i18n/errors";
 import { useSupabaseSession } from "../src/providers/AppProviders";
@@ -64,11 +64,12 @@ export default function ResetPasswordScreen() {
     setSaving(true);
     setError(null);
     try {
-      // Read before completePasswordReset clears the proof.
-      const notice = isInvite() ? "password-created" : "password-reset";
+      // Read before completePasswordSetup clears the proof.
+      const outcome = await completePasswordSetup(supabase, next, { invite: isInvite() });
 
-      await completePasswordReset(supabase, next);
-      router.replace({ params: { notice }, pathname: "/login" });
+      // An invite stays signed in: "/" sends each role to its own area (an owner of a closed business to the setup checklist).
+      if (outcome === "signed-in") router.replace("/");
+      else router.replace({ params: { notice: "password-reset" }, pathname: "/login" });
     } catch (caught) {
       setError(errorMessage(caught, t, t("auth.reset.saveError")));
     } finally {
