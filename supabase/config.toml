@@ -99,8 +99,11 @@ additional_redirect_urls = ["https://zenc-web-dev.zenc.workers.dev/**"]
 
 [remotes.dev.auth.email]
 enable_confirmations = true
+# The local value is 1s; hosted keeps one minute between e-mails to the same address (resend/recovery abuse).
+max_frequency = "1m0s"
 
 [remotes.dev.auth.email.smtp]
+enabled = true
 host = "smtp.resend.com"
 port = 465
 user = "resend"

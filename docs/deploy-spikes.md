@@ -14,19 +14,28 @@ line under "Risks" in the spec.
 | S4c source maps reach Sentry | R2/Sentry | `SENTRY_AUTH_TOKEN` | checked by the first dev deploy |
 | P1 what a dump contains | R9 | dev session-pooler URL | plan 3 |
 
-## S3: what would `config push` change? (before the first deploy)
+## S3: what would `config push` change? (before the first deploy; RAN 2026-11-26 against zenc-dev)
 
-1. Fill the placeholders in `supabase/config.toml` (`[remotes.dev]` project ref and the `REPLACE-ACCOUNT` part of the workers.dev address) and merge that.
-2. In the repo, with the owner logged in (`npx supabase login`):
+**`supabase config push` has no dry run.** In a non-interactive shell (an agent is auto-detected) it applies **without prompting** and
+ignores a piped "n". To review the diff, the owner runs it in their own interactive terminal with `--agent no` and answers "n":
 
-   ```bash
-   npx supabase link --project-ref <DEV_REF>
-   npx supabase config push --project-ref <DEV_REF>
-   ```
+```bash
+npx supabase login            # or a scoped token, see docs/hosted-deploy.md "Supabase access token"
+npx supabase link --project-ref <DEV_REF>
+npx supabase config push --project-ref <DEV_REF> --agent no     # read the diff, answer n
+```
 
-3. Read the diff it prints and **answer "no"**. Pass: it lists only hosted values (the workers.dev site URL and redirect, e-mail
-   confirmations true, the Resend SMTP block) and **no** `127.0.0.1` or `localhost`. Fail (the CLI ignores `[remotes.*]`): stop and
-   report; the fallback is a generated `supabase/config.dev.toml` with `--workdir`.
+Findings of the first run (each fixed in `config.toml` or accepted):
+
+- Fixed: `[email.smtp] enabled` would have become `false`: the hosted update was **rejected** (400, "Email template modification is not
+  available for free tier projects using the default email provider"). Both `[remotes.*.auth.email.smtp]` blocks now set `enabled = true`.
+- Fixed: `[auth.email] max_frequency` would have gone from the hosted `1m0s` to the local `1s`. Both remotes now set `max_frequency = "1m0s"`.
+- Accepted, no override (see `docs/hosted-deploy.md` "Accepted differences"): TOTP MFA enroll/verify true to false, `otp_length` 8 to 6,
+  `minimum_password_length` to 8, `sms.enable_confirmations` true.
+- The token needs `infra_add_ons_read` (config push lists add-ons first; 403 otherwise): recipe in `docs/hosted-deploy.md`.
+
+Pass criteria for a later run: the diff lists only hosted values (the workers.dev or production site URL and redirects, confirmations true,
+the Resend SMTP block enabled) and no `127.0.0.1` or `localhost`.
 
 ## S4a: Vault values (after the first dev deploy)
 
