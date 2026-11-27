@@ -76,6 +76,7 @@ const appointmentsUrl = (slug: string | null) => buildShopUrl(Deno.env.get("SHOP
 
 const dispatchRows = createDispatcher({
   appointmentsUrl,
+  logoUrl: Deno.env.get("EMAIL_LOGO_URL"),
   deactivateExpo: async (token) => { await supabaseRpc("deactivate_notification_token", { target_expo_push_token: token }); },
   deactivateWeb: async (endpoint) => { await supabaseRpc("deactivate_web_subscription", { target_endpoint: endpoint }); },
   markFailed: async (id, error) => { await supabaseRpc("mark_notification_failed", { target_error: error, target_id: id }); },

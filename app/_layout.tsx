@@ -24,6 +24,7 @@ import { CurrentShopProvider } from "../src/features/shops/CurrentShopProvider";
 import { NotificationsPromptGate } from "../src/features/notifications/NotificationsPromptGate";
 import { ShopGate } from "../src/features/shops/ShopGate";
 import { ShopThemeProvider } from "../src/features/shops/ShopThemeProvider";
+import { DemoFrame } from "../src/components/domain/DemoBanner";
 import { useColors } from "../src/lib/design/theme/ThemeProvider";
 import { initMonitoring, withMonitoring } from "../src/lib/monitoring/sentry";
 import { AppProviders } from "../src/providers/AppProviders";
@@ -98,7 +99,9 @@ function RootLayout() {
       <AppProviders>
         <CurrentShopProvider>
           <ShopThemeProvider>
-            <RootNavigator />
+            <DemoFrame>
+              <RootNavigator />
+            </DemoFrame>
           </ShopThemeProvider>
         </CurrentShopProvider>
       </AppProviders>

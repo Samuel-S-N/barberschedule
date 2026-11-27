@@ -67,7 +67,6 @@ export const pt: DeepStringRecord<typeof en> = {
       createAccount: "Criar conta",
       error: "Não foi possível entrar.",
       forgot: "Esqueci minha senha",
-      passwordCreated: "Senha criada. Entre com ela.",
       passwordReset: "Senha redefinida. Entre com a nova senha.",
       submit: "Entrar",
       subtitle: "Use a mesma conta do Zenc na Web, no iOS ou no Android.",
@@ -456,6 +455,7 @@ export const pt: DeepStringRecord<typeof en> = {
     title: "Vamos abrir seu estabelecimento",
   },
   emailReminders: { error: "Não foi possível salvar. Tente de novo.", hint: "Receba um e-mail 24 horas antes do seu agendamento, em qualquer estabelecimento.", label: "Lembretes por e-mail" },
+  demo: { banner: "Ambiente de demonstração: os dados podem ser apagados a qualquer momento. Não use dados reais." },
   shopGate: {
     comingSoonBody: "{{name}} está preparando a agenda.",
     comingSoonTitle: "Em breve",

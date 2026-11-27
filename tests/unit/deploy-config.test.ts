@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const root = join(__dirname, "..", "..");
@@ -157,6 +157,33 @@ describe("workflows", () => {
     expect(deployEnv).toContain("--source-maps");
     expect(deployEnv.indexOf("sentry-expo-upload-sourcemaps")).toBeLessThan(deployEnv.indexOf("-name '*.map' -delete"));
     expect(deployEnv.indexOf("-name '*.map' -delete")).toBeLessThan(deployEnv.indexOf("wrangler deploy"));
+  });
+
+  it("the auth e-mail logo follows the environment's site before config push, and production's site is the one the templates already use", () => {
+    const step = 'node scripts/set-email-logo.mjs "$REF"';
+    const config = read("supabase/config.toml");
+    const siteOf = (name: string) => (config.split(`[remotes.${name}.auth]`)[1]?.split("\n[")[0] ?? "").match(/^site_url = "([^"]+)"/m)?.[1];
+
+    expect(deployEnv).toContain(step);
+    expect(deployEnv).not.toMatch(/if:[^\n]*\n\s+run: node scripts\/set-email-logo/);
+    expect(deployEnv.indexOf(step)).toBeLessThan(deployEnv.indexOf("supabase config push"));
+    expect(deployEnv.indexOf(step)).toBeGreaterThan(deployEnv.indexOf("Hosted config is filled in"));
+    expect(siteOf("dev")).toMatch(/^https:\/\/zenc-web-dev\./);
+    expect(read("supabase/templates/invite.html")).toContain("https://zencpro.app/email/zenc-logo.png");
+    // Where a production remote exists its site is exactly the address the templates (and the reminder default) use.
+    if (siteOf("prod")) expect(siteOf("prod")).toBe("https://zencpro.app");
+  });
+
+  it("only the non-production builds are marked noindex; production stays indexable", () => {
+    const step = "node scripts/mark-noindex.mjs dist";
+
+    expect(deployEnv).toContain(step);
+    expect(deployEnv).toMatch(/- if: \$\{\{ inputs\.environment != 'production' \}\}\n\s+run: node scripts\/mark-noindex\.mjs dist/);
+    expect(deployEnv.indexOf(step)).toBeLessThan(deployEnv.indexOf("wrangler deploy"));
+    expect(deployEnv.indexOf(step)).toBeGreaterThan(deployEnv.indexOf("-name '*.map' -delete"));
+    // The files that ship in every environment must not carry it.
+    expect(read("public/_headers")).not.toMatch(/X-Robots-Tag/i);
+    expect(existsSync(join(root, "public", "robots.txt"))).toBe(false);
   });
 
   it("every secret and variable a workflow reads is documented in docs/hosted-deploy.md", () => {

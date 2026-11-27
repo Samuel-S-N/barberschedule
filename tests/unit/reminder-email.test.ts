@@ -44,6 +44,19 @@ describe("buildReminderEmail", () => {
     expect(email.text.endsWith(notice)).toBe(true);
   });
 
+  it("takes the logo URL from the environment (hosted dev serves it from its own site) and keeps the production address by default", () => {
+    const dev = buildReminderEmail(payload, "https://x/appointments", "https://zenc-web-dev.zenc.workers.dev/email/zenc-logo.png");
+
+    expect(dev.html).toContain('src="https://zenc-web-dev.zenc.workers.dev/email/zenc-logo.png"');
+    expect(dev.html).not.toContain("https://zencpro.app/email/zenc-logo.png");
+    expect(email.html).toContain('src="https://zencpro.app/email/zenc-logo.png"');
+    expect(buildReminderEmail(payload, "https://x/appointments", "").html).toContain('src="https://zencpro.app/email/zenc-logo.png"');
+  });
+
+  it("escapes the logo URL", () => {
+    expect(buildReminderEmail(payload, "https://x/appointments", 'https://a/"><script>').html).not.toContain("<script>");
+  });
+
   it("uses the shop's time zone", () => {
     const manaus = buildReminderEmail({ ...payload, shop_timezone: "America/Manaus" }, "https://x.zencpro.app/appointments");
 
