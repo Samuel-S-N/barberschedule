@@ -457,6 +457,7 @@ export const en = {
     title: "Let's open your business",
   },
   emailReminders: { error: "Could not save. Please try again.", hint: "Get an e-mail 24 hours before your appointment, at any business.", label: "E-mail reminders" },
+  demo: { banner: "Demo environment: data may be erased at any time. Do not use real data." },
   shopGate: {
     comingSoonBody: "{{name}} is getting its agenda ready.",
     comingSoonTitle: "Coming soon",

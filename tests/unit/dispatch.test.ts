@@ -251,6 +251,15 @@ describe("reminder e-mails", () => {
     expect(calls.some((call) => call.startsWith("expo:") || call.startsWith("web:"))).toBe(false);
   });
 
+  it("passes the configured logo URL to the e-mail", async () => {
+    const sent: string[] = [];
+    const { dispatch } = deps({ logoUrl: "https://zenc-web-dev.zenc.workers.dev/email/zenc-logo.png", sendEmail: async (email) => { sent.push(email.html); return { ok: true }; } });
+
+    await dispatch([emailRow()]);
+
+    expect(sent[0]).toContain('src="https://zenc-web-dev.zenc.workers.dev/email/zenc-logo.png"');
+  });
+
   it("builds the link from the shop slug", async () => {
     const sent: string[] = [];
     const { dispatch } = deps({ sendEmail: async (email) => { sent.push(email.html); return { ok: true }; } });

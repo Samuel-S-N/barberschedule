@@ -30,6 +30,8 @@ export type Message = { body: string; title: string; url?: string };
 
 export type Deps = {
   appointmentsUrl: (slug: string | null) => string;
+  // Optional address of the e-mail logo (EMAIL_LOGO_URL); production uses the default.
+  logoUrl?: string;
   deactivateExpo: (token: string) => Promise<void>;
   deactivateWeb: (endpoint: string) => Promise<void>;
   markFailed: (id: string, error: string) => Promise<void>;
@@ -82,7 +84,7 @@ export function createDispatcher(deps: Deps) {
     if (row.event_type === EMAIL_REMINDER_EVENT) {
       if (!row.recipient_email) return { outcome: "skipped" };
 
-      const email = buildReminderEmail(row.payload as ReminderPayload, deps.appointmentsUrl(row.shop_slug));
+      const email = buildReminderEmail(row.payload as ReminderPayload, deps.appointmentsUrl(row.shop_slug), deps.logoUrl);
       const result = await deps.sendEmail({ ...email, to: row.recipient_email }, row.id);
 
       if (!result.ok) return { error: result.error ?? "E-mail delivery failed", outcome: "failed" };

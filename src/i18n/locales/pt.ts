@@ -456,6 +456,7 @@ export const pt: DeepStringRecord<typeof en> = {
     title: "Vamos abrir seu estabelecimento",
   },
   emailReminders: { error: "Não foi possível salvar. Tente de novo.", hint: "Receba um e-mail 24 horas antes do seu agendamento, em qualquer estabelecimento.", label: "Lembretes por e-mail" },
+  demo: { banner: "Ambiente de demonstração: os dados podem ser apagados a qualquer momento. Não use dados reais." },
   shopGate: {
     comingSoonBody: "{{name}} está preparando a agenda.",
     comingSoonTitle: "Em breve",

@@ -9,7 +9,7 @@
 ## 0. The flow in one screen
 
 - **One branch, `main`.** Every merge runs `verify` (typecheck, lint, Jest, script tests, pgTAP on a clean database) and then deploys
-  to **dev** (`zenc-dev` + the `zenc-web-dev` Worker behind Cloudflare Access) by itself.
+  to **dev** (`zenc-dev` + the `zenc-web-dev` Worker, a **public demo** site: noindex, demo strip, no Cloudflare Access) by itself.
 - **Production** is the same commit promoted by one approval in the GitHub Environment `production` (reviewer: the owner): `zenc-prod`
   + the `zenc-web` Worker on `zencpro.app` and `*.zencpro.app`.
 - **Backups:** nightly encrypted dump of `zenc-prod` to Cloudflare R2 (30 daily, 12 monthly); restore runbook `docs/restore-runbook.md`.
@@ -27,8 +27,12 @@
 3. GitHub > Settings > Branches: protect `main`: require a pull request and the `verify` status check before merging.
 4. Review the config diff once in your own interactive terminal (`docs/deploy-spikes.md` S3: `config push` has no dry run, so use `--agent no` and answer "n"). It already ran once; the findings are fixed. Otherwise trust the first pipeline run.
 5. Merge to `main`: `verify` runs, then `dev` deploys. Read the log; then S4a and S4c.
-6. Cloudflare > Workers & Pages > `zenc-web-dev` > Settings > Domains & Routes > Enable Cloudflare Access (workers.dev **and**
-   preview URLs); policy "Allow" for exactly two e-mails: zencpro.admin@gmail.com and your personal e-mail. Open the address, log in once.
+6. Open `https://zenc-web-dev.zenc.workers.dev`. **The dev site is public by decision (2026-11-27): it doubles as the demo shown to
+   businesses, and production only gets validated versions. Cloudflare Access is not used.** Check the safeguards: the thin demo strip
+   ("Ambiente de demonstração: ...") on every screen, `curl -sI <dev address>/login` shows `x-robots-tag: noindex, nofollow`, and
+   `<dev address>/robots.txt` says `Disallow: /`. Production never gets any of the three. **Known risk:** Resend's free 100 e-mails/day is shared
+   by dev and production, so abuse of the public dev site (sign-ups, password recovery) could exhaust production e-mail for the day. Mitigations:
+   the 1-minute per-address limit and, when real businesses start, a separate quota for production.
 7. Create the dev test business once (the owner's own shell, service-role key pasted by them):
 
    ```bash
@@ -38,6 +42,15 @@
    ```
 
    then set the GitHub variable `EXPO_PUBLIC_DEV_SHOP_SLUG=demo` and re-run the `deploy` workflow.
+
+### E-mail logo per environment
+
+Every e-mail loads its logo from the web app's own static file (`/email/zenc-logo.png`). Production serves it at `https://zencpro.app`; the
+templates and the reminder default to that address. Until production is live that host serves nothing, so hosted dev points the logo at
+its own site: **auth e-mails** (confirmation, recovery, invite) need no secret (`deploy-env.yml` runs `scripts/set-email-logo.mjs` before
+`config push`, taking `[remotes.<env>.auth] site_url`; production's is `zencpro.app`, so it is unchanged); the **reminder e-mail**
+(built by `dispatch-notifications`) reads the optional function secret **`EMAIL_LOGO_URL`**: set
+`EMAIL_LOGO_URL=https://zenc-web-dev.zenc.workers.dev/email/zenc-logo.png` on `zenc-dev` (the owner adds it), and leave it **unset** on `zenc-prod`.
 
 ### Supabase access token (GitHub secret `SUPABASE_ACCESS_TOKEN`, and any local CLI token)
 
@@ -68,12 +81,12 @@ the remotes the same way, with a test in `tests/unit/deploy-config.test.ts`.
 | `CLOUDFLARE_API_TOKEN` | secret | GitHub env `dev`, `production` (a separate token each) | `wrangler deploy` |
 | `CLOUDFLARE_ACCOUNT_ID` | variable | GitHub env `dev`, `production` | `wrangler deploy` |
 | `SENTRY_AUTH_TOKEN` | secret | GitHub env `dev`, `production` | source map upload |
-| `SENTRY_DSN_FUNCTIONS`, `SENTRY_ENVIRONMENT`, `EMAIL_FROM`, `SHOP_URL_TEMPLATE`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `EXPO_ACCESS_TOKEN` (optional) | Supabase function secrets | each Supabase project | Edge Functions |
+| `SENTRY_DSN_FUNCTIONS`, `SENTRY_ENVIRONMENT`, `EMAIL_FROM`, `EMAIL_LOGO_URL` (dev only), `SHOP_URL_TEMPLATE`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `EXPO_ACCESS_TOKEN` (optional) | Supabase function secrets | each Supabase project | Edge Functions |
 | `SUPABASE_DB_URL` (session pooler of `zenc-prod`), `AGE_PUBLIC_KEY`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | secret | GitHub env `backup` only | nightly backup |
 | `R2_ACCOUNT_ID`, `R2_BUCKET` | variable | GitHub env `backup` only | nightly backup |
 | age **private** key | (never in a system) | the owner's password manager | restore only |
 
-The step-by-step owner checklist (R2 card, bucket, tokens, key pair, Access policy, Resend domain, Email Routing, approving the first
+The step-by-step owner checklist (R2 card, bucket, tokens, key pair, Resend domain, Email Routing, approving the first
 production run) is section 6 of the spec; each plan repeats the items it needs.
 
 ## 1. Before touching the database
