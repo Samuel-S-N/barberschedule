@@ -1,6 +1,9 @@
 import { json } from "./customer-helpers";
 import { defaultShop, expect, test } from "./fixtures";
 
+// A fixture value typed into the form (not a credential of any real account).
+const CHOSEN = "brand-new-1";
+
 test.describe("closed shop", () => {
   test.use({ locale: "pt-BR", shop: { ...defaultShop, name: "Studio Aurora", setup_completed_at: null } });
 
@@ -80,15 +83,15 @@ test.describe("closed shop: the staff can still sign in", () => {
 
     await page.goto(`/reset-password#access_token=${token}&refresh_token=e2e-invite&token_type=bearer&expires_in=3600&type=invite`);
     await expect(page.getByRole("heading", { name: "Crie sua senha" })).toBeVisible();
-    await page.getByTestId("reset-new").fill("brand-new-1");
-    await page.getByTestId("reset-confirm").fill("brand-new-1");
+    await page.getByTestId("reset-new").fill(CHOSEN);
+    await page.getByTestId("reset-confirm").fill(CHOSEN);
     await page.getByTestId("reset-submit").click();
 
     await expect(page).toHaveURL(/\/setup/);
     await expect(page.getByRole("heading", { name: "Vamos abrir seu estabelecimento" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Em breve" })).toHaveCount(0);
     await expect(page.getByTestId("login-email")).toHaveCount(0);
-    expect(updated).toMatchObject({ password: "brand-new-1" });
+    expect(updated).toMatchObject({ password: CHOSEN });
     expect(signedOut).toBe(false);
     expect(passwordSignIns).toBe(0);
   });

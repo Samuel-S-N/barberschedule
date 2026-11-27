@@ -1,6 +1,9 @@
 import { completePasswordReset, completePasswordSetup, requestPasswordReset, startRecoverySession } from "../../src/features/auth/api";
 import { clearRecovery, hasRecovery, isInvite, markInvite, markRecovery } from "../../src/features/auth/recovery";
 
+// A fixture value passed to the mocked client (not a credential of any real account).
+const CHOSEN = "new-pass-1";
+
 const client = (auth: Record<string, jest.Mock>) => ({ auth }) as never;
 
 describe("requestPasswordReset", () => {
@@ -65,9 +68,9 @@ describe("completePasswordReset", () => {
     const signOut = jest.fn().mockResolvedValue({ error: null });
     markRecovery();
 
-    await completePasswordReset(client({ signOut, updateUser }), "new-pass-1");
+    await completePasswordReset(client({ signOut, updateUser }), CHOSEN);
 
-    expect(updateUser).toHaveBeenCalledWith({ password: "new-pass-1" });
+    expect(updateUser).toHaveBeenCalledWith({ password: CHOSEN });
     expect(signOut).toHaveBeenCalledWith({ scope: "global" });
     expect(hasRecovery()).toBe(false);
   });
@@ -87,9 +90,9 @@ describe("completePasswordSetup", () => {
     const signOut = jest.fn().mockResolvedValue({ error: null });
     markInvite();
 
-    await expect(completePasswordSetup(client({ signOut, updateUser }), "new-pass-1", { invite: true })).resolves.toBe("signed-in");
+    await expect(completePasswordSetup(client({ signOut, updateUser }), CHOSEN, { invite: true })).resolves.toBe("signed-in");
 
-    expect(updateUser).toHaveBeenCalledWith({ password: "new-pass-1" });
+    expect(updateUser).toHaveBeenCalledWith({ password: CHOSEN });
     expect(signOut).not.toHaveBeenCalled();
     // A later visit to /reset-password must not behave as an invite (or as a recovery) any more.
     expect(isInvite()).toBe(false);
@@ -101,7 +104,7 @@ describe("completePasswordSetup", () => {
     const signOut = jest.fn().mockResolvedValue({ error: null });
     markRecovery();
 
-    await expect(completePasswordSetup(client({ signOut, updateUser }), "new-pass-1", { invite: false })).resolves.toBe("signed-out");
+    await expect(completePasswordSetup(client({ signOut, updateUser }), CHOSEN, { invite: false })).resolves.toBe("signed-out");
 
     expect(signOut).toHaveBeenCalledWith({ scope: "global" });
     expect(hasRecovery()).toBe(false);
