@@ -128,6 +128,8 @@ additional_redirect_urls = ["https://zencpro.app/**", "https://*.zencpro.app/**"
 
 [remotes.prod.auth.email]
 enable_confirmations = true
+# The local value is 1s; hosted keeps one minute between e-mails to the same address (resend/recovery abuse).
+max_frequency = "1m0s"
 
 [remotes.prod.auth.email.smtp]
 enabled = true
