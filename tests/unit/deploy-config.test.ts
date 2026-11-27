@@ -32,6 +32,10 @@ describe("supabase/config.toml hosted overrides", () => {
     for (const name of remotes) expect(block(`remotes.${name}.auth.email.smtp`)).toMatch(/^enabled = true$/m);
   });
 
+  it("every hosted remote keeps the one-minute e-mail rate limit instead of the local 1s", () => {
+    for (const name of remotes) expect(block(`remotes.${name}.auth.email`)).toMatch(/^max_frequency = "1m0s"$/m);
+  });
+
   it("hands the cron job its URL and token through Vault, from the environment", () => {
     expect(config).toMatch(/\[remotes\.dev\.db\.vault\][^[]*dispatch_url = "env\(DISPATCH_URL\)"[^[]*dispatch_token = "env\(DISPATCH_TOKEN\)"/);
   });
