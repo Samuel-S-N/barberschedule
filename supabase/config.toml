@@ -130,6 +130,7 @@ additional_redirect_urls = ["https://zencpro.app/**", "https://*.zencpro.app/**"
 enable_confirmations = true
 
 [remotes.prod.auth.email.smtp]
+enabled = true
 host = "smtp.resend.com"
 port = 465
 user = "resend"
