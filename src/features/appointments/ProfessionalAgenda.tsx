@@ -18,6 +18,7 @@ import { Toast } from "../../components/domain/Toast";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Screen } from "../../components/ui/Screen";
+import { RefreshableScrollView } from "../../components/ui/RefreshableScrollView";
 import { quickActions } from "./agenda-actions";
 import { listMyProfessionalAgenda, setMyAppointmentStatus, type ProfessionalAgendaAppointment, type ProfessionalAppointmentStatus } from "./professional-agenda";
 import { parseAgendaTarget } from "./agenda-target";
@@ -38,7 +39,7 @@ import { buildCalendarStripDays } from "../../lib/dates/calendar-strip-days";
 import { formatDateNumeric } from "../../lib/i18n/format";
 import { formatInstantInShopTime } from "../../lib/dates/shop-time";
 import { useSupabaseSession } from "../../providers/AppProviders";
-import { pullToRefresh, useRefreshAll } from "../../lib/use-refresh";
+import { useRefreshAll } from "../../lib/use-refresh";
 
 const DAYS_AHEAD = 30;
 const PENDING_DAYS_BACK = 30;
@@ -216,7 +217,7 @@ export function ProfessionalAgenda({ header, mode = "professional" }: { header?:
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
-      <KeyboardAwareScrollView refreshControl={pullToRefresh(pull)} bottomOffset={24} keyboardShouldPersistTaps="handled" className="flex-1">
+      <RefreshableScrollView as={KeyboardAwareScrollView} bottomOffset={24} onRefresh={pull.onRefresh} refreshing={pull.refreshing} keyboardShouldPersistTaps="handled" className="flex-1">
         <View className="items-center gap-4 p-5">
           <ScreenTopBar title={t("professional.agenda.title")} />
           {header}
@@ -323,7 +324,7 @@ export function ProfessionalAgenda({ header, mode = "professional" }: { header?:
           ) : null}
           <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
         </View>
-      </KeyboardAwareScrollView>
+      </RefreshableScrollView>
     </Screen>
   );
 }

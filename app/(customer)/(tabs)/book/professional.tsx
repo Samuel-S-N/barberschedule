@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { RefreshControl, ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { ProfessionalCard } from "../../../../src/components/domain/ProfessionalCard";
 import { EmptyState } from "../../../../src/components/domain/EmptyState";
@@ -12,6 +12,7 @@ import { listPublicProfessionals } from "../../../../src/features/professionals/
 import { useRefresh } from "../../../../src/lib/use-refresh";
 import { useSupabaseSession } from "../../../../src/providers/AppProviders";
 import { Screen } from "../../../../src/components/ui/Screen";
+import { RefreshableScrollView } from "../../../../src/components/ui/RefreshableScrollView";
 import { useBookingShopId } from "../../../../src/features/booking/use-booking-shop-id";
 
 export default function BookProfessionalScreen() {
@@ -29,7 +30,7 @@ export default function BookProfessionalScreen() {
 
   return (
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
-      <ScrollView className="flex-1" refreshControl={<RefreshControl onRefresh={refresh.onRefresh} refreshing={refresh.refreshing} />}>
+      <RefreshableScrollView className="flex-1" onRefresh={refresh.onRefresh} refreshing={refresh.refreshing}>
       <View className="items-center gap-4 p-5">
         <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl leading-[44px] font-display-bold text-ink">
           {t("book.professionalTitle")}
@@ -61,7 +62,7 @@ export default function BookProfessionalScreen() {
           ))}
         </View>
       </View>
-      </ScrollView>
+      </RefreshableScrollView>
     </Screen>
   );
 }
