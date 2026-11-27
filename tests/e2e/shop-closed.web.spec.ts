@@ -48,6 +48,51 @@ test.describe("closed shop: the staff can still sign in", () => {
     await expect(page.getByRole("heading", { name: "Vamos abrir seu estabelecimento" })).toBeVisible();
   });
 
+  test("an invited owner sets the password and goes straight to the setup checklist: no 'Em breve', no login form, no second sign-in", async ({ page }) => {
+    const ownerId = "55555555-5555-4555-8555-555555555555";
+    const now = Math.floor(Date.now() / 1000);
+    const header = Buffer.from(JSON.stringify({ alg: "none" })).toString("base64").replace(/=+$/, "");
+    const token = `${header}.${Buffer.from(JSON.stringify({ exp: now + 3600, sub: ownerId })).toString("base64")}.`;
+    let updated: Record<string, unknown> | null = null;
+    let signedOut = false;
+    let passwordSignIns = 0;
+
+    await page.route("**/auth/v1/user", async (route) => {
+      if (route.request().method() === "PUT") updated = route.request().postDataJSON() as Record<string, unknown>;
+      await json(route, { app_metadata: {}, aud: "authenticated", created_at: "2026-11-26T10:00:00Z", email: "owner@example.test", id: ownerId, user_metadata: {} });
+    });
+    await page.route("**/auth/v1/logout**", async (route) => {
+      signedOut = true;
+      await route.fulfill({ status: 204 });
+    });
+    await page.route("**/auth/v1/token?grant_type=password", async (route) => {
+      passwordSignIns += 1;
+      await route.abort();
+    });
+    await page.route("**/rest/v1/**", async (route) => {
+      const path = new URL(route.request().url()).pathname;
+
+      if (path.endsWith("/rpc/get_current_profile")) return json(route, [{ full_name: "Olivia Owner", role: "owner", user_id: ownerId }]);
+      if (path.endsWith("/rpc/shop_setup_status")) return json(route, { completed: false, missing: ["agreement", "details", "hours", "services", "team"], professionals: [] });
+      if (route.request().method() === "GET") return json(route, []);
+      await route.abort();
+    });
+
+    await page.goto(`/reset-password#access_token=${token}&refresh_token=e2e-invite&token_type=bearer&expires_in=3600&type=invite`);
+    await expect(page.getByRole("heading", { name: "Crie sua senha" })).toBeVisible();
+    await page.getByTestId("reset-new").fill("brand-new-1");
+    await page.getByTestId("reset-confirm").fill("brand-new-1");
+    await page.getByTestId("reset-submit").click();
+
+    await expect(page).toHaveURL(/\/setup/);
+    await expect(page.getByRole("heading", { name: "Vamos abrir seu estabelecimento" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Em breve" })).toHaveCount(0);
+    await expect(page.getByTestId("login-email")).toHaveCount(0);
+    expect(updated).toMatchObject({ password: "brand-new-1" });
+    expect(signedOut).toBe(false);
+    expect(passwordSignIns).toBe(0);
+  });
+
   test("the reset-password landing (an invited owner's e-mail link) stays reachable", async ({ page }) => {
     await page.goto("/reset-password");
     await expect(page.getByRole("heading", { name: "Em breve" })).toHaveCount(0);
