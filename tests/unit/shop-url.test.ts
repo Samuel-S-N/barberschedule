@@ -13,6 +13,11 @@ describe("buildShopUrl", () => {
     expect(buildShopUrl(DEFAULT_SHOP_URL_TEMPLATE, "alfa")).toBe("https://alfa.zencpro.app/");
   });
 
+  it("puts the path before a query string kept from the template (hosted dev address)", () => {
+    expect(buildShopUrl("https://zenc-web-dev.acme.workers.dev/?shop={slug}", "demo", "/reset-password")).toBe("https://zenc-web-dev.acme.workers.dev/reset-password?shop=demo");
+    expect(buildShopUrl("https://zenc-web-dev.acme.workers.dev/?shop={slug}", "demo")).toBe("https://zenc-web-dev.acme.workers.dev/?shop=demo");
+  });
+
   it("rejects a template without the slug placeholder", () => {
     expect(() => buildShopUrl("https://zencpro.app", "alfa")).toThrow("{slug}");
   });

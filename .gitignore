@@ -57,3 +57,6 @@ graphify-out/
 
 # Supabase CLI local state (holds local service-role keys and JWT secrets)
 supabase/.temp/
+
+# Cloudflare wrangler local state
+.wrangler/

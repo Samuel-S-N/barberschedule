@@ -9,6 +9,7 @@ import { render } from "@testing-library/react-native";
 // A `const` referenced by the factory would still be uninitialized the
 // first time the factory actually runs.
 jest.mock("expo-font", () => ({ useFonts: jest.fn() }));
+jest.mock("../../src/lib/monitoring/sentry", () => ({ initMonitoring: () => false, withMonitoring: (component: unknown) => component }));
 jest.mock("expo-router", () => ({
   DefaultTheme: { colors: { background: "grey", primary: "blue" } },
   Stack: jest.fn(() => null),

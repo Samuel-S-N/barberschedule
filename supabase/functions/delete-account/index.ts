@@ -1,7 +1,11 @@
+import { createReporter, withMonitoring } from "../_shared/monitoring.ts";
+
 declare const Deno: {
   env: { get(name: string): string | undefined };
   serve(handler: (request: Request) => Response | Promise<Response>): void;
 };
+
+const report = createReporter({ dsn: Deno.env.get("SENTRY_DSN_FUNCTIONS"), environment: Deno.env.get("SENTRY_ENVIRONMENT") ?? "dev" });
 
 const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -22,7 +26,7 @@ function json(status: number, body: Record<string, unknown>) {
   });
 }
 
-Deno.serve(async (request) => {
+Deno.serve(withMonitoring(async (request) => {
   // Browsers preflight supabase.functions.invoke (custom headers), so OPTIONS must succeed.
   if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders, status: 204 });
   if (request.method !== "POST") return json(405, { code: "METHOD_NOT_ALLOWED" });
@@ -75,4 +79,4 @@ Deno.serve(async (request) => {
   });
 
   return deleted.ok ? json(200, {}) : json(500, { code: "DELETION_FAILED" });
-});
+}, report));

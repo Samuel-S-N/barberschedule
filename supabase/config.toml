@@ -81,3 +81,37 @@ enabled = false
 
 [experimental]
 orioledb_version = ""
+
+# dispatch-notifications authenticates itself (service-role key or DISPATCH_TOKEN); the cron token is not a JWT, so the gateway must not check it.
+[functions.dispatch-notifications]
+verify_jwt = false
+
+# Hosted overrides. `supabase config push --project-ref <ref>` applies the block whose project_id matches; everything not listed
+# here keeps the local value above. Without these blocks a push would set site_url to 127.0.0.1 and turn e-mail confirmations off.
+# FILL IN (owner): the dev project ref (Project Settings > General, 20 letters) and the account part of the workers.dev address
+# (Cloudflare > Workers & Pages > Account details). The deploy workflow refuses to run while a placeholder is left.
+[remotes.dev]
+project_id = "ezmvbpoypqlghgrgtlxa"
+
+[remotes.dev.auth]
+site_url = "https://zenc-web-dev.zenc.workers.dev"
+additional_redirect_urls = ["https://zenc-web-dev.zenc.workers.dev/**"]
+
+[remotes.dev.auth.email]
+enable_confirmations = true
+# The local value is 1s; hosted keeps one minute between e-mails to the same address (resend/recovery abuse).
+max_frequency = "1m0s"
+
+[remotes.dev.auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+admin_email = "nao-responda@zencpro.com.br"
+sender_name = "Zenc"
+
+# The cron job of migration 0083 reads these two Vault secrets (applied by `db push`, skipped with --skip-vault).
+[remotes.dev.db.vault]
+dispatch_url = "env(DISPATCH_URL)"
+dispatch_token = "env(DISPATCH_TOKEN)"

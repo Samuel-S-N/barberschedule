@@ -8,6 +8,7 @@ module.exports = tseslint.config(
       ".claude/**",
       ".e2e-dist/**",
       ".expo/**",
+      ".wrangler/**",
       "coverage/**",
       "dist/**",
       "node_modules/**",

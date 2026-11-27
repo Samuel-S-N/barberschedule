@@ -38,7 +38,8 @@
       ],
       "expo-notifications",
       "expo-sharing",
-      "expo-status-bar"
+      "expo-status-bar",
+      ["@sentry/react-native/expo", { "organization": "zenc", "project": "zenc-app", "url": "https://de.sentry.io/" }]
     ]
   }
 }

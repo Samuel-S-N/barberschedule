@@ -25,6 +25,7 @@ import { NotificationsPromptGate } from "../src/features/notifications/Notificat
 import { ShopGate } from "../src/features/shops/ShopGate";
 import { ShopThemeProvider } from "../src/features/shops/ShopThemeProvider";
 import { useColors } from "../src/lib/design/theme/ThemeProvider";
+import { initMonitoring, withMonitoring } from "../src/lib/monitoring/sentry";
 import { AppProviders } from "../src/providers/AppProviders";
 import { useSupabaseSession } from "../src/providers/AppProviders";
 
@@ -88,7 +89,9 @@ export function RootNavigator() {
   );
 }
 
-export default function RootLayout() {
+initMonitoring();
+
+function RootLayout() {
   return (
     // Native gestures (MonthCalendar's swipe) need this root; JS responders are cancelled inside the Android pager.
     <GestureHandlerRootView style={styles.root}>
@@ -113,3 +116,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 });
+
+export default withMonitoring(RootLayout);

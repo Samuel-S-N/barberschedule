@@ -1,15 +1,18 @@
-import { isServiceRequest } from "./auth.ts";
+import { dispatchToken, isServiceRequest } from "./auth.ts";
 import { createDispatcher } from "./dispatch.ts";
 import type { ClaimedNotification, Message, WebSubscription } from "./dispatch.ts";
 import { createResendSender } from "./resend.ts";
 import type { OutgoingEmail } from "./resend.ts";
 import { createWebSender } from "./web-push-lib.ts";
+import { createReporter, withMonitoring } from "../_shared/monitoring.ts";
 import { buildShopUrl, DEFAULT_SHOP_URL_TEMPLATE } from "../_shared/shop-url.ts";
 
 declare const Deno: {
   env: { get(name: string): string | undefined };
   serve(handler: (request: Request) => Response | Promise<Response>): void;
 };
+
+const report = createReporter({ dsn: Deno.env.get("SENTRY_DSN_FUNCTIONS"), environment: Deno.env.get("SENTRY_ENVIRONMENT") ?? "dev" });
 
 const expoPushUrl = "https://exp.host/--/api/v2/push/send";
 
@@ -84,7 +87,7 @@ const dispatchRows = createDispatcher({
 
 async function dispatch(request: Request) {
   if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
-  if (!isServiceRequest(request.headers.get("Authorization"), requiredEnv("SUPABASE_SERVICE_ROLE_KEY"))) {
+  if (!isServiceRequest(request.headers.get("Authorization"), requiredEnv("SUPABASE_SERVICE_ROLE_KEY"), dispatchToken(Deno.env.get("DISPATCH_TOKEN")))) {
     return new Response("Unauthorized", { status: 401 });
   }
 
@@ -93,4 +96,4 @@ async function dispatch(request: Request) {
   return Response.json(await dispatchRows(claimed ?? []));
 }
 
-Deno.serve(dispatch);
+Deno.serve(withMonitoring(dispatch, report));
