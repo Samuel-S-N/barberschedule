@@ -24,7 +24,7 @@ monitoring, Turnstile, Sentry performance/replay/logs (PII), a `develop` branch,
 | E-mail | Resend; sender `Zenc <nao-responda@zencpro.com.br>`; domain `zencpro.com.br` verified through Cloudflare auto-configure; free tier 3,000/month and 100/day (UTC) shared by dev and prod. |
 | Sentry | Org slug `zenc`, EU region (`ingest.de.sentry.io`), projects `zenc-app` (React Native, also Expo web) and `zenc-functions` (Deno); error monitoring only; data scrubbing on; IP storage off. |
 | Flow | **A**: single `main`. Merge to `main` deploys to **dev** automatically; **production** is the same commit promoted through the GitHub Environment `production` with the user as required reviewer. No `develop`. |
-| Dev web | Cloudflare Workers (static assets) on a free `*.workers.dev` address behind Cloudflare Access (allowed e-mails only); one test business chosen with `EXPO_PUBLIC_DEV_SHOP_SLUG` or `?shop=` (already supported by the app: `resolveCurrentSlug`). |
+| Dev web | Cloudflare Workers (static assets) on a free `*.workers.dev` address, **public, no Cloudflare Access** (decision of 2026-11-27: it doubles as the demo shown to businesses); one test business chosen with `EXPO_PUBLIC_DEV_SHOP_SLUG` or `?shop=` (already supported by the app: `resolveCurrentSlug`). |
 | Production web | Same Workers setup on `*.zencpro.app` (wildcard Workers route plus proxied wildcard DNS); the bare domain shows the existing bare page. |
 | Migrations | Append-only after the first hosted deploy (decision `018`). The first hosted deploy applies every file in `supabase/migrations`. |
 | Backups | Nightly GitHub Action: dump `zenc-prod`, encrypt with a key only the user holds (`age`, public key in GitHub, private key in the user's password manager), upload to Cloudflare R2; keep 30 daily and 12 monthly; failures e-mail from GitHub; restore runbook proven by restoring into `zenc-dev`. |
@@ -46,7 +46,7 @@ monitoring, Turnstile, Sentry performance/replay/logs (PII), a `develop` branch,
                                                    ├─ supabase config push    → zenc-dev (auth templates, URLs, SMTP)
                                                    ├─ supabase functions deploy → zenc-dev
                                                    ├─ sentry source maps (app build)
-                                                   └─ expo export + wrangler deploy → zenc-web-dev (Access)
+                                                   └─ expo export + wrangler deploy → zenc-web-dev (public demo, noindex)
                                                                     │ needs
                                                                     ▼
                                                    job deploy-prod (environment: production, reviewer: the user)
@@ -61,7 +61,7 @@ Environments and what differs:
 | | local | dev | production |
 |---|---|---|---|
 | Database | Docker Supabase | `zenc-dev` | `zenc-prod` |
-| Web | Metro / static export on `*.localhost` | Worker `zenc-web-dev` on `*.workers.dev`, behind Access | Worker `zenc-web` on `zencpro.app` + `*.zencpro.app` |
+| Web | Metro / static export on `*.localhost` | Worker `zenc-web-dev` on `*.workers.dev`, public demo (noindex, demo banner) | Worker `zenc-web` on `zencpro.app` + `*.zencpro.app` |
 | Shop selection | host label | `?shop=` or `EXPO_PUBLIC_DEV_SHOP_SLUG` | host label (`<slug>.zencpro.app`) |
 | `EXPO_PUBLIC_SHOP_BASE_DOMAIN` | `localhost` | `zencpro.app` (the dev host is not under it, so the `?shop=` path applies) | `zencpro.app` |
 | `EXPO_PUBLIC_AUTH_COOKIE_DOMAIN` | empty | empty | `.zencpro.app` (one login across business subdomains) |
@@ -125,8 +125,12 @@ Alternative rejected: a GitHub scheduled workflow (5-minute floor, frequent dela
 
 - `wrangler.jsonc` at the root with two environments. Assets directory `dist` (the output of `expo export --platform web`),
   `not_found_handling: "single-page-application"`, no Worker script unless spike S1 shows the dynamic route needs one.
-- `zenc-web-dev`: workers.dev only, Cloudflare Access enabled on it (policy: exactly two e-mails, `zencpro.admin@gmail.com` and the owner's personal e-mail, one-time PIN). Preview URLs
-  disabled, so there is no unprotected address.
+- `zenc-web-dev`: workers.dev only, **public** (decision of 2026-11-27: the dev site stays open and doubles as the demo shown to businesses; production
+  only gets validated versions). Cloudflare Access is no longer used. Safeguards: (1) a thin demo strip on every screen when
+  `EXPO_PUBLIC_APP_ENV=dev` ("Ambiente de demonstração: os dados podem ser apagados a qualquer momento. Não use dados reais."), never in
+  production or local builds; (2) the dev build only (deploy-env.yml, every environment except production) gets `X-Robots-Tag: noindex, nofollow`
+  on every path and a `robots.txt` with `Disallow: /` (`scripts/mark-noindex.mjs`), production stays indexable; (3) the data is expected to be
+  erasable at any time. Preview URLs stay disabled.
 - `zenc-web` (production): Workers Routes `zencpro.app/*` and `*.zencpro.app/*` in zone `zencpro.app`, plus proxied DNS records for the
   apex and `*`. Universal SSL covers the apex and one wildcard level. Custom Domains do not support wildcards, hence Routes.
 - `public/_headers`: `sw.js` and `manifest.json` with `Cache-Control: no-cache` so a new deploy reaches installed PWAs.
@@ -201,8 +205,8 @@ Everything here is done by the user (the person typing secrets is never Claude).
    `VAPID_SUBJECT=mailto:contato@zencpro.com.br` into the Supabase function secrets of that project.
 8. Supabase function secrets per project (Dashboard > Edge Functions > Secrets, or the CLI): `RESEND_API_KEY`, `EMAIL_FROM`,
    `SHOP_URL_TEMPLATE`, `DISPATCH_TOKEN` (generate with `openssl rand -hex 32`), `SENTRY_DSN_FUNCTIONS`, `SENTRY_ENVIRONMENT`, the VAPID three.
-9. After the first dev deploy: Cloudflare > Workers & Pages > `zenc-web-dev` > Settings > Domains & Routes > Enable Cloudflare Access
-   (workers.dev **and** preview URLs), policy "Allow" for exactly two e-mails: zencpro.admin@gmail.com and your personal e-mail; open the address and log in once to check.
+9. After the first dev deploy: open the dev address (it is public by decision of 2026-11-27, no Cloudflare Access) and check the demo strip, the
+   `x-robots-tag: noindex, nofollow` response header and `/robots.txt`.
 
 **B. Before plan 2 (production)**
 10. Cloudflare DNS for `zencpro.app`: proxied `A` records `@` and `*` with the placeholder address `192.0.2.1` (the Worker Route answers before it is
@@ -247,6 +251,7 @@ Everything here is done by the user (the person typing secrets is never Claude).
 - **R10 Storage files are not in the database dump.** Avatars are Supabase Storage objects (migration `0027`); `db dump` keeps the
   `storage.objects` rows but not the files, so a restore leaves profile pictures missing until re-uploaded. Accepted for 0.5 (see
   open question 7); plan 3 documents it in the runbook.
+- **R12 The public dev site can exhaust the shared Resend quota** (100/day for dev and production): see decision 9 of section 8.
 - **R11 Dev and production share one Sentry project per surface** (`zenc-app`, `zenc-functions`), told apart by the `environment` tag.
 
 ## 8. Decisions taken after review (2026-11-26, the user's)
@@ -256,14 +261,20 @@ All former open questions are answered; D1 to D10 below are accepted.
 1. **Dev link template: yes.** `buildShopUrl` inserts the path before the template's query string (plan 1 Task 1).
 2. **Dev test business: slug `demo`**, created by hand once by the owner with `create-shop.mjs` against dev (not by CI).
 3. **Cloudflare Access allow-list for the dev site: exactly two e-mails**, `zencpro.admin@gmail.com` and the owner's personal e-mail.
-   The personal address is private and never written in the repository; checklists say "zencpro.admin@gmail.com and your personal e-mail".
+   The personal address is private and never written in the repository. **Superseded on 2026-11-27 (see 9 below): the dev site is public; no Access.**
 4. **`zencpro.com`:** no redirect for now; out of scope until the landing page exists.
 5. **Branch protection: yes**, require the `verify` check on pull requests to `main` (a GitHub settings step for the owner, in the checklist).
 6. **Second restore drill:** yes, one week after the first real business goes live.
 7. **Avatars:** the gap (R10) is accepted for 0.5 and stays documented as a known gap in the runbook.
 8. **Dev data:** `demo` is created by hand once; CI never seeds.
 
-## 9. Decisions in this document that are mine, not the user's
+9. **Dev site public (2026-11-27, supersedes 3).** The dev site stays public and doubles as the demo shown to businesses; production only gets
+   validated versions. Safeguards: the demo strip (dev builds only), noindex + `robots.txt` (non-production deploys only), erasable data. Known
+   risk R12: Resend's free quota (100 e-mails/day) is shared by dev and production, so abuse of the public dev site (sign-ups, password
+   recovery) could exhaust production e-mail for the day. Mitigations: the 1-minute per-address limit (`max_frequency = "1m0s"`) and, when real
+   businesses start, a separate quota for production (a second Resend team or the Pro plan).
+
+## 10. Decisions in this document that are mine, not the user's
 
 - D1 `DISPATCH_TOKEN` plus `verify_jwt = false` for `dispatch-notifications` instead of putting the service-role key in Vault/GitHub.
 - D2 The dispatch trigger is a new migration `0083` using `pg_cron`+`pg_net`+Vault (nothing triggered the function before).
