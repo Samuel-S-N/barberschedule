@@ -16,6 +16,7 @@ import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { DateField } from "../../src/components/ui/DateField";
 import { Screen } from "../../src/components/ui/Screen";
+import { RefreshableScrollView } from "../../src/components/ui/RefreshableScrollView";
 import { listOwnerAgenda, listOwnerAgendaOverrides } from "../../src/features/appointments/agenda-query";
 import { cancelAppointment } from "../../src/features/appointments/lifecycle";
 import { setOwnerAppointmentStatus } from "../../src/features/appointments/owner-api";
@@ -28,7 +29,7 @@ import { errorMessage } from "../../src/i18n/errors";
 import { formatInstantInShopTime } from "../../src/lib/dates/shop-time";
 import { formatDateNumeric } from "../../src/lib/i18n/format";
 import { useSupabaseSession } from "../../src/providers/AppProviders";
-import { pullToRefresh, useRefreshAll } from "../../src/lib/use-refresh";
+import { useRefreshAll } from "../../src/lib/use-refresh";
 
 type AgendaView = "day" | "week" | "month";
 
@@ -121,7 +122,7 @@ export default function OwnerAgendaScreen() {
 
   return (
     <Screen className="flex-1 bg-canvas" edges={["top", "left", "right"]}>
-      <KeyboardAwareScrollView refreshControl={pullToRefresh(pull)} bottomOffset={24} className="flex-1" keyboardShouldPersistTaps="handled">
+      <RefreshableScrollView as={KeyboardAwareScrollView} bottomOffset={24} onRefresh={pull.onRefresh} refreshing={pull.refreshing} className="flex-1" keyboardShouldPersistTaps="handled">
         <View className="items-center p-5">
           <View className="w-full max-w-[420px] gap-4">
             <ScreenTopBar title={t(nav.title)} />
@@ -207,7 +208,7 @@ export default function OwnerAgendaScreen() {
             <Toast message={feedback?.message ?? ""} onDismiss={() => setFeedback(null)} variant={feedback?.variant ?? "info"} visible={feedback !== null} />
           </View>
         </View>
-      </KeyboardAwareScrollView>
+      </RefreshableScrollView>
     </Screen>
   );
 }

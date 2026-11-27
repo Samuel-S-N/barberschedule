@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { RefreshControl, ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { AppointmentCard } from "../../../src/components/domain/AppointmentCard";
 import { CalendarStrip } from "../../../src/components/domain/CalendarStrip";
@@ -26,6 +26,7 @@ import { useNow } from "../../../src/lib/use-now";
 import { useRefresh } from "../../../src/lib/use-refresh";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 import { Screen } from "../../../src/components/ui/Screen";
+import { RefreshableScrollView } from "../../../src/components/ui/RefreshableScrollView";
 import { useCurrentShop } from "../../../src/features/shops/CurrentShopProvider";
 import { formatShopAddress } from "../../../src/features/shops/address";
 
@@ -177,7 +178,7 @@ export default function AgendaScreen() {
 
   return (
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
-      <ScrollView className="flex-1" refreshControl={<RefreshControl onRefresh={refresh.onRefresh} refreshing={refresh.refreshing} />}>
+      <RefreshableScrollView className="flex-1" onRefresh={refresh.onRefresh} refreshing={refresh.refreshing}>
         <View className="items-center gap-4 p-5">
           <Text accessibilityRole="header" className="w-full max-w-[420px] text-3xl leading-[44px] font-display-bold text-ink">{t("appointments.title")}</Text>
           <View className="w-full max-w-[420px] flex-row gap-2">
@@ -247,7 +248,7 @@ export default function AgendaScreen() {
             visible={feedback !== null}
           />
         </View>
-      </ScrollView>
+      </RefreshableScrollView>
     </Screen>
   );
 }

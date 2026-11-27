@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { RefreshControl, ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { AppointmentCard } from "../../../src/components/domain/AppointmentCard";
 import { EmptyState } from "../../../src/components/domain/EmptyState";
@@ -20,6 +20,7 @@ import { listMyCustomers } from "../../../src/features/customers/api";
 import { useRefresh } from "../../../src/lib/use-refresh";
 import { useSupabaseSession } from "../../../src/providers/AppProviders";
 import { Screen } from "../../../src/components/ui/Screen";
+import { RefreshableScrollView } from "../../../src/components/ui/RefreshableScrollView";
 import { useCurrentShop } from "../../../src/features/shops/CurrentShopProvider";
 
 export default function CustomerHomeScreen() {
@@ -45,7 +46,7 @@ export default function CustomerHomeScreen() {
 
   return (
     <Screen edges={["top", "left", "right"]} className="flex-1 bg-canvas">
-      <ScrollView className="flex-1" refreshControl={<RefreshControl onRefresh={refresh.onRefresh} refreshing={refresh.refreshing} />}>
+      <RefreshableScrollView className="flex-1" onRefresh={refresh.onRefresh} refreshing={refresh.refreshing}>
         <View className="items-center gap-4 p-5">
           <ScreenTopBar title={firstName ? t("home.greeting", { name: firstName }) : t("home.welcome")} />
           <View className="w-full max-w-[420px] gap-3">
@@ -59,7 +60,7 @@ export default function CustomerHomeScreen() {
           </View>
           <Toast message={t("home.bookingScheduled")} onDismiss={() => setConfirmed(false)} variant="success" visible={confirmed} />
         </View>
-      </ScrollView>
+      </RefreshableScrollView>
     </Screen>
   );
 }
