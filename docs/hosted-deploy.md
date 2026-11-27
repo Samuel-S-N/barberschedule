@@ -119,7 +119,7 @@ GitHub and in Supabase (never print it; compare lengths only).
 7. **Resend:** the domain `zencpro.com.br` shows "Verified" and the `zenc-prod` key can send from it.
 8. **Dry run (read only):** `npx supabase link --project-ref <PROD_REF>` then `npx supabase db push --dry-run`: all 83 migrations
    (`0001` to `0083`) are listed and nothing else (the project is empty, so no duplicate e-mail pre-check is needed). Then
-   `docs/deploy-spikes.md` S3 against the prod ref: answer "no"; the diff shows only production values.
+   the config diff against the prod ref, in your own interactive terminal (`docs/deploy-spikes.md` S3: `config push --agent no`, answer "n"; the token needs `infra_add_ons_read`): only production values, no `127.0.0.1`.
 9. **Promote:** merge to `main` (or Actions > deploy > Run workflow). `verify` and `dev` run; the `production` job waits. Actions > the
    run > "Review deployments" > tick `production` > Approve. This is the first and last time migrations are applied from zero:
    **from now on they are append-only** (decision `018`).
