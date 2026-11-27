@@ -56,6 +56,9 @@ jobs:
       # Database first: a function or a web build that needs a new column must never run before its migration.
       - run: npx supabase link --project-ref "$REF"
       - run: npx supabase db push --linked --yes
+      # The auth e-mail templates load their logo from the web app's own static file: point it at this environment's site (production's is
+      # zencpro.app, so production is unchanged). Rewrites the CI workspace only; the repository's templates stay as they are.
+      - run: node scripts/set-email-logo.mjs "$REF"
       - run: npx supabase config push --project-ref "$REF" --yes
       - run: npx supabase functions deploy --project-ref "$REF" --use-api
 
