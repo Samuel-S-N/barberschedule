@@ -1,9 +1,22 @@
 {
-  // Dev Worker (workers.dev, behind Cloudflare Access). Plan 2 adds env.production: zenc-web on zencpro.app and *.zencpro.app.
+  // Top level = the dev Worker (workers.dev, behind Cloudflare Access): `wrangler deploy`.
+  // env.production = zenc-web on zencpro.app and every *.zencpro.app (Workers Routes: Custom Domains cannot be wildcards): `wrangler deploy --env production`.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "zenc-web-dev",
   "compatibility_date": "2026-11-01",
   "workers_dev": true,
   "preview_urls": false,
-  "assets": { "directory": "./dist", "not_found_handling": "single-page-application" }
+  "assets": { "directory": "./dist", "not_found_handling": "single-page-application" },
+  "env": {
+    "production": {
+      "name": "zenc-web",
+      "workers_dev": false,
+      "preview_urls": false,
+      "assets": { "directory": "./dist", "not_found_handling": "single-page-application" },
+      "routes": [
+        { "pattern": "zencpro.app/*", "zone_name": "zencpro.app" },
+        { "pattern": "*.zencpro.app/*", "zone_name": "zencpro.app" }
+      ]
+    }
+  }
 }

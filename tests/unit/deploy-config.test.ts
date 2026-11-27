@@ -41,6 +41,31 @@ describe("supabase/config.toml hosted overrides", () => {
   });
 });
 
+describe("supabase/config.toml production overrides", () => {
+  const config = read("supabase/config.toml");
+  const section = (name: string) => config.split(`[remotes.${name}]`)[1]?.split(/\n\[(?!remotes\.)/)[0] ?? "";
+  const prod = config.split("[remotes.prod.auth]")[1]?.split("\n[remotes.prod.")[0] ?? "";
+
+  it("sends invites and recovery links to each business's own address", () => {
+    expect(section("prod")).toMatch(/project_id = "[a-z]{20}"/);
+    expect(prod).toContain('site_url = "https://zencpro.app"');
+    expect(prod).toContain('"https://zencpro.app/**"');
+    expect(prod).toContain('"https://*.zencpro.app/**"');
+    expect(prod).not.toMatch(/127\.0\.0\.1|localhost|exp:\/\//);
+    expect(config).toMatch(/\[remotes\.prod\.auth\.email\][^[]*enable_confirmations = true/);
+    expect(config).toMatch(/\[remotes\.prod\.auth\.email\.smtp\][^[]*pass = "env\(RESEND_API_KEY\)"/);
+    expect(config).toMatch(/\[remotes\.prod\.db\.vault\][^[]*dispatch_url = "env\(DISPATCH_URL\)"[^[]*dispatch_token = "env\(DISPATCH_TOKEN\)"/);
+  });
+
+  it("dev and prod are different projects", () => {
+    const ref = (name: string) => section(name).match(/project_id = "([a-z]{20})"/)?.[1];
+
+    expect(ref("dev")).toBeDefined();
+    expect(ref("prod")).toBeDefined();
+    expect(ref("dev")).not.toBe(ref("prod"));
+  });
+});
+
 describe("wrangler.jsonc", () => {
   const wrangler = JSON.parse(read("wrangler.jsonc").replace(/^\s*\/\/.*$/gm, ""));
 
@@ -49,6 +74,21 @@ describe("wrangler.jsonc", () => {
     expect(wrangler.assets).toEqual({ directory: "./dist", not_found_handling: "single-page-application" });
     expect(wrangler.workers_dev).toBe(true);
     expect(wrangler.preview_urls).toBe(false);
+  });
+});
+
+describe("wrangler.jsonc production", () => {
+  const production = JSON.parse(read("wrangler.jsonc").replace(/^\s*\/\/.*$/gm, "")).env.production;
+
+  it("is its own Worker on the apex and every business subdomain, never on workers.dev", () => {
+    expect(production.name).toBe("zenc-web");
+    expect(production.workers_dev).toBe(false);
+    expect(production.preview_urls).toBe(false);
+    expect(production.routes).toEqual([
+      { pattern: "zencpro.app/*", zone_name: "zencpro.app" },
+      { pattern: "*.zencpro.app/*", zone_name: "zencpro.app" },
+    ]);
+    expect(production.assets).toEqual({ directory: "./dist", not_found_handling: "single-page-application" });
   });
 });
 
@@ -89,6 +129,18 @@ describe("workflows", () => {
     }
   });
 
+  it("production waits for dev and for the production environment's reviewer, on the same commit", () => {
+    expect(deploy).toMatch(/production:\s+needs: dev\s+uses: \.\/\.github\/workflows\/deploy-env\.yml\s+with:\s+environment: production\s+secrets: inherit/);
+    expect(deploy).not.toMatch(/ref:/);
+  });
+
+  it("the production run checks the live site and the e-mail logo after deploying", () => {
+    expect(deployEnv).toContain("inputs.environment == 'production'");
+    expect(deployEnv).toContain("https://zencpro.app/email/zenc-logo.png");
+    expect(deployEnv).toContain("image/png");
+    expect(deployEnv.indexOf("https://zencpro.app/email/zenc-logo.png")).toBeGreaterThan(deployEnv.indexOf("wrangler deploy"));
+  });
+
   it("deploys the database before anything that depends on it, and the web build last", () => {
     const order = ["supabase db push", "supabase config push", "supabase functions deploy", "expo export", "wrangler deploy"].map((step) => deployEnv.indexOf(step));
 
@@ -105,6 +157,20 @@ describe("workflows", () => {
     expect(deployEnv).toContain("--source-maps");
     expect(deployEnv.indexOf("sentry-expo-upload-sourcemaps")).toBeLessThan(deployEnv.indexOf("-name '*.map' -delete"));
     expect(deployEnv.indexOf("-name '*.map' -delete")).toBeLessThan(deployEnv.indexOf("wrangler deploy"));
+  });
+
+  it("the backup runs nightly in its own environment, holds only backup credentials and never uploads an unencrypted artifact", () => {
+    const backup = read(".github/workflows/backup.yml");
+
+    expect(backup).toMatch(/cron: "0 5 \* \* \*"/);
+    expect(backup).toContain("workflow_dispatch:");
+    expect(backup).toContain("environment: backup");
+    expect(backup).toContain("bash scripts/backup.sh");
+    expect(backup).not.toContain("upload-artifact");
+    expect(backup).not.toMatch(/SUPABASE_ACCESS_TOKEN|CLOUDFLARE_API_TOKEN|RESEND_API_KEY/);
+    for (const name of [...backup.matchAll(/\bsecrets\.([A-Z0-9_]+)/g)].map((match) => match[1])) {
+      expect(["SUPABASE_DB_URL", "AGE_PUBLIC_KEY", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY"]).toContain(name);
+    }
   });
 
   it("the auth e-mail logo follows the environment's site before config push, and production's site is the one the templates already use", () => {
@@ -136,7 +202,7 @@ describe("workflows", () => {
 
   it("every secret and variable a workflow reads is documented in docs/hosted-deploy.md", () => {
     const docs = read("docs/hosted-deploy.md");
-    const used = new Set([...(verify + deploy + deployEnv).matchAll(/\b(?:secrets|vars)\.([A-Z0-9_]+)/g)].map((match) => match[1]));
+    const used = new Set([...(verify + deploy + deployEnv + read(".github/workflows/backup.yml")).matchAll(/\b(?:secrets|vars)\.([A-Z0-9_]+)/g)].map((match) => match[1]));
 
     expect(used.size).toBeGreaterThan(5);
     for (const name of used) expect(docs).toContain(name);

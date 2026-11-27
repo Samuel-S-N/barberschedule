@@ -1,6 +1,6 @@
 # Release checklist
 
-> **Target flow (planned, see `docs/hosted-deploy.md` section 0):** a merge to `main` deploys to dev; production is the same commit
+> **Flow (built, never run yet; see `docs/hosted-deploy.md` sections 0 to 0e):** a merge to `main` deploys to dev; production is the same commit
 > approved in the GitHub Environment `production`. The 0.5 release is web/PWA only: no EAS or store build. Until the pipeline
 > exists, the manual steps in `docs/hosted-deploy.md` apply.
 
@@ -31,7 +31,7 @@ The app id is `com.zencpro.app` (iOS bundle identifier and Android package, see 
 in App Store Connect and Google Play before the first build; changing it later is not possible once published.
 Shop subdomains will be `*.zencpro.app`; the marketing site is on `zencpro.com.br`.
 
-## EAS
+## EAS (later: store builds are not part of 0.5)
 
 `development` is an internal development-client build, `preview` is an internal Android APK, and `production` is intentionally empty until real EAS credentials and store metadata are configured. This repository does not claim store readiness.
 
