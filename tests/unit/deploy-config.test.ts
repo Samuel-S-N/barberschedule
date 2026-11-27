@@ -23,6 +23,15 @@ describe("supabase/config.toml hosted overrides", () => {
     expect(config).toMatch(/\[remotes\.dev\.auth\.email\.smtp\][^[]*pass = "env\(RESEND_API_KEY\)"/);
   });
 
+  // Hosted-only values the owner must not lose to the local defaults (found by spike S3, 2026-11-26).
+  const remotes = [...config.matchAll(/^\[remotes\.([a-z]+)\.auth\.email\.smtp\]/gm)].map((match) => match[1]);
+  const block = (header: string) => config.split(`[${header}]`)[1]?.split("\n[")[0] ?? "";
+
+  it("every hosted remote turns custom SMTP on (the free tier rejects template changes with the default e-mail provider)", () => {
+    expect(remotes.length).toBeGreaterThan(0);
+    for (const name of remotes) expect(block(`remotes.${name}.auth.email.smtp`)).toMatch(/^enabled = true$/m);
+  });
+
   it("hands the cron job its URL and token through Vault, from the environment", () => {
     expect(config).toMatch(/\[remotes\.dev\.db\.vault\][^[]*dispatch_url = "env\(DISPATCH_URL\)"[^[]*dispatch_token = "env\(DISPATCH_TOKEN\)"/);
   });

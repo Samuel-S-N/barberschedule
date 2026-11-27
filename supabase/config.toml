@@ -101,6 +101,7 @@ additional_redirect_urls = ["https://zenc-web-dev.zenc.workers.dev/**"]
 enable_confirmations = true
 
 [remotes.dev.auth.email.smtp]
+enabled = true
 host = "smtp.resend.com"
 port = 465
 user = "resend"
