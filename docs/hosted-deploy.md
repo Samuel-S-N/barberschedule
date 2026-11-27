@@ -1,7 +1,7 @@
 # Hosted deploy (dev, production, backups)
 
-> **Status (2026-11-26):** plan 1 (dev pipeline, scheduled dispatch, Sentry) is **in the repository** but has never run: nothing is
-> deployed yet, because it needs the owner's secrets (section 0b). Production (plan 2) and backups (plan 3) are designed in
+> **Status (2026-11-26):** plans 1 (dev pipeline, scheduled dispatch, Sentry) and 2 (production promotion) are **in the repository** but
+> have never run: nothing is deployed yet, because they need the owner's secrets (sections 0b to 0e). Backups (plan 3) are designed in
 > `docs/superpowers/specs/2026-11-26-deploy-05-design.md` and `docs/superpowers/plans/2026-11-26-deploy-{1-dev,2-prod,3-backups}.md`.
 > Sections 1 to 10 below are the manual steps; the pipeline runs sections 2, 3 (config) and 5 (functions) for every deploy, and a human
 > only does the one-time parts. Spikes and their pass criteria: `docs/deploy-spikes.md`.
@@ -23,7 +23,8 @@
 1. Fill the two placeholders in `supabase/config.toml` `[remotes.dev]` (the dev project ref, 20 letters, and the account part of
    `zenc-web-dev.<account>.workers.dev`, shown in Cloudflare > Workers & Pages) and merge that. The deploy workflow refuses to run
    while `REPLACE-` is left, or while `SUPABASE_PROJECT_REF` has no `[remotes.*]` block.
-2. GitHub > Settings > Environments > `dev`: add the secrets and variables of the table below (the owner pastes every value).
+2. GitHub > Settings > Environments > `dev`: add the secrets and variables of the table below, and set the Supabase **function secrets** of
+   `zenc-dev` (section 0c). The owner pastes every value.
 3. GitHub > Settings > Branches: protect `main`: require a pull request and the `verify` status check before merging.
 4. Review the config diff once in your own interactive terminal (`docs/deploy-spikes.md` S3: `config push` has no dry run, so use `--agent no` and answer "n"). It already ran once; the findings are fixed. Otherwise trust the first pipeline run.
 5. Merge to `main`: `verify` runs, then `dev` deploys. Read the log; then S4a and S4c.
@@ -88,6 +89,83 @@ the remotes the same way, with a test in `tests/unit/deploy-config.test.ts`.
 
 The step-by-step owner checklist (R2 card, bucket, tokens, key pair, Resend domain, Email Routing, approving the first
 production run) is section 6 of the spec; each plan repeats the items it needs.
+
+## 0c. Function secrets (set once per Supabase project: `zenc-dev` AND `zenc-prod`)
+
+Dashboard > Edge Functions > Secrets, or `npx supabase secrets set --project-ref <REF> NAME=value ...` typed by the owner. They never
+travel through the repo or CI. `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` are injected by the platform.
+
+| Secret | `zenc-dev` | `zenc-prod` |
+|---|---|---|
+| `DISPATCH_TOKEN` | `openssl rand -hex 32`, **the same value as the GitHub environment `dev` secret** (the cron job sends it from Vault, the function compares it) | a different `openssl rand -hex 32`, **the same value as the GitHub environment `production` secret** |
+| `RESEND_API_KEY` | the `zenc-dev` key (also the `dev` GitHub secret) | the `zenc-prod` key (also the `production` GitHub secret) |
+| `EMAIL_FROM` | `Zenc <nao-responda@zencpro.com.br>` | `Zenc <nao-responda@zencpro.com.br>` |
+| `SHOP_URL_TEMPLATE` | `https://zenc-web-dev.<account>.workers.dev/?shop={slug}` | `https://{slug}.zencpro.app` |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | pair 1 (`npx web-push generate-vapid-keys`); the public half is also the `dev` variable `EXPO_PUBLIC_VAPID_PUBLIC_KEY` | pair 2; the public half is also the `production` variable |
+| `VAPID_SUBJECT` | `mailto:contato@zencpro.com.br` | `mailto:contato@zencpro.com.br` |
+| `SENTRY_DSN_FUNCTIONS` | the `zenc-functions` DSN | the same DSN |
+| `SENTRY_ENVIRONMENT` | `dev` | `production` |
+| `EXPO_ACCESS_TOKEN` | optional (Expo push; not needed for web-only 0.5) | optional |
+
+Check after setting: Edge Functions > Secrets lists every name above for the project, and `DISPATCH_TOKEN` has the same length (64) in
+GitHub and in Supabase (never print it; compare lengths only).
+
+## 0d. Production: what the owner does, in order
+
+1. **GitHub environment `production`** (Settings > Environments): required reviewer = the owner; deployment branches = `main` only.
+   Secrets: `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD` (prod database password), `RESEND_API_KEY` (the `zenc-prod` key), `DISPATCH_TOKEN`
+   (section 0c), `CLOUDFLARE_API_TOKEN`, `SENTRY_AUTH_TOKEN`. Variables: `SUPABASE_PROJECT_REF`, `CLOUDFLARE_ACCOUNT_ID`,
+   `EXPO_PUBLIC_SUPABASE_URL` (`https://<PROD_REF>.supabase.co`), `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (the prod publishable key),
+   `EXPO_PUBLIC_SHOP_BASE_DOMAIN=zencpro.app`, `EXPO_PUBLIC_AUTH_COOKIE_DOMAIN=.zencpro.app`, `EXPO_PUBLIC_VAPID_PUBLIC_KEY`,
+   `EXPO_PUBLIC_SENTRY_DSN` (the `zenc-app` DSN). `EXPO_PUBLIC_DEV_SHOP_SLUG` stays unset.
+2. **Cloudflare API token for production:** create a second token (`zenc-deploy-prod`) with Workers edit on the account **and**
+   Zone > Workers Routes > Edit on `zencpro.app`. Never reuse the dev token.
+3. **`supabase/config.toml`:** replace the `[remotes.prod]` placeholder `project_id` with the `zenc-prod` ref and merge. A workflow run
+   whose `SUPABASE_PROJECT_REF` has no block there stops before touching anything.
+4. **Function secrets** of `zenc-prod`: the `zenc-prod` column of section 0c.
+5. **Cloudflare DNS, zone `zencpro.app`:** two **proxied** (orange cloud) `A` records: name `@` and name `*`, both content `192.0.2.1`
+   (a placeholder: the Worker Routes answer before it is ever contacted). Explicit records, if any, win over the wildcard. SSL/TLS mode
+   "Full (strict)". Universal SSL covers the apex and one wildcard level.
+6. **Cloudflare Email Routing for `zencpro.com.br`:** enable it; custom addresses `contato@` and `privacidade@` forward to
+   zencpro.admin@gmail.com; confirm the verification e-mail. Both addresses are printed in the legal texts and in every automatic e-mail,
+   so they must work before the first invite.
+7. **Resend:** the domain `zencpro.com.br` shows "Verified" and the `zenc-prod` key can send from it.
+8. **Dry run (read only):** `npx supabase link --project-ref <PROD_REF>` then `npx supabase db push --dry-run`: all 83 migrations
+   (`0001` to `0083`) are listed and nothing else (the project is empty, so no duplicate e-mail pre-check is needed). Then
+   the config diff against the prod ref, in your own interactive terminal (`docs/deploy-spikes.md` S3: `config push --agent no`, answer "n"; the token needs `infra_add_ons_read`): only production values, no `127.0.0.1`.
+9. **Promote:** merge to `main` (or Actions > deploy > Run workflow). `verify` and `dev` run; the `production` job waits. Actions > the
+   run > "Review deployments" > tick `production` > Approve. This is the first and last time migrations are applied from zero:
+   **from now on they are append-only** (decision `018`).
+10. **Read the run:** `db push` applies `0001` to `0083`; `config push` applies the production values; three functions deploy; the web
+    bundle uploads; `assert-hosted-auth` and the OPTIONS check pass; the apex and the logo answer.
+11. **Verify (SQL editor of `zenc-prod`):** `select name from vault.decrypted_secrets order by name;` lists `dispatch_token` and
+    `dispatch_url` (never the secret column); `select jobname, active from cron.job order by jobname;` lists four active jobs
+    (`barberschedule-payout-due`, `zenc-dispatch-notifications`, `zenc-materialize-recurrence`, `zenc-notification-reminders`).
+12. **Turn the e-mail claim on** (only now: confirmations are enforced, the CI step proved it): `update public.app_settings set email_claim_enabled = true;`.
+13. **Bare domain:** `https://zencpro.app/` shows the page asking for the business's link; `https://anything.zencpro.app/` says "negócio não encontrado".
+
+### 0e. The first real business
+
+The owner decides name, slug, the owner's e-mail and time zone. Slugs are permanent addresses: `^[a-z0-9][a-z0-9-]{1,30}[a-z0-9]$`, not
+reserved (`www app api admin zenc mail email smtp static assets cdn docs help support status blog dev staging test login auth`).
+
+```bash
+read -rs SUPABASE_SERVICE_ROLE_KEY && export SUPABASE_SERVICE_ROLE_KEY
+SUPABASE_URL=https://<PROD_REF>.supabase.co SHOP_URL_TEMPLATE='https://{slug}.zencpro.app' node scripts/create-shop.mjs --name "<Nome do negócio>" --slug <slug> --owner <e-mail do dono> --timezone America/Sao_Paulo
+unset SUPABASE_SERVICE_ROLE_KEY
+```
+
+The script checks the slug first and sends nothing if it is taken. Never run it, or any SQL against production, from CI or through Claude.
+
+1. The owner receives "Você foi convidado para <negócio> na Zenc" from `Zenc <nao-responda@zencpro.com.br>` with the logo and the
+   automatic-e-mail footer; the button opens `https://<slug>.zencpro.app/reset-password`. They set a password, sign in and see the
+   setup checklist (agreement, details, hours, a service, a team member); "Abrir minha agenda" opens the business and shows its link and QR.
+   Until then visitors see "Em breve".
+2. Read-only check: `select slug, name, setup_completed_at is not null as open from public.shops order by created_at desc limit 3;`.
+3. Customer smoke with a real address of the owner's: sign up on `https://<slug>.zencpro.app/`, confirm the e-mail, book an appointment
+   for tomorrow, run `select public.enqueue_notification_reminders();`; within two minutes the reminder e-mail arrives (Resend's 100/day is
+   shared with dev: do this once). Turn "Lembretes por e-mail" off and confirm no second reminder row appears.
+4. iPhone Safari: install the PWA from the business address, sign in, enable push. Record the result (it is unverified until then).
 
 ## 1. Before touching the database
 
@@ -169,7 +247,10 @@ row is merged into the account's own row if one exists). Turn it off again if co
 
 ## 7. Rollback
 
-Migrations are forward-only (append-only once applied, decision `018`). If something breaks, restore the backup from step 1 rather than hand-editing.
+Migrations are forward-only (append-only once applied, decision `018`): a mistake gets a **new** migration, never an edit of an applied
+file. If data is lost or corrupted, recover from the nightly backup with `docs/restore-runbook.md` (plan 3) rather than hand-editing the
+database. A bad web release is rolled back by re-running the `deploy` workflow on the previous good commit (Actions > deploy >
+Run workflow, ref `main` after a revert PR); migrations are not undone by that.
 
 ## 8. Legal data (before the public launch)
 

@@ -77,3 +77,10 @@ jobs:
           SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
       - run: test "$(curl -s -o /dev/null -w '%{http_code}' -X OPTIONS "$EXPO_PUBLIC_SUPABASE_URL/functions/v1/invite-professional")" = "204"
+
+      # Production only: the apex answers, and the e-mail logo (a static file of this web app that every e-mail references) is served.
+      - if: ${{ inputs.environment == 'production' }}
+        run: |
+          retry="--retry 6 --retry-delay 5 --retry-all-errors"
+          curl -fsS $retry -o /dev/null https://zencpro.app/
+          test "$(curl -s $retry -o /dev/null -w '%{content_type}' https://zencpro.app/email/zenc-logo.png)" = "image/png"

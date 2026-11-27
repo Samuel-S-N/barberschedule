@@ -24,3 +24,12 @@ jobs:
     with:
       environment: dev
     secrets: inherit
+
+  # The same commit, promoted: this job waits for the required reviewer of the `production` environment (the owner approves it in the
+  # run's "Review deployments" panel). It only starts after dev succeeded; the web bundle is rebuilt with production's variables.
+  production:
+    needs: dev
+    uses: ./.github/workflows/deploy-env.yml
+    with:
+      environment: production
+    secrets: inherit
