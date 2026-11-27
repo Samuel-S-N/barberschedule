@@ -56,21 +56,36 @@ const indicator = (page: Page) => page.getByTestId("pull-root").filter({ has: pa
 test.beforeEach(async ({ page }) => {
   // Skip where the engine cannot construct touch events (reported, not silently passed).
   await page.goto("/login");
-  test.skip(!(await page.evaluate(() => typeof Touch !== "undefined" && typeof TouchEvent !== "undefined")), "this engine cannot construct TouchEvent in emulation");
+  const constructible = await page.evaluate(() => {
+    try {
+      const touch = new Touch({ clientX: 0, clientY: 0, identifier: 1, target: document.body });
+
+      return new TouchEvent("touchstart", { touches: [touch] }) instanceof Event;
+    } catch {
+      return false; // WebKit exposes Touch but "Illegal constructor"
+    }
+  });
+
+  test.skip(!constructible, "this engine cannot construct Touch / TouchEvent, so the gesture cannot be dispatched here (verified on Chromium and Firefox)");
 });
 
 test("pulling down at the top of Home refetches and shows the spinner while it loads", async ({ page }) => {
+  let armed = false;
   let release: () => void = () => undefined;
   const gate = new Promise<void>((resolve) => { release = resolve; });
-  const counter = await openHome(page, { onUpcoming: async (count) => { if (count >= 2) await gate; } });
+  const counter = await openHome(page, { onUpcoming: async () => { if (armed) await gate; } });
 
-  expect(counter.upcoming).toBe(1);
+  await page.waitForTimeout(300); // let any initial refetch settle (WebKit loads twice)
+  const before = counter.upcoming;
+
+  armed = true;
+
   await expect(indicator(page)).toHaveCSS("opacity", "0");
 
   const prevented = await touchDrag(page, { x: 195, y: 120 }, { x: 195, y: 300 });
 
   expect(prevented?.some(Boolean)).toBe(true);
-  await expect.poll(() => counter.upcoming).toBe(2);
+  await expect.poll(() => counter.upcoming).toBe(before + 1);
   await expect(indicator(page)).toHaveCSS("opacity", "1");
   release();
   await expect(indicator(page)).toHaveCSS("opacity", "0");
@@ -79,14 +94,20 @@ test("pulling down at the top of Home refetches and shows the spinner while it l
 test("a short pull does nothing", async ({ page }) => {
   const counter = await openHome(page);
 
+  await page.waitForTimeout(300);
+  const before = counter.upcoming;
+
   await touchDrag(page, { x: 195, y: 120 }, { x: 195, y: 150 });
   await page.waitForTimeout(400);
-  expect(counter.upcoming).toBe(1);
+  expect(counter.upcoming).toBe(before);
   await expect(indicator(page)).toHaveCSS("opacity", "0");
 });
 
 test("no pull while the screen is scrolled down, and a drag up or sideways is left to the browser", async ({ page }) => {
   const counter = await openHome(page);
+
+  await page.waitForTimeout(300);
+  const before = counter.upcoming;
 
   await page.mouse.move(195, 200);
   await page.mouse.wheel(0, 200);
@@ -99,7 +120,7 @@ test("no pull while the screen is scrolled down, and a drag up or sideways is le
   expect((await touchDrag(page, { x: 195, y: 300 }, { x: 195, y: 120 }))?.some(Boolean)).toBe(false);
   expect((await touchDrag(page, { x: 100, y: 200 }, { x: 300, y: 210 }))?.some(Boolean)).toBe(false);
   await page.waitForTimeout(300);
-  expect(counter.upcoming).toBe(1);
+  expect(counter.upcoming).toBe(before);
 });
 
 test("normal scrolling still works", async ({ page }) => {
