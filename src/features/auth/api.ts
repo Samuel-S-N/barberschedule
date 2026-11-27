@@ -140,3 +140,24 @@ export async function completePasswordReset(supabase: Pick<AuthSupabaseClient, "
   consumedRefreshToken = null;
   await supabase.auth.signOut({ scope: "global" });
 }
+
+// What happens after the new password is saved:
+// - a forgotten-password recovery signs the user out everywhere and sends them to the login (a security choice: the link proved only
+//   e-mail access, and every other session of the account must end);
+// - an invite (a new owner or professional setting a password for the first time) STAYS signed in, so an owner of a business that is
+//   still closed goes straight to the setup checklist instead of the "Em breve" page and a second sign-in.
+// Either way the recovery/invite proof is cleared, so a later visit to /reset-password does not behave as one.
+export async function completePasswordSetup(supabase: Pick<AuthSupabaseClient, "auth">, password: string, { invite }: { invite: boolean }): Promise<"signed-in" | "signed-out"> {
+  if (!invite) {
+    await completePasswordReset(supabase, password);
+
+    return "signed-out";
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+  throwIfError(error);
+  clearRecovery();
+  consumedRefreshToken = null;
+
+  return "signed-in";
+}
