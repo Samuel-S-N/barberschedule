@@ -122,3 +122,14 @@ alt text "ZENC." shows instead. To see an e-mail with the image, open its HTML w
 regenerate the PNG (Oswald Bold, ink `#171412`, the period drawn as a wine `#7A1F2B` circle, transparent, 2x of 119 x 48):
 `node scripts/render-email-logo.mjs`.
 
+## Fake passwords in tests (secret scanners)
+
+GitGuardian flags literals that look like passwords next to a password key (`{ password: "brand-new-1" }`), even fake ones. Its PR
+check scans every commit of the PR, so a flagged literal keeps the check red until someone marks it a false positive. Scanning stays
+on for every path; write tests so they do not trip it:
+
+- keep a fixture password in a named constant without "password" in its name (`const CHOSEN = "brand-new-1";`) and use the
+  constant everywhere, including in assertions (`{ password: CHOSEN }`);
+- never use a real password, key or token in a test;
+- if a fake one is flagged anyway, mark that incident "false positive" in the GitGuardian check; do not disable scanning for paths.
+
