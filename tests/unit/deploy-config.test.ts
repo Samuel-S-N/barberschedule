@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const root = join(__dirname, "..", "..");
@@ -105,6 +105,18 @@ describe("workflows", () => {
     expect(deployEnv).toContain("--source-maps");
     expect(deployEnv.indexOf("sentry-expo-upload-sourcemaps")).toBeLessThan(deployEnv.indexOf("-name '*.map' -delete"));
     expect(deployEnv.indexOf("-name '*.map' -delete")).toBeLessThan(deployEnv.indexOf("wrangler deploy"));
+  });
+
+  it("only the non-production builds are marked noindex; production stays indexable", () => {
+    const step = "node scripts/mark-noindex.mjs dist";
+
+    expect(deployEnv).toContain(step);
+    expect(deployEnv).toMatch(/- if: \$\{\{ inputs\.environment != 'production' \}\}\n\s+run: node scripts\/mark-noindex\.mjs dist/);
+    expect(deployEnv.indexOf(step)).toBeLessThan(deployEnv.indexOf("wrangler deploy"));
+    expect(deployEnv.indexOf(step)).toBeGreaterThan(deployEnv.indexOf("-name '*.map' -delete"));
+    // The files that ship in every environment must not carry it.
+    expect(read("public/_headers")).not.toMatch(/X-Robots-Tag/i);
+    expect(existsSync(join(root, "public", "robots.txt"))).toBe(false);
   });
 
   it("every secret and variable a workflow reads is documented in docs/hosted-deploy.md", () => {

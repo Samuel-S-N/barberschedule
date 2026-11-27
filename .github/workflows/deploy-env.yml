@@ -63,6 +63,9 @@ jobs:
       - run: npx sentry-expo-upload-sourcemaps dist
       # Source maps go to Sentry only; they are never published with the site.
       - run: find dist -name '*.map' -delete
+      # The public dev site doubles as the demo shown to businesses: keep it out of search engines. Production stays indexable.
+      - if: ${{ inputs.environment != 'production' }}
+        run: node scripts/mark-noindex.mjs dist
       - run: npx wrangler deploy ${{ inputs.environment == 'production' && '--env production' || '' }}
 
       # Smoke: e-mail confirmations are enforced and the functions gateway answers the browser preflight.
