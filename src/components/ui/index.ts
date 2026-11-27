@@ -9,3 +9,5 @@ export type { CardProps, CardVariant } from "./Card";
 export { DateInput, TimeInput } from "./MaskedInputs";
 export { SearchInput } from "./SearchInput";
 export { FabAdd } from "./FabAdd";
+export { RefreshableScrollView } from "./RefreshableScrollView";
+export type { RefreshableScrollViewProps } from "./RefreshableScrollView";
