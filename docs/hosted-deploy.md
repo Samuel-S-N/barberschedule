@@ -43,6 +43,15 @@
 
    then set the GitHub variable `EXPO_PUBLIC_DEV_SHOP_SLUG=demo` and re-run the `deploy` workflow.
 
+### E-mail logo per environment
+
+Every e-mail loads its logo from the web app's own static file (`/email/zenc-logo.png`). Production serves it at `https://zencpro.app`; the
+templates and the reminder default to that address. Until production is live that host serves nothing, so hosted dev points the logo at
+its own site: **auth e-mails** (confirmation, recovery, invite) need no secret (`deploy-env.yml` runs `scripts/set-email-logo.mjs` before
+`config push`, taking `[remotes.<env>.auth] site_url`; production's is `zencpro.app`, so it is unchanged); the **reminder e-mail**
+(built by `dispatch-notifications`) reads the optional function secret **`EMAIL_LOGO_URL`**: set
+`EMAIL_LOGO_URL=https://zenc-web-dev.zenc.workers.dev/email/zenc-logo.png` on `zenc-dev` (the owner adds it), and leave it **unset** on `zenc-prod`.
+
 ### Supabase access token (GitHub secret `SUPABASE_ACCESS_TOKEN`, and any local CLI token)
 
 `config push` lists the project's add-ons first, so a token without `infra_add_ons_read` fails with 403 ("Missing required permission(s):
@@ -72,7 +81,7 @@ the remotes the same way, with a test in `tests/unit/deploy-config.test.ts`.
 | `CLOUDFLARE_API_TOKEN` | secret | GitHub env `dev`, `production` (a separate token each) | `wrangler deploy` |
 | `CLOUDFLARE_ACCOUNT_ID` | variable | GitHub env `dev`, `production` | `wrangler deploy` |
 | `SENTRY_AUTH_TOKEN` | secret | GitHub env `dev`, `production` | source map upload |
-| `SENTRY_DSN_FUNCTIONS`, `SENTRY_ENVIRONMENT`, `EMAIL_FROM`, `SHOP_URL_TEMPLATE`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `EXPO_ACCESS_TOKEN` (optional) | Supabase function secrets | each Supabase project | Edge Functions |
+| `SENTRY_DSN_FUNCTIONS`, `SENTRY_ENVIRONMENT`, `EMAIL_FROM`, `EMAIL_LOGO_URL` (dev only), `SHOP_URL_TEMPLATE`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `EXPO_ACCESS_TOKEN` (optional) | Supabase function secrets | each Supabase project | Edge Functions |
 | `SUPABASE_DB_URL` (session pooler of `zenc-prod`), `AGE_PUBLIC_KEY`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | secret | GitHub env `backup` only | nightly backup |
 | `R2_ACCOUNT_ID`, `R2_BUCKET` | variable | GitHub env `backup` only | nightly backup |
 | age **private** key | (never in a system) | the owner's password manager | restore only |
