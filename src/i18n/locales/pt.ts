@@ -67,7 +67,6 @@ export const pt: DeepStringRecord<typeof en> = {
       createAccount: "Criar conta",
       error: "Não foi possível entrar.",
       forgot: "Esqueci minha senha",
-      passwordCreated: "Senha criada. Entre com ela.",
       passwordReset: "Senha redefinida. Entre com a nova senha.",
       submit: "Entrar",
       subtitle: "Use a mesma conta do Zenc na Web, no iOS ou no Android.",

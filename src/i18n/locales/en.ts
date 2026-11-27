@@ -68,7 +68,6 @@ export const en = {
       createAccount: "Create account",
       error: "Unable to sign in.",
       forgot: "Forgot password?",
-      passwordCreated: "Password created. Sign in with it.",
       passwordReset: "Password reset. Sign in with your new password.",
       submit: "Sign in",
       subtitle: "Use the same Zenc account on Web, iOS, or Android.",
